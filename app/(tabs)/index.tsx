@@ -101,7 +101,7 @@ export default function FeedScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <View style={styles.headerContent}>
-          <Text style={styles.title}>Miravè</Text>
+          <Text style={styles.title}>Diora</Text>
           <TouchableOpacity 
             style={styles.notificationButton}
             onPress={handleNotificationPress}

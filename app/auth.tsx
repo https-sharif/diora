@@ -70,7 +70,7 @@ export default function AuthScreen() {
       >
         <View style={styles.content}>
           <View style={styles.header}>
-            <Text style={styles.title}>Miravè</Text>
+            <Text style={styles.title}>Diora</Text>
             <Text style={styles.subtitle}>
               {isLogin ? 'Welcome back' : 'Join the fashion community'}
             </Text>

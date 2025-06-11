@@ -80,7 +80,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         username,
         fullName,
         avatar: 'https://images.pexels.com/photos/1036623/pexels-photo-1036623.jpeg?auto=compress&cs=tinysrgb&w=150',
-        bio: 'New to Mirave ✨',
+        bio: 'New to Diora ✨',
         followers: 0,
         following: 0,
         posts: 0
