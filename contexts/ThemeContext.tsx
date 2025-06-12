@@ -23,8 +23,8 @@ interface ThemeContextType {
 }
 
 const lightTheme: Theme = {
-  background: '#f8f9fa',
-  card: '#ffffff',
+  background: '#ffffff',
+  card: '#f8f9fa',
   text: '#000000',
   textSecondary: '#666666',
   border: '#e9ecef',

@@ -49,11 +49,362 @@ interface SocialAccount {
   icon: string;
 }
 
+const createTheme = (theme: any) => StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    marginBottom: 16,
+  },
+  headerButton: {
+    padding: 8,
+    width: 40,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontFamily: 'Inter-Bold',
+  },
+  content: {
+    flex: 1,
+  },
+  section: {
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontFamily: 'Inter-Bold',
+    marginBottom: 12,
+    paddingHorizontal: 16,
+  },
+  sectionContent: {
+    borderRadius: 12,
+    marginHorizontal: 16,
+    overflow: 'hidden',
+  },
+  settingItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderBottomWidth: 1,
+  },
+  settingLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  settingRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+  },
+  settingIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  settingText: {
+    flex: 1,
+  },
+  settingTitle: {
+    fontSize: 16,
+    fontFamily: 'Inter-SemiBold',
+  },
+  settingSubtitle: {
+    fontSize: 14,
+    fontFamily: 'Inter-Regular',
+    marginTop: 2,
+  },
+  profileImageSection: {
+    alignItems: 'center',
+    padding: 20,
+  },
+  profileImageLarge: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+  },
+  cameraOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: theme.background,
+    borderRadius: 15,
+    width: 30,
+    height: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  inputGroup: {
+    padding: 16
+  },
+  inputLabel: {
+    fontSize: 16,
+    fontFamily: 'Inter-SemiBold',
+    marginBottom: 8,
+  },
+  textInput: {
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    fontFamily: 'Inter-Regular',
+    marginBottom: 8,
+  },
+  textArea: {
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    fontFamily: 'Inter-Regular',
+    marginBottom: 8,
+    minHeight: 100,
+    textAlignVertical: 'top',
+  },
+  characterCount: {
+    position: 'absolute',
+    right: 16,
+    bottom: 8,
+    fontSize: 12,
+    fontFamily: 'Inter-Regular',
+    textAlign: 'right',
+  },
+  stylePreferences: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  styleChip: {
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  styleChipSelected: {
+    backgroundColor: theme.accentSecondary,
+    borderColor: theme.border,
+  },
+  styleChipText: {
+    fontSize: 14,
+    fontFamily: 'Inter-Medium',
+    alignContent: 'center',
+    justifyContent: 'center',
+    textAlign: 'center'
+  },
+  styleChipTextSelected: {
+    color: "#fff",
+  },
+  saveButton: {
+    backgroundColor: theme.accentSecondary,
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+    margin: 16,
+  },
+  saveButtonText: {
+    color: '#000',
+    fontSize: 16,
+    fontFamily: 'Inter-SemiBold',
+  },
+  passwordInput: {
+    position: 'relative',
+    marginBottom: 8,
+  },
+  eyeIcon: {
+    position: 'absolute',
+    right: 12,
+    top: 12,
+  },
+  changePasswordButton: {
+    backgroundColor: theme.accentSecondary,
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  changePasswordButtonText: {
+    color: '#000',
+    fontSize: 16,
+    fontFamily: 'Inter-SemiBold',
+  },
+  updateEmailButton: {
+    backgroundColor: theme.accentSecondary,
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  updateEmailButtonText: {
+    color: '#000',
+    fontSize: 16,
+    fontFamily: 'Inter-SemiBold',
+  },
+  frequencyOptions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  frequencyOption: {
+    flex: 1,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  frequencyOptionSelected: {
+    backgroundColor: theme.accentSecondary,
+    borderColor: theme.border,
+  },
+  frequencyOptionText: {
+    fontSize: 14,
+    fontFamily: 'Inter-Medium',
+  },
+  frequencyOptionTextSelected: {
+    color: theme.text,
+  },
+  socialIcon: {
+    fontSize: 20,
+  },
+  connectButton: {
+    backgroundColor: '#007AFF',
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  disconnectButton: {
+    backgroundColor: '#FF3B30',
+  },
+  connectButtonText: {
+    color: '#fff',
+    fontSize: 12,
+    fontFamily: 'Inter-SemiBold',
+  },
+  disconnectButtonText: {
+    color: '#fff',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalOverlay2: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    borderRadius: 16,
+    padding: 24,
+    margin: 20,
+    maxWidth: 400,
+    width: '90%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    gap: 12,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontFamily: 'Inter-Bold',
+  },
+  modalText: {
+    fontSize: 16,
+    fontFamily: 'Inter-Regular',
+    lineHeight: 24,
+    marginBottom: 24,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  cancelButton: {
+    borderWidth: 1,
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    fontFamily: 'Inter-SemiBold',
+  },
+  deleteButton: {
+    backgroundColor: '#FF3B30',
+  },
+  deleteButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontFamily: 'Inter-SemiBold',
+  },
+  deactivateButton: {
+    backgroundColor: '#FF9500',
+  },
+  deactivateButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontFamily: 'Inter-SemiBold',
+  },
+  imagePickerModal: {
+    position: 'absolute',
+    borderTopColor: '#e9ecef',
+    borderTopWidth: 1,
+    bottom: 0,
+    left: 0,
+    right: 0,
+  },
+  imagePickerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e9ecef',
+  },
+  imagePickerTitle: {
+    fontSize: 18,
+    fontFamily: 'Inter-Bold',
+  },
+  imagePickerOptions: {
+    padding: 20,
+  },
+  imagePickerOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 16,
+    gap: 16,
+  },
+  imagePickerOptionText: {
+    fontSize: 16,
+    fontFamily: 'Inter-Medium',
+  },
+  bottomPadding: {
+    height: 84,
+  },
+});
+
+
 export default function SettingsScreen() {
   const { user, logout } = useAuth();
   const { theme, toggleTheme, isDarkMode } = useTheme();
   const { settings, setSettings } = useNotifications();
   const { showToast, visible, hideToast, messages } = useToast();
+
+  const styles = createTheme(theme);
 
   // Profile Editor State
   const [fullName, setFullName] = useState(user?.fullName || '');
@@ -74,7 +425,6 @@ export default function SettingsScreen() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [newEmail, setNewEmail] = useState(user?.email || '');
-  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
 
@@ -241,7 +591,7 @@ export default function SettingsScreen() {
       <View
         style={[
           styles.header,
-          { backgroundColor: theme.card, borderBottomColor: theme.border },
+          { backgroundColor: theme.background, borderBottomColor: theme.border },
         ]}
       >
         <TouchableOpacity
@@ -268,7 +618,7 @@ export default function SettingsScreen() {
                   style={styles.profileImageLarge}
                 />
                 <View style={styles.cameraOverlay}>
-                  <Camera size={20} color="#fff" />
+                  <Camera size={20} color={theme.text} />
                 </View>
               </TouchableOpacity>
             </View>
@@ -368,15 +718,19 @@ export default function SettingsScreen() {
                     ]}
                     onPress={() => toggleStylePreference(style.id)}
                   >
-                    <Text
-                      style={[
-                        styles.styleChipText,
-                        style.selected && styles.styleChipTextSelected,
-                        { color: style.selected ? '#fff' : theme.text },
-                      ]}
-                    >
-                      {style.name}
-                    </Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                      <Text
+                        style={[
+                          styles.styleChipText,
+                          style.selected && styles.styleChipTextSelected,
+                          { color: style.selected ? "#000" : theme.text },
+                          { width: style.selected ?  65 : 85 }
+                        ]}
+                      >
+                        {style.name}
+                      </Text>
+                      {style.selected && <Check size={14} color='#000' style={{ marginLeft: 6 }} />}
+                    </View>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -507,18 +861,6 @@ export default function SettingsScreen() {
                 <Text style={styles.updateEmailButtonText}>Update Email</Text>
               </TouchableOpacity>
             </View>
-
-            {renderSettingItem(
-              <Shield size={20} color={theme.text} />,
-              'Two-Factor Authentication',
-              'Add an extra layer of security',
-              <Switch
-                value={twoFactorEnabled}
-                onValueChange={setTwoFactorEnabled}
-                trackColor={{ false: theme.border, true: '#4CAF50' }}
-                thumbColor={twoFactorEnabled ? '#fff' : '#f4f3f4'}
-              />
-            )}
           </>
         )}
 
@@ -611,7 +953,7 @@ export default function SettingsScreen() {
                         {
                           color:
                             settings.emailFrequency === frequency
-                              ? '#fff'
+                              ? '#000'
                               : theme.text,
                         },
                       ]}
@@ -643,6 +985,7 @@ export default function SettingsScreen() {
           </>
         )}
 
+        {/* Connected Accounts */}
         {renderSection(
           'Connected Accounts',
           <>
@@ -875,348 +1218,3 @@ export default function SettingsScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    marginBottom: 16,
-  },
-  headerButton: {
-    padding: 8,
-    width: 40,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontFamily: 'Inter-Bold',
-  },
-  content: {
-    flex: 1,
-  },
-  section: {
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontFamily: 'Inter-Bold',
-    marginBottom: 12,
-    paddingHorizontal: 16,
-  },
-  sectionContent: {
-    borderRadius: 12,
-    marginHorizontal: 16,
-    overflow: 'hidden',
-  },
-  settingItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 16,
-    borderBottomWidth: 1,
-  },
-  settingLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  settingRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-  },
-  settingIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  settingText: {
-    flex: 1,
-  },
-  settingTitle: {
-    fontSize: 16,
-    fontFamily: 'Inter-SemiBold',
-  },
-  settingSubtitle: {
-    fontSize: 14,
-    fontFamily: 'Inter-Regular',
-    marginTop: 2,
-  },
-  profileImageSection: {
-    alignItems: 'center',
-    padding: 20,
-  },
-  profileImageLarge: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-  },
-  cameraOverlay: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    backgroundColor: '#000',
-    borderRadius: 15,
-    width: 30,
-    height: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  inputGroup: {
-    padding: 16
-  },
-  inputLabel: {
-    fontSize: 16,
-    fontFamily: 'Inter-SemiBold',
-    marginBottom: 8,
-  },
-  textInput: {
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    fontFamily: 'Inter-Regular',
-    marginBottom: 8,
-  },
-  textArea: {
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    fontFamily: 'Inter-Regular',
-    marginBottom: 8,
-    minHeight: 100,
-    textAlignVertical: 'top',
-  },
-  characterCount: {
-    position: 'absolute',
-    right: 16,
-    bottom: 8,
-    fontSize: 12,
-    fontFamily: 'Inter-Regular',
-    textAlign: 'right',
-  },
-  stylePreferences: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  styleChip: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-  },
-  styleChipSelected: {
-    backgroundColor: '#000',
-    borderColor: '#000',
-  },
-  styleChipText: {
-    fontSize: 14,
-    fontFamily: 'Inter-Medium',
-  },
-  styleChipTextSelected: {
-    color: '#fff',
-  },
-  saveButton: {
-    backgroundColor: '#000',
-    borderRadius: 8,
-    paddingVertical: 12,
-    alignItems: 'center',
-    margin: 16,
-  },
-  saveButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontFamily: 'Inter-SemiBold',
-  },
-  passwordInput: {
-    position: 'relative',
-    marginBottom: 8,
-  },
-  eyeIcon: {
-    position: 'absolute',
-    right: 12,
-    top: 12,
-  },
-  changePasswordButton: {
-    backgroundColor: '#007AFF',
-    borderRadius: 8,
-    paddingVertical: 10,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  changePasswordButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontFamily: 'Inter-SemiBold',
-  },
-  updateEmailButton: {
-    backgroundColor: '#D3D3D3',
-    borderRadius: 8,
-    paddingVertical: 10,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  updateEmailButtonText: {
-    color: '#000',
-    fontSize: 14,
-    fontFamily: 'Inter-SemiBold',
-  },
-  frequencyOptions: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  frequencyOption: {
-    flex: 1,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    alignItems: 'center',
-  },
-  frequencyOptionSelected: {
-    backgroundColor: '#000',
-    borderColor: '#000',
-  },
-  frequencyOptionText: {
-    fontSize: 14,
-    fontFamily: 'Inter-Medium',
-  },
-  frequencyOptionTextSelected: {
-    color: '#fff',
-  },
-  socialIcon: {
-    fontSize: 20,
-  },
-  connectButton: {
-    backgroundColor: '#007AFF',
-    borderRadius: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-  disconnectButton: {
-    backgroundColor: '#FF3B30',
-  },
-  connectButtonText: {
-    color: '#fff',
-    fontSize: 12,
-    fontFamily: 'Inter-SemiBold',
-  },
-  disconnectButtonText: {
-    color: '#fff',
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalOverlay2: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContent: {
-    borderRadius: 16,
-    padding: 24,
-    margin: 20,
-    maxWidth: 400,
-    width: '90%',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-    gap: 12,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontFamily: 'Inter-Bold',
-  },
-  modalText: {
-    fontSize: 16,
-    fontFamily: 'Inter-Regular',
-    lineHeight: 24,
-    marginBottom: 24,
-  },
-  modalButtons: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  modalButton: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  cancelButton: {
-    borderWidth: 1,
-  },
-  cancelButtonText: {
-    fontSize: 16,
-    fontFamily: 'Inter-SemiBold',
-  },
-  deleteButton: {
-    backgroundColor: '#FF3B30',
-  },
-  deleteButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontFamily: 'Inter-SemiBold',
-  },
-  deactivateButton: {
-    backgroundColor: '#FF9500',
-  },
-  deactivateButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontFamily: 'Inter-SemiBold',
-  },
-  imagePickerModal: {
-    position: 'absolute',
-    borderTopColor: '#e9ecef',
-    borderTopWidth: 1,
-    bottom: 0,
-    left: 0,
-    right: 0,
-  },
-  imagePickerHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e9ecef',
-  },
-  imagePickerTitle: {
-    fontSize: 18,
-    fontFamily: 'Inter-Bold',
-  },
-  imagePickerOptions: {
-    padding: 20,
-  },
-  imagePickerOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 16,
-    gap: 16,
-  },
-  imagePickerOptionText: {
-    fontSize: 16,
-    fontFamily: 'Inter-Medium',
-  },
-  bottomPadding: {
-    height: 84,
-  },
-});
