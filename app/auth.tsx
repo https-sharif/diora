@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -9,11 +9,13 @@ import {
   Platform,
   Alert,
   ActivityIndicator,
+  BackHandler,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
 import { Eye, EyeOff } from 'lucide-react-native';
 import { useFonts } from 'expo-font';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 
 export default function AuthScreen() {
   const [isLogin, setIsLogin] = useState(true);
@@ -25,12 +27,39 @@ export default function AuthScreen() {
   const [loading, setLoading] = useState(false);
   const { login, signup } = useAuth();
 
+  // useEffect(() => {
+  //   const backHandler = BackHandler.addEventListener(
+  //     'hardwareBackPress',
+  //     () => {
+  //       return true;
+  //     }
+  //   );
+
+  //   return () => backHandler.remove();
+  // }, []);
+
+  // const navigation = useNavigation();
+
+  // useFocusEffect(
+  //   React.useCallback(() => {
+  //     const onBeforeRemove = (e : any) => {
+  //       if (loading) return;
+
+  //       e.preventDefault();
+  //     };
+
+  //     navigation.addListener('beforeRemove', onBeforeRemove);
+
+  //     return () => navigation.removeListener('beforeRemove', onBeforeRemove);
+  //   }, [navigation, loading])
+  // );
+
   const [fontsLoaded] = useFonts({
-      'DancingScript-Regular': require('../assets/fonts/DancingScript-Regular.ttf'),
-      'DancingScript-Medium': require('../assets/fonts/DancingScript-Medium.ttf'),
-      'DancingScript-SemiBold': require('../assets/fonts/DancingScript-SemiBold.ttf'),
-      'DancingScript-Bold': require('../assets/fonts/DancingScript-Bold.ttf'),
-    });
+    'DancingScript-Regular': require('../assets/fonts/DancingScript-Regular.ttf'),
+    'DancingScript-Medium': require('../assets/fonts/DancingScript-Medium.ttf'),
+    'DancingScript-SemiBold': require('../assets/fonts/DancingScript-SemiBold.ttf'),
+    'DancingScript-Bold': require('../assets/fonts/DancingScript-Bold.ttf'),
+  });
 
   const handleSubmit = async () => {
     if (!email || !password) {
@@ -150,7 +179,9 @@ export default function AuthScreen() {
 
             <View style={styles.switchContainer}>
               <Text style={styles.switchText}>
-                {isLogin ? "Don't have an account? " : 'Already have an account? '}
+                {isLogin
+                  ? "Don't have an account? "
+                  : 'Already have an account? '}
               </Text>
               <TouchableOpacity onPress={() => setIsLogin(!isLogin)}>
                 <Text style={styles.switchLink}>

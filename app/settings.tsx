@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -10,7 +10,7 @@ import {
   Image,
   Alert,
   Modal,
-  Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -20,7 +20,6 @@ import {
   Shield,
   Bell,
   Palette,
-  Link,
   Trash2,
   Download,
   Eye,
@@ -57,6 +56,7 @@ export default function SettingsScreen() {
 
   // Profile Editor State
   const [fullName, setFullName] = useState(user?.fullName || '');
+  const [username, setUsername] = useState(user?.username || '');
   const [bio, setBio] = useState(user?.bio || '');
   const [profileImage, setProfileImage] = useState(user?.avatar || '');
   const [stylePreferences, setStylePreferences] = useState<StylePreference[]>([
@@ -77,15 +77,6 @@ export default function SettingsScreen() {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
 
-  // Notification Preferences
-  const [notifications, setNotifications] = useState({
-    likes: true,
-    comments: true,
-    sales: true,
-    messages: true,
-    emailFrequency: 'instant' as 'instant' | 'daily' | 'weekly',
-  });
-
   // Social Accounts
   const [socialAccounts, setSocialAccounts] = useState<SocialAccount[]>([
     { id: '1', name: 'Google', connected: false, icon: '🔍' },
@@ -97,6 +88,7 @@ export default function SettingsScreen() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showDeactivateConfirm, setShowDeactivateConfirm] = useState(false);
   const [showImagePicker, setShowImagePicker] = useState(false);
+  const [downloadLoading, setDownloadLoading] = useState(false);
 
   const handleSaveProfile = () => {
     if (fullName.length < 2 || fullName.length > 50) {
@@ -160,20 +152,29 @@ export default function SettingsScreen() {
   };
 
   const handleDeleteAccount = () => {
-    Alert.alert('Account Deleted', 'Your account has been permanently deleted');
-    logout();
+    showToast('alert', 'Your account has been permanently deleted');
+    setShowDeleteConfirm(false);
+    setTimeout(() => {
+      logout();
+      router.replace('/auth');
+    }, 2000);
   };
 
   const handleDeactivateAccount = () => {
-    Alert.alert('Account Deactivated', 'Your account has been deactivated');
-    logout();
+    setShowDeactivateConfirm(false);
+    showToast('alert', 'Your account has been deactivated');
+    setTimeout(() => {
+      logout();
+      router.replace('/auth');
+    }, 2000);
   };
 
   const handleDownloadData = () => {
-    Alert.alert(
-      'Data Export',
-      "Your data export will be ready in 24-48 hours. You will receive an email when it's ready for download."
-    );
+    setDownloadLoading(true);
+    setTimeout(() => {
+      showToast('neutral', 'Your data export will be ready in 24-48 hours. You will receive an email when it\'s ready for download.');
+      setDownloadLoading(false);
+    }, 2000);
   };
 
   const renderSection = (title: string, children: React.ReactNode) => (
@@ -190,7 +191,8 @@ export default function SettingsScreen() {
     title: string,
     subtitle?: string,
     rightElement?: React.ReactNode,
-    onPress?: () => void
+    onPress?: () => void,
+    loading?: boolean
   ) => (
     <TouchableOpacity
       style={[styles.settingItem, { borderBottomColor: theme.border }]}
@@ -214,6 +216,9 @@ export default function SettingsScreen() {
               {subtitle}
             </Text>
           )}
+        </View>
+        <View style={styles.settingRight}>
+          {loading && <ActivityIndicator size="small" color={theme.text} />}
         </View>
       </View>
       {rightElement}
@@ -645,7 +650,8 @@ export default function SettingsScreen() {
               'Download Data',
               'Export your account data',
               null,
-              handleDownloadData
+              handleDownloadData,
+              downloadLoading
             )}
 
             {renderSettingItem(
@@ -878,6 +884,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
+  },
+  settingRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
   },
   settingIcon: {
     width: 40,
