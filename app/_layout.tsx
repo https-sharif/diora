@@ -62,7 +62,7 @@ function ThemeAwareRoot({ insets }: { insets: EdgeInsets }) {
     <AuthProvider>
       <NotificationProvider>
         <ShoppingProvider>
-          <View style={{ flex: 1, backgroundColor: theme.background, paddingBottom: insets.bottom, }} >
+          <View style={{ flex: 1, backgroundColor: theme.background, paddingBottom: insets.bottom, paddingTop: insets.top }} >
             <Stack screenOptions={{ headerShown: false }} >
               <Stack.Screen name="auth" options={{ headerShown: false }} />
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
@@ -73,8 +73,8 @@ function ThemeAwareRoot({ insets }: { insets: EdgeInsets }) {
               <Stack.Screen name="shop/[shopname]" options={{ headerShown: false }} />
               <Stack.Screen name="settings" options={{ headerShown: false }} />
             </Stack>
-            <StatusBar style={isDarkMode ? 'light' : 'dark'} animated translucent backgroundColor="transparent" />
           </View>
+          <StatusBar style={isDarkMode ? 'light' : 'dark'} animated translucent backgroundColor="transparent" />
         </ShoppingProvider>
       </NotificationProvider>
     </AuthProvider>

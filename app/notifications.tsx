@@ -18,7 +18,8 @@ const createStyle = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.background,
-    paddingBottom: -34,
+    paddingTop: -100,
+    paddingBottom: -100,
   },
   header: {
     flexDirection: 'row',
@@ -65,7 +66,7 @@ const createStyle = (theme: any) => StyleSheet.create({
   unreadBannerText: {
     fontSize: 14,
     fontFamily: 'Inter-Medium',
-    color: theme.background,
+    color: "#000",
   },
   notificationsList: {
     paddingBottom: 50,

@@ -25,7 +25,7 @@ const mockProductDetails: Record<string, Product & {
     rating: number;
     followers: string;
   };
-  reviews: Array<{
+  reviewList: Array<{
     id: string;
     user: string;
     avatar: string;
@@ -57,7 +57,7 @@ const mockProductDetails: Record<string, Product & {
       rating: 4.8,
       followers: '12.5K',
     },
-    reviews: [
+    reviewList: [
       {
         id: '1',
         user: 'sarah_style',
@@ -99,7 +99,7 @@ const mockProductDetails: Record<string, Product & {
       rating: 4.5,
       followers: '8K',
     },
-    reviews: [
+    reviewList: [
       {
         id: '1',
         user: 'john_doe',
@@ -177,7 +177,7 @@ export default function ProductDetailScreen() {
     </TouchableOpacity>
   );
 
-  const renderReview = ({ item }: { item: typeof product.reviews[0] }) => (
+  const renderReview = ({ item }: { item: typeof product.reviewList[0] }) => (
     <View style={styles.reviewItem}>
       <View style={styles.reviewHeader}>
         <Image source={{ uri: item.avatar }} style={styles.reviewAvatar} />
@@ -360,7 +360,7 @@ export default function ProductDetailScreen() {
         <View style={styles.reviewsSection}>
           <Text style={styles.sectionTitle}>Reviews ({product.reviewCount})</Text>
           <FlatList
-            data={product.reviews}
+            data={product.reviewList}
             renderItem={renderReview}
             keyExtractor={(item) => item.id}
             scrollEnabled={false}
@@ -385,6 +385,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
+    paddingTop: -59,
+    paddingBottom: -34,
   },
   header: {
     flexDirection: 'row',

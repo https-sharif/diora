@@ -52,6 +52,8 @@ interface SocialAccount {
 const createTheme = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
+    paddingTop: -100,
+    paddingBottom: -100,
   },
   header: {
     flexDirection: 'row',

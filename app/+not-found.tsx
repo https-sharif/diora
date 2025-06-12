@@ -20,7 +20,8 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 20,
+    paddingTop: -100,
+    paddingBottom: -100,
   },
   text: {
     fontSize: 20,
