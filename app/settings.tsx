@@ -11,6 +11,7 @@ import {
   Alert,
   Modal,
   ActivityIndicator,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -80,8 +81,9 @@ export default function SettingsScreen() {
   // Social Accounts
   const [socialAccounts, setSocialAccounts] = useState<SocialAccount[]>([
     { id: '1', name: 'Google', connected: false, icon: '🔍' },
-    { id: '2', name: 'Apple', connected: false, icon: '🍎' },
-    { id: '3', name: 'Instagram', connected: true, icon: '📷' },
+    { id: '2', name: 'Facebook', connected: false, icon: '📘' },
+    { id: '3', name: 'Apple', connected: false, icon: '🍎' },
+    { id: '4', name: 'Instagram', connected: true, icon: '📷' },
   ]);
 
   // Modals
@@ -93,6 +95,11 @@ export default function SettingsScreen() {
   const handleSaveProfile = () => {
     if (fullName.length < 2 || fullName.length > 50) {
       showToast('error', 'Full name must be between 2-50 characters');
+      return;
+    }
+
+    if (username.length < 3 || username.length > 20) {
+      showToast('error', 'Username must be between 3-20 characters');
       return;
     }
 
@@ -289,6 +296,32 @@ export default function SettingsScreen() {
                 style={[styles.characterCount, { color: theme.textSecondary }]}
               >
                 {fullName.length}/50
+              </Text>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={[styles.inputLabel, { color: theme.text }]}>
+                Username
+              </Text>
+              <TextInput
+                style={[
+                  styles.textInput,
+                  {
+                    backgroundColor: theme.background,
+                    color: theme.text,
+                    borderColor: theme.border,
+                  },
+                ]}
+                value={username}
+                onChangeText={setUsername}
+                placeholder="Enter your username"
+                placeholderTextColor={theme.textSecondary}
+                maxLength={20}
+              />
+              <Text
+                style={[styles.characterCount, { color: theme.textSecondary }]}
+              >
+                {username.length}/20
               </Text>
             </View>
 
@@ -682,41 +715,46 @@ export default function SettingsScreen() {
         animationType="fade"
         onRequestClose={() => setShowDeleteConfirm(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: theme.card }]}>
-            <View style={styles.modalHeader}>
-              <AlertTriangle size={24} color="#FF3B30" />
-              <Text style={[styles.modalTitle, { color: theme.text }]}>
-                Delete Account
-              </Text>
-            </View>
-            <Text style={[styles.modalText, { color: theme.textSecondary }]}>
-              This action cannot be undone. All your data, posts, and account
-              information will be permanently deleted.
-            </Text>
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[
-                  styles.modalButton,
-                  styles.cancelButton,
-                  { borderColor: theme.border },
-                ]}
-                onPress={() => setShowDeleteConfirm(false)}
-              >
-                <Text style={[styles.cancelButtonText, { color: theme.text }]}>
-                  Cancel
+        <TouchableWithoutFeedback onPress={() => setShowDeleteConfirm(false)}>
+          <View style={styles.modalOverlay}>
+            <TouchableWithoutFeedback onPress={() => {}}>
+              <View style={[styles.modalContent, { backgroundColor: theme.card }]}>
+                <View style={styles.modalHeader}>
+                  <AlertTriangle size={24} color="#FF3B30" />
+                  <Text style={[styles.modalTitle, { color: theme.text }]}>
+                    Delete Account
+                  </Text>
+                </View>
+                <Text style={[styles.modalText, { color: theme.textSecondary }]}>
+                  This action cannot be undone. All your data, posts, and account
+                  information will be permanently deleted.
                 </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.deleteButton]}
-                onPress={handleDeleteAccount}
-              >
-                <Text style={styles.deleteButtonText}>Delete</Text>
-              </TouchableOpacity>
-            </View>
+                <View style={styles.modalButtons}>
+                  <TouchableOpacity
+                    style={[
+                      styles.modalButton,
+                      styles.cancelButton,
+                      { borderColor: theme.border },
+                    ]}
+                    onPress={() => setShowDeleteConfirm(false)}
+                  >
+                    <Text style={[styles.cancelButtonText, { color: theme.text }]}>
+                      Cancel
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.modalButton, styles.deleteButton]}
+                    onPress={handleDeleteAccount}
+                  >
+                    <Text style={styles.deleteButtonText}>Delete</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </TouchableWithoutFeedback>
           </View>
-        </View>
+        </TouchableWithoutFeedback>
       </Modal>
+
 
       {/* Deactivate Account Confirmation Modal */}
       <Modal
@@ -725,40 +763,44 @@ export default function SettingsScreen() {
         animationType="fade"
         onRequestClose={() => setShowDeactivateConfirm(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: theme.card }]}>
-            <View style={styles.modalHeader}>
-              <AlertTriangle size={24} color="#FF9500" />
-              <Text style={[styles.modalTitle, { color: theme.text }]}>
-                Deactivate Account
-              </Text>
-            </View>
-            <Text style={[styles.modalText, { color: theme.textSecondary }]}>
-              Your account will be temporarily disabled. You can reactivate it
-              anytime by logging in again.
-            </Text>
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[
-                  styles.modalButton,
-                  styles.cancelButton,
-                  { borderColor: theme.border },
-                ]}
-                onPress={() => setShowDeactivateConfirm(false)}
-              >
-                <Text style={[styles.cancelButtonText, { color: theme.text }]}>
-                  Cancel
+        <TouchableWithoutFeedback onPress={() => setShowDeactivateConfirm(false)}>
+          <View style={styles.modalOverlay}>
+            <TouchableWithoutFeedback onPress={() => {}}>
+              <View style={[styles.modalContent, { backgroundColor: theme.card }]}>
+                <View style={styles.modalHeader}>
+                  <AlertTriangle size={24} color="#FF9500" />
+                  <Text style={[styles.modalTitle, { color: theme.text }]}>
+                    Deactivate Account
+                  </Text>
+                </View>
+                <Text style={[styles.modalText, { color: theme.textSecondary }]}>
+                  Your account will be temporarily disabled. You can reactivate it
+                  anytime by logging in again.
                 </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.deactivateButton]}
-                onPress={handleDeactivateAccount}
-              >
-                <Text style={styles.deactivateButtonText}>Deactivate</Text>
-              </TouchableOpacity>
-            </View>
+                <View style={styles.modalButtons}>
+                  <TouchableOpacity
+                    style={[
+                      styles.modalButton,
+                      styles.cancelButton,
+                      { borderColor: theme.border },
+                    ]}
+                    onPress={() => setShowDeactivateConfirm(false)}
+                  >
+                    <Text style={[styles.cancelButtonText, { color: theme.text }]}>
+                      Cancel
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.modalButton, styles.deactivateButton]}
+                    onPress={handleDeactivateAccount}
+                  >
+                    <Text style={styles.deactivateButtonText}>Deactivate</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </TouchableWithoutFeedback>
           </View>
-        </View>
+        </TouchableWithoutFeedback>
       </Modal>
 
       {/* Profile Image Picker Modal */}
@@ -768,38 +810,37 @@ export default function SettingsScreen() {
         animationType="slide"
         onRequestClose={() => setShowImagePicker(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View
-            style={[styles.imagePickerModal, { backgroundColor: theme.card }]}
-          >
-            <View style={styles.imagePickerHeader}>
-              <Text style={[styles.imagePickerTitle, { color: theme.text }]}>
-                Change Profile Picture
-              </Text>
-              <TouchableOpacity onPress={() => setShowImagePicker(false)}>
-                <X size={24} color={theme.text} />
-              </TouchableOpacity>
-            </View>
-            <View style={styles.imagePickerOptions}>
-              <TouchableOpacity style={styles.imagePickerOption}>
-                <Camera size={24} color={theme.text} />
-                <Text
-                  style={[styles.imagePickerOptionText, { color: theme.text }]}
-                >
-                  Take Photo
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.imagePickerOption}>
-                <Download size={24} color={theme.text} />
-                <Text
-                  style={[styles.imagePickerOptionText, { color: theme.text }]}
-                >
-                  Choose from Gallery
-                </Text>
-              </TouchableOpacity>
-            </View>
+        <TouchableWithoutFeedback onPress={() => setShowImagePicker(false)}>
+          <View style={styles.modalOverlay2}>
+            <TouchableWithoutFeedback onPress={() => {}}>
+              <View style={[styles.imagePickerModal, { backgroundColor: theme.card }]}>
+                {/* Your modal content */}
+                <View style={styles.imagePickerHeader}>
+                  <Text style={[styles.imagePickerTitle, { color: theme.text }]}>
+                    Change Profile Picture
+                  </Text>
+                  <TouchableOpacity onPress={() => setShowImagePicker(false)}>
+                    <X size={24} color={theme.text} />
+                  </TouchableOpacity>
+                </View>
+                <View style={styles.imagePickerOptions}>
+                  <TouchableOpacity style={styles.imagePickerOption}>
+                    <Camera size={24} color={theme.text} />
+                    <Text style={[styles.imagePickerOptionText, { color: theme.text }]}>
+                      Take Photo
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.imagePickerOption}>
+                    <Download size={24} color={theme.text} />
+                    <Text style={[styles.imagePickerOptionText, { color: theme.text }]}>
+                      Choose from Gallery
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </TouchableWithoutFeedback>
           </View>
-        </View>
+        </TouchableWithoutFeedback>
       </Modal>
 
       {/* Toast Notifications */}
@@ -931,7 +972,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   inputGroup: {
-    padding: 16,
+    padding: 16
   },
   inputLabel: {
     fontSize: 16,
@@ -957,6 +998,9 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
   },
   characterCount: {
+    position: 'absolute',
+    right: 16,
+    bottom: 8,
     fontSize: 12,
     fontFamily: 'Inter-Regular',
     textAlign: 'right',
@@ -1073,7 +1117,13 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalOverlay2: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -1134,9 +1184,9 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-SemiBold',
   },
   imagePickerModal: {
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
     position: 'absolute',
+    borderTopColor: '#e9ecef',
+    borderTopWidth: 1,
     bottom: 0,
     left: 0,
     right: 0,

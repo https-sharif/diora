@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { act } from 'react';
 import {
   View,
   Text,
@@ -46,8 +46,35 @@ const userPosts = [
   },
 ];
 
+const likedPosts = [
+  {
+    id: '1',
+    image: 'https://images.pexels.com/photos/1036623/pexels-photo-1036623.jpeg?auto=compress&cs=tinysrgb&w=300',
+    stars: 200,
+  },
+  {
+    id: '2',
+    image: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=300',
+    stars: 180,
+  },
+  {
+    id: '3',
+    image: 'https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=300',
+    stars: 220,
+  },
+  {
+    id: '4',
+    image: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=300',
+    stars: 150,
+  },
+];
+
 export default function ProfileScreen() {
   const { user, logout } = useAuth();
+  const [activeTab, setActiveTab] = React.useState<'posts' | 'liked'>('posts');
+  const handleTabPress = (tab: 'posts' | 'liked') => {
+    setActiveTab(tab);
+  };
 
   const handlePostPress = (postId: string) => {
     router.push(`/post/${postId}`);
@@ -112,51 +139,26 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        {/* Action Buttons */}
-        <View style={styles.actionButtons}>
-          <TouchableOpacity style={styles.editButton}>
-            <Text style={styles.editButtonText}>Edit Profile</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.shareButton}>
-            <Text style={styles.shareButtonText}>Share Profile</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Demographics */}
-        <View style={styles.demographicsSection}>
-          <Text style={styles.sectionTitle}>About</Text>
-          <View style={styles.demographicItem}>
-            <Text style={styles.demographicLabel}>Email</Text>
-            <Text style={styles.demographicValue}>{user.email}</Text>
-          </View>
-          <View style={styles.demographicItem}>
-            <Text style={styles.demographicLabel}>Member Since</Text>
-            <Text style={styles.demographicValue}>January 2024</Text>
-          </View>
-          <View style={styles.demographicItem}>
-            <Text style={styles.demographicLabel}>Location</Text>
-            <Text style={styles.demographicValue}>New York, NY</Text>
-          </View>
-          <View style={styles.demographicItem}>
-            <Text style={styles.demographicLabel}>Style Preference</Text>
-            <Text style={styles.demographicValue}>Casual Chic</Text>
-          </View>
-        </View>
-
         {/* Posts Tab */}
         <View style={styles.tabsSection}>
-          <TouchableOpacity style={[styles.tab, styles.activeTab]}>
-            <Grid size={20} color="#000" />
-            <Text style={styles.activeTabText}>Posts</Text>
+          <TouchableOpacity style={[styles.tab, activeTab === 'posts' ? styles.activeTab : {}]}
+            onPress={() => handleTabPress('posts')}
+            activeOpacity={0.7}
+          >
+            <Grid size={20} color={activeTab === 'posts' ? "#000" : "#666"} />
+            <Text style={activeTab === 'posts' ? styles.activeTabText : styles.tabText}>Posts</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.tab}>
-            <Heart size={20} color="#666" />
-            <Text style={styles.tabText}>Liked</Text>
+          <TouchableOpacity style={[styles.tab, activeTab === 'liked' ? styles.activeTab : {}]}
+            onPress={() => handleTabPress('liked')}
+            activeOpacity={0.7}
+          >
+            <Heart size={20} color={activeTab === 'liked' ? "#000" : "#666"} />
+            <Text style={activeTab === 'liked' ? styles.activeTabText : styles.tabText}>Liked</Text>
           </TouchableOpacity>
         </View>
 
         {/* Posts Grid */}
-        <FlatList
+        {activeTab === 'posts' && <FlatList
           data={userPosts}
           renderItem={renderPost}
           keyExtractor={(item) => item.id}
@@ -164,7 +166,19 @@ export default function ProfileScreen() {
           scrollEnabled={false}
           columnWrapperStyle={styles.postsRow}
           contentContainerStyle={styles.postsGrid}
+        />}
+
+        {/* Liked Posts */}
+        {activeTab === 'liked' && <FlatList
+          data={likedPosts}
+          renderItem={renderPost}
+          keyExtractor={(item) => item.id}
+          numColumns={3}
+          scrollEnabled={false}
+          columnWrapperStyle={styles.postsRow}
+          contentContainerStyle={styles.postsGrid}
         />
+        }
 
         <View style={styles.bottomPadding} />
       </ScrollView>
@@ -176,6 +190,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8f9fa',
+    paddingBottom: -34,
   },
   header: {
     flexDirection: 'row',
@@ -258,72 +273,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-Regular',
     color: '#666',
     marginTop: 4,
-  },
-  actionButtons: {
-    flexDirection: 'row',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e9ecef',
-    gap: 12,
-  },
-  editButton: {
-    flex: 1,
-    backgroundColor: '#000',
-    borderRadius: 8,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  editButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontFamily: 'Inter-SemiBold',
-  },
-  shareButton: {
-    flex: 1,
-    backgroundColor: '#f8f9fa',
-    borderRadius: 8,
-    paddingVertical: 12,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#e9ecef',
-  },
-  shareButtonText: {
-    color: '#000',
-    fontSize: 16,
-    fontFamily: 'Inter-SemiBold',
-  },
-  demographicsSection: {
-    backgroundColor: '#fff',
-    padding: 20,
-    marginTop: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e9ecef',
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontFamily: 'Inter-Bold',
-    color: '#000',
-    marginBottom: 16,
-  },
-  demographicItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f8f9fa',
-  },
-  demographicLabel: {
-    fontSize: 16,
-    fontFamily: 'Inter-Regular',
-    color: '#666',
-  },
-  demographicValue: {
-    fontSize: 16,
-    fontFamily: 'Inter-SemiBold',
-    color: '#000',
   },
   tabsSection: {
     flexDirection: 'row',
