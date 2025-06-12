@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -14,9 +14,27 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { ArrowLeft, User, Shield, Bell, Palette, Link, Trash2, Download, Eye, EyeOff, Camera, Check, X, TriangleAlert as AlertTriangle } from 'lucide-react-native';
+import {
+  ArrowLeft,
+  User,
+  Shield,
+  Bell,
+  Palette,
+  Link,
+  Trash2,
+  Download,
+  Eye,
+  EyeOff,
+  Camera,
+  Check,
+  X,
+  TriangleAlert as AlertTriangle,
+} from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useNotifications } from '@/contexts/NotificationContext';
+import { useToast } from '@/hooks/useToast';
+import { Toast } from '@/components/Toast';
 
 interface StylePreference {
   id: string;
@@ -34,7 +52,9 @@ interface SocialAccount {
 export default function SettingsScreen() {
   const { user, logout } = useAuth();
   const { theme, toggleTheme, isDarkMode } = useTheme();
-  
+  const { settings, setSettings } = useNotifications();
+  const { showToast, visible, hideToast, messages } = useToast();
+
   // Profile Editor State
   const [fullName, setFullName] = useState(user?.fullName || '');
   const [bio, setBio] = useState(user?.bio || '');
@@ -80,30 +100,31 @@ export default function SettingsScreen() {
 
   const handleSaveProfile = () => {
     if (fullName.length < 2 || fullName.length > 50) {
-      Alert.alert('Error', 'Full name must be between 2-50 characters');
+      showToast('error', 'Full name must be between 2-50 characters');
       return;
     }
+
     if (bio.length > 200) {
-      Alert.alert('Error', 'Bio must be less than 200 characters');
+      showToast('error', 'Bio must be less than 200 characters');
       return;
     }
-    Alert.alert('Success', 'Profile updated successfully');
+    showToast('success', 'Profile updated successfully');
   };
 
   const handleChangePassword = () => {
     if (!currentPassword || !newPassword || !confirmPassword) {
-      Alert.alert('Error', 'Please fill in all password fields');
+      showToast('error', 'Please fill in all password fields');
       return;
     }
     if (newPassword.length < 8) {
-      Alert.alert('Error', 'New password must be at least 8 characters');
+      showToast('error', 'New password must be at least 8 characters');
       return;
     }
     if (newPassword !== confirmPassword) {
-      Alert.alert('Error', 'New passwords do not match');
+      showToast('error', 'New passwords do not match');
       return;
     }
-    Alert.alert('Success', 'Password changed successfully');
+    showToast('success', 'Password changed successfully');
     setCurrentPassword('');
     setNewPassword('');
     setConfirmPassword('');
@@ -111,24 +132,29 @@ export default function SettingsScreen() {
 
   const handleUpdateEmail = () => {
     if (!newEmail.includes('@')) {
-      Alert.alert('Error', 'Please enter a valid email address');
+      showToast('error', 'Please enter a valid email address');
       return;
     }
-    Alert.alert('Verification Required', 'A verification email has been sent to your new email address');
+    showToast(
+      'alert',
+      'A verification email has been sent to your new email address'
+    );
   };
 
   const toggleStylePreference = (id: string) => {
-    setStylePreferences(prev =>
-      prev.map(style =>
+    setStylePreferences((prev) =>
+      prev.map((style) =>
         style.id === id ? { ...style, selected: !style.selected } : style
       )
     );
   };
 
   const toggleSocialAccount = (id: string) => {
-    setSocialAccounts(prev =>
-      prev.map(account =>
-        account.id === id ? { ...account, connected: !account.connected } : account
+    setSocialAccounts((prev) =>
+      prev.map((account) =>
+        account.id === id
+          ? { ...account, connected: !account.connected }
+          : account
       )
     );
   };
@@ -144,7 +170,10 @@ export default function SettingsScreen() {
   };
 
   const handleDownloadData = () => {
-    Alert.alert('Data Export', 'Your data export will be ready in 24-48 hours. You will receive an email when it\'s ready for download.');
+    Alert.alert(
+      'Data Export',
+      "Your data export will be ready in 24-48 hours. You will receive an email when it's ready for download."
+    );
   };
 
   const renderSection = (title: string, children: React.ReactNode) => (
@@ -169,13 +198,19 @@ export default function SettingsScreen() {
       disabled={!onPress}
     >
       <View style={styles.settingLeft}>
-        <View style={[styles.settingIcon, { backgroundColor: theme.background }]}>
+        <View
+          style={[styles.settingIcon, { backgroundColor: theme.background }]}
+        >
           {icon}
         </View>
         <View style={styles.settingText}>
-          <Text style={[styles.settingTitle, { color: theme.text }]}>{title}</Text>
+          <Text style={[styles.settingTitle, { color: theme.text }]}>
+            {title}
+          </Text>
           {subtitle && (
-            <Text style={[styles.settingSubtitle, { color: theme.textSecondary }]}>
+            <Text
+              style={[styles.settingSubtitle, { color: theme.textSecondary }]}
+            >
               {subtitle}
             </Text>
           )}
@@ -188,22 +223,38 @@ export default function SettingsScreen() {
   if (!user) return null;
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
-      <View style={[styles.header, { backgroundColor: theme.card, borderBottomColor: theme.border }]}>
-        <TouchableOpacity style={styles.headerButton} onPress={() => router.back()}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: theme.background }]}
+    >
+      <View
+        style={[
+          styles.header,
+          { backgroundColor: theme.card, borderBottomColor: theme.border },
+        ]}
+      >
+        <TouchableOpacity
+          style={styles.headerButton}
+          onPress={() => router.back()}
+        >
           <ArrowLeft size={24} color={theme.text} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: theme.text }]}>Settings</Text>
+        <Text style={[styles.headerTitle, { color: theme.text }]}>
+          Settings
+        </Text>
         <View style={styles.headerButton} />
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Profile Editor */}
-        {renderSection('Profile', (
+        {renderSection(
+          'Profile',
           <>
             <View style={styles.profileImageSection}>
               <TouchableOpacity onPress={() => setShowImagePicker(true)}>
-                <Image source={{ uri: profileImage }} style={styles.profileImageLarge} />
+                <Image
+                  source={{ uri: profileImage }}
+                  style={styles.profileImageLarge}
+                />
                 <View style={styles.cameraOverlay}>
                   <Camera size={20} color="#fff" />
                 </View>
@@ -211,24 +262,44 @@ export default function SettingsScreen() {
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={[styles.inputLabel, { color: theme.text }]}>Full Name</Text>
+              <Text style={[styles.inputLabel, { color: theme.text }]}>
+                Full Name
+              </Text>
               <TextInput
-                style={[styles.textInput, { backgroundColor: theme.background, color: theme.text, borderColor: theme.border }]}
+                style={[
+                  styles.textInput,
+                  {
+                    backgroundColor: theme.background,
+                    color: theme.text,
+                    borderColor: theme.border,
+                  },
+                ]}
                 value={fullName}
                 onChangeText={setFullName}
                 placeholder="Enter your full name"
                 placeholderTextColor={theme.textSecondary}
                 maxLength={50}
               />
-              <Text style={[styles.characterCount, { color: theme.textSecondary }]}>
+              <Text
+                style={[styles.characterCount, { color: theme.textSecondary }]}
+              >
                 {fullName.length}/50
               </Text>
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={[styles.inputLabel, { color: theme.text }]}>Bio</Text>
+              <Text style={[styles.inputLabel, { color: theme.text }]}>
+                Bio
+              </Text>
               <TextInput
-                style={[styles.textArea, { backgroundColor: theme.background, color: theme.text, borderColor: theme.border }]}
+                style={[
+                  styles.textArea,
+                  {
+                    backgroundColor: theme.background,
+                    color: theme.text,
+                    borderColor: theme.border,
+                  },
+                ]}
                 value={bio}
                 onChangeText={setBio}
                 placeholder="Tell us about yourself..."
@@ -237,13 +308,17 @@ export default function SettingsScreen() {
                 numberOfLines={4}
                 maxLength={200}
               />
-              <Text style={[styles.characterCount, { color: theme.textSecondary }]}>
+              <Text
+                style={[styles.characterCount, { color: theme.textSecondary }]}
+              >
                 {bio.length}/200
               </Text>
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={[styles.inputLabel, { color: theme.text }]}>Style Preferences</Text>
+              <Text style={[styles.inputLabel, { color: theme.text }]}>
+                Style Preferences
+              </Text>
               <View style={styles.stylePreferences}>
                 {stylePreferences.map((style) => (
                   <TouchableOpacity
@@ -251,7 +326,7 @@ export default function SettingsScreen() {
                     style={[
                       styles.styleChip,
                       style.selected && styles.styleChipSelected,
-                      { borderColor: theme.border }
+                      { borderColor: theme.border },
                     ]}
                     onPress={() => toggleStylePreference(style.id)}
                   >
@@ -259,7 +334,7 @@ export default function SettingsScreen() {
                       style={[
                         styles.styleChipText,
                         style.selected && styles.styleChipTextSelected,
-                        { color: style.selected ? '#fff' : theme.text }
+                        { color: style.selected ? '#fff' : theme.text },
                       ]}
                     >
                       {style.name}
@@ -269,20 +344,34 @@ export default function SettingsScreen() {
               </View>
             </View>
 
-            <TouchableOpacity style={styles.saveButton} onPress={handleSaveProfile}>
+            <TouchableOpacity
+              style={styles.saveButton}
+              onPress={handleSaveProfile}
+            >
               <Text style={styles.saveButtonText}>Save Profile</Text>
             </TouchableOpacity>
           </>
-        ))}
+        )}
 
         {/* Account Security */}
-        {renderSection('Security', (
+        {renderSection(
+          'Security',
           <>
             <View style={styles.inputGroup}>
-              <Text style={[styles.inputLabel, { color: theme.text }]}>Change Password</Text>
+              <Text style={[styles.inputLabel, { color: theme.text }]}>
+                Change Password
+              </Text>
               <View style={styles.passwordInput}>
                 <TextInput
-                  style={[styles.textInput, { backgroundColor: theme.background, color: theme.text, borderColor: theme.border, paddingRight: 50 }]}
+                  style={[
+                    styles.textInput,
+                    {
+                      backgroundColor: theme.background,
+                      color: theme.text,
+                      borderColor: theme.border,
+                      paddingRight: 50,
+                    },
+                  ]}
                   value={currentPassword}
                   onChangeText={setCurrentPassword}
                   placeholder="Current password"
@@ -302,7 +391,15 @@ export default function SettingsScreen() {
               </View>
               <View style={styles.passwordInput}>
                 <TextInput
-                  style={[styles.textInput, { backgroundColor: theme.background, color: theme.text, borderColor: theme.border, paddingRight: 50 }]}
+                  style={[
+                    styles.textInput,
+                    {
+                      backgroundColor: theme.background,
+                      color: theme.text,
+                      borderColor: theme.border,
+                      paddingRight: 50,
+                    },
+                  ]}
                   value={newPassword}
                   onChangeText={setNewPassword}
                   placeholder="New password (min 8 characters)"
@@ -321,22 +418,43 @@ export default function SettingsScreen() {
                 </TouchableOpacity>
               </View>
               <TextInput
-                style={[styles.textInput, { backgroundColor: theme.background, color: theme.text, borderColor: theme.border }]}
+                style={[
+                  styles.textInput,
+                  {
+                    backgroundColor: theme.background,
+                    color: theme.text,
+                    borderColor: theme.border,
+                  },
+                ]}
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
                 placeholder="Confirm new password"
                 placeholderTextColor={theme.textSecondary}
                 secureTextEntry
               />
-              <TouchableOpacity style={styles.changePasswordButton} onPress={handleChangePassword}>
-                <Text style={styles.changePasswordButtonText}>Change Password</Text>
+              <TouchableOpacity
+                style={styles.changePasswordButton}
+                onPress={handleChangePassword}
+              >
+                <Text style={styles.changePasswordButtonText}>
+                  Change Password
+                </Text>
               </TouchableOpacity>
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={[styles.inputLabel, { color: theme.text }]}>Email Address</Text>
+              <Text style={[styles.inputLabel, { color: theme.text }]}>
+                Email Address
+              </Text>
               <TextInput
-                style={[styles.textInput, { backgroundColor: theme.background, color: theme.text, borderColor: theme.border }]}
+                style={[
+                  styles.textInput,
+                  {
+                    backgroundColor: theme.background,
+                    color: theme.text,
+                    borderColor: theme.border,
+                  },
+                ]}
                 value={newEmail}
                 onChangeText={setNewEmail}
                 placeholder="Enter new email"
@@ -344,7 +462,10 @@ export default function SettingsScreen() {
                 keyboardType="email-address"
                 autoCapitalize="none"
               />
-              <TouchableOpacity style={styles.updateEmailButton} onPress={handleUpdateEmail}>
+              <TouchableOpacity
+                style={styles.updateEmailButton}
+                onPress={handleUpdateEmail}
+              >
                 <Text style={styles.updateEmailButtonText}>Update Email</Text>
               </TouchableOpacity>
             </View>
@@ -361,20 +482,23 @@ export default function SettingsScreen() {
               />
             )}
           </>
-        ))}
+        )}
 
         {/* Notification Preferences */}
-        {renderSection('Notifications', (
+        {renderSection(
+          'Notifications',
           <>
             {renderSettingItem(
               <Bell size={20} color={theme.text} />,
               'Like Notifications',
               'Get notified when someone likes your posts',
               <Switch
-                value={notifications.likes}
-                onValueChange={(value) => setNotifications(prev => ({ ...prev, likes: value }))}
+                value={settings.likes}
+                onValueChange={(value) =>
+                  setSettings((prev) => ({ ...prev, likes: value }))
+                }
                 trackColor={{ false: theme.border, true: '#4CAF50' }}
-                thumbColor={notifications.likes ? '#fff' : '#f4f3f4'}
+                thumbColor={settings.likes ? '#fff' : '#f4f3f4'}
               />
             )}
 
@@ -383,10 +507,12 @@ export default function SettingsScreen() {
               'Comment Notifications',
               'Get notified when someone comments on your posts',
               <Switch
-                value={notifications.comments}
-                onValueChange={(value) => setNotifications(prev => ({ ...prev, comments: value }))}
+                value={settings.comments}
+                onValueChange={(value) =>
+                  setSettings((prev) => ({ ...prev, comments: value }))
+                }
                 trackColor={{ false: theme.border, true: '#4CAF50' }}
-                thumbColor={notifications.comments ? '#fff' : '#f4f3f4'}
+                thumbColor={settings.comments ? '#fff' : '#f4f3f4'}
               />
             )}
 
@@ -395,10 +521,12 @@ export default function SettingsScreen() {
               'Sales Alerts',
               'Get notified about sales and promotions',
               <Switch
-                value={notifications.sales}
-                onValueChange={(value) => setNotifications(prev => ({ ...prev, sales: value }))}
+                value={settings.sales}
+                onValueChange={(value) =>
+                  setSettings((prev) => ({ ...prev, sales: value }))
+                }
                 trackColor={{ false: theme.border, true: '#4CAF50' }}
-                thumbColor={notifications.sales ? '#fff' : '#f4f3f4'}
+                thumbColor={settings.sales ? '#fff' : '#f4f3f4'}
               />
             )}
 
@@ -407,31 +535,47 @@ export default function SettingsScreen() {
               'Direct Messages',
               'Get notified about new messages',
               <Switch
-                value={notifications.messages}
-                onValueChange={(value) => setNotifications(prev => ({ ...prev, messages: value }))}
+                value={settings.messages}
+                onValueChange={(value) =>
+                  setSettings((prev) => ({ ...prev, messages: value }))
+                }
                 trackColor={{ false: theme.border, true: '#4CAF50' }}
-                thumbColor={notifications.messages ? '#fff' : '#f4f3f4'}
+                thumbColor={settings.messages ? '#fff' : '#f4f3f4'}
               />
             )}
 
             <View style={styles.inputGroup}>
-              <Text style={[styles.inputLabel, { color: theme.text }]}>Email Frequency</Text>
+              <Text style={[styles.inputLabel, { color: theme.text }]}>
+                Email Frequency
+              </Text>
               <View style={styles.frequencyOptions}>
                 {['instant', 'daily', 'weekly'].map((frequency) => (
                   <TouchableOpacity
                     key={frequency}
                     style={[
                       styles.frequencyOption,
-                      notifications.emailFrequency === frequency && styles.frequencyOptionSelected,
-                      { borderColor: theme.border }
+                      settings.emailFrequency === frequency &&
+                        styles.frequencyOptionSelected,
+                      { borderColor: theme.border },
                     ]}
-                    onPress={() => setNotifications(prev => ({ ...prev, emailFrequency: frequency as any }))}
+                    onPress={() =>
+                      setSettings((prev) => ({
+                        ...prev,
+                        emailFrequency: frequency as any,
+                      }))
+                    }
                   >
                     <Text
                       style={[
                         styles.frequencyOptionText,
-                        notifications.emailFrequency === frequency && styles.frequencyOptionTextSelected,
-                        { color: notifications.emailFrequency === frequency ? '#fff' : theme.text }
+                        settings.emailFrequency === frequency &&
+                          styles.frequencyOptionTextSelected,
+                        {
+                          color:
+                            settings.emailFrequency === frequency
+                              ? '#fff'
+                              : theme.text,
+                        },
                       ]}
                     >
                       {frequency.charAt(0).toUpperCase() + frequency.slice(1)}
@@ -441,10 +585,11 @@ export default function SettingsScreen() {
               </View>
             </View>
           </>
-        ))}
+        )}
 
         {/* Theme Customization */}
-        {renderSection('Appearance', (
+        {renderSection(
+          'Appearance',
           <>
             {renderSettingItem(
               <Palette size={20} color={theme.text} />,
@@ -458,10 +603,10 @@ export default function SettingsScreen() {
               />
             )}
           </>
-        ))}
+        )}
 
-        {/* Social Account Linking */}
-        {renderSection('Connected Accounts', (
+        {renderSection(
+          'Connected Accounts',
           <>
             {socialAccounts.map((account) => (
               <View key={account.id}>
@@ -472,14 +617,14 @@ export default function SettingsScreen() {
                   <TouchableOpacity
                     style={[
                       styles.connectButton,
-                      account.connected && styles.disconnectButton
+                      account.connected && styles.disconnectButton,
                     ]}
                     onPress={() => toggleSocialAccount(account.id)}
                   >
                     <Text
                       style={[
                         styles.connectButtonText,
-                        account.connected && styles.disconnectButtonText
+                        account.connected && styles.disconnectButtonText,
                       ]}
                     >
                       {account.connected ? 'Disconnect' : 'Connect'}
@@ -489,10 +634,11 @@ export default function SettingsScreen() {
               </View>
             ))}
           </>
-        ))}
+        )}
 
         {/* Account Management */}
-        {renderSection('Account Management', (
+        {renderSection(
+          'Account Management',
           <>
             {renderSettingItem(
               <Download size={20} color={theme.text} />,
@@ -518,7 +664,7 @@ export default function SettingsScreen() {
               () => setShowDeleteConfirm(true)
             )}
           </>
-        ))}
+        )}
 
         <View style={styles.bottomPadding} />
       </ScrollView>
@@ -534,17 +680,26 @@ export default function SettingsScreen() {
           <View style={[styles.modalContent, { backgroundColor: theme.card }]}>
             <View style={styles.modalHeader}>
               <AlertTriangle size={24} color="#FF3B30" />
-              <Text style={[styles.modalTitle, { color: theme.text }]}>Delete Account</Text>
+              <Text style={[styles.modalTitle, { color: theme.text }]}>
+                Delete Account
+              </Text>
             </View>
             <Text style={[styles.modalText, { color: theme.textSecondary }]}>
-              This action cannot be undone. All your data, posts, and account information will be permanently deleted.
+              This action cannot be undone. All your data, posts, and account
+              information will be permanently deleted.
             </Text>
             <View style={styles.modalButtons}>
               <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton, { borderColor: theme.border }]}
+                style={[
+                  styles.modalButton,
+                  styles.cancelButton,
+                  { borderColor: theme.border },
+                ]}
                 onPress={() => setShowDeleteConfirm(false)}
               >
-                <Text style={[styles.cancelButtonText, { color: theme.text }]}>Cancel</Text>
+                <Text style={[styles.cancelButtonText, { color: theme.text }]}>
+                  Cancel
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.modalButton, styles.deleteButton]}
@@ -568,17 +723,26 @@ export default function SettingsScreen() {
           <View style={[styles.modalContent, { backgroundColor: theme.card }]}>
             <View style={styles.modalHeader}>
               <AlertTriangle size={24} color="#FF9500" />
-              <Text style={[styles.modalTitle, { color: theme.text }]}>Deactivate Account</Text>
+              <Text style={[styles.modalTitle, { color: theme.text }]}>
+                Deactivate Account
+              </Text>
             </View>
             <Text style={[styles.modalText, { color: theme.textSecondary }]}>
-              Your account will be temporarily disabled. You can reactivate it anytime by logging in again.
+              Your account will be temporarily disabled. You can reactivate it
+              anytime by logging in again.
             </Text>
             <View style={styles.modalButtons}>
               <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton, { borderColor: theme.border }]}
+                style={[
+                  styles.modalButton,
+                  styles.cancelButton,
+                  { borderColor: theme.border },
+                ]}
                 onPress={() => setShowDeactivateConfirm(false)}
               >
-                <Text style={[styles.cancelButtonText, { color: theme.text }]}>Cancel</Text>
+                <Text style={[styles.cancelButtonText, { color: theme.text }]}>
+                  Cancel
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.modalButton, styles.deactivateButton]}
@@ -599,9 +763,13 @@ export default function SettingsScreen() {
         onRequestClose={() => setShowImagePicker(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={[styles.imagePickerModal, { backgroundColor: theme.card }]}>
+          <View
+            style={[styles.imagePickerModal, { backgroundColor: theme.card }]}
+          >
             <View style={styles.imagePickerHeader}>
-              <Text style={[styles.imagePickerTitle, { color: theme.text }]}>Change Profile Picture</Text>
+              <Text style={[styles.imagePickerTitle, { color: theme.text }]}>
+                Change Profile Picture
+              </Text>
               <TouchableOpacity onPress={() => setShowImagePicker(false)}>
                 <X size={24} color={theme.text} />
               </TouchableOpacity>
@@ -609,16 +777,54 @@ export default function SettingsScreen() {
             <View style={styles.imagePickerOptions}>
               <TouchableOpacity style={styles.imagePickerOption}>
                 <Camera size={24} color={theme.text} />
-                <Text style={[styles.imagePickerOptionText, { color: theme.text }]}>Take Photo</Text>
+                <Text
+                  style={[styles.imagePickerOptionText, { color: theme.text }]}
+                >
+                  Take Photo
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.imagePickerOption}>
                 <Download size={24} color={theme.text} />
-                <Text style={[styles.imagePickerOptionText, { color: theme.text }]}>Choose from Gallery</Text>
+                <Text
+                  style={[styles.imagePickerOptionText, { color: theme.text }]}
+                >
+                  Choose from Gallery
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
       </Modal>
+
+      {/* Toast Notifications */}
+      {visible.error && (
+        <Toast
+          type="error"
+          message={messages.error}
+          onClose={() => hideToast('error')}
+        />
+      )}
+      {visible.success && (
+        <Toast
+          type="success"
+          message={messages.success}
+          onClose={() => hideToast('success')}
+        />
+      )}
+      {visible.neutral && (
+        <Toast
+          type="neutral"
+          message={messages.neutral}
+          onClose={() => hideToast('neutral')}
+        />
+      )}
+      {visible.alert && (
+        <Toast
+          type="alert"
+          message={messages.alert}
+          onClose={() => hideToast('alert')}
+        />
+      )}
     </SafeAreaView>
   );
 }
@@ -634,6 +840,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
+    marginBottom: 16,
   },
   headerButton: {
     padding: 8,
@@ -799,14 +1006,14 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-SemiBold',
   },
   updateEmailButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#D3D3D3',
     borderRadius: 8,
     paddingVertical: 10,
     alignItems: 'center',
     marginTop: 8,
   },
   updateEmailButtonText: {
-    color: '#fff',
+    color: '#000',
     fontSize: 14,
     fontFamily: 'Inter-SemiBold',
   },

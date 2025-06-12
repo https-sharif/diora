@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -177,6 +177,18 @@ export default function PostDetailScreen() {
 
   const post = mockPostDetails[id || '1'];
 
+  const [aspectRatio, setAspectRatio] = useState(1);
+
+  useEffect(() => {
+    if (!post || !post.image) return;
+
+    Image.getSize(
+      post.image,
+      (width, height) => setAspectRatio(width / height),
+      (err) => console.error('Failed to get image size:', err)
+    );
+  }, [post]);
+
   React.useEffect(() => {
     if (post) {
       setStarCount(post.stars);
@@ -284,7 +296,15 @@ export default function PostDetailScreen() {
 
         {/* Post Image */}
         <TouchableOpacity onPress={() => setShowImageModal(true)}>
-          <Image source={{ uri: post.image }} style={styles.postImage} />
+          <Image
+          source={{ uri: post.image }}
+          style={{
+            width: '100%',
+            height: undefined,
+            aspectRatio,
+            resizeMode: 'contain',
+          }}
+        />
         </TouchableOpacity>
 
         {/* Actions */}
@@ -402,6 +422,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
+    paddingBottom: -100,
   },
   header: {
     flexDirection: 'row',
@@ -453,10 +474,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-Regular',
     color: '#666',
     marginTop: 2,
-  },
-  postImage: {
-    width: '100%',
-    height: width,
   },
   actions: {
     flexDirection: 'row',
@@ -582,7 +599,6 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#e9ecef',
     padding: 16,
-    paddingBottom: 50,
     backgroundColor: '#fff',
   },
   replyingIndicator: {

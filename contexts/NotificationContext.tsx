@@ -12,16 +12,25 @@ export interface Notification {
   actionUrl?: string;
   data?: any;
 }
-
+interface NotificationSettings {
+  likes: boolean;
+  comments: boolean;
+  sales: boolean;
+  messages: boolean;
+  emailFrequency: 'instant' | 'daily' | 'weekly';
+}
 interface NotificationContextType {
   notifications: Notification[];
   unreadCount: number;
+  settings: NotificationSettings;
+  setSettings: React.Dispatch<React.SetStateAction<NotificationSettings>>;
   markAsRead: (notificationId: string) => void;
   markAllAsRead: () => void;
   addNotification: (notification: Omit<Notification, 'id' | 'timestamp' | 'read'>) => void;
   deleteNotification: (notificationId: string) => void;
   clearAllNotifications: () => void;
 }
+
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
 
@@ -102,6 +111,14 @@ const mockNotifications: Notification[] = [
 
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
   const [notifications, setNotifications] = useState<Notification[]>(mockNotifications);
+  const [settings, setSettings] = useState<NotificationSettings>({
+    likes: true,
+    comments: true,
+    sales: true,
+    messages: true,
+    emailFrequency: 'instant',
+  });
+
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
@@ -122,6 +139,17 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   };
 
   const addNotification = (notificationData: Omit<Notification, 'id' | 'timestamp' | 'read'>) => {
+    const shouldNotify = {
+      like: settings.likes,
+      comment: settings.comments,
+      follow: true,
+      mention: true,
+      order: settings.sales,
+      promotion: true,
+    }[notificationData.type];
+
+    if (!shouldNotify) return;
+
     const newNotification: Notification = {
       ...notificationData,
       id: Date.now().toString(),
@@ -131,6 +159,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
     setNotifications(prev => [newNotification, ...prev]);
   };
+
 
   const deleteNotification = (notificationId: string) => {
     setNotifications(prev => prev.filter(n => n.id !== notificationId));
@@ -168,15 +197,19 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   }, []);
 
   return (
-    <NotificationContext.Provider value={{
-      notifications,
-      unreadCount,
-      markAsRead,
-      markAllAsRead,
-      addNotification,
-      deleteNotification,
-      clearAllNotifications,
-    }}>
+    <NotificationContext.Provider
+      value={{
+        notifications,
+        unreadCount,
+        settings,
+        setSettings,
+        markAsRead,
+        markAllAsRead,
+        addNotification,
+        deleteNotification,
+        clearAllNotifications,
+      }}
+    >
       {children}
     </NotificationContext.Provider>
   );

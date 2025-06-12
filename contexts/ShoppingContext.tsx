@@ -10,6 +10,11 @@ export interface Product {
   description: string;
   sizes: string[];
   colors: string[];
+  stock: number;
+  rating: number;
+  reviews: number;
+  isAvailable: boolean;
+  discount?: number;
 }
 
 export interface CartItem extends Product {

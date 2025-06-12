@@ -20,6 +20,7 @@ import {
   X,
   Plus,
   Minus,
+  Dot,
 } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useShopping, Product } from '@/contexts/ShoppingContext';
@@ -39,79 +40,91 @@ const mockProducts: Product[] = [
     id: '1',
     name: 'Vintage Denim Jacket',
     price: 89.99,
-    image:
-      'https://images.pexels.com/photos/1126993/pexels-photo-1126993.jpeg?auto=compress&cs=tinysrgb&w=400',
+    image: 'https://images.pexels.com/photos/1126993/pexels-photo-1126993.jpeg?auto=compress&cs=tinysrgb&w=400',
     brand: 'Urban Threads',
     category: 'Tops',
-    description:
-      'Classic vintage-style denim jacket perfect for layering. Made from premium cotton denim with authentic distressing.',
+    description: 'Classic vintage-style denim jacket perfect for layering. Made from premium cotton denim with authentic distressing.',
     sizes: ['S', 'M', 'L', 'XL'],
     colors: ['Blue', 'Black', 'White'],
+    stock: 0,
+    rating: 0,
+    reviews: 0,
+    isAvailable: false
   },
   {
     id: '2',
     name: 'Flowy Maxi Dress',
     price: 129.99,
-    image:
-      'https://images.pexels.com/photos/1457983/pexels-photo-1457983.jpeg?auto=compress&cs=tinysrgb&w=400',
+    image: 'https://images.pexels.com/photos/1457983/pexels-photo-1457983.jpeg?auto=compress&cs=tinysrgb&w=400',
     brand: 'Boho Chic',
     category: 'Dresses',
-    description:
-      'Elegant flowy maxi dress for special occasions. Features a flattering silhouette and premium fabric.',
+    description: 'Elegant flowy maxi dress for special occasions. Features a flattering silhouette and premium fabric.',
     sizes: ['XS', 'S', 'M', 'L'],
     colors: ['Floral', 'Solid Pink', 'Navy'],
+    stock: 0,
+    rating: 0,
+    reviews: 0,
+    isAvailable: false
   },
   {
     id: '3',
     name: 'Classic Sneakers',
     price: 79.99,
-    image:
-      'https://images.pexels.com/photos/1464625/pexels-photo-1464625.jpeg?auto=compress&cs=tinysrgb&w=400',
+    image: 'https://images.pexels.com/photos/1464625/pexels-photo-1464625.jpeg?auto=compress&cs=tinysrgb&w=400',
     brand: 'Street Style',
     category: 'Shoes',
-    description:
-      'Comfortable classic sneakers for everyday wear. Premium materials and cushioned sole.',
+    description: 'Comfortable classic sneakers for everyday wear. Premium materials and cushioned sole.',
     sizes: ['6', '7', '8', '9', '10'],
     colors: ['White', 'Black', 'Gray'],
+    stock: 0,
+    rating: 0,
+    reviews: 0,
+    isAvailable: false
   },
   {
     id: '4',
     name: 'High-Waisted Jeans',
     price: 69.99,
-    image:
-      'https://images.pexels.com/photos/1040424/pexels-photo-1040424.jpeg?auto=compress&cs=tinysrgb&w=400',
+    image: 'https://images.pexels.com/photos/1040424/pexels-photo-1040424.jpeg?auto=compress&cs=tinysrgb&w=400',
     brand: 'Classic Fit',
     category: 'Bottoms',
-    description:
-      'High-waisted jeans with a comfortable fit. Perfect for any casual occasion.',
+    description: 'High-waisted jeans with a comfortable fit. Perfect for any casual occasion.',
     sizes: ['26', '28', '30', '32', '34'],
     colors: ['Dark Blue', 'Light Blue', 'Black'],
+    stock: 0,
+    rating: 0,
+    reviews: 0,
+    isAvailable: false
   },
   {
     id: '5',
     name: 'Silk Scarf',
     price: 39.99,
-    image:
-      'https://images.pexels.com/photos/1381556/pexels-photo-1381556.jpeg?auto=compress&cs=tinysrgb&w=400',
+    image: 'https://images.pexels.com/photos/1381556/pexels-photo-1381556.jpeg?auto=compress&cs=tinysrgb&w=400',
     brand: 'Luxury Accessories',
     category: 'Accessories',
-    description:
-      'Premium silk scarf with elegant patterns. Perfect accessory for any outfit.',
+    description: 'Premium silk scarf with elegant patterns. Perfect accessory for any outfit.',
     sizes: ['One Size'],
     colors: ['Red', 'Blue', 'Gold'],
+    stock: 0,
+    rating: 0,
+    reviews: 0,
+    isAvailable: false
   },
   {
     id: '6',
     name: 'Casual Blazer',
     price: 149.99,
-    image:
-      'https://images.pexels.com/photos/1462637/pexels-photo-1462637.jpeg?auto=compress&cs=tinysrgb&w=400',
+    image: 'https://images.pexels.com/photos/1462637/pexels-photo-1462637.jpeg?auto=compress&cs=tinysrgb&w=400',
     brand: 'Professional Wear',
     category: 'Tops',
-    description:
-      'Versatile blazer for work and casual occasions. Tailored fit with premium fabric.',
+    description: 'Versatile blazer for work and casual occasions. Tailored fit with premium fabric.',
     sizes: ['S', 'M', 'L', 'XL'],
     colors: ['Black', 'Navy', 'Beige'],
+    stock: 0,
+    rating: 0,
+    reviews: 0,
+    isAvailable: false
   },
 ];
 
@@ -136,7 +149,7 @@ export default function ShoppingScreen() {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [showCart, setShowCart] = useState(false);
-  const [showWishlist, setShowWishlist] = useState(false);
+
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [selectedSize, setSelectedSize] = useState<string>('');
   const [selectedColor, setSelectedColor] = useState<string>('');
@@ -256,12 +269,11 @@ export default function ShoppingScreen() {
           <View style={styles.headerButtons}>
             <TouchableOpacity
               style={styles.headerButton}
-              onPress={() => setShowWishlist(true)}
+              onPress={() => {router.push('/wishlist');}}
             >
               <Heart size={24} color="#000" />
               {wishlist.length > 0 && (
-                <View style={styles.badge}>
-                  <Text style={styles.badgeText}>{wishlist.length}</Text>
+                <View style={styles.badge}> 
                 </View>
               )}
             </TouchableOpacity>
@@ -272,7 +284,6 @@ export default function ShoppingScreen() {
               <ShoppingCart size={24} color="#000" />
               {getCartItemCount() > 0 && (
                 <View style={styles.badge}>
-                  <Text style={styles.badgeText}>{getCartItemCount()}</Text>
                 </View>
               )}
             </TouchableOpacity>
@@ -467,38 +478,7 @@ export default function ShoppingScreen() {
         </View>
       </Modal>
 
-      {/* Wishlist Modal */}
-      <Modal
-        visible={showWishlist}
-        animationType="slide"
-        onRequestClose={() => setShowWishlist(false)}
-      >
-        <View style={styles.wishlistModal}>
-          <View style={styles.wishlistHeader}>
-            <Text style={styles.wishlistTitle}>Wishlist</Text>
-            <TouchableOpacity onPress={() => setShowWishlist(false)}>
-              <X size={24} color="#000" />
-            </TouchableOpacity>
-          </View>
-
-          {wishlist.length === 0 ? (
-            <View style={styles.emptyWishlist}>
-              <Text style={styles.emptyWishlistText}>
-                Your wishlist is empty
-              </Text>
-            </View>
-          ) : (
-            <FlatList
-              data={wishlist}
-              renderItem={renderProduct}
-              keyExtractor={(item) => item.id}
-              numColumns={2}
-              contentContainerStyle={styles.wishlistGrid}
-              columnWrapperStyle={styles.productRow}
-            />
-          )}
-        </View>
-      </Modal>
+      
     </SafeAreaView>
   );
 }
@@ -537,19 +517,14 @@ const getStyles = (theme: any) =>
   },
   badge: {
     position: 'absolute',
-    top: -8,
-    right: -8,
+    top: 0,
+    right: -2,
     backgroundColor: '#FF6B6B',
     borderRadius: 10,
-    minWidth: 20,
-    height: 20,
+    minWidth: 10,
+    height: 10,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  badgeText: {
-    color: '#fff',
-    fontSize: 12,
-    fontFamily: 'Inter-Bold',
   },
   searchContainer: {
     flexDirection: 'row',

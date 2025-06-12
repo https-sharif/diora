@@ -16,7 +16,12 @@ interface User {
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<boolean>;
-  signup: (email: string, password: string, username: string, fullName: string) => Promise<boolean>;
+  signup: (
+    email: string,
+    password: string,
+    username: string,
+    fullName: string
+  ) => Promise<boolean>;
   logout: () => void;
   isAuthenticated: boolean;
   loading: boolean;
@@ -28,39 +33,77 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    // Simulate checking for existing session
-    const checkAuthStatus = async () => {
-      try {
-        // In a real app, you'd check for stored tokens/session
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        setLoading(false);
-      } catch (error) {
-        setLoading(false);
-      }
-    };
+  // useEffect(() => {
+  //   // Simulate checking for existing session
+  //   const checkAuthStatus = async () => {
+  //     try {
+  //       // In a real app, you'd check for stored tokens/session
+  //       await new Promise(resolve => setTimeout(resolve, 1000));
+  //       setLoading(false);
+  //     } catch (error) {
+  //       setLoading(false);
+  //     }
+  //   };
 
-    checkAuthStatus();
+  //   checkAuthStatus();
+  // }, []);
+
+  useEffect(() => {
+    if (__DEV__) {
+      const mockUser: User = {
+        id: 'dev',
+        email: 'dev@example.com',
+        username: 'devUser',
+        fullName: 'Dev User',
+        avatar:
+          'https://images.pexels.com/photos/1036623/pexels-photo-1036623.jpeg?auto=compress&cs=tinysrgb&w=150',
+        bio: 'Dev mode auto-login',
+        followers: 999,
+        following: 999,
+        posts: 999,
+      };
+      setUser(mockUser);
+      setLoading(false);
+    } else {
+      const checkAuthStatus = async () => {
+        try {
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+          setLoading(false);
+        } catch {
+          setLoading(false);
+        }
+      };
+      checkAuthStatus();
+    }
   }, []);
+
+  useEffect(() => {
+    if (!loading && user) {
+      router.replace('/(tabs)');
+    } else if (!loading && !user) {
+      router.replace('/auth');
+    }
+  }, [loading, user]);
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
       // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
       // Mock successful login
       const mockUser: User = {
         id: '1',
         email,
         username: email.split('@')[0],
         fullName: 'Fashion Enthusiast',
-        avatar: 'https://images.pexels.com/photos/1036623/pexels-photo-1036623.jpeg?auto=compress&cs=tinysrgb&w=150',
+        avatar:
+          'https://images.pexels.com/photos/1036623/pexels-photo-1036623.jpeg?auto=compress&cs=tinysrgb&w=150',
         bio: 'Fashion lover & trendsetter ✨',
         followers: 1234,
         following: 567,
-        posts: 89
+        posts: 89,
       };
-      
+
       setUser(mockUser);
       router.replace('/(tabs)');
       return true;
@@ -69,23 +112,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const signup = async (email: string, password: string, username: string, fullName: string): Promise<boolean> => {
+  const signup = async (
+    email: string,
+    password: string,
+    username: string,
+    fullName: string
+  ): Promise<boolean> => {
     try {
       // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
       const mockUser: User = {
         id: '2',
         email,
         username,
         fullName,
-        avatar: 'https://images.pexels.com/photos/1036623/pexels-photo-1036623.jpeg?auto=compress&cs=tinysrgb&w=150',
+        avatar:
+          'https://images.pexels.com/photos/1036623/pexels-photo-1036623.jpeg?auto=compress&cs=tinysrgb&w=150',
         bio: 'New to Diora ✨',
         followers: 0,
         following: 0,
-        posts: 0
+        posts: 0,
       };
-      
+
       setUser(mockUser);
       router.replace('/(tabs)');
       return true;
@@ -100,14 +149,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{
-      user,
-      login,
-      signup,
-      logout,
-      isAuthenticated: !!user,
-      loading
-    }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        login,
+        signup,
+        logout,
+        isAuthenticated: !!user,
+        loading,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

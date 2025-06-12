@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -11,7 +11,14 @@ import {
   TextInput,
   Alert,
 } from 'react-native';
-import { Star, MessageCircle, Share, X, Send, Heart } from 'lucide-react-native';
+import {
+  Star,
+  MessageCircle,
+  Share,
+  X,
+  Send,
+  Heart,
+} from 'lucide-react-native';
 
 interface Comment {
   id: string;
@@ -45,7 +52,8 @@ const mockComments: Comment[] = [
   {
     id: '1',
     user: 'style_lover',
-    avatar: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=100',
+    avatar:
+      'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=100',
     text: 'Absolutely love this look! Where did you get that jacket?',
     timestamp: '2h ago',
     likes: 12,
@@ -53,21 +61,23 @@ const mockComments: Comment[] = [
       {
         id: '1-1',
         user: 'fashionista_jane',
-        avatar: 'https://images.pexels.com/photos/1036623/pexels-photo-1036623.jpeg?auto=compress&cs=tinysrgb&w=100',
+        avatar:
+          'https://images.pexels.com/photos/1036623/pexels-photo-1036623.jpeg?auto=compress&cs=tinysrgb&w=100',
         text: 'Thank you! Got it from Urban Threads 💕',
         timestamp: '1h ago',
         likes: 5,
-      }
-    ]
+      },
+    ],
   },
   {
     id: '2',
     user: 'trendy_alex',
-    avatar: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=100',
+    avatar:
+      'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=100',
     text: 'Perfect styling! The colors work so well together 🔥',
     timestamp: '3h ago',
     likes: 8,
-  }
+  },
 ];
 
 export default function PostCard({ post, onStar }: PostCardProps) {
@@ -79,10 +89,21 @@ export default function PostCard({ post, onStar }: PostCardProps) {
   const [newComment, setNewComment] = useState('');
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
 
+  const [imageHeight, setImageHeight] = useState(0);
+
+  useEffect(() => {
+    Image.getSize(post.image, (width, height) => {
+      const screenWidth = Dimensions.get('window').width - 32;
+      const scaleFactor = width / screenWidth;
+      const scaledHeight = height / scaleFactor;
+      setImageHeight(scaledHeight);
+    });
+  }, [post.image]);
+
   const handleStar = () => {
     const newStarred = !isStarred;
     setIsStarred(newStarred);
-    setStarCount(prev => newStarred ? prev + 1 : prev - 1);
+    setStarCount((prev) => (newStarred ? prev + 1 : prev - 1));
     onStar?.(post.id);
   };
 
@@ -92,28 +113,34 @@ export default function PostCard({ post, onStar }: PostCardProps) {
     const comment: Comment = {
       id: Date.now().toString(),
       user: 'current_user',
-      avatar: 'https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=100',
+      avatar:
+        'https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=100',
       text: newComment,
       timestamp: 'now',
       likes: 0,
     };
 
     if (replyingTo) {
-      setComments(prev => prev.map(c => 
-        c.id === replyingTo 
-          ? { ...c, replies: [...(c.replies || []), comment] }
-          : c
-      ));
+      setComments((prev) =>
+        prev.map((c) =>
+          c.id === replyingTo
+            ? { ...c, replies: [...(c.replies || []), comment] }
+            : c
+        )
+      );
       setReplyingTo(null);
     } else {
-      setComments(prev => [comment, ...prev]);
+      setComments((prev) => [comment, ...prev]);
     }
-    
+
     setNewComment('');
   };
 
   const renderComment = (comment: Comment, isReply = false) => (
-    <View key={comment.id} style={[styles.commentItem, isReply && styles.replyItem]}>
+    <View
+      key={comment.id}
+      style={[styles.commentItem, isReply && styles.replyItem]}
+    >
       <Image source={{ uri: comment.avatar }} style={styles.commentAvatar} />
       <View style={styles.commentContent}>
         <View style={styles.commentHeader}>
@@ -127,7 +154,7 @@ export default function PostCard({ post, onStar }: PostCardProps) {
             <Text style={styles.commentActionText}>{comment.likes}</Text>
           </TouchableOpacity>
           {!isReply && (
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.commentAction}
               onPress={() => setReplyingTo(comment.id)}
             >
@@ -135,7 +162,7 @@ export default function PostCard({ post, onStar }: PostCardProps) {
             </TouchableOpacity>
           )}
         </View>
-        {comment.replies?.map(reply => renderComment(reply, true))}
+        {comment.replies?.map((reply) => renderComment(reply, true))}
       </View>
     </View>
   );
@@ -151,8 +178,19 @@ export default function PostCard({ post, onStar }: PostCardProps) {
           </View>
         </View>
 
-        <TouchableOpacity onPress={() => setShowImageModal(true)}>
-          <Image source={{ uri: post.image }} style={styles.postImage} />
+        <TouchableOpacity
+          onPress={() => setShowImageModal(true)}
+          activeOpacity={0.9}
+        >
+          <Image
+            source={{ uri: post.image }}
+            style={{
+              width: '100%',
+              height: imageHeight,
+              borderRadius: 12,
+              resizeMode: 'contain',
+            }}
+          />
         </TouchableOpacity>
 
         <View style={styles.actions}>
@@ -168,16 +206,12 @@ export default function PostCard({ post, onStar }: PostCardProps) {
             </Text>
           </TouchableOpacity>
 
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.actionButton}
             onPress={() => setShowComments(true)}
           >
             <MessageCircle size={24} color="#666" strokeWidth={2} />
             <Text style={styles.actionText}>{post.comments}</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.actionButton}>
-            <Share size={24} color="#666" strokeWidth={2} />
           </TouchableOpacity>
         </View>
 
@@ -197,7 +231,7 @@ export default function PostCard({ post, onStar }: PostCardProps) {
         onRequestClose={() => setShowImageModal(false)}
       >
         <View style={styles.imageModalContainer}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.imageModalClose}
             onPress={() => setShowImageModal(false)}
           >
@@ -223,16 +257,16 @@ export default function PostCard({ post, onStar }: PostCardProps) {
               <X size={24} color="#000" />
             </TouchableOpacity>
           </View>
-          
+
           <ScrollView style={styles.commentsList}>
-            {comments.map(comment => renderComment(comment))}
+            {comments.map((comment) => renderComment(comment))}
           </ScrollView>
 
           <View style={styles.commentInput}>
             {replyingTo && (
               <View style={styles.replyingIndicator}>
                 <Text style={styles.replyingText}>
-                  Replying to {comments.find(c => c.id === replyingTo)?.user}
+                  Replying to {comments.find((c) => c.id === replyingTo)?.user}
                 </Text>
                 <TouchableOpacity onPress={() => setReplyingTo(null)}>
                   <X size={16} color="#666" />
@@ -248,12 +282,12 @@ export default function PostCard({ post, onStar }: PostCardProps) {
                 multiline
                 placeholderTextColor="#666"
               />
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.sendButton}
                 onPress={handleAddComment}
                 disabled={!newComment.trim()}
               >
-                <Send size={20} color={newComment.trim() ? "#000" : "#ccc"} />
+                <Send size={20} color={newComment.trim() ? '#000' : '#ccc'} />
               </TouchableOpacity>
             </View>
           </View>
@@ -305,9 +339,10 @@ const styles = StyleSheet.create({
   },
   postImage: {
     width: '100%',
-    height: width - 32,
+    height: width,
     marginHorizontal: 16,
     borderRadius: 12,
+    resizeMode: 'contain',
   },
   actions: {
     flexDirection: 'row',

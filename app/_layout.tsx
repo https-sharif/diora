@@ -22,6 +22,7 @@ import {
 import { View } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import type { EdgeInsets } from 'react-native-safe-area-context';
+import { SafeAreaProvider } from '@/contexts/SafeAreaContext';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -57,32 +58,26 @@ function ThemeAwareRoot({ insets }: { insets: EdgeInsets }) {
   const { theme, isDarkMode } = useTheme();
 
   return (
+    <SafeAreaProvider>
     <AuthProvider>
       <NotificationProvider>
         <ShoppingProvider>
-          <View
-            style={{
-              flex: 1,
-              backgroundColor: theme.background,
-              paddingBottom: insets.bottom,
-            }}
-          >
-            <Stack screenOptions={{ headerShown: false }}>
-              <Stack.Screen name="auth" />
-              <Stack.Screen name="(tabs)" />
-              <Stack.Screen name="notification" />
-              <Stack.Screen name="product/[id]" />
-              <Stack.Screen name="post/[id]" />
+          <View style={{ flex: 1, backgroundColor: theme.background, paddingBottom: insets.bottom, }} >
+            <Stack screenOptions={{ headerShown: false }} >
+              <Stack.Screen name="auth" options={{ headerShown: false }} />
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen name="notifications" options={{ headerShown: false }} />
+              <Stack.Screen name="product/[id]" options={{ headerShown: false }} />
+              <Stack.Screen name="post/[id]" options={{ headerShown: false }} />
+              <Stack.Screen name="user/[username]" options={{ headerShown: false }} />
+              <Stack.Screen name="shop/[shopname]" options={{ headerShown: false }} />
+              <Stack.Screen name="settings" options={{ headerShown: false }} />
             </Stack>
-            <StatusBar
-              style={isDarkMode ? 'light' : 'dark'}
-              animated
-              translucent
-              backgroundColor="transparent"
-            />
+            <StatusBar style={isDarkMode ? 'light' : 'dark'} animated translucent backgroundColor="transparent" />
           </View>
         </ShoppingProvider>
       </NotificationProvider>
     </AuthProvider>
+    </SafeAreaProvider>
   );
 }

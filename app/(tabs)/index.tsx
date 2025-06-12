@@ -85,7 +85,7 @@ export default function FeedScreen() {
   };
 
   const handleStar = (postId: string) => {
-    // In a real app, you'd make an API call here
+    
     console.log('Starred post:', postId);
   };
 
@@ -138,7 +138,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8f9fa',
-    paddingBottom: -34,
   },
   header: {
     paddingHorizontal: 16,
