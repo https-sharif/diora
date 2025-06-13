@@ -1,4 +1,4 @@
-import { ArrowLeft, Heart, Share, X } from 'lucide-react-native';
+import { ArrowLeft, Bookmark, Heart, Menu, PackageMinus,  X } from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
   View,
@@ -20,8 +20,7 @@ const createStyles = (theme: any) =>
   StyleSheet.create({
     container: {
       flex: 1,
-      padding: 16,
-      backgroundColor: '#fff',
+      backgroundColor: theme.background,
       paddingTop: -100,
       paddingBottom: -100,
     },
@@ -31,12 +30,12 @@ const createStyles = (theme: any) =>
       alignItems: 'center',
       paddingHorizontal: 16,
       borderBottomWidth: 1,
-      borderBottomColor: '#e9ecef',
+      borderBottomColor: theme.border,
     },
     itemContainer: {
       padding: 12,
       borderBottomWidth: 1,
-      borderBottomColor: '#eee',
+      borderBottomColor: theme.border,
     },
     itemText: { fontSize: 18 },
     headerButton: {
@@ -45,25 +44,11 @@ const createStyles = (theme: any) =>
     headerTitle: {
       fontSize: 18,
       fontFamily: 'Inter-SemiBold',
-      color: '#000',
+      color: theme.text,
     },
     wishlistModal: {
       flex: 1,
-      backgroundColor: '#fff',
-    },
-    wishlistHeader: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      padding: 16,
-      borderBottomWidth: 1,
-      borderBottomColor: '#e9ecef',
-      paddingTop: 60,
-    },
-    wishlistTitle: {
-      fontSize: 20,
-      fontFamily: 'Inter-Bold',
-      color: '#000',
+      backgroundColor: theme.background,
     },
     wishlistGrid: {
       padding: 16,
@@ -74,21 +59,16 @@ const createStyles = (theme: any) =>
       justifyContent: 'center',
       alignItems: 'center',
     },
-    emptyWishlistText: {
-      fontSize: 16,
-      fontFamily: 'Inter-Regular',
-      color: '#666',
-    },
     productRow: {
       justifyContent: 'space-between',
     },
     productCard: {
       width: '48%',
-      backgroundColor: '#fff',
+      backgroundColor: theme.card,
       borderRadius: 16,
       overflow: 'hidden',
       marginBottom: 16,
-      shadowColor: '#000',
+      shadowColor: theme.accent,
       shadowOffset: {
         width: 0,
         height: 4,
@@ -107,12 +87,9 @@ const createStyles = (theme: any) =>
       position: 'absolute',
       top: 8,
       right: 8,
-      backgroundColor: 'rgba(255, 255, 255, 0.9)',
+      backgroundColor: theme.card,
       borderRadius: 20,
       padding: 8,
-    },
-    wishlistButtonActive: {
-      backgroundColor: 'rgba(255, 107, 107, 0.1)',
     },
     productInfo: {
       padding: 12,
@@ -120,35 +97,35 @@ const createStyles = (theme: any) =>
     productBrand: {
       fontSize: 12,
       fontFamily: 'Inter-Medium',
-      color: '#666',
+      color: theme.textSecondary,
       marginBottom: 2,
     },
     productName: {
       fontSize: 14,
       fontFamily: 'Inter-SemiBold',
-      color: '#000',
+      color: theme.text,
       marginBottom: 4,
     },
     productPrice: {
       fontSize: 16,
       fontFamily: 'Inter-Bold',
-      color: '#000',
+      color: theme.text,
       marginBottom: 8,
     },
     addToCartButton: {
-      backgroundColor: '#000',
+      backgroundColor: theme.text,
       borderRadius: 8,
       paddingVertical: 8,
       alignItems: 'center',
     },
     addToCartText: {
-      color: '#fff',
+      color: theme.background,
       fontSize: 12,
       fontFamily: 'Inter-SemiBold',
     },
     productModal: {
       flex: 1,
-      backgroundColor: '#fff',
+      backgroundColor: theme.background,
     },
     productModalHeader: {
       flexDirection: 'row',
@@ -156,13 +133,13 @@ const createStyles = (theme: any) =>
       alignItems: 'center',
       padding: 16,
       borderBottomWidth: 1,
-      borderBottomColor: '#e9ecef',
+      borderBottomColor: theme.border,
       paddingTop: 60,
     },
     productModalTitle: {
       fontSize: 20,
       fontFamily: 'Inter-Bold',
-      color: '#000',
+      color: theme.text,
     },
     productModalContent: {
       flex: 1,
@@ -173,23 +150,30 @@ const createStyles = (theme: any) =>
       height: 300,
       borderRadius: 12,
       marginBottom: 16,
+      resizeMode: 'contain',
+      shadowColor: theme.accent,
+      shadowOffset: {
+        width: 0,
+        height: 4,
+      },
+      backgroundColor: theme.card,
     },
     productModalName: {
       fontSize: 24,
       fontFamily: 'Inter-Bold',
-      color: '#000',
+      color: theme.text,
       marginBottom: 8,
     },
     productModalPrice: {
       fontSize: 20,
       fontFamily: 'Inter-Bold',
-      color: '#000',
+      color: theme.text,
       marginBottom: 16,
     },
     productModalDescription: {
       fontSize: 16,
       fontFamily: 'Inter-Regular',
-      color: '#666',
+      color: theme.textSecondary,
       lineHeight: 24,
       marginBottom: 24,
     },
@@ -199,7 +183,7 @@ const createStyles = (theme: any) =>
     optionTitle: {
       fontSize: 18,
       fontFamily: 'Inter-SemiBold',
-      color: '#000',
+      color: theme.text,
       marginBottom: 12,
     },
     optionButtons: {
@@ -212,32 +196,62 @@ const createStyles = (theme: any) =>
       paddingVertical: 8,
       borderRadius: 20,
       borderWidth: 1,
-      borderColor: '#e9ecef',
-      backgroundColor: '#f8f9fa',
+      borderColor: theme.text,
+      backgroundColor: theme.background,
     },
     optionButtonActive: {
-      backgroundColor: '#000',
-      borderColor: '#000',
+      backgroundColor: theme.accent,
+      borderColor: theme.accent,
     },
     optionButtonText: {
       fontSize: 14,
       fontFamily: 'Inter-Medium',
-      color: '#666',
+      color: theme.text,
     },
     optionButtonTextActive: {
-      color: '#fff',
+      color: '#000',
     },
     confirmButton: {
-      backgroundColor: '#000',
+      backgroundColor: theme.accent,
       margin: 16,
       borderRadius: 12,
       paddingVertical: 16,
       alignItems: 'center',
+      marginBottom: 48,
     },
     confirmButtonText: {
-      color: '#fff',
+      color: '#000',
       fontSize: 16,
       fontFamily: 'Inter-SemiBold',
+    },
+    emptyState: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingHorizontal: 32,
+    },
+    emptyIconContainer: {
+      width: 80,
+      height: 80,
+      borderRadius: 40,
+      backgroundColor: theme.card,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginBottom: 24,
+    },
+    emptyTitle: {
+      fontSize: 20,
+      fontFamily: 'Inter-Bold',
+      color: theme.text,
+      marginBottom: 8,
+      textAlign: 'center',
+    },
+    emptyMessage: {
+      fontSize: 16,
+      fontFamily: 'Inter-Regular',
+      color: theme.textSecondary,
+      textAlign: 'center',
+      lineHeight: 24,
     },
   });
 
@@ -253,9 +267,6 @@ const wishlistData: WishlistItem[] = [
 ];
 
 const Wishlist = () => {
-  const { id } = useLocalSearchParams<{ id: string }>();
-  const wishlistItem = wishlistData.find((item) => item.id === id);
-
   const { theme } = useTheme();
   const styles = createStyles(theme);
 
@@ -270,6 +281,18 @@ const Wishlist = () => {
     isInWishlist,
     addToCart,
   } = useShopping();
+
+  const renderEmptyState = () => (
+      <View style={styles.emptyState}>
+        <View style={styles.emptyIconContainer}>
+          <PackageMinus size={48} color={theme.text} />
+        </View>
+        <Text style={styles.emptyTitle}>No items in your wishlist</Text>
+        <Text style={styles.emptyMessage}>
+          When you add items to your wishlist, they'll appear here
+        </Text>
+      </View>
+    );
 
   const toggleWishlist = (product: Product) => {
     if (isInWishlist(product.id)) {
@@ -305,14 +328,14 @@ const Wishlist = () => {
       <TouchableOpacity
         style={[
           styles.wishlistButton,
-          isInWishlist(item.id) && styles.wishlistButtonActive,
+          isInWishlist(item.id) && { backgroundColor: theme.text },
         ]}
         onPress={() => toggleWishlist(item)}
       >
-        <Heart
+        <Bookmark
           size={20}
-          color={isInWishlist(item.id) ? '#FF6B6B' : '#666'}
-          fill={isInWishlist(item.id) ? '#FF6B6B' : 'transparent'}
+          color={ theme.background }
+          fill={isInWishlist(item.id) ? theme.background : 'transparent'}
         />
       </TouchableOpacity>
 
@@ -340,19 +363,17 @@ const Wishlist = () => {
           style={styles.headerButton}
           onPress={() => router.back()}
         >
-          <ArrowLeft size={24} color="#000" />
+          <ArrowLeft size={24} color={theme.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>WishList</Text>
         <TouchableOpacity style={styles.headerButton}>
-          <Share size={24} color="#000" />
+          <Menu size={24} color={theme.text} />
         </TouchableOpacity>
       </View>
 
       <View style={styles.wishlistModal}>
         {wishlist.length === 0 ? (
-          <View style={styles.emptyWishlist}>
-            <Text style={styles.emptyWishlistText}>Your wishlist is empty</Text>
-          </View>
+          renderEmptyState()
         ) : (
           <FlatList
             data={wishlist}
@@ -375,7 +396,7 @@ const Wishlist = () => {
             <View style={styles.productModalHeader}>
               <Text style={styles.productModalTitle}>Select Options</Text>
               <TouchableOpacity onPress={() => setSelectedProduct(null)}>
-                <X size={24} color="#000" />
+                <X size={24} color={theme.text} />
               </TouchableOpacity>
             </View>
 
