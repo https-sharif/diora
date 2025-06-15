@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -9,13 +9,106 @@ import {
   Platform,
   Alert,
   ActivityIndicator,
-  BackHandler,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
 import { Eye, EyeOff } from 'lucide-react-native';
-import { useFonts } from 'expo-font';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useTheme } from '@/contexts/ThemeContext';
+import useBlockNavigation from '@/hooks/useBlockNavigation';
+
+const createStyles = (theme: any) => StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: theme.background,
+    paddingTop: -100,
+    paddingBottom: -100,
+  },
+  keyboardView: {
+    flex: 1,
+  },
+  content: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+  },
+  header: {
+    alignItems: 'center',
+    marginBottom: 40,
+  },
+  title: {
+    fontSize: 48,
+    fontFamily: 'Inter-Bold',
+    color: theme.text,
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 24,
+    fontFamily: 'Inter-Regular',
+    color: theme.primary,
+    textAlign: 'center',
+  },
+  form: {
+    gap: 16,
+  },
+  inputContainer: {
+    position: 'relative',
+  },
+  input: {
+    backgroundColor: theme.card,
+    borderRadius: 12,
+    padding: 16,
+    fontSize: 16,
+    fontFamily: 'Inter-Regular',
+    borderWidth: 1,
+    borderColor: theme.border,
+    color: theme.text,
+  },
+  passwordInput: {
+    backgroundColor: theme.card,
+    borderRadius: 12,
+    padding: 16,
+    paddingRight: 50,
+    fontSize: 16,
+    fontFamily: 'Inter-Regular',
+    borderWidth: 1,
+    borderColor: theme.border,
+    color: theme.text,
+  },
+  eyeIcon: {
+    position: 'absolute',
+    right: 16,
+    top: 16,
+  },
+  submitButton: {
+    backgroundColor: theme.accent,
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  submitButtonText: {
+    color: '#000',
+    fontSize: 16,
+    fontFamily: 'Inter-SemiBold',
+  },
+  switchContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 16,
+  },
+  switchText: {
+    fontSize: 14,
+    fontFamily: 'Inter-Regular',
+    color: theme.text,
+  },
+  switchLink: {
+    fontSize: 14,
+    fontFamily: 'Inter-Bold',
+    color: theme.accent,
+    marginLeft: 4,
+    textDecorationLine: 'underline',
+  },
+});
 
 export default function AuthScreen() {
   const [isLogin, setIsLogin] = useState(true);
@@ -26,40 +119,11 @@ export default function AuthScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const { login, signup } = useAuth();
+  const { theme } = useTheme();
 
-  // useEffect(() => {
-  //   const backHandler = BackHandler.addEventListener(
-  //     'hardwareBackPress',
-  //     () => {
-  //       return true;
-  //     }
-  //   );
+  const styles = createStyles(theme);
 
-  //   return () => backHandler.remove();
-  // }, []);
-
-  // const navigation = useNavigation();
-
-  // useFocusEffect(
-  //   React.useCallback(() => {
-  //     const onBeforeRemove = (e : any) => {
-  //       if (loading) return;
-
-  //       e.preventDefault();
-  //     };
-
-  //     navigation.addListener('beforeRemove', onBeforeRemove);
-
-  //     return () => navigation.removeListener('beforeRemove', onBeforeRemove);
-  //   }, [navigation, loading])
-  // );
-
-  const [fontsLoaded] = useFonts({
-    'DancingScript-Regular': require('../assets/fonts/DancingScript-Regular.ttf'),
-    'DancingScript-Medium': require('../assets/fonts/DancingScript-Medium.ttf'),
-    'DancingScript-SemiBold': require('../assets/fonts/DancingScript-SemiBold.ttf'),
-    'DancingScript-Bold': require('../assets/fonts/DancingScript-Bold.ttf'),
-  });
+  useBlockNavigation();
 
   const handleSubmit = async () => {
     if (!email || !password) {
@@ -127,7 +191,7 @@ export default function AuthScreen() {
                     value={username}
                     onChangeText={setUsername}
                     autoCapitalize="none"
-                    placeholderTextColor="#666"
+                    placeholderTextColor={theme.textSecondary}
                   />
                 </View>
                 <View style={styles.inputContainer}>
@@ -136,7 +200,7 @@ export default function AuthScreen() {
                     placeholder="Full Name"
                     value={fullName}
                     onChangeText={setFullName}
-                    placeholderTextColor="#666"
+                    placeholderTextColor={theme.textSecondary}
                   />
                 </View>
               </>
@@ -195,93 +259,3 @@ export default function AuthScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    paddingTop: -100,
-    paddingBottom: -100,
-  },
-  keyboardView: {
-    flex: 1,
-  },
-  content: {
-    flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 24,
-  },
-  header: {
-    alignItems: 'center',
-    marginBottom: 40,
-  },
-  title: {
-    fontSize: 48,
-    fontFamily: 'DancingScript-Bold',
-    color: '#000',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 24,
-    fontFamily: 'DancingScript-Regular',
-    color: '#666',
-    textAlign: 'center',
-  },
-  form: {
-    gap: 16,
-  },
-  inputContainer: {
-    position: 'relative',
-  },
-  input: {
-    backgroundColor: '#f8f9fa',
-    borderRadius: 12,
-    padding: 16,
-    fontSize: 16,
-    fontFamily: 'Inter-Regular',
-    borderWidth: 1,
-    borderColor: '#e9ecef',
-  },
-  passwordInput: {
-    backgroundColor: '#f8f9fa',
-    borderRadius: 12,
-    padding: 16,
-    paddingRight: 50,
-    fontSize: 16,
-    fontFamily: 'Inter-Regular',
-    borderWidth: 1,
-    borderColor: '#e9ecef',
-  },
-  eyeIcon: {
-    position: 'absolute',
-    right: 16,
-    top: 16,
-  },
-  submitButton: {
-    backgroundColor: '#000',
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  submitButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontFamily: 'Inter-SemiBold',
-  },
-  switchContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 16,
-  },
-  switchText: {
-    fontSize: 14,
-    fontFamily: 'Inter-Regular',
-    color: '#666',
-  },
-  switchLink: {
-    fontSize: 14,
-    fontFamily: 'Inter-SemiBold',
-    color: '#000',
-  },
-});

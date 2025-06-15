@@ -23,6 +23,7 @@ import { View } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import type { EdgeInsets } from 'react-native-safe-area-context';
 import { SafeAreaProvider } from '@/contexts/SafeAreaContext';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -58,26 +59,28 @@ function ThemeAwareRoot({ insets }: { insets: EdgeInsets }) {
   const { theme, isDarkMode } = useTheme();
 
   return (
-    <SafeAreaProvider>
-    <AuthProvider>
-      <NotificationProvider>
-        <ShoppingProvider>
-          <View style={{ flex: 1, backgroundColor: theme.background, paddingBottom: insets.bottom, paddingTop: insets.top }} >
-            <Stack screenOptions={{ headerShown: false }} >
-              <Stack.Screen name="auth" options={{ headerShown: false }} />
-              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-              <Stack.Screen name="notifications" options={{ headerShown: false }} />
-              <Stack.Screen name="product/[id]" options={{ headerShown: false }} />
-              <Stack.Screen name="post/[id]" options={{ headerShown: false }} />
-              <Stack.Screen name="user/[username]" options={{ headerShown: false }} />
-              <Stack.Screen name="shop/[shopname]" options={{ headerShown: false }} />
-              <Stack.Screen name="settings" options={{ headerShown: false }} />
-            </Stack>
-          </View>
-          <StatusBar style={isDarkMode ? 'light' : 'dark'} animated translucent backgroundColor="transparent" />
-        </ShoppingProvider>
-      </NotificationProvider>
-    </AuthProvider>
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <AuthProvider>
+          <NotificationProvider>
+            <ShoppingProvider>
+              <View style={{ flex: 1, backgroundColor: theme.background, paddingBottom: insets.bottom, paddingTop: insets.top }} >
+                <Stack screenOptions={{ headerShown: false }} >
+                  <Stack.Screen name="auth" options={{ headerShown: false }} />
+                  <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                  <Stack.Screen name="notifications" options={{ headerShown: false }} />
+                  <Stack.Screen name="product/[id]" options={{ headerShown: false }} />
+                  <Stack.Screen name="post/[id]" options={{ headerShown: false }} />
+                  <Stack.Screen name="user/[username]" options={{ headerShown: false }} />
+                  <Stack.Screen name="shop/[shopname]" options={{ headerShown: false }} />
+                  <Stack.Screen name="settings" options={{ headerShown: false }} />
+                </Stack>
+              </View>
+              <StatusBar style={isDarkMode ? 'light' : 'dark'} animated translucent backgroundColor="transparent" />
+            </ShoppingProvider>
+          </NotificationProvider>
+        </AuthProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }

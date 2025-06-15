@@ -269,7 +269,7 @@ export default function ShoppingScreen() {
           <View style={styles.headerButtons}>
             <TouchableOpacity
               style={styles.headerButton}
-              onPress={() => {router.push('/wishlist');}}
+              onPress={() => {router.push('/wishlist'); }}
             >
               <Heart size={24} color="#000" />
               {wishlist.length > 0 && (
@@ -279,7 +279,7 @@ export default function ShoppingScreen() {
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.headerButton}
-              onPress={() => setShowCart(true)}
+              onPress={() => {router.push('/cart'); }}
             >
               <ShoppingCart size={24} color="#000" />
               {getCartItemCount() > 0 && (

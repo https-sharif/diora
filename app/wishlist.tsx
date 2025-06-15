@@ -12,7 +12,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router } from 'expo-router';
 import { Product, useShopping } from '@/contexts/ShoppingContext';
 import { useTheme } from '@/contexts/ThemeContext';
 
@@ -255,17 +255,6 @@ const createStyles = (theme: any) =>
     },
   });
 
-type WishlistItem = {
-  id: string;
-  title: string;
-};
-
-const wishlistData: WishlistItem[] = [
-  { id: '1', title: 'Item 1' },
-  { id: '2', title: 'Item 2' },
-  { id: '3', title: 'Item 3' },
-];
-
 const Wishlist = () => {
   const { theme } = useTheme();
   const styles = createStyles(theme);
@@ -365,7 +354,7 @@ const Wishlist = () => {
         >
           <ArrowLeft size={24} color={theme.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>WishList</Text>
+        <Text style={styles.headerTitle}>Wishlist</Text>
         <TouchableOpacity style={styles.headerButton}>
           <Menu size={24} color={theme.text} />
         </TouchableOpacity>
