@@ -4,7 +4,9 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "cross-env EXPO_NO_TELEMETRY=1 expo start"
+    "dev": "cross-env EXPO_NO_TELEMETRY=1 expo start",
+    "build:web": "expo export --platform web",
+    "lint": "expo lint"
   },
   "dependencies": {
     "@expo-google-fonts/inter": "^0.2.3",
