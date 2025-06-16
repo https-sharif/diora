@@ -33,57 +33,57 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    // Simulate checking for existing session
-    const checkAuthStatus = async () => {
-      try {
-        // In a real app, you'd check for stored tokens/session
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        setLoading(false);
-      } catch (error) {
-        setLoading(false);
-      }
-    };
-
-    checkAuthStatus();
-  }, []);
-
   // useEffect(() => {
-  //   if (__DEV__) {
-  //     const mockUser: User = {
-  //       id: 'dev',
-  //       email: 'dev@example.com',
-  //       username: 'devUser',
-  //       fullName: 'Dev User',
-  //       avatar:
-  //         'https://images.pexels.com/photos/1036623/pexels-photo-1036623.jpeg?auto=compress&cs=tinysrgb&w=150',
-  //       bio: 'Dev mode auto-login',
-  //       followers: 999,
-  //       following: 999,
-  //       posts: 999,
-  //     };
-  //     setUser(mockUser);
-  //     setLoading(false);
-  //   } else {
-  //     const checkAuthStatus = async () => {
-  //       try {
-  //         await new Promise((resolve) => setTimeout(resolve, 1000));
-  //         setLoading(false);
-  //       } catch {
-  //         setLoading(false);
-  //       }
-  //     };
-  //     checkAuthStatus();
-  //   }
+  //   // Simulate checking for existing session
+  //   const checkAuthStatus = async () => {
+  //     try {
+  //       // In a real app, you'd check for stored tokens/session
+  //       await new Promise(resolve => setTimeout(resolve, 1000));
+  //       setLoading(false);
+  //     } catch (error) {
+  //       setLoading(false);
+  //     }
+  //   };
+
+  //   checkAuthStatus();
   // }, []);
 
+  // useEffect(() => {
+  //   if (!loading && user) {
+  //     router.replace('/(tabs)');
+  //   } else if (!loading && !user) {
+  //     router.replace('/auth');
+  //   }
+  // }, [loading, user]);
+
   useEffect(() => {
-    if (!loading && user) {
-      router.replace('/(tabs)');
-    } else if (!loading && !user) {
-      router.replace('/auth');
+    if (__DEV__) {
+      const mockUser: User = {
+        id: 'dev',
+        email: 'dev@example.com',
+        username: 'devUser',
+        fullName: 'Dev User',
+        avatar:
+          'https://images.pexels.com/photos/1036623/pexels-photo-1036623.jpeg?auto=compress&cs=tinysrgb&w=150',
+        bio: 'Dev mode auto-login',
+        followers: 999,
+        following: 999,
+        posts: 999,
+      };
+      setUser(mockUser);
+      setLoading(false);
+    } else {
+      const checkAuthStatus = async () => {
+        try {
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+          setLoading(false);
+        } catch {
+          setLoading(false);
+        }
+      };
+      checkAuthStatus();
     }
-  }, [loading, user]);
+  }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {

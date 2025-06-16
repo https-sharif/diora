@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import {
@@ -15,15 +15,13 @@ import { ShoppingProvider } from '@/contexts/ShoppingContext';
 import { NotificationProvider } from '@/contexts/NotificationContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import React from 'react';
-import {
-  SafeAreaView,
-  useSafeAreaInsets,
-} from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { View } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import type { EdgeInsets } from 'react-native-safe-area-context';
 import { SafeAreaProvider } from '@/contexts/SafeAreaContext';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { useAuth } from '@/contexts/AuthContext';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -31,7 +29,20 @@ export default function RootLayout() {
   useFrameworkReady();
   const insets = useSafeAreaInsets();
 
-  const [fontsLoaded, fontError] = useFonts({
+  return (
+    <AuthProvider>
+      <ThemeProvider>
+        <AppReadyWrapper insets={insets} />
+      </ThemeProvider>
+    </AuthProvider>
+  );
+}
+
+function AppReadyWrapper({ insets }: { insets: EdgeInsets }) {
+  const { theme, isDarkMode } = useTheme();
+  const { loading } = useAuth();
+
+  const [fontsLoaded] = useFonts({
     'Inter-Regular': Inter_400Regular,
     'Inter-Medium': Inter_500Medium,
     'Inter-SemiBold': Inter_600SemiBold,
@@ -39,34 +50,24 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
-    if (fontsLoaded || fontError) {
+    if (fontsLoaded && !loading) {
       SplashScreen.hideAsync();
     }
-  }, [fontsLoaded, fontError]);
+  }, [fontsLoaded, loading]);
 
-  if (!fontsLoaded && !fontError) {
+  if (!fontsLoaded || loading) {
     return null;
   }
 
   return (
-    <ThemeProvider>
-      <ThemeAwareRoot insets={insets} />
-    </ThemeProvider>
-  );
-}
-
-function ThemeAwareRoot({ insets }: { insets: EdgeInsets }) {
-  const { theme, isDarkMode } = useTheme();
-
-  return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <AuthProvider>
           <NotificationProvider>
             <ShoppingProvider>
               <View style={{ flex: 1, backgroundColor: theme.background, paddingBottom: insets.bottom, paddingTop: insets.top }} >
                 <Stack screenOptions={{ headerShown: false }} >
-                  <Stack.Screen name="auth" options={{ headerShown: false }} />
+                  <Stack.Screen name='empty' options={{ headerShown: false }} />
+                  <Stack.Screen name='auth' options={{ headerShown: false }} />
                   <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
                   <Stack.Screen name="notifications" options={{ headerShown: false }} />
                   <Stack.Screen name="product/[id]" options={{ headerShown: false }} />
@@ -79,7 +80,6 @@ function ThemeAwareRoot({ insets }: { insets: EdgeInsets }) {
               <StatusBar style={isDarkMode ? 'light' : 'dark'} animated translucent backgroundColor="transparent" />
             </ShoppingProvider>
           </NotificationProvider>
-        </AuthProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

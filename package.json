@@ -15,6 +15,7 @@
     "@react-native-async-storage/async-storage": "^2.2.0",
     "@react-navigation/bottom-tabs": "^7.2.0",
     "@react-navigation/native": "^7.0.14",
+    "color": "^5.0.0",
     "expo": "^53.0.11",
     "expo-blur": "~14.1.5",
     "expo-camera": "~16.1.8",

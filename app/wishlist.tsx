@@ -151,12 +151,6 @@ const createStyles = (theme: any) =>
       borderRadius: 12,
       marginBottom: 16,
       resizeMode: 'contain',
-      shadowColor: theme.accent,
-      shadowOffset: {
-        width: 0,
-        height: 4,
-      },
-      backgroundColor: theme.card,
     },
     productModalName: {
       fontSize: 24,
