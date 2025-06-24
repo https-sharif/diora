@@ -529,16 +529,16 @@ export default function ShoppingScreen() {
         </View>
 
         <View style={styles.searchContainer}>
-          <Search size={20} color="#666" style={styles.searchIcon} />
+          <Search size={20} color={theme.textSecondary} style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
             placeholder="Search products..."
             value={searchQuery}
             onChangeText={setSearchQuery}
-            placeholderTextColor="#666"
+            placeholderTextColor={theme.textSecondary}
           />
           <TouchableOpacity style={styles.filterButton}>
-            <Filter size={20} color="#666" />
+            <Filter size={20} color={theme.textSecondary} />
           </TouchableOpacity>
         </View>
       </View>

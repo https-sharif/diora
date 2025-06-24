@@ -4,7 +4,7 @@ import React from 'react';
 import { useTheme } from '@/contexts/ThemeContext';
 
 export default function TabLayout() {
-  const { theme, isDarkMode } = useTheme();
+  const { theme } = useTheme();
 
   return (
     <Tabs

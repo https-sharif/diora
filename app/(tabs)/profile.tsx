@@ -134,14 +134,13 @@ const createStyles = (theme: any) =>
     },
     postsGrid: {
       backgroundColor: theme.background,
-      paddingBottom: 84,
     },
     postsRow: {
       justifyContent: 'space-between',
       paddingHorizontal: 2,
     },
     postItem: {
-      width: '32%',
+      width: '33%',
       aspectRatio: 1,
       margin: 1,
       position: 'relative',
@@ -185,6 +184,78 @@ const userPosts = [
   },
   {
     id: '6',
+    image:
+      'https://images.pexels.com/photos/1462637/pexels-photo-1462637.jpeg?auto=compress&cs=tinysrgb&w=300',
+    stars: 145,
+  },
+  {
+    id: '7',
+    image:
+      'https://images.pexels.com/photos/1126993/pexels-photo-1126993.jpeg?auto=compress&cs=tinysrgb&w=300',
+    stars: 128,
+  },
+  {
+    id: '8',
+    image:
+      'https://images.pexels.com/photos/1043474/pexels-photo-1043474.jpeg?auto=compress&cs=tinysrgb&w=300',
+    stars: 256,
+  },
+  {
+    id: '9',
+    image:
+      'https://images.pexels.com/photos/1457983/pexels-photo-1457983.jpeg?auto=compress&cs=tinysrgb&w=300',
+    stars: 89,
+  },
+  {
+    id: '10',
+    image:
+      'https://images.pexels.com/photos/1040424/pexels-photo-1040424.jpeg?auto=compress&cs=tinysrgb&w=300',
+    stars: 167,
+  },
+  {
+    id: '11',
+    image:
+      'https://images.pexels.com/photos/1381556/pexels-photo-1381556.jpeg?auto=compress&cs=tinysrgb&w=300',
+    stars: 203,
+  },
+  {
+    id: '12',
+    image:
+      'https://images.pexels.com/photos/1462637/pexels-photo-1462637.jpeg?auto=compress&cs=tinysrgb&w=300',
+    stars: 145,
+  },
+  {
+    id: '13',
+    image:
+      'https://images.pexels.com/photos/1126993/pexels-photo-1126993.jpeg?auto=compress&cs=tinysrgb&w=300',
+    stars: 128,
+  },
+  {
+    id: '14',
+    image:
+      'https://images.pexels.com/photos/1043474/pexels-photo-1043474.jpeg?auto=compress&cs=tinysrgb&w=300',
+    stars: 256,
+  },
+  {
+    id: '15',
+    image:
+      'https://images.pexels.com/photos/1457983/pexels-photo-1457983.jpeg?auto=compress&cs=tinysrgb&w=300',
+    stars: 89,
+  },
+  {
+    id: '16',
+    image:
+      'https://images.pexels.com/photos/1040424/pexels-photo-1040424.jpeg?auto=compress&cs=tinysrgb&w=300',
+    stars: 167,
+  },
+  {
+    id: '17',
+    image:
+      'https://images.pexels.com/photos/1381556/pexels-photo-1381556.jpeg?auto=compress&cs=tinysrgb&w=300',
+    stars: 203,
+  },
+  {
+    id: '18',
     image:
       'https://images.pexels.com/photos/1462637/pexels-photo-1462637.jpeg?auto=compress&cs=tinysrgb&w=300',
     stars: 145,
