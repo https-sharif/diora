@@ -9,13 +9,11 @@ import {
   FlatList,
   Modal,
   Alert,
-  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { 
   ArrowLeft, 
-  Grid2x2 as Grid, 
   Heart, 
   MessageCircle, 
   Share, 
@@ -32,247 +30,50 @@ import {
   UserPlus,
   UserMinus
 } from 'lucide-react-native';
-import { Product, useShopping } from '@/contexts/ShoppingContext';
+import { Product, Review, useShopping } from '@/contexts/ShoppingContext';
+import { ShopProfile, useAuth } from '@/contexts/AuthContext';
 
-const { width } = Dimensions.get('window');
-
-interface ShopProfile {
-  id: string;
-  shopname: string;
-  displayName: string;
-  avatar: string;
-  coverImage: string;
-  description: string;
-  followers: number;
-  products: number;
-  rating: number;
-  reviewCount: number;
-  isFollowing: boolean;
-  isVerified: boolean;
-  location: string;
-  phone?: string;
-  email?: string;
-  website?: string;
-  openingHours: string;
-  establishedYear: string;
-  categories: string[];
-  shopProducts: Product[];
-  reviews: Array<{
-    id: string;
-    user: string;
-    avatar: string;
-    rating: number;
-    comment: string;
-    date: string;
-    images?: string[];
-  }>;
-}
-
-const mockShopProfiles: Record<string, ShopProfile> = {
-  'urban_threads': {
+const mockShopProfiles: ShopProfile[] = [
+  {
     id: '1',
-    shopname: 'urban_threads',
-    displayName: 'Urban Threads',
-    avatar: 'https://images.pexels.com/photos/1926769/pexels-photo-1926769.jpeg?auto=compress&cs=tinysrgb&w=300',
-    coverImage: 'https://images.pexels.com/photos/1884581/pexels-photo-1884581.jpeg?auto=compress&cs=tinysrgb&w=800',
+    userId: '1',
+    username: 'urban_threads',
+    name: 'Urban Threads',
+    logoUrl: 'https://images.pexels.com/photos/1926769/pexels-photo-1926769.jpeg?auto=compress&cs=tinysrgb&w=300',
+    coverImageUrl: 'https://images.pexels.com/photos/1884581/pexels-photo-1884581.jpeg?auto=compress&cs=tinysrgb&w=800',
     description: 'Curated vintage and contemporary fashion pieces. Sustainable fashion for the modern wardrobe. Quality over quantity, style over trends.',
-    followers: 25600,
-    products: 156,
+    followers: [ '1', '2', '3', '4', '5'],
     rating: 4.8,
-    reviewCount: 1247,
-    isFollowing: false,
     isVerified: true,
     location: 'Brooklyn, NY',
-    phone: '+1 (555) 123-4567',
-    email: 'hello@urbanthreads.com',
+    contactPhone: '+1 (555) 123-4567',
+    contactEmail: 'hello@urbanthreads.com',
     website: 'urbanthreads.com',
-    openingHours: 'Mon-Sat 10AM-8PM, Sun 12PM-6PM',
-    establishedYear: '2019',
+    createdAt: '2019',
+    updatedAt: '2023',
     categories: ['Vintage', 'Streetwear', 'Accessories'],
-    shopProducts: [
-      {
-        id: '1',
-        name: 'Vintage Denim Jacket',
-        price: 89.99,
-        image: 'https://images.pexels.com/photos/1126993/pexels-photo-1126993.jpeg?auto=compress&cs=tinysrgb&w=400',
-        category: 'Outerwear',
-        brand: 'Urban Threads',
-        description: 'A classic vintage denim jacket with a modern twist. Perfect for layering or as a statement piece.',
-        sizes: ['S', 'M', 'L', 'XL'],
-        colors: ['Blue', 'Black'],
-        stock: 25,
-        rating: 4.5,
-        reviews: 120,
-        isAvailable: true,
-        discount: 10,
-      },
-      {
-        id: '2',
-        name: 'Classic White Sneakers',
-        price: 79.99,
-        image: 'https://images.pexels.com/photos/1464625/pexels-photo-1464625.jpeg?auto=compress&cs=tinysrgb&w=400',
-        category: 'Shoes',
-        brand: 'Urban Threads',
-        description: 'Timeless white sneakers that go with everything. Made from sustainable materials for a stylish and eco-friendly choice.',
-        sizes: ['6', '7', '8', '9', '10'],
-        colors: ['White'],
-        stock: 50,
-        rating: 4.7,
-        reviews: 200,
-        isAvailable: true,
-      },
-      {
-        id: '3',
-        name: 'Leather Crossbody Bag',
-        price: 129.99,
-        image: 'https://images.pexels.com/photos/1381556/pexels-photo-1381556.jpeg?auto=compress&cs=tinysrgb&w=400',
-        category: 'Accessories',
-        brand: 'Urban Threads',
-        description: 'A chic leather crossbody bag with multiple compartments. Perfect for everyday use or a night out.',
-        sizes: [],
-        colors: ['Black', 'Brown'],
-        stock: 15,
-        rating: 4.9,
-        reviews: 75,
-        isAvailable: true,
-      },
-      {
-        id: '4',
-        name: 'Oversized Blazer',
-        price: 149.99,
-        image: 'https://images.pexels.com/photos/1462637/pexels-photo-1462637.jpeg?auto=compress&cs=tinysrgb&w=400',
-        category: 'Outerwear',
-        brand: 'Urban Threads',
-        description: 'A stylish oversized blazer that adds a touch of sophistication to any outfit.',
-        sizes: ['S', 'M', 'L'],
-        colors: ['Gray', 'Black'],
-        stock: 20,
-        rating: 4.6,
-        reviews: 50,
-        isAvailable: true,
-      },
-      {
-        id: '5',
-        name: 'High-Waisted Jeans',
-        price: 69.99,
-        image: 'https://images.pexels.com/photos/1040424/pexels-photo-1040424.jpeg?auto=compress&cs=tinysrgb&w=400',
-        category: 'Bottoms',
-        brand: 'Urban Threads',
-        description: 'A pair of stylish high-waisted jeans that flatter your figure.',
-        sizes: ['S', 'M', 'L', 'XL'],
-        colors: ['Blue', 'Black'],
-        stock: 30,
-        rating: 4.5,
-        reviews: 100,
-        isAvailable: true,
-      },
-      {
-        id: '6',
-        name: 'Silk Scarf',
-        price: 39.99,
-        image: 'https://images.pexels.com/photos/1457983/pexels-photo-1457983.jpeg?auto=compress&cs=tinysrgb&w=400',
-        category: 'Accessories',
-        brand: 'Urban Threads',
-        description: 'A luxurious silk scarf that adds a touch of elegance to any outfit.',
-        sizes: [],
-        colors: ['Red', 'Blue', 'Green'],
-        stock: 50,
-        rating: 4.8,
-        reviews: 30,
-        isAvailable: true,
-      },
-    ],
-    reviews: [
-      {
-        id: '1',
-        user: 'fashionista_jane',
-        avatar: 'https://images.pexels.com/photos/1036623/pexels-photo-1036623.jpeg?auto=compress&cs=tinysrgb&w=100',
-        rating: 5,
-        comment: 'Amazing quality and unique pieces! The vintage denim jacket is perfect. Fast shipping and great customer service.',
-        date: '2 days ago',
-        images: ['https://images.pexels.com/photos/1126993/pexels-photo-1126993.jpeg?auto=compress&cs=tinysrgb&w=200'],
-      },
-      {
-        id: '2',
-        user: 'style_maven',
-        avatar: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=100',
-        rating: 4,
-        comment: 'Great selection of sustainable fashion. Love supporting this local business!',
-        date: '1 week ago',
-      },
-      {
-        id: '3',
-        user: 'trendy_alex',
-        avatar: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=100',
-        rating: 5,
-        comment: 'The blazer fits perfectly and the quality is outstanding. Will definitely shop here again!',
-        date: '2 weeks ago',
-      },
-    ],
+    productIds: [ '1', '2', '3', '4', '5', '6'],
   },
-  'street_wear': {
+  {
     id: '2',
-    shopname: 'street_wear',
-    displayName: 'Vintage Treasures',
-    avatar: 'https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=300',
-    coverImage: 'https://images.pexels.com/photos/1884584/pexels-photo-1884584.jpeg?auto=compress&cs=tinysrgb&w=800',
+    userId: '2',
+    username: 'street_wear',
+    name: 'Street Wear',
+    logoUrl: 'https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=300',
+    coverImageUrl: 'https://images.pexels.com/photos/1884584/pexels-photo-1884584.jpeg?auto=compress&cs=tinysrgb&w=800',
     description: 'Authentic vintage clothing from the 60s, 70s, and 80s. Each piece tells a story and brings timeless style to your wardrobe.',
-    followers: 18200,
-    products: 89,
+    followers: ['18200', '18201', '18202', '18203', '18204'],
     rating: 4.6,
-    reviewCount: 892,
-    isFollowing: true,
     isVerified: false,
     location: 'San Francisco, CA',
-    phone: '+1 (555) 987-6543',
+    contactPhone: '+1 (555) 987-6543',
     website: 'vintagetreasures.com',
-    openingHours: 'Tue-Sun 11AM-7PM, Closed Mondays',
-    establishedYear: '2015',
+    createdAt: '2015',
     categories: ['Vintage', 'Retro', 'Collectibles'],
-    shopProducts: [
-      {
-        id: '7',
-        name: '70s Floral Dress',
-        price: 95.99,
-        image: 'https://images.pexels.com/photos/1457983/pexels-photo-1457983.jpeg?auto=compress&cs=tinysrgb&w=400',
-        category: 'Dresses',
-        brand: 'Vintage Treasures',
-        description: 'A beautiful 70s floral dress that captures the essence of vintage fashion.',
-        sizes: ['M', 'L'],
-        colors: ['Red', 'Yellow'],
-        stock: 10,
-        rating: 4.5,
-        reviews: 25,
-        isAvailable: true,
-      },
-      {
-        id: '8',
-        name: 'Vintage Band Tee',
-        price: 45.99,
-        image: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=400',
-        category: 'Tops',
-        brand: 'Vintage Treasures',
-        description: 'A classic vintage band tee that never goes out of style.',
-        sizes: ['S', 'M', 'L'],
-        colors: ['Black', 'White'],
-        stock: 20,
-        rating: 4.8,
-        reviews: 30,
-        isAvailable: true,
-      },
-    ],
-    reviews: [
-      {
-        id: '4',
-        user: 'retro_lover',
-        avatar: 'https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=100',
-        rating: 5,
-        comment: 'Found the perfect 70s dress here! Authentic vintage pieces at great prices.',
-        date: '3 days ago',
-      },
-    ],
+    productIds: [ '7', '8', '9', '10', '11', '12'],
+    updatedAt: '2023',
   },
-};
+];
 
 export default function ShopProfileScreen() {
   const { shopname } = useLocalSearchParams<{ shopname: string }>();
@@ -282,31 +83,72 @@ export default function ShopProfileScreen() {
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [selectedTab, setSelectedTab] = useState<'products' | 'reviews'>('products');
   const [loading, setLoading] = useState(true);
+  const { user, followUser } = useAuth();
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isFollowing, setIsFollowing] = useState(false);
 
   useEffect(() => {
-    if (shopname && mockShopProfiles[shopname]) {
-      setShopProfile(mockShopProfiles[shopname]);
+    if (shopname) {
+      const profile = mockShopProfiles.find(p => p.username === shopname);
+      if (profile) {
+        setShopProfile(profile);
+      }
     }
     setLoading(false);
   }, [shopname]);
 
-  const handleFollow = () => {
-    if (!shopProfile) return;
-    
-    const newFollowingState = !shopProfile.isFollowing;
-    setShopProfile(prev => prev ? {
-      ...prev,
-      isFollowing: newFollowingState,
-      followers: newFollowingState ? prev.followers + 1 : prev.followers - 1,
-    } : null);
+  
+  useEffect(() => {
+    if (shopProfile) {
+      setIsFollowing(user?.id ? shopProfile.followers.includes(user.id) : false);
+      const fetchedProducts: Product[] = [
+        {
+          id: '1',
+          name: 'Vintage Denim Jacket',
+          price: 59.99,
+          imageUrl: 'https://images.pexels.com/photos/1234567/pexels-photo-1234567.jpeg?auto=compress&cs=tinysrgb&w=300',
+          brand: 'Urban Threads',
+          category: 'Jackets',
+          description: 'A classic denim jacket with a vintage wash.',
+          sizes: ['S', 'M', 'L'],
+          colors: ['Blue', 'Black'],
+          stock: 10,
+          rating: 4.5,
+        },
+        // Add more products as needed
+      ];
+
+      setProducts(fetchedProducts);
+
+      const fetchedReviews: Review[] = [
+        {
+          id: '1',
+          userId: '1',
+          targetId: '1',
+          targetType: 'shop',
+          rating: 5,
+          comment: 'Amazing shop with great vintage finds!',
+          createdAt: '2023-10-01T12:00:00Z',
+        },
+        // Add more reviews as needed
+      ];
+      setReviews(fetchedReviews);
+    }
+  }, [shopProfile]);
+
+  const toggleFollow = () => {
+    if (!shopProfile || !user) return;
+    followUser(shopProfile.id);
   };
 
+
   const handleContact = () => {
-    Alert.alert('Contact Shop', `Contact ${shopProfile?.displayName}`);
+    Alert.alert('Contact Shop', `Contact ${shopProfile?.name}`);
   };
 
   const handleShare = () => {
-    Alert.alert('Share Shop', `Share ${shopProfile?.displayName}'s shop`);
+    Alert.alert('Share Shop', `Share ${shopProfile?.name}'s shop`);
   };
 
   const handleReport = () => {
@@ -442,7 +284,7 @@ export default function ShopProfileScreen() {
         <TouchableOpacity style={styles.headerButton} onPress={() => router.back()}>
           <ArrowLeft size={24} color="#000" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>{shopProfile.shopname}</Text>
+        <Text style={styles.headerTitle}>{shopProfile.name}</Text>
         <View style={styles.headerActions}>
           <TouchableOpacity style={styles.headerButton} onPress={handleShare}>
             <Share size={24} color="#000" />
@@ -458,15 +300,15 @@ export default function ShopProfileScreen() {
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Cover Image */}
-        <Image source={{ uri: shopProfile.coverImage }} style={styles.coverImage} />
+        <Image source={{ uri: shopProfile.coverImageUrl }} style={styles.coverImage} />
 
         {/* Shop Info */}
         <View style={styles.shopSection}>
           <View style={styles.shopHeader}>
-            <Image source={{ uri: shopProfile.avatar }} style={styles.shopAvatar} />
+            <Image source={{ uri: shopProfile.logoUrl }} style={styles.shopAvatar} />
             <View style={styles.shopStats}>
               <View style={styles.statItem}>
-                <Text style={styles.statNumber}>{shopProfile.products}</Text>
+                <Text style={styles.statNumber}>{products.length}</Text>
                 <Text style={styles.statLabel}>Products</Text>
               </View>
               <View style={styles.statItem}>
@@ -478,14 +320,14 @@ export default function ShopProfileScreen() {
                   <Star size={16} color="#FFD700" fill="#FFD700" />
                   <Text style={styles.statNumber}>{shopProfile.rating}</Text>
                 </View>
-                <Text style={styles.statLabel}>{shopProfile.reviewCount} reviews</Text>
+                <Text style={styles.statLabel}>{reviews.length} reviews</Text>
               </View>
             </View>
           </View>
 
           <View style={styles.shopInfo}>
             <View style={styles.nameContainer}>
-              <Text style={styles.shopName}>{shopProfile.displayName}</Text>
+              <Text style={styles.shopName}>{shopProfile.name}</Text>
               {shopProfile.isVerified && (
                 <View style={styles.verifiedBadge}>
                   <Text style={styles.verifiedText}>✓</Text>
@@ -500,20 +342,20 @@ export default function ShopProfileScreen() {
                 <MapPin size={16} color="#666" />
                 <Text style={styles.contactText}>{shopProfile.location}</Text>
               </View>
-              <View style={styles.contactItem}>
+              {/* <View style={styles.contactItem}>
                 <Clock size={16} color="#666" />
                 <Text style={styles.contactText}>{shopProfile.openingHours}</Text>
-              </View>
-              {shopProfile.phone && (
+              </View> */}
+              {shopProfile.contactPhone && (
                 <View style={styles.contactItem}>
                   <Phone size={16} color="#666" />
-                  <Text style={styles.contactText}>{shopProfile.phone}</Text>
+                  <Text style={styles.contactText}>{shopProfile.contactPhone}</Text>
                 </View>
               )}
-              {shopProfile.email && (
+              {shopProfile.contactEmail && (
                 <View style={styles.contactItem}>
                   <Mail size={16} color="#666" />
-                  <Text style={styles.contactText}>{shopProfile.email}</Text>
+                  <Text style={styles.contactText}>{shopProfile.contactEmail}</Text>
                 </View>
               )}
               {shopProfile.website && (
@@ -524,7 +366,7 @@ export default function ShopProfileScreen() {
               )}
             </View>
 
-            <Text style={styles.establishedText}>Established {shopProfile.establishedYear}</Text>
+            <Text style={styles.establishedText}>Established {shopProfile.createdAt}</Text>
           </View>
 
           {/* Categories */}
@@ -542,19 +384,19 @@ export default function ShopProfileScreen() {
           {/* Action Buttons */}
           <View style={styles.actionButtons}>
             <TouchableOpacity 
-              style={[styles.followButton, shopProfile.isFollowing && styles.followingButton]}
-              onPress={handleFollow}
+              style={[styles.followButton, isFollowing && styles.followingButton]}
+              onPress={toggleFollow}
             >
-              {shopProfile.isFollowing ? (
+              {isFollowing ? (
                 <UserMinus size={16} color="#666" />
               ) : (
                 <UserPlus size={16} color="#fff" />
               )}
               <Text style={[
                 styles.followButtonText, 
-                shopProfile.isFollowing && styles.followingButtonText
+                isFollowing && styles.followingButtonText
               ]}>
-                {shopProfile.isFollowing ? 'Following' : 'Follow'}
+                {isFollowing ? 'Following' : 'Follow'}
               </Text>
             </TouchableOpacity>
             
@@ -576,7 +418,7 @@ export default function ShopProfileScreen() {
               styles.tabText, 
               selectedTab === 'products' && styles.activeTabText
             ]}>
-              Products ({shopProfile.products})
+              Products ({products.length})
             </Text>
           </TouchableOpacity>
           <TouchableOpacity 
@@ -588,7 +430,7 @@ export default function ShopProfileScreen() {
               styles.tabText, 
               selectedTab === 'reviews' && styles.activeTabText
             ]}>
-              Reviews ({shopProfile.reviewCount})
+              Reviews ({reviews.length})
             </Text>
           </TouchableOpacity>
         </View>
@@ -596,7 +438,7 @@ export default function ShopProfileScreen() {
         {/* Content */}
         {selectedTab === 'products' ? (
           <FlatList
-            data={shopProfile.shopProducts}
+            data={products}
             renderItem={({ item }) => renderProduct({ item })}
             keyExtractor={(item) => item.id}
             numColumns={2}
@@ -607,7 +449,7 @@ export default function ShopProfileScreen() {
         ) : (
           <View style={styles.reviewsContainer}>
             <FlatList
-              data={shopProfile.reviews}
+              data={reviews}
               renderItem={renderReview}
               keyExtractor={(item) => item.id}
               scrollEnabled={false}

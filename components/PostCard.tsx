@@ -1,81 +1,265 @@
 import React, { useEffect, useState } from 'react';
-import {
-  View,
-  Text,
-  Image,
-  TouchableOpacity,
-  StyleSheet,
-  Dimensions,
-  Modal,
-  ScrollView,
-  TextInput,
-  Alert,
-} from 'react-native';
-import {
-  Star,
-  MessageCircle,
-  Share,
-  X,
-  Send,
-  Heart,
-} from 'lucide-react-native';
-
-interface Comment {
+import { View, Text, Image, TouchableOpacity, Dimensions, Modal, ScrollView, TextInput, StyleSheet, TouchableWithoutFeedback, KeyboardAvoidingView, Platform , Keyboard } from 'react-native';
+import { Star, MessageCircle, X, Send, Heart } from 'lucide-react-native';
+import { useTheme } from '@/contexts/ThemeContext';
+export interface Comment {
   id: string;
-  user: string;
-  avatar: string;
+  userId: string;
+  username: string;
+  avatar?: string;
   text: string;
-  timestamp: string;
-  likes: number;
+  createdAt: string;
   replies?: Comment[];
+  likes: number;
+}
+interface Post {
+  id: string;
+  userId: string;
+  username: string;
+  avatar?: string;
+  imageUrl: string;
+  caption?: string;
+  stars: number;
+  comments: number;
+  createdAt: string;
 }
 
 interface PostCardProps {
-  post: {
-    id: string;
-    user: {
-      username: string;
-      avatar: string;
-    };
-    image: string;
-    caption: string;
-    stars: number;
-    comments: number;
-    timestamp: string;
-  };
+  post: Post;
   onStar?: (postId: string) => void;
 }
 
 const { width, height } = Dimensions.get('window');
 
+const createStyles = (theme: any) => {
+  return StyleSheet.create({
+    container: {
+      backgroundColor: theme.background,
+      marginBottom: 16,
+      borderRadius: 16,
+      overflow: 'hidden',
+      shadowColor: theme.text,
+      shadowOffset: {
+        width: 0,
+        height: 4,
+      },
+      shadowOpacity: 0.1,
+      shadowRadius: 8,
+      elevation: 8,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: 16,
+    },
+    avatar: {
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+    },
+    userInfo: {
+      marginLeft: 12,
+      flex: 1,
+    },
+    username: {
+      fontSize: 16,
+      fontFamily: 'Inter-SemiBold',
+      color: theme.text,
+    },
+    timestamp: {
+      fontSize: 12,
+      fontFamily: 'Inter-Regular',
+      color: theme.textSecondary,
+      marginTop: 2,
+    },
+    postImage: {
+      width: '100%',
+      height: width,
+      marginHorizontal: 16,
+      borderRadius: 12,
+      resizeMode: 'contain',
+    },
+    actions: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 16,
+      paddingVertical: 16,
+      gap: 20,
+    },
+    actionButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+    },
+    actionText: {
+      fontSize: 14,
+      fontFamily: 'Inter-Bold',
+      color: theme.text,
+    },
+    content: {
+      paddingHorizontal: 16,
+      paddingBottom: 16,
+    },
+    caption: {
+      fontSize: 14,
+      fontFamily: 'Inter-Regular',
+      color: theme.text,
+      lineHeight: 20,
+    },
+    captionUsername: {
+      fontFamily: 'Inter-Bold',
+    },
+    commentsModal: {
+      flex: 1,
+      backgroundColor: theme.card,
+    },
+    commentsHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.border,
+    },
+    commentsTitle: {
+      fontSize: 20,
+      fontFamily: 'Inter-Bold',
+      color: theme.text,
+    },
+    commentsList: {
+      flex: 1,
+      padding: 16,
+    },
+    commentItem: {
+      flexDirection: 'row',
+      marginBottom: 16,
+    },
+    replyItem: {
+      marginLeft: 40,
+      marginTop: 8,
+      marginBottom: 8,
+    },
+    commentAvatar: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+    },
+    commentContent: {
+      flex: 1,
+      marginLeft: 12,
+    },
+    commentHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      marginBottom: 4,
+    },
+    commentUser: {
+      fontSize: 14,
+      fontFamily: 'Inter-SemiBold',
+      color: theme.text,
+    },
+    commentTime: {
+      fontSize: 12,
+      fontFamily: 'Inter-Regular',
+      color: theme.textSecondary,
+    },
+    commentText: {
+      fontSize: 14,
+      fontFamily: 'Inter-Regular',
+      color: theme.text,
+      lineHeight: 18,
+      marginBottom: 8,
+    },
+    commentActions: {
+      flexDirection: 'row',
+      gap: 16,
+    },
+    commentAction: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+    },
+    commentActionText: {
+      fontSize: 12,
+      fontFamily: 'Inter-Medium',
+      color: theme.textSecondary,
+    },
+    commentInput: {
+      borderTopWidth: 1,
+      borderTopColor: theme.border,
+      padding: 16,
+      paddingBottom: 32,
+      backgroundColor: theme.card,
+    },
+    replyingIndicator: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      backgroundColor: theme.card,
+      padding: 8,
+      borderRadius: 8,
+      marginBottom: 8,
+    },
+    replyingText: {
+      fontSize: 12,
+      fontFamily: 'Inter-Medium',
+      color: theme.textSecondary,
+    },
+    commentInputRow: {
+      flexDirection: 'row',
+      alignItems: 'flex-end',
+      gap: 12,
+    },
+    commentTextInput: {
+      flex: 1,
+      borderWidth: 1,
+      borderColor: theme.border,
+      color: theme.text,
+      borderRadius: 20,
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      fontSize: 14,
+      fontFamily: 'Inter-Regular',
+      maxHeight: 100,
+    },
+    sendButton: {
+      padding: 12,
+    },
+  });
+}
+
 const mockComments: Comment[] = [
   {
     id: '1',
-    user: 'style_lover',
+    userId: 'style_lover',
+    username: 'style_lover',
     avatar:
       'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=100',
     text: 'Absolutely love this look! Where did you get that jacket?',
-    timestamp: '2h ago',
+    createdAt: '2h ago',
     likes: 12,
     replies: [
       {
         id: '1-1',
-        user: 'fashionista_jane',
+        userId: 'fashionista_jane',
+        username: 'fashionista_jane',
         avatar:
           'https://images.pexels.com/photos/1036623/pexels-photo-1036623.jpeg?auto=compress&cs=tinysrgb&w=100',
         text: 'Thank you! Got it from Urban Threads 💕',
-        timestamp: '1h ago',
+        createdAt: '1h ago',
         likes: 5,
       },
     ],
   },
   {
     id: '2',
-    user: 'trendy_alex',
+    userId: 'trendy_alex',
+    username: 'trendy_alex',
     avatar:
       'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=100',
     text: 'Perfect styling! The colors work so well together 🔥',
-    timestamp: '3h ago',
+    createdAt: '3h ago',
     likes: 8,
   },
 ];
@@ -83,22 +267,24 @@ const mockComments: Comment[] = [
 export default function PostCard({ post, onStar }: PostCardProps) {
   const [isStarred, setIsStarred] = useState(false);
   const [starCount, setStarCount] = useState(post.stars);
-  const [showImageModal, setShowImageModal] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState<Comment[]>(mockComments);
   const [newComment, setNewComment] = useState('');
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
 
+  const { theme } = useTheme();
+  const styles = createStyles(theme);
+
   const [imageHeight, setImageHeight] = useState(0);
 
   useEffect(() => {
-    Image.getSize(post.image, (width, height) => {
+    Image.getSize(post.imageUrl, (width, height) => {
       const screenWidth = Dimensions.get('window').width - 32;
       const scaleFactor = width / screenWidth;
       const scaledHeight = height / scaleFactor;
       setImageHeight(scaledHeight);
     });
-  }, [post.image]);
+  }, [post.imageUrl]);
 
   const handleStar = () => {
     const newStarred = !isStarred;
@@ -107,16 +293,24 @@ export default function PostCard({ post, onStar }: PostCardProps) {
     onStar?.(post.id);
   };
 
+  const formatNumber = (num : number) => {
+    if (num >= 1_000_000) return (num / 1_000_000).toFixed(1).replace('.0', '') + 'M';
+    if (num > 9999) return (num / 1000).toFixed(1).replace('.0', '') + 'K';
+    return num.toLocaleString(); // 9999 and below: just commas
+  };
+
+
   const handleAddComment = () => {
     if (!newComment.trim()) return;
 
     const comment: Comment = {
       id: Date.now().toString(),
-      user: 'current_user',
+      userId: 'current_user',
+      username: 'current_user',
       avatar:
         'https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=100',
       text: newComment,
-      timestamp: 'now',
+      createdAt: 'now',
       likes: 0,
     };
 
@@ -144,8 +338,8 @@ export default function PostCard({ post, onStar }: PostCardProps) {
       <Image source={{ uri: comment.avatar }} style={styles.commentAvatar} />
       <View style={styles.commentContent}>
         <View style={styles.commentHeader}>
-          <Text style={styles.commentUser}>{comment.user}</Text>
-          <Text style={styles.commentTime}>{comment.timestamp}</Text>
+          <Text style={styles.commentUser}>{comment.username}</Text>
+          <Text style={styles.commentTime}>{comment.createdAt}</Text>
         </View>
         <Text style={styles.commentText}>{comment.text}</Text>
         <View style={styles.commentActions}>
@@ -171,38 +365,33 @@ export default function PostCard({ post, onStar }: PostCardProps) {
     <>
       <View style={styles.container}>
         <View style={styles.header}>
-          <Image source={{ uri: post.user.avatar }} style={styles.avatar} />
+          <Image source={{ uri: post.avatar }} style={styles.avatar} />
           <View style={styles.userInfo}>
-            <Text style={styles.username}>{post.user.username}</Text>
-            <Text style={styles.timestamp}>{post.timestamp}</Text>
+            <Text style={styles.username}>{post.username}</Text>
+            <Text style={styles.timestamp}>{post.createdAt}</Text>
           </View>
         </View>
 
-        <TouchableOpacity
-          onPress={() => setShowImageModal(true)}
-          activeOpacity={0.9}
-        >
-          <Image
-            source={{ uri: post.image }}
-            style={{
-              width: '100%',
-              height: imageHeight,
-              borderRadius: 12,
-              resizeMode: 'contain',
-            }}
-          />
-        </TouchableOpacity>
+        <Image
+          source={{ uri: post.imageUrl }}
+          style={{
+            width: '100%',
+            height: imageHeight,
+            borderRadius: 12,
+            resizeMode: 'contain',
+          }}
+        />
 
         <View style={styles.actions}>
           <TouchableOpacity style={styles.actionButton} onPress={handleStar}>
             <Star
               size={24}
-              color={isStarred ? '#FFD700' : '#666'}
+              color={isStarred ? '#FFD700' : theme.text}
               fill={isStarred ? '#FFD700' : 'transparent'}
               strokeWidth={2}
             />
-            <Text style={[styles.actionText, isStarred && styles.starredText]}>
-              {starCount}
+            <Text style={styles.actionText}>
+              {formatNumber(starCount)}
             </Text>
           </TouchableOpacity>
 
@@ -210,320 +399,90 @@ export default function PostCard({ post, onStar }: PostCardProps) {
             style={styles.actionButton}
             onPress={() => setShowComments(true)}
           >
-            <MessageCircle size={24} color="#666" strokeWidth={2} />
-            <Text style={styles.actionText}>{post.comments}</Text>
+            <MessageCircle size={24} color={theme.text} strokeWidth={2} />
+            <Text style={styles.actionText}>{formatNumber(post.comments)}</Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.content}>
           <Text style={styles.caption}>
-            <Text style={styles.captionUsername}>{post.user.username}</Text>{' '}
+            <Text style={styles.captionUsername}>{post.username}</Text>{' '}
             {post.caption}
           </Text>
         </View>
       </View>
 
-      {/* Full Image Modal */}
-      <Modal
-        visible={showImageModal}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setShowImageModal(false)}
-      >
-        <View style={styles.imageModalContainer}>
-          <TouchableOpacity
-            style={styles.imageModalClose}
-            onPress={() => setShowImageModal(false)}
-          >
-            <X size={24} color="#fff" />
-          </TouchableOpacity>
-          <Image source={{ uri: post.image }} style={styles.fullImage} />
-          <View style={styles.imageModalCaption}>
-            <Text style={styles.imageModalCaptionText}>{post.caption}</Text>
-          </View>
-        </View>
-      </Modal>
-
       {/* Comments Modal */}
       <Modal
         visible={showComments}
         animationType="slide"
+        transparent
         onRequestClose={() => setShowComments(false)}
       >
-        <View style={styles.commentsModal}>
-          <View style={styles.commentsHeader}>
-            <Text style={styles.commentsTitle}>Comments</Text>
-            <TouchableOpacity onPress={() => setShowComments(false)}>
-              <X size={24} color="#000" />
-            </TouchableOpacity>
-          </View>
-
-          <ScrollView style={styles.commentsList}>
-            {comments.map((comment) => renderComment(comment))}
-          </ScrollView>
-
-          <View style={styles.commentInput}>
-            {replyingTo && (
-              <View style={styles.replyingIndicator}>
-                <Text style={styles.replyingText}>
-                  Replying to {comments.find((c) => c.id === replyingTo)?.user}
-                </Text>
-                <TouchableOpacity onPress={() => setReplyingTo(null)}>
-                  <X size={16} color="#666" />
-                </TouchableOpacity>
-              </View>
-            )}
-            <View style={styles.commentInputRow}>
-              <TextInput
-                style={styles.commentTextInput}
-                placeholder="Add a comment..."
-                value={newComment}
-                onChangeText={setNewComment}
-                multiline
-                placeholderTextColor="#666"
-              />
-              <TouchableOpacity
-                style={styles.sendButton}
-                onPress={handleAddComment}
-                disabled={!newComment.trim()}
+        <TouchableWithoutFeedback onPress={() => setShowComments(false)}>
+          <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
+            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+              <KeyboardAvoidingView
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                keyboardVerticalOffset={0}
+                style={{
+                  height: '80%',
+                  backgroundColor: theme.card,
+                  borderTopLeftRadius: 20,
+                  borderTopRightRadius: 20,
+                  overflow: 'hidden',
+                }}
               >
-                <Send size={20} color={newComment.trim() ? '#000' : '#ccc'} />
-              </TouchableOpacity>
-            </View>
+                <View style={styles.commentsModal}>
+                  <View style={styles.commentsHeader}>
+                    <Text style={styles.commentsTitle}>Comments</Text>
+                    <TouchableOpacity onPress={() => setShowComments(false)}>
+                      <X size={24} color={theme.text} />
+                    </TouchableOpacity>
+                  </View>
+
+                  <ScrollView style={styles.commentsList}>
+                    {comments.map((comment) => renderComment(comment))}
+                  </ScrollView>
+
+                  <View style={[styles.commentInput, { position: 'absolute', bottom: 0, left: 0, right: 0 }]}>
+                    {replyingTo && (
+                      <View style={styles.replyingIndicator}>
+                        <Text style={styles.replyingText}>
+                          Replying to {comments.find((c) => c.id === replyingTo)?.username}
+                        </Text>
+                        <TouchableOpacity onPress={() => setReplyingTo(null)}>
+                          <X size={16} color={theme.textSecondary} />
+                        </TouchableOpacity>
+                      </View>
+                    )}
+                    <TouchableWithoutFeedback onPress={() => {}}>
+                      <View style={styles.commentInputRow}>
+                        <TextInput
+                          style={styles.commentTextInput}
+                          placeholder="Add a comment..."
+                          value={newComment}
+                          onChangeText={setNewComment}
+                          multiline
+                          placeholderTextColor={theme.textSecondary}
+                        />
+                        <TouchableOpacity
+                          style={styles.sendButton}
+                          onPress={handleAddComment}
+                          disabled={!newComment.trim()}
+                        >
+                          <Send size={20} color={newComment.trim() ? theme.text : theme.textSecondary} />
+                        </TouchableOpacity>
+                      </View>
+                    </TouchableWithoutFeedback>
+                  </View>
+                </View>
+              </KeyboardAvoidingView>
+            </TouchableWithoutFeedback>
           </View>
-        </View>
+        </TouchableWithoutFeedback>
       </Modal>
+
     </>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: '#fff',
-    marginBottom: 16,
-    borderRadius: 16,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-  },
-  avatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-  },
-  userInfo: {
-    marginLeft: 12,
-    flex: 1,
-  },
-  username: {
-    fontSize: 16,
-    fontFamily: 'Inter-SemiBold',
-    color: '#000',
-  },
-  timestamp: {
-    fontSize: 12,
-    fontFamily: 'Inter-Regular',
-    color: '#666',
-    marginTop: 2,
-  },
-  postImage: {
-    width: '100%',
-    height: width,
-    marginHorizontal: 16,
-    borderRadius: 12,
-    resizeMode: 'contain',
-  },
-  actions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    gap: 20,
-  },
-  actionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  actionText: {
-    fontSize: 14,
-    fontFamily: 'Inter-Medium',
-    color: '#666',
-  },
-  starredText: {
-    color: '#FFD700',
-  },
-  content: {
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-  },
-  caption: {
-    fontSize: 14,
-    fontFamily: 'Inter-Regular',
-    color: '#000',
-    lineHeight: 20,
-  },
-  captionUsername: {
-    fontFamily: 'Inter-SemiBold',
-  },
-  imageModalContainer: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.95)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  imageModalClose: {
-    position: 'absolute',
-    top: 60,
-    right: 20,
-    zIndex: 1,
-    padding: 8,
-  },
-  fullImage: {
-    width: width,
-    height: width,
-    resizeMode: 'contain',
-  },
-  imageModalCaption: {
-    position: 'absolute',
-    bottom: 60,
-    left: 20,
-    right: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    borderRadius: 12,
-    padding: 16,
-  },
-  imageModalCaptionText: {
-    color: '#fff',
-    fontSize: 14,
-    fontFamily: 'Inter-Regular',
-    lineHeight: 20,
-  },
-  commentsModal: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  commentsHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e9ecef',
-    paddingTop: 60,
-  },
-  commentsTitle: {
-    fontSize: 20,
-    fontFamily: 'Inter-Bold',
-    color: '#000',
-  },
-  commentsList: {
-    flex: 1,
-    padding: 16,
-  },
-  commentItem: {
-    flexDirection: 'row',
-    marginBottom: 16,
-  },
-  replyItem: {
-    marginLeft: 40,
-    marginTop: 8,
-    marginBottom: 8,
-  },
-  commentAvatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-  },
-  commentContent: {
-    flex: 1,
-    marginLeft: 12,
-  },
-  commentHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 4,
-  },
-  commentUser: {
-    fontSize: 14,
-    fontFamily: 'Inter-SemiBold',
-    color: '#000',
-  },
-  commentTime: {
-    fontSize: 12,
-    fontFamily: 'Inter-Regular',
-    color: '#666',
-  },
-  commentText: {
-    fontSize: 14,
-    fontFamily: 'Inter-Regular',
-    color: '#000',
-    lineHeight: 18,
-    marginBottom: 8,
-  },
-  commentActions: {
-    flexDirection: 'row',
-    gap: 16,
-  },
-  commentAction: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  commentActionText: {
-    fontSize: 12,
-    fontFamily: 'Inter-Medium',
-    color: '#666',
-  },
-  commentInput: {
-    borderTopWidth: 1,
-    borderTopColor: '#e9ecef',
-    padding: 16,
-    paddingBottom: 32,
-  },
-  replyingIndicator: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#f8f9fa',
-    padding: 8,
-    borderRadius: 8,
-    marginBottom: 8,
-  },
-  replyingText: {
-    fontSize: 12,
-    fontFamily: 'Inter-Medium',
-    color: '#666',
-  },
-  commentInputRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: 12,
-  },
-  commentTextInput: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: '#e9ecef',
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 14,
-    fontFamily: 'Inter-Regular',
-    maxHeight: 100,
-  },
-  sendButton: {
-    padding: 12,
-  },
-});

@@ -1,10 +1,21 @@
 import React, { createContext, useContext, useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { v4 as uuidv4 } from 'uuid';
 
+export interface Review {
+  id: string;
+  userId: string;
+  targetId: string;
+  targetType: 'product' | 'shop';
+  rating: number;
+  comment?: string;
+  createdAt: string;
+}
 export interface Product {
   id: string;
   name: string;
   price: number;
-  image: string;
+  imageUrl: string;
   brand: string;
   category: string;
   description: string;
@@ -12,27 +23,34 @@ export interface Product {
   colors: string[];
   stock: number;
   rating: number;
-  reviews: number;
-  isAvailable: boolean;
   discount?: number;
 }
 
-export interface CartItem extends Product {
+export interface CartItem {
+  id: string;
+  userId: string;
+  productId: string;
   quantity: number;
   selectedSize?: string;
   selectedColor?: string;
 }
 
+export interface WishlistItem {
+  id: string;
+  userId: string;
+  productId: string;
+}
+
 interface ShoppingContextType {
   cart: CartItem[];
-  wishlist: Product[];
+  wishlist: WishlistItem[];
   addToCart: (product: Product, size?: string, color?: string) => void;
   removeFromCart: (productId: string) => void;
   updateCartQuantity: (productId: string, quantity: number) => void;
   addToWishlist: (product: Product) => void;
   removeFromWishlist: (productId: string) => void;
   isInWishlist: (productId: string) => boolean;
-  getCartTotal: () => number;
+  getCartTotal: (products: Product[]) => number;
   getCartItemCount: () => number;
 }
 
@@ -40,19 +58,26 @@ const ShoppingContext = createContext<ShoppingContextType | undefined>(undefined
 
 export function ShoppingProvider({ children }: { children: React.ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [wishlist, setWishlist] = useState<Product[]>([]);
+  const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
+  const { user } = useAuth();
 
   const addToCart = (product: Product, size?: string, color?: string) => {
+    if (!user) {
+      console.error('User not authenticated');
+      return;
+    }
+
+    const userId = user.id;
     setCart(prev => {
       const existingItem = prev.find(item => 
-        item.id === product.id && 
+        item.productId === product.id && 
         item.selectedSize === size && 
         item.selectedColor === color
       );
       
       if (existingItem) {
         return prev.map(item =>
-          item.id === product.id && 
+          item.productId === product.id && 
           item.selectedSize === size && 
           item.selectedColor === color
             ? { ...item, quantity: item.quantity + 1 }
@@ -60,17 +85,22 @@ export function ShoppingProvider({ children }: { children: React.ReactNode }) {
         );
       }
       
-      return [...prev, { 
-        ...product, 
-        quantity: 1, 
-        selectedSize: size, 
-        selectedColor: color 
-      }];
+      return [
+        ...prev,
+        {
+          id: uuidv4(),
+          userId,
+          productId: product.id,
+          quantity: 1,
+          selectedSize: size,
+          selectedColor: color,
+        }
+      ];
     });
   };
 
   const removeFromCart = (productId: string) => {
-    setCart(prev => prev.filter(item => item.id !== productId));
+    setCart(prev => prev.filter(item => item.productId !== productId));
   };
 
   const updateCartQuantity = (productId: string, quantity: number) => {
@@ -87,24 +117,40 @@ export function ShoppingProvider({ children }: { children: React.ReactNode }) {
   };
 
   const addToWishlist = (product: Product) => {
+    if (!user) {
+      console.error('User not authenticated');
+      return;
+    }
     setWishlist(prev => {
-      const exists = prev.find(item => item.id === product.id);
+      const exists = prev.find(item => item.productId === product.id && item.userId === user.id);
       if (exists) return prev;
-      return [...prev, product];
+      return [
+        ...prev,
+        {
+          id: uuidv4(),
+          userId: user.id,
+          productId: product.id,
+        }
+      ];
     });
   };
 
   const removeFromWishlist = (productId: string) => {
-    setWishlist(prev => prev.filter(item => item.id !== productId));
+    setWishlist(prev => prev.filter(item => item.productId !== productId));
   };
 
   const isInWishlist = (productId: string) => {
-    return wishlist.some(item => item.id === productId);
+    return wishlist.some(item => item.productId === productId);
   };
 
-  const getCartTotal = () => {
-    return cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+  const getCartTotal = (products: Product[]) => {
+    return cart.reduce((total, item) => {
+      const product = products.find(p => p.id === item.productId);
+      if (!product) return total;
+      return total + product.price * item.quantity;
+    }, 0);
   };
+
 
   const getCartItemCount = () => {
     return cart.reduce((total, item) => total + item.quantity, 0);

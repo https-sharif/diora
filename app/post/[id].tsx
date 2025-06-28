@@ -14,18 +14,11 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ArrowLeft, Star, MessageCircle, Share, X, Send, Heart } from 'lucide-react-native';
+import { Comment } from '@/components/PostCard';
+import { useAuth } from '@/contexts/AuthContext';
+
 
 const { width } = Dimensions.get('window');
-
-interface Comment {
-  id: string;
-  user: string;
-  avatar: string;
-  text: string;
-  timestamp: string;
-  likes: number;
-  replies?: Comment[];
-}
 
 const mockPostDetails: Record<string, {
   id: string;
@@ -58,44 +51,49 @@ const mockPostDetails: Record<string, {
     allComments: [
       {
         id: '1',
-        user: 'style_lover',
+        userId: '5',
+        username: 'style_lover',
         avatar: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=100',
         text: 'Absolutely love this look! Where did you get that jacket?',
-        timestamp: '2h ago',
+        createdAt: '2h ago',
         likes: 12,
         replies: [
           {
             id: '1-1',
-            user: 'fashionista_jane',
+            userId: '1',
+            username: 'fashionista_jane',
             avatar: 'https://images.pexels.com/photos/1036623/pexels-photo-1036623.jpeg?auto=compress&cs=tinysrgb&w=100',
             text: 'Thank you! Got it from Urban Threads 💕',
-            timestamp: '1h ago',
+            createdAt: '1h ago',
             likes: 5,
           }
         ]
       },
       {
         id: '2',
-        user: 'trendy_alex',
+        userId: '2',
+        username: 'urban_style',
         avatar: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=100',
         text: 'Perfect styling! The colors work so well together 🔥',
-        timestamp: '3h ago',
+        createdAt: '3h ago',
         likes: 8,
       },
       {
         id: '3',
-        user: 'vintage_queen',
+        userId: '3',
+        username: 'vintage_queen',
         avatar: 'https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=100',
         text: 'This is giving me major 90s vibes! Love it 😍',
-        timestamp: '4h ago',
+        createdAt: '4h ago',
         likes: 15,
       },
       {
         id: '4',
-        user: 'denim_lover',
+        userId: '4',
+        username: 'denim_lover',
         avatar: 'https://images.pexels.com/photos/1462637/pexels-photo-1462637.jpeg?auto=compress&cs=tinysrgb&w=100',
         text: 'Double denim done right! 👌',
-        timestamp: '5h ago',
+        createdAt: '5h ago',
         likes: 6,
       }
     ]
@@ -116,18 +114,20 @@ const mockPostDetails: Record<string, {
     allComments: [
       {
         id: '1',
-        user: 'fashion_fanatic',
+        userId: '1',
+        username: 'fashion_fanatic',
         avatar: 'https://images.pexels.com/photos/1036623/pexels-photo-1036623.jpeg?auto=compress&cs=tinysrgb&w=100',
         text: 'This is so classy! Where did you get that top?',
-        timestamp: '1h ago',
+        createdAt: '1h ago',
         likes: 20,
       },
       {
         id: '2',
-        user: 'urban_style',
+        userId: '2',
+        username: 'urban_style',
         avatar: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=100',
         text: 'Love the simplicity of this look! Perfect for any occasion.',
-        timestamp: '2h ago',
+        createdAt: '2h ago',
         likes: 15,
       }
     ]
@@ -148,18 +148,20 @@ const mockPostDetails: Record<string, {
     allComments: [
       {
         id: '1',
-        user: 'beach_babe',
+        userId: '5',
+        username: 'beach_babe',
         avatar: 'https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=100',
         text: 'This dress is gorgeous! Perfect for a beach day 🌊',
-        timestamp: '30m ago',
+        createdAt: '30m ago',
         likes: 10,
       },
       {
         id: '2',
-        user: 'floral_fan',
+        userId: '6',
+        username: 'floral_fan',
         avatar: 'https://images.pexels.com/photos/1462637/pexels-photo-1462637.jpeg?auto=compress&cs=tinysrgb&w=100',
         text: 'I love the floral print! So perfect for summer 🌺',
-        timestamp: '1h ago',
+        createdAt: '1h ago',
         likes: 8,
       }
     ]
@@ -174,6 +176,7 @@ export default function PostDetailScreen() {
   const [newComment, setNewComment] = useState('');
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [showImageModal, setShowImageModal] = useState(false);
+  const { user } = useAuth();
 
   const post = mockPostDetails[id || '1'];
 
@@ -216,14 +219,14 @@ export default function PostDetailScreen() {
   };
 
   const handleAddComment = () => {
-    if (!newComment.trim()) return;
-
+    if (!newComment.trim() || !user) return;
     const comment: Comment = {
       id: Date.now().toString(),
-      user: 'current_user',
+      userId: user.id,
+      username: user.username,
       avatar: 'https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=100',
       text: newComment,
-      timestamp: 'now',
+      createdAt: 'now',
       likes: 0,
     };
 
@@ -246,8 +249,8 @@ export default function PostDetailScreen() {
       <Image source={{ uri: comment.avatar }} style={styles.commentAvatar} />
       <View style={styles.commentContent}>
         <View style={styles.commentHeader}>
-          <Text style={styles.commentUser}>{comment.user}</Text>
-          <Text style={styles.commentTime}>{comment.timestamp}</Text>
+          <Text style={styles.commentUser}>{comment.username}</Text>
+          <Text style={styles.commentTime}>{comment.createdAt}</Text>
         </View>
         <Text style={styles.commentText}>{comment.text}</Text>
         <View style={styles.commentActions}>
@@ -368,7 +371,7 @@ export default function PostDetailScreen() {
         {replyingTo && (
           <View style={styles.replyingIndicator}>
             <Text style={styles.replyingText}>
-              Replying to {comments.find(c => c.id === replyingTo)?.user}
+              Replying to {comments.find(c => c.id === replyingTo)?.username}
             </Text>
             <TouchableOpacity onPress={() => setReplyingTo(null)}>
               <X size={16} color="#666" />

@@ -1,16 +1,43 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { router } from 'expo-router';
+export interface ShopProfile {
+  id: string;
+  userId: string;
+  name: string;
+  username: string;
+  logoUrl?: string;
+  coverImageUrl?: string;
+  description?: string;
+  location?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  website?: string;
+  socialLinks?: {
+    instagram?: string;
+    facebook?: string;
+    twitter?: string;
+    tiktok?: string;
+  };
+  categories: string[];
+  productIds: string[];
+  rating: number;
+  followers: string[];
+  isVerified: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
 
-interface User {
+export interface User {
   id: string;
   email: string;
   username: string;
   fullName: string;
   avatar?: string;
   bio?: string;
-  followers: number;
-  following: number;
+  followers: string[];
+  following: string[];
   posts: number;
+  createdAt?: string;
 }
 
 interface AuthContextType {
@@ -23,6 +50,7 @@ interface AuthContextType {
     fullName: string
   ) => Promise<boolean>;
   logout: () => void;
+  followUser: (targetUserId: string) => void;
   isAuthenticated: boolean;
   loading: boolean;
 }
@@ -66,8 +94,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         avatar:
           'https://images.pexels.com/photos/1036623/pexels-photo-1036623.jpeg?auto=compress&cs=tinysrgb&w=150',
         bio: 'Dev mode auto-login',
-        followers: 999,
-        following: 999,
+        followers: ['dev1', 'dev2'],
+        following: ['dev3', 'dev4'],
         posts: 999,
       };
       setUser(mockUser);
@@ -99,8 +127,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         avatar:
           'https://images.pexels.com/photos/1036623/pexels-photo-1036623.jpeg?auto=compress&cs=tinysrgb&w=150',
         bio: 'Fashion lover & trendsetter ✨',
-        followers: 1234,
-        following: 567,
+        followers: ['dev1', 'dev2'],
+        following: ['dev3', 'dev4'],
         posts: 89,
       };
 
@@ -130,8 +158,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         avatar:
           'https://images.pexels.com/photos/1036623/pexels-photo-1036623.jpeg?auto=compress&cs=tinysrgb&w=150',
         bio: 'New to Diora ✨',
-        followers: 0,
-        following: 0,
+        followers: [],
+        following: [],
         posts: 0,
       };
 
@@ -148,6 +176,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     router.replace('/auth');
   };
 
+  const followUser = (targetUserId: string) => {
+    if (!user) return;
+
+    const isFollowing = user.following.includes(targetUserId);
+
+    setUser(prev => {
+      if (!prev) return prev;
+
+      let updatedFollowing = [...prev.following];
+      let updatedFollowers = [...prev.followers];
+
+      if (isFollowing) {
+        // Unfollow: remove targetUserId from following
+        updatedFollowing = updatedFollowing.filter(id => id !== targetUserId);
+        // Also remove this user from target's followers (simulate)
+        // For demo: assume you fetch target user and update their followers in real app
+      } else {
+        // Follow: add targetUserId to following
+        updatedFollowing.push(targetUserId);
+        // Also add this user to target's followers (simulate)
+      }
+
+      return {
+        ...prev,
+        following: updatedFollowing,
+        // followers remain same here, you need to update target user's followers separately
+      };
+    });
+  };
+
+
   return (
     <AuthContext.Provider
       value={{
@@ -155,6 +214,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         login,
         signup,
         logout,
+        followUser,
         isAuthenticated: !!user,
         loading,
       }}

@@ -34,6 +34,7 @@ const createStyles = (theme: any) =>
       justifyContent: 'space-between',
       alignItems: 'center',
       paddingHorizontal: 16,
+      paddingVertical: 12,
       borderBottomWidth: 1,
       borderBottomColor: theme.border,
     },
@@ -41,7 +42,7 @@ const createStyles = (theme: any) =>
       padding: 8,
     },
     headerTitle: {
-      fontSize: 18,
+      fontSize: 24,
       fontFamily: 'Inter-SemiBold',
       color: theme.text,
     },
