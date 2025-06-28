@@ -34,10 +34,11 @@ export interface User {
   fullName: string;
   avatar?: string;
   bio?: string;
+  isVerified?: boolean;
   followers: string[];
   following: string[];
-  posts: number;
   createdAt?: string;
+  posts: string[];
 }
 
 interface AuthContextType {
@@ -96,7 +97,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         bio: 'Dev mode auto-login',
         followers: ['dev1', 'dev2'],
         following: ['dev3', 'dev4'],
-        posts: 999,
+        posts: ['1', '2', '3'],
       };
       setUser(mockUser);
       setLoading(false);
@@ -129,7 +130,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         bio: 'Fashion lover & trendsetter ✨',
         followers: ['dev1', 'dev2'],
         following: ['dev3', 'dev4'],
-        posts: 89,
+        posts: ['1', '2', '3'],
       };
 
       setUser(mockUser);
@@ -160,7 +161,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         bio: 'New to Diora ✨',
         followers: [],
         following: [],
-        posts: 0,
+        posts: []
       };
 
       setUser(mockUser);

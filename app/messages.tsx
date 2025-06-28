@@ -163,7 +163,6 @@ const createStyles = (theme: any) => {
 };
 
 export default function MessagesScreen() {
-  // const [conversations, setConversations] = useState<Conversation[]>(mockConversations);
   const [searchQuery, setSearchQuery] = useState('');
   const [newChatVisible, setNewChatVisible] = useState(false);
   const { theme } = useTheme();

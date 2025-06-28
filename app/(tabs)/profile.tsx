@@ -354,12 +354,12 @@ export default function ProfileScreen() {
           </View>
           <View style={styles.statItem}>
             <Text style={styles.statNumber}>
-              {user.followers.toLocaleString()}
+              {user.followers.length.toLocaleString()}
             </Text>
             <Text style={styles.statLabel}>Followers</Text>
           </View>
           <View style={styles.statItem}>
-            <Text style={styles.statNumber}>{user.following}</Text>
+            <Text style={styles.statNumber}>{user.following.length.toLocaleString()}</Text>
             <Text style={styles.statLabel}>Following</Text>
           </View>
         </View>

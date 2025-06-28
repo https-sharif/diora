@@ -32,48 +32,9 @@ import {
 } from 'lucide-react-native';
 import { Product, Review, useShopping } from '@/contexts/ShoppingContext';
 import { ShopProfile, useAuth } from '@/contexts/AuthContext';
-
-const mockShopProfiles: ShopProfile[] = [
-  {
-    id: '1',
-    userId: '1',
-    username: 'urban_threads',
-    name: 'Urban Threads',
-    logoUrl: 'https://images.pexels.com/photos/1926769/pexels-photo-1926769.jpeg?auto=compress&cs=tinysrgb&w=300',
-    coverImageUrl: 'https://images.pexels.com/photos/1884581/pexels-photo-1884581.jpeg?auto=compress&cs=tinysrgb&w=800',
-    description: 'Curated vintage and contemporary fashion pieces. Sustainable fashion for the modern wardrobe. Quality over quantity, style over trends.',
-    followers: [ '1', '2', '3', '4', '5'],
-    rating: 4.8,
-    isVerified: true,
-    location: 'Brooklyn, NY',
-    contactPhone: '+1 (555) 123-4567',
-    contactEmail: 'hello@urbanthreads.com',
-    website: 'urbanthreads.com',
-    createdAt: '2019',
-    updatedAt: '2023',
-    categories: ['Vintage', 'Streetwear', 'Accessories'],
-    productIds: [ '1', '2', '3', '4', '5', '6'],
-  },
-  {
-    id: '2',
-    userId: '2',
-    username: 'street_wear',
-    name: 'Street Wear',
-    logoUrl: 'https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=300',
-    coverImageUrl: 'https://images.pexels.com/photos/1884584/pexels-photo-1884584.jpeg?auto=compress&cs=tinysrgb&w=800',
-    description: 'Authentic vintage clothing from the 60s, 70s, and 80s. Each piece tells a story and brings timeless style to your wardrobe.',
-    followers: ['18200', '18201', '18202', '18203', '18204'],
-    rating: 4.6,
-    isVerified: false,
-    location: 'San Francisco, CA',
-    contactPhone: '+1 (555) 987-6543',
-    website: 'vintagetreasures.com',
-    createdAt: '2015',
-    categories: ['Vintage', 'Retro', 'Collectibles'],
-    productIds: [ '7', '8', '9', '10', '11', '12'],
-    updatedAt: '2023',
-  },
-];
+import { mockProducts } from '@/mock/Product';
+import { mockReviews } from '@/mock/Review';
+import { mockShops } from '@/mock/Shop';
 
 export default function ShopProfileScreen() {
   const { shopname } = useLocalSearchParams<{ shopname: string }>();
@@ -90,7 +51,7 @@ export default function ShopProfileScreen() {
 
   useEffect(() => {
     if (shopname) {
-      const profile = mockShopProfiles.find(p => p.username === shopname);
+      const profile = mockShops.find(p => p.username === shopname);
       if (profile) {
         setShopProfile(profile);
       }
@@ -102,37 +63,10 @@ export default function ShopProfileScreen() {
   useEffect(() => {
     if (shopProfile) {
       setIsFollowing(user?.id ? shopProfile.followers.includes(user.id) : false);
-      const fetchedProducts: Product[] = [
-        {
-          id: '1',
-          name: 'Vintage Denim Jacket',
-          price: 59.99,
-          imageUrl: 'https://images.pexels.com/photos/1234567/pexels-photo-1234567.jpeg?auto=compress&cs=tinysrgb&w=300',
-          brand: 'Urban Threads',
-          category: 'Jackets',
-          description: 'A classic denim jacket with a vintage wash.',
-          sizes: ['S', 'M', 'L'],
-          colors: ['Blue', 'Black'],
-          stock: 10,
-          rating: 4.5,
-        },
-        // Add more products as needed
-      ];
-
+      const fetchedProducts: Product[] = mockProducts.filter(product => shopProfile.productIds.includes(product.id));
       setProducts(fetchedProducts);
 
-      const fetchedReviews: Review[] = [
-        {
-          id: '1',
-          userId: '1',
-          targetId: '1',
-          targetType: 'shop',
-          rating: 5,
-          comment: 'Amazing shop with great vintage finds!',
-          createdAt: '2023-10-01T12:00:00Z',
-        },
-        // Add more reviews as needed
-      ];
+      const fetchedReviews: Review[] = mockReviews.filter(review => review.targetId === shopProfile.id && review.targetType === 'shop');
       setReviews(fetchedReviews);
     }
   }, [shopProfile]);

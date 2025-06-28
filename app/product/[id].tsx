@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,118 +9,19 @@ import {
   FlatList,
   Alert,
   Dimensions,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ArrowLeft, Heart, Share, Star, ShoppingCart, Store, Plus, Minus } from 'lucide-react-native';
-import { useShopping, Product } from '@/contexts/ShoppingContext';
+import { useShopping, Review } from '@/contexts/ShoppingContext';
+import { mockProducts } from '@/mock/Product';
+import { mockReviews } from '@/mock/Review';
+import { mockUsers } from '@/mock/User';
+import { mockShops } from '@/mock/Shop';
+import { ShopProfile } from '@/contexts/AuthContext';
 
-const { width } = Dimensions.get('window');
-
-const mockProductDetails: Record<string, Product & {
-  images: string[];
-  store: {
-    name: string;
-    avatar: string;
-    rating: number;
-    followers: string;
-  };
-  reviewList: Array<{
-    id: string;
-    user: string;
-    avatar: string;
-    rating: number;
-    comment: string;
-    date: string;
-  }>;
-  rating: number;
-  reviewCount: number;
-}> = {
-  '1': {
-    id: '1',
-    name: 'Vintage Denim Jacket',
-    price: 89.99,
-    image: 'https://images.pexels.com/photos/1126993/pexels-photo-1126993.jpeg?auto=compress&cs=tinysrgb&w=400',
-    brand: 'Urban Threads',
-    category: 'Tops',
-    description: 'Classic vintage-style denim jacket perfect for layering. Made from premium cotton denim with authentic distressing. Features include classic button closure, chest pockets, and adjustable waist tabs. This timeless piece adds effortless cool to any outfit.',
-    sizes: ['S', 'M', 'L', 'XL'],
-    colors: ['Blue', 'Black', 'White'],
-    images: [
-      'https://images.pexels.com/photos/1126993/pexels-photo-1126993.jpeg?auto=compress&cs=tinysrgb&w=800',
-      'https://images.pexels.com/photos/1043474/pexels-photo-1043474.jpeg?auto=compress&cs=tinysrgb&w=800',
-      'https://images.pexels.com/photos/1457983/pexels-photo-1457983.jpeg?auto=compress&cs=tinysrgb&w=800',
-    ],
-    store: {
-      name: 'Urban Threads',
-      avatar: 'https://images.pexels.com/photos/1926769/pexels-photo-1926769.jpeg?auto=compress&cs=tinysrgb&w=150',
-      rating: 4.8,
-      followers: '12.5K',
-    },
-    reviewList: [
-      {
-        id: '1',
-        user: 'sarah_style',
-        avatar: 'https://images.pexels.com/photos/1036623/pexels-photo-1036623.jpeg?auto=compress&cs=tinysrgb&w=100',
-        rating: 5,
-        comment: 'Amazing quality! The fit is perfect and the vintage wash looks authentic.',
-        date: '2 days ago',
-      },
-      {
-        id: '2',
-        user: 'fashion_lover',
-        avatar: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=100',
-        rating: 4,
-        comment: 'Love this jacket! Goes with everything in my wardrobe.',
-        date: '1 week ago',
-      },
-    ],
-    rating: 4.6,
-    reviewCount: 127,
-  },
-  '2': {
-    id: '2',
-    name: 'Classic White Sneakers',
-    price: 69.99,
-    image: 'https://images.pexels.com/photos/1040424/pexels-photo-1040424.jpeg?auto=compress&cs=tinysrgb&w=400',
-    brand: 'Sneaker Co.',
-    category: 'Footwear',
-    description: 'Timeless white sneakers made from premium leather. Features include cushioned insole, durable rubber sole, and classic lace-up design. Perfect for everyday wear or dressing up casual outfits.',
-    sizes: ['6', '7', '8', '9', '10'],
-    colors: ['White', 'Black'],
-    images: [
-      'https://images.pexels.com/photos/1040424/pexels-photo-1040424.jpeg?auto=compress&cs=tinysrgb&w=800',
-      'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=800',
-      'https://images.pexels.com/photos/1457983/pexels-photo-1457983.jpeg?auto=compress&cs=tinysrgb&w=800',
-    ],
-    store: {
-      name: 'Sneaker Co.',
-      avatar: 'https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=150',
-      rating: 4.5,
-      followers: '8K',
-    },
-    reviewList: [
-      {
-        id: '1',
-        user: 'john_doe',
-        avatar: 'https://images.pexels.com/photos/1036623/pexels-photo-1036623.jpeg?auto=compress&cs=tinysrgb&w=100',
-        rating: 5,
-        comment: 'Best sneakers I\'ve ever owned! Super comfortable and stylish.',
-        date: '3 days ago',
-      },
-      {
-        id: '2',
-        user: 'jane_smith',
-        avatar: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=100',
-        rating: 4,
-        comment: 'Great quality for the price. Love the minimalist design.',
-        date: '1 week ago',
-      },
-    ],
-    rating: 4.7,
-    reviewCount: 89,
-  },
-};
+const { width } = Dimensions.get('window')
 
 export default function ProductDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -135,8 +36,23 @@ export default function ProductDetailScreen() {
   const [selectedSize, setSelectedSize] = useState('');
   const [selectedColor, setSelectedColor] = useState('');
   const [quantity, setQuantity] = useState(1);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [store, setStore] = useState<ShopProfile | null>(null);
 
-  const product = mockProductDetails[id || '1'];
+  const product = mockProducts.find(product => product.id === id);
+
+  useEffect(() => {
+    if (product) {
+      setSelectedImageIndex(0);
+      setSelectedSize(product.sizes[0]);
+      setSelectedColor(product.colors[0]);
+      setReviews(mockReviews.filter(review => review.targetId === id && review.targetType === 'product'));
+      const shop = mockShops.find(shop => shop.id === product.storeId);
+      setStore(shop || null);
+      setLoading(false);
+    }
+  }, [product]);
 
   if (!product) {
     return (
@@ -177,12 +93,14 @@ export default function ProductDetailScreen() {
     </TouchableOpacity>
   );
 
-  const renderReview = ({ item }: { item: typeof product.reviewList[0] }) => (
+  const renderReview = ({ item }: { item: Review }) => {
+    const user = mockUsers.find(user => user.id === item.userId);
+    return (
     <View style={styles.reviewItem}>
       <View style={styles.reviewHeader}>
-        <Image source={{ uri: item.avatar }} style={styles.reviewAvatar} />
+        <Image source={{ uri: user?.avatar }} style={styles.reviewAvatar} />
         <View style={styles.reviewInfo}>
-          <Text style={styles.reviewUser}>{item.user}</Text>
+          <Text style={styles.reviewUser}>{user?.username}</Text>
           <View style={styles.reviewRating}>
             {[...Array(5)].map((_, i) => (
               <Star
@@ -192,13 +110,22 @@ export default function ProductDetailScreen() {
                 fill={i < item.rating ? '#FFD700' : 'transparent'}
               />
             ))}
-            <Text style={styles.reviewDate}>{item.date}</Text>
+            <Text style={styles.reviewDate}>{item.createdAt}</Text>
           </View>
         </View>
       </View>
       <Text style={styles.reviewComment}>{item.comment}</Text>
     </View>
   );
+  };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <ActivityIndicator size="large" color="#000" />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -227,14 +154,14 @@ export default function ProductDetailScreen() {
         {/* Main Image */}
         <View style={styles.imageContainer}>
           <Image 
-            source={{ uri: product.images[selectedImageIndex] }} 
+            source={{ uri: product.imageUrl }} 
             style={styles.mainImage} 
           />
         </View>
 
         {/* Image Thumbnails */}
         <FlatList
-          data={product.images}
+          data={product.imageUrl}
           renderItem={renderImageItem}
           keyExtractor={(item, index) => index.toString()}
           horizontal
@@ -259,7 +186,7 @@ export default function ProductDetailScreen() {
                   fill={i < Math.floor(product.rating) ? '#FFD700' : 'transparent'}
                 />
               ))}
-              <Text style={styles.ratingText}>{product.rating} ({product.reviewCount} reviews)</Text>
+              <Text style={styles.ratingText}>{product.rating} ({reviews.length} reviews)</Text>
             </View>
           </View>
 
@@ -270,15 +197,15 @@ export default function ProductDetailScreen() {
         <View style={styles.storeSection}>
           <Text style={styles.sectionTitle}>Store</Text>
           <View style={styles.storeInfo}>
-            <Image source={{ uri: product.store.avatar }} style={styles.storeAvatar} />
+            <Image source={{ uri: store?.logoUrl }} style={styles.storeAvatar} />
             <View style={styles.storeDetails}>
-              <Text style={styles.storeName}>{product.store.name}</Text>
+              <Text style={styles.storeName}>{store?.name}</Text>
               <View style={styles.storeStats}>
                 <View style={styles.storeRating}>
                   <Star size={14} color="#FFD700" fill="#FFD700" />
-                  <Text style={styles.storeRatingText}>{product.store.rating}</Text>
+                  <Text style={styles.storeRatingText}>{store?.rating}</Text>
                 </View>
-                <Text style={styles.storeFollowers}>{product.store.followers} followers</Text>
+                <Text style={styles.storeFollowers}>{store?.followers.length} followers</Text>
               </View>
             </View>
             <TouchableOpacity style={styles.visitStoreButton}>
@@ -358,9 +285,9 @@ export default function ProductDetailScreen() {
 
         {/* Reviews */}
         <View style={styles.reviewsSection}>
-          <Text style={styles.sectionTitle}>Reviews ({product.reviewCount})</Text>
+          <Text style={styles.sectionTitle}>Reviews ({reviews.length})</Text>
           <FlatList
-            data={product.reviewList}
+            data={reviews}
             renderItem={renderReview}
             keyExtractor={(item) => item.id}
             scrollEnabled={false}

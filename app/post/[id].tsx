@@ -14,159 +14,14 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ArrowLeft, Star, MessageCircle, Share, X, Send, Heart } from 'lucide-react-native';
-import { Comment } from '@/components/PostCard';
 import { useAuth } from '@/contexts/AuthContext';
+import { Post, Comment } from '@/components/PostCard';
+import { mockPosts } from '@/mock/Post';
+import { mockComments } from '@/mock/Comment';
 
 
 const { width } = Dimensions.get('window');
 
-const mockPostDetails: Record<string, {
-  id: string;
-  user: {
-    username: string;
-    avatar: string;
-  };
-  image: string;
-  caption: string;
-  stars: number;
-  comments: number;
-  timestamp: string;
-  location?: string;
-  tags: string[];
-  allComments: Comment[];
-}> = {
-  '1': {
-    id: '1',
-    user: {
-      username: 'fashionista_jane',
-      avatar: 'https://images.pexels.com/photos/1036623/pexels-photo-1036623.jpeg?auto=compress&cs=tinysrgb&w=150',
-    },
-    image: 'https://images.pexels.com/photos/1126993/pexels-photo-1126993.jpeg?auto=compress&cs=tinysrgb&w=800',
-    caption: 'Loving this vintage look! Perfect for a casual day out ✨ The denim jacket is from @urbanthreads and pairs perfectly with these high-waisted jeans. Sometimes the simplest outfits make the biggest statement. #vintage #ootd #denimondenim',
-    stars: 128,
-    comments: 23,
-    timestamp: '2h ago',
-    location: 'New York, NY',
-    tags: ['#vintage', '#ootd', '#denimondenim', '#casualstyle'],
-    allComments: [
-      {
-        id: '1',
-        userId: '5',
-        username: 'style_lover',
-        avatar: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=100',
-        text: 'Absolutely love this look! Where did you get that jacket?',
-        createdAt: '2h ago',
-        likes: 12,
-        replies: [
-          {
-            id: '1-1',
-            userId: '1',
-            username: 'fashionista_jane',
-            avatar: 'https://images.pexels.com/photos/1036623/pexels-photo-1036623.jpeg?auto=compress&cs=tinysrgb&w=100',
-            text: 'Thank you! Got it from Urban Threads 💕',
-            createdAt: '1h ago',
-            likes: 5,
-          }
-        ]
-      },
-      {
-        id: '2',
-        userId: '2',
-        username: 'urban_style',
-        avatar: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=100',
-        text: 'Perfect styling! The colors work so well together 🔥',
-        createdAt: '3h ago',
-        likes: 8,
-      },
-      {
-        id: '3',
-        userId: '3',
-        username: 'vintage_queen',
-        avatar: 'https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=100',
-        text: 'This is giving me major 90s vibes! Love it 😍',
-        createdAt: '4h ago',
-        likes: 15,
-      },
-      {
-        id: '4',
-        userId: '4',
-        username: 'denim_lover',
-        avatar: 'https://images.pexels.com/photos/1462637/pexels-photo-1462637.jpeg?auto=compress&cs=tinysrgb&w=100',
-        text: 'Double denim done right! 👌',
-        createdAt: '5h ago',
-        likes: 6,
-      }
-    ]
-  },
-  '2': {
-    id: '2',
-    user: {
-      username: 'style_maven',
-      avatar: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=150',
-    },
-    image: 'https://images.pexels.com/photos/1043474/pexels-photo-1043474.jpeg?auto=compress&cs=tinysrgb&w=800',
-    caption: 'Black and white never goes out of style 🖤🤍 This outfit is perfect for any occasion, from brunch to a night out. The classic combo always makes a statement! #minimalism #chic #blackandwhite',
-    stars: 256,
-    comments: 41,
-    timestamp: '4h ago',
-    location: 'Los Angeles, CA',
-    tags: ['#minimalism', '#chic', '#blackandwhite'],
-    allComments: [
-      {
-        id: '1',
-        userId: '1',
-        username: 'fashion_fanatic',
-        avatar: 'https://images.pexels.com/photos/1036623/pexels-photo-1036623.jpeg?auto=compress&cs=tinysrgb&w=100',
-        text: 'This is so classy! Where did you get that top?',
-        createdAt: '1h ago',
-        likes: 20,
-      },
-      {
-        id: '2',
-        userId: '2',
-        username: 'urban_style',
-        avatar: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=100',
-        text: 'Love the simplicity of this look! Perfect for any occasion.',
-        createdAt: '2h ago',
-        likes: 15,
-      }
-    ]
-  },
-  '3': {
-    id: '3',
-    user: {
-      username: 'trendy_alex',
-      avatar: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=150',
-    },
-    image: 'https://images.pexels.com/photos/1457983/pexels-photo-1457983.jpeg?auto=compress&cs=tinysrgb&w=800',
-    caption: 'Summer vibes with this flowy dress 🌸 Perfect for brunch dates! The light fabric and floral print make it a must-have for the season. #summerfashion #brunchvibes #floraldress',
-    stars: 89,
-    comments: 12,
-    timestamp: '6h ago',
-    location: 'Miami, FL',
-    tags: ['#summerfashion', '#brunchvibes', '#floraldress'],
-    allComments: [
-      {
-        id: '1',
-        userId: '5',
-        username: 'beach_babe',
-        avatar: 'https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=100',
-        text: 'This dress is gorgeous! Perfect for a beach day 🌊',
-        createdAt: '30m ago',
-        likes: 10,
-      },
-      {
-        id: '2',
-        userId: '6',
-        username: 'floral_fan',
-        avatar: 'https://images.pexels.com/photos/1462637/pexels-photo-1462637.jpeg?auto=compress&cs=tinysrgb&w=100',
-        text: 'I love the floral print! So perfect for summer 🌺',
-        createdAt: '1h ago',
-        likes: 8,
-      }
-    ]
-  },
-};
 
 export default function PostDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -178,24 +33,24 @@ export default function PostDetailScreen() {
   const [showImageModal, setShowImageModal] = useState(false);
   const { user } = useAuth();
 
-  const post = mockPostDetails[id || '1'];
+  const post = mockPosts.find(post => post.id === id);
 
   const [aspectRatio, setAspectRatio] = useState(1);
 
   useEffect(() => {
-    if (!post || !post.image) return;
+    if (!post || !post.imageUrl) return;
 
     Image.getSize(
-      post.image,
+      post.imageUrl,
       (width, height) => setAspectRatio(width / height),
       (err) => console.error('Failed to get image size:', err)
     );
   }, [post]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (post) {
       setStarCount(post.stars);
-      setComments(post.allComments);
+      setComments(mockComments.filter(comment => post.comments.includes(comment.id)));
     }
   }, [post]);
 
@@ -287,20 +142,17 @@ export default function PostDetailScreen() {
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* User Info */}
         <View style={styles.userSection}>
-          <Image source={{ uri: post.user.avatar }} style={styles.userAvatar} />
+          <Image source={{ uri: post.avatar }} style={styles.userAvatar} />
           <View style={styles.userInfo}>
-            <Text style={styles.username}>{post.user.username}</Text>
-            <Text style={styles.timestamp}>{post.timestamp}</Text>
-            {post.location && (
-              <Text style={styles.location}>{post.location}</Text>
-            )}
+            <Text style={styles.username}>{post.username}</Text>
+            <Text style={styles.timestamp}>{post.createdAt}</Text>
           </View>
         </View>
 
         {/* Post Image */}
         <TouchableOpacity onPress={() => setShowImageModal(true)}>
           <Image
-          source={{ uri: post.image }}
+          source={{ uri: post.imageUrl }}
           style={{
             width: '100%',
             height: undefined,
@@ -337,25 +189,10 @@ export default function PostDetailScreen() {
         {/* Caption */}
         <View style={styles.captionSection}>
           <Text style={styles.caption}>
-            <Text style={styles.captionUsername}>{post.user.username}</Text>{' '}
+            <Text style={styles.captionUsername}>{post.username}</Text>{' '}
             {post.caption}
           </Text>
         </View>
-
-        {/* Tags */}
-        {post.tags.length > 0 && (
-          <View style={styles.tagsSection}>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              <View style={styles.tags}>
-                {post.tags.map((tag, index) => (
-                  <TouchableOpacity key={index} style={styles.tag}>
-                    <Text style={styles.tagText}>{tag}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </ScrollView>
-          </View>
-        )}
 
         {/* Comments */}
         <View style={styles.commentsSection}>
@@ -411,7 +248,7 @@ export default function PostDetailScreen() {
           >
             <X size={24} color="#fff" />
           </TouchableOpacity>
-          <Image source={{ uri: post.image }} style={styles.fullImage} />
+          <Image source={{ uri: post.imageUrl }} style={styles.fullImage} />
           <View style={styles.imageModalCaption}>
             <Text style={styles.imageModalCaptionText}>{post.caption}</Text>
           </View>

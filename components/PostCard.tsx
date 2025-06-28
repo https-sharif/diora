@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, Image, TouchableOpacity, Dimensions, Modal, ScrollView, TextInput, StyleSheet, TouchableWithoutFeedback, KeyboardAvoidingView, Platform , Keyboard } from 'react-native';
 import { Star, MessageCircle, X, Send, Heart } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
+import { mockComments } from '@/mock/Comment';
+
 export interface Comment {
   id: string;
   userId: string;
@@ -12,7 +14,7 @@ export interface Comment {
   replies?: Comment[];
   likes: number;
 }
-interface Post {
+export interface Post {
   id: string;
   userId: string;
   username: string;
@@ -20,7 +22,7 @@ interface Post {
   imageUrl: string;
   caption?: string;
   stars: number;
-  comments: number;
+  comments: string[];
   createdAt: string;
 }
 
@@ -229,41 +231,6 @@ const createStyles = (theme: any) => {
   });
 }
 
-const mockComments: Comment[] = [
-  {
-    id: '1',
-    userId: 'style_lover',
-    username: 'style_lover',
-    avatar:
-      'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=100',
-    text: 'Absolutely love this look! Where did you get that jacket?',
-    createdAt: '2h ago',
-    likes: 12,
-    replies: [
-      {
-        id: '1-1',
-        userId: 'fashionista_jane',
-        username: 'fashionista_jane',
-        avatar:
-          'https://images.pexels.com/photos/1036623/pexels-photo-1036623.jpeg?auto=compress&cs=tinysrgb&w=100',
-        text: 'Thank you! Got it from Urban Threads 💕',
-        createdAt: '1h ago',
-        likes: 5,
-      },
-    ],
-  },
-  {
-    id: '2',
-    userId: 'trendy_alex',
-    username: 'trendy_alex',
-    avatar:
-      'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=100',
-    text: 'Perfect styling! The colors work so well together 🔥',
-    createdAt: '3h ago',
-    likes: 8,
-  },
-];
-
 export default function PostCard({ post, onStar }: PostCardProps) {
   const [isStarred, setIsStarred] = useState(false);
   const [starCount, setStarCount] = useState(post.stars);
@@ -400,7 +367,7 @@ export default function PostCard({ post, onStar }: PostCardProps) {
             onPress={() => setShowComments(true)}
           >
             <MessageCircle size={24} color={theme.text} strokeWidth={2} />
-            <Text style={styles.actionText}>{formatNumber(post.comments)}</Text>
+            <Text style={styles.actionText}>{formatNumber(post.comments.length)}</Text>
           </TouchableOpacity>
         </View>
 

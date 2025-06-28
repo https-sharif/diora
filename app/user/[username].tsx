@@ -28,176 +28,48 @@ import {
 } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNotifications } from '@/contexts/NotificationContext';
-
-const { width } = Dimensions.get('window');
-
-interface UserProfile {
-  id: string;
-  username: string;
-  fullName: string;
-  avatar: string;
-  bio: string;
-  followers: number;
-  following: number;
-  posts: number;
-  isFollowing: boolean;
-  isVerified: boolean;
-  location?: string;
-  website?: string;
-  joinDate: string;
-  stylePreferences: string[];
-  userPosts: Array<{
-    id: string;
-    image: string;
-    stars: number;
-    comments: number;
-    caption: string;
-    timestamp: string;
-  }>;
-}
-
-const mockUserProfiles: Record<string, UserProfile> = {
-  'fashionista_jane': {
-    id: '1',
-    username: 'fashionista_jane',
-    fullName: 'Jane Smith',
-    avatar: 'https://images.pexels.com/photos/1036623/pexels-photo-1036623.jpeg?auto=compress&cs=tinysrgb&w=300',
-    bio: 'Fashion enthusiast & style blogger ✨ Sharing daily outfit inspiration and vintage finds 💫',
-    followers: 12500,
-    following: 890,
-    posts: 234,
-    isFollowing: false,
-    isVerified: true,
-    location: 'New York, NY',
-    website: 'fashionistajane.com',
-    joinDate: 'January 2023',
-    stylePreferences: ['Vintage', 'Casual', 'Boho'],
-    userPosts: [
-      {
-        id: '1',
-        image: 'https://images.pexels.com/photos/1126993/pexels-photo-1126993.jpeg?auto=compress&cs=tinysrgb&w=400',
-        stars: 128,
-        comments: 23,
-        caption: 'Loving this vintage look! Perfect for a casual day out ✨',
-        timestamp: '2h ago',
-      },
-      {
-        id: '2',
-        image: 'https://images.pexels.com/photos/1043474/pexels-photo-1043474.jpeg?auto=compress&cs=tinysrgb&w=400',
-        stars: 256,
-        comments: 41,
-        caption: 'Black and white never goes out of style 🖤🤍',
-        timestamp: '1d ago',
-      },
-      {
-        id: '3',
-        image: 'https://images.pexels.com/photos/1457983/pexels-photo-1457983.jpeg?auto=compress&cs=tinysrgb&w=400',
-        stars: 89,
-        comments: 12,
-        caption: 'Summer vibes with this flowy dress 🌸',
-        timestamp: '3d ago',
-      },
-      {
-        id: '4',
-        image: 'https://images.pexels.com/photos/1040424/pexels-photo-1040424.jpeg?auto=compress&cs=tinysrgb&w=400',
-        stars: 167,
-        comments: 28,
-        caption: 'Street style inspiration from NYC 🏙️',
-        timestamp: '5d ago',
-      },
-      {
-        id: '5',
-        image: 'https://images.pexels.com/photos/1381556/pexels-photo-1381556.jpeg?auto=compress&cs=tinysrgb&w=400',
-        stars: 203,
-        comments: 35,
-        caption: 'Accessorizing with vintage jewelry 💎',
-        timestamp: '1w ago',
-      },
-      {
-        id: '6',
-        image: 'https://images.pexels.com/photos/1462637/pexels-photo-1462637.jpeg?auto=compress&cs=tinysrgb&w=400',
-        stars: 145,
-        comments: 19,
-        caption: 'Classic blazer for the office look 👔',
-        timestamp: '1w ago',
-      },
-    ],
-  },
-  'style_maven': {
-    id: '2',
-    username: 'style_maven',
-    fullName: 'Alex Rodriguez',
-    avatar: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=300',
-    bio: 'Minimalist fashion advocate | Sustainable style choices | Less is more 🌱',
-    followers: 8200,
-    following: 456,
-    posts: 156,
-    isFollowing: true,
-    isVerified: false,
-    location: 'Los Angeles, CA',
-    joinDate: 'March 2023',
-    stylePreferences: ['Minimalist', 'Casual', 'Formal'],
-    userPosts: [
-      {
-        id: '7',
-        image: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=400',
-        stars: 95,
-        comments: 15,
-        caption: 'Minimalist wardrobe essentials 🤍',
-        timestamp: '4h ago',
-      },
-      {
-        id: '8',
-        image: 'https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=400',
-        stars: 142,
-        comments: 22,
-        caption: 'Sustainable fashion choices matter 🌍',
-        timestamp: '2d ago',
-      },
-    ],
-  },
-};
+import { User } from '@/contexts/AuthContext';
+import { Post } from '@/components/PostCard';
+import { mockUsers } from '@/mock/User';
+import { mockPosts } from '@/mock/Post';
 
 export default function UserProfileScreen() {
   const { username } = useLocalSearchParams<{ username: string }>();
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, followUser } = useAuth();
   const { addNotification } = useNotifications();
   
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [userProfile, setUserProfile] = useState<User | null>(null);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
-  const [selectedTab, setSelectedTab] = useState<'posts' | 'liked'>('posts');
   const [loading, setLoading] = useState(true);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [selectedTab, setSelectedTab] = useState<'posts' | 'liked'>('posts');
+  const [posts, setPosts] = useState<Post[]>([]);
 
   useEffect(() => {
-    if (username && mockUserProfiles[username]) {
-      setUserProfile(mockUserProfiles[username]);
+    const user = mockUsers.find(user => user.username === username);
+    if (user) {
+      setUserProfile(user);
+      setIsFollowing(user.followers.includes(currentUser?.id || ''));
     }
+
+    const posts = mockPosts.filter(post => post.userId === user?.id);
+
+    setPosts(posts);
+
+    setSelectedTab('posts');
+
     setLoading(false);
   }, [username]);
 
   const handleFollow = () => {
     if (!userProfile) return;
     
-    const newFollowingState = !userProfile.isFollowing;
-    setUserProfile(prev => prev ? {
-      ...prev,
-      isFollowing: newFollowingState,
-      followers: newFollowingState ? prev.followers + 1 : prev.followers - 1,
-    } : null);
-
-    // Add notification
-    addNotification({
-      type: 'follow',
-      title: newFollowingState ? 'New Follower' : 'Unfollowed',
-      message: newFollowingState 
-        ? `${currentUser?.username} started following you`
-        : `${currentUser?.username} unfollowed you`,
-      avatar: currentUser?.avatar,
-    });
+    followUser(userProfile.id);
+    setIsFollowing(!isFollowing);
   };
 
   const handleMessage = () => {
-    Alert.alert('Message', `Send a message to ${userProfile?.fullName}`);
+    router.push(`/message/${userProfile?.id}`);
   };
 
   const handleShare = () => {
@@ -222,12 +94,12 @@ export default function UserProfileScreen() {
     router.push(`/post/${postId}`);
   };
 
-  const renderPost = ({ item }: { item: UserProfile['userPosts'][0] }) => (
+  const renderPost = ({ item }: { item: Post }) => (
     <TouchableOpacity 
       style={styles.postItem}
       onPress={() => handlePostPress(item.id)}
     >
-      <Image source={{ uri: item.image }} style={styles.postImage} />
+      <Image source={{ uri: item.imageUrl }} style={styles.postImage} />
       <View style={styles.postOverlay}>
         <View style={styles.postStats}>
           <View style={styles.postStat}>
@@ -242,27 +114,6 @@ export default function UserProfileScreen() {
       </View>
     </TouchableOpacity>
   );
-  
-  // const renderPost = ({ item }: { item: typeof userProfile.userPosts[0] }) => (
-  //   <TouchableOpacity 
-  //     style={styles.postItem}
-  //     onPress={() => handlePostPress(item.id)}
-  //   >
-  //     <Image source={{ uri: item.image }} style={styles.postImage} />
-  //     <View style={styles.postOverlay}>
-  //       <View style={styles.postStats}>
-  //         <View style={styles.postStat}>
-  //           <Star size={12} color="#fff" fill="#fff" />
-  //           <Text style={styles.postStatText}>{item.stars}</Text>
-  //         </View>
-  //         <View style={styles.postStat}>
-  //           <MessageCircle size={12} color="#fff" />
-  //           <Text style={styles.postStatText}>{item.comments}</Text>
-  //         </View>
-  //       </View>
-  //     </View>
-  //   </TouchableOpacity>
-  // );
 
   if (loading) {
     return (
@@ -345,45 +196,25 @@ export default function UserProfileScreen() {
               )}
             </View>
             <Text style={styles.bio}>{userProfile.bio}</Text>
-            {userProfile.location && (
-              <Text style={styles.location}>📍 {userProfile.location}</Text>
-            )}
-            {userProfile.website && (
-              <TouchableOpacity>
-                <Text style={styles.website}>🔗 {userProfile.website}</Text>
-              </TouchableOpacity>
-            )}
-            <Text style={styles.joinDate}>Joined {userProfile.joinDate}</Text>
-          </View>
-
-          {/* Style Preferences */}
-          <View style={styles.stylePreferences}>
-            <Text style={styles.styleTitle}>Style Preferences</Text>
-            <View style={styles.styleTags}>
-              {userProfile.stylePreferences.map((style, index) => (
-                <View key={index} style={styles.styleTag}>
-                  <Text style={styles.styleTagText}>{style}</Text>
-                </View>
-              ))}
-            </View>
+            <Text style={styles.joinDate}>Joined {userProfile.createdAt}</Text>
           </View>
 
           {/* Action Buttons */}
           <View style={styles.actionButtons}>
             <TouchableOpacity 
-              style={[styles.followButton, userProfile.isFollowing && styles.followingButton]}
+              style={[styles.followButton, isFollowing && styles.followingButton]}
               onPress={handleFollow}
             >
-              {userProfile.isFollowing ? (
+              {isFollowing ? (
                 <UserMinus size={16} color="#666" />
               ) : (
                 <UserPlus size={16} color="#fff" />
               )}
               <Text style={[
                 styles.followButtonText, 
-                userProfile.isFollowing && styles.followingButtonText
+                isFollowing && styles.followingButtonText
               ]}>
-                {userProfile.isFollowing ? 'Following' : 'Follow'}
+                {isFollowing ? 'Following' : 'Follow'}
               </Text>
             </TouchableOpacity>
             
@@ -425,7 +256,7 @@ export default function UserProfileScreen() {
         {/* Posts Grid */}
         {selectedTab === 'posts' ? (
           <FlatList
-            data={userProfile.userPosts}
+            data={posts}
             renderItem={renderPost}
             keyExtractor={(item) => item.id}
             numColumns={3}

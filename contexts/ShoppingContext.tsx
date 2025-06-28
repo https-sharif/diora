@@ -13,6 +13,7 @@ export interface Review {
 }
 export interface Product {
   id: string;
+  storeId: string;
   name: string;
   price: number;
   imageUrl: string;
