@@ -1,25 +1,7 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Image,
-  FlatList,
-  TextInput,
-  Modal,
-  Alert,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, FlatList, TextInput, Modal, Alert, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import {
-  ShoppingCart,
-  Heart,
-  Search,
-  Filter,
-  X,
-  Bookmark,
-} from 'lucide-react-native';
+import { ShoppingCart, Heart, Search, Filter, X, Bookmark, } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useShopping, Product } from '@/contexts/ShoppingContext';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -61,6 +43,7 @@ const createStyles = (theme: any) => {
       fontSize: 28,
       fontFamily: 'Inter-Bold',
       color: theme.text,
+      marginBottom: 16,
     },
     headerButtons: {
       flexDirection: 'row',
@@ -502,176 +485,178 @@ export default function ShoppingScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <View style={styles.headerTop}>
-          <Text style={styles.title}>Shop</Text>
-          <View style={styles.headerButtons}>
-            <TouchableOpacity
-              style={styles.headerButton}
-              onPress={() => {
-                router.push('/wishlist');
-              }}
-            >
-              <Heart size={24} color={theme.text} />
-              {wishlist.length > 0 && <View style={styles.badge}></View>}
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.headerButton}
-              onPress={() => {
-                router.push('/cart');
-              }}
-            >
-              <ShoppingCart size={24} color={theme.text} />
-              {getCartItemCount() > 0 && <View style={styles.badge}></View>}
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        <View style={styles.searchContainer}>
-          <Search size={20} color={theme.textSecondary} style={styles.searchIcon} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search products..."
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            placeholderTextColor={theme.textSecondary}
-          />
-          <TouchableOpacity style={styles.filterButton}>
-            <Filter size={20} color={theme.textSecondary} />
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.categoriesContainer}
-        contentContainerStyle={styles.categories}
-      >
-        {categories.map((category) => (
-          <TouchableOpacity
-            key={category}
-            style={[
-              styles.categoryChip,
-              selectedCategory === category && styles.categoryChipActive,
-            ]}
-            onPress={() => setSelectedCategory(category)}
-          >
-            <Text
-              style={[
-                styles.categoryText,
-                selectedCategory === category && styles.categoryTextActive,
-              ]}
-            >
-              {category}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-
-      <FlatList
-        data={filteredProducts}
-        renderItem={renderProduct}
-        keyExtractor={(item) => item.id}
-        numColumns={2}
-        contentContainerStyle={styles.productsGrid}
-        columnWrapperStyle={styles.productRow}
-        showsVerticalScrollIndicator={false}
-      />
-
-      {/* Product Selection Modal */}
-      <Modal
-        visible={!!selectedProduct}
-        animationType="slide"
-        onRequestClose={() => setSelectedProduct(null)}
-      >
-        {selectedProduct && (
-          <View style={styles.productModal}>
-            <View style={styles.productModalHeader}>
-              <Text style={styles.productModalTitle}>Select Options</Text>
-              <TouchableOpacity onPress={() => setSelectedProduct(null)}>
-                <X size={24} color={theme.text} />
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <View style={styles.headerTop}>
+            <Text style={styles.title}>Shop</Text>
+            <View style={styles.headerButtons}>
+              <TouchableOpacity
+                style={styles.headerButton}
+                onPress={() => {
+                  router.push('/wishlist');
+                }}
+              >
+                <Heart size={24} color={theme.text} />
+                {wishlist.length > 0 && <View style={styles.badge}></View>}
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.headerButton}
+                onPress={() => {
+                  router.push('/cart');
+                }}
+              >
+                <ShoppingCart size={24} color={theme.text} />
+                {getCartItemCount() > 0 && <View style={styles.badge}></View>}
               </TouchableOpacity>
             </View>
+          </View>
 
-            <ScrollView style={styles.productModalContent}>
-              <Image
-                source={{ uri: selectedProduct.image }}
-                style={styles.productModalImage}
-              />
-              <Text style={styles.productModalName}>
-                {selectedProduct.name}
-              </Text>
-              <Text style={styles.productModalPrice}>
-                ${selectedProduct.price}
-              </Text>
-              <Text style={styles.productModalDescription}>
-                {selectedProduct.description}
-              </Text>
-
-              <View style={styles.optionSection}>
-                <Text style={styles.optionTitle}>Size</Text>
-                <View style={styles.optionButtons}>
-                  {selectedProduct.sizes.map((size) => (
-                    <TouchableOpacity
-                      key={size}
-                      style={[
-                        styles.optionButton,
-                        selectedSize === size && styles.optionButtonActive,
-                      ]}
-                      onPress={() => setSelectedSize(size)}
-                    >
-                      <Text
-                        style={[
-                          styles.optionButtonText,
-                          selectedSize === size &&
-                            styles.optionButtonTextActive,
-                        ]}
-                      >
-                        {size}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </View>
-
-              <View style={styles.optionSection}>
-                <Text style={styles.optionTitle}>Color</Text>
-                <View style={styles.optionButtons}>
-                  {selectedProduct.colors.map((color) => (
-                    <TouchableOpacity
-                      key={color}
-                      style={[
-                        styles.optionButton,
-                        selectedColor === color && styles.optionButtonActive,
-                      ]}
-                      onPress={() => setSelectedColor(color)}
-                    >
-                      <Text
-                        style={[
-                          styles.optionButtonText,
-                          selectedColor === color &&
-                            styles.optionButtonTextActive,
-                        ]}
-                      >
-                        {color}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </View>
-            </ScrollView>
-
-            <TouchableOpacity
-              style={styles.confirmButton}
-              onPress={confirmAddToCart}
-            >
-              <Text style={styles.confirmButtonText}>Add to Cart</Text>
+          <View style={styles.searchContainer}>
+            <Search size={20} color={theme.textSecondary} style={styles.searchIcon} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search products..."
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholderTextColor={theme.textSecondary}
+            />
+            <TouchableOpacity style={styles.filterButton}>
+              <Filter size={20} color={theme.textSecondary} />
             </TouchableOpacity>
           </View>
-        )}
-      </Modal>
-    </SafeAreaView>
+        </View>
+
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.categoriesContainer}
+          contentContainerStyle={styles.categories}
+        >
+          {categories.map((category) => (
+            <TouchableOpacity
+              key={category}
+              style={[
+                styles.categoryChip,
+                selectedCategory === category && styles.categoryChipActive,
+              ]}
+              onPress={() => setSelectedCategory(category)}
+            >
+              <Text
+                style={[
+                  styles.categoryText,
+                  selectedCategory === category && styles.categoryTextActive,
+                ]}
+              >
+                {category}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+
+        <FlatList
+          data={filteredProducts}
+          renderItem={renderProduct}
+          keyExtractor={(item) => item.id}
+          numColumns={2}
+          contentContainerStyle={styles.productsGrid}
+          columnWrapperStyle={styles.productRow}
+          showsVerticalScrollIndicator={false}
+        />
+
+        {/* Product Selection Modal */}
+        <Modal
+          visible={!!selectedProduct}
+          animationType="slide"
+          onRequestClose={() => setSelectedProduct(null)}
+        >
+          {selectedProduct && (
+            <View style={styles.productModal}>
+              <View style={styles.productModalHeader}>
+                <Text style={styles.productModalTitle}>Select Options</Text>
+                <TouchableOpacity onPress={() => setSelectedProduct(null)}>
+                  <X size={24} color={theme.text} />
+                </TouchableOpacity>
+              </View>
+
+              <ScrollView style={styles.productModalContent}>
+                <Image
+                  source={{ uri: selectedProduct.image }}
+                  style={styles.productModalImage}
+                />
+                <Text style={styles.productModalName}>
+                  {selectedProduct.name}
+                </Text>
+                <Text style={styles.productModalPrice}>
+                  ${selectedProduct.price}
+                </Text>
+                <Text style={styles.productModalDescription}>
+                  {selectedProduct.description}
+                </Text>
+
+                <View style={styles.optionSection}>
+                  <Text style={styles.optionTitle}>Size</Text>
+                  <View style={styles.optionButtons}>
+                    {selectedProduct.sizes.map((size) => (
+                      <TouchableOpacity
+                        key={size}
+                        style={[
+                          styles.optionButton,
+                          selectedSize === size && styles.optionButtonActive,
+                        ]}
+                        onPress={() => setSelectedSize(size)}
+                      >
+                        <Text
+                          style={[
+                            styles.optionButtonText,
+                            selectedSize === size &&
+                              styles.optionButtonTextActive,
+                          ]}
+                        >
+                          {size}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+
+                <View style={styles.optionSection}>
+                  <Text style={styles.optionTitle}>Color</Text>
+                  <View style={styles.optionButtons}>
+                    {selectedProduct.colors.map((color) => (
+                      <TouchableOpacity
+                        key={color}
+                        style={[
+                          styles.optionButton,
+                          selectedColor === color && styles.optionButtonActive,
+                        ]}
+                        onPress={() => setSelectedColor(color)}
+                      >
+                        <Text
+                          style={[
+                            styles.optionButtonText,
+                            selectedColor === color &&
+                              styles.optionButtonTextActive,
+                          ]}
+                        >
+                          {color}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+              </ScrollView>
+
+              <TouchableOpacity
+                style={styles.confirmButton}
+                onPress={confirmAddToCart}
+              >
+                <Text style={styles.confirmButtonText}>Add to Cart</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </Modal>
+      </SafeAreaView>
+    </TouchableWithoutFeedback>
   );
 }

@@ -8,11 +8,67 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Bell } from 'lucide-react-native';
+import { Bell, MessageCircle } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { router } from 'expo-router';
 import PostCard from '@/components/PostCard';
+import { useTheme } from '@/contexts/ThemeContext';
+
+const createStyles = (theme : any) => {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.background,
+      paddingTop: -100,
+      paddingBottom: -100,
+    },
+    header: {
+      paddingHorizontal: 16,
+      paddingVertical: 16,
+      backgroundColor: theme.background,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.background,
+    },
+    headerContent: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    title: {
+      fontSize: 28,
+      fontFamily: 'Inter-Bold',
+      color: theme.text,
+      marginBottom: 16,
+    },
+    notificationButton: {
+      position: 'relative',
+      padding: 8,
+    },
+    notificationBadge: {
+      position: 'absolute',
+      top: 2,
+      right: 2,
+      backgroundColor: theme.error,
+      borderRadius: 10,
+      minWidth: 20,
+      height: 20,
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderWidth: 2,
+      borderColor: theme.background,
+    },
+    notificationBadgeText: {
+      color: '#fff',
+      fontSize: 11,
+      fontFamily: 'Inter-Bold',
+    },
+    feed: {
+      padding: 16,
+      paddingBottom: 50,
+    },
+  });
+}
 
 const mockPosts = [
   {
@@ -35,7 +91,7 @@ const mockPosts = [
     },
     image: 'https://images.pexels.com/photos/1043474/pexels-photo-1043474.jpeg?auto=compress&cs=tinysrgb&w=800',
     caption: 'Black and white never goes out of style 🖤🤍 #minimalism #chic',
-    stars: 256,
+    stars: 258888,
     comments: 41,
     timestamp: '4h ago',
   },
@@ -66,10 +122,13 @@ const mockPosts = [
 ];
 
 export default function FeedScreen() {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated } = useAuth();
   const { unreadCount } = useNotifications();
   const [posts, setPosts] = useState(mockPosts);
   const [refreshing, setRefreshing] = useState(false);
+  const { theme }  = useTheme();
+
+  const styles = createStyles(theme);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -93,6 +152,10 @@ export default function FeedScreen() {
     router.push('/notifications');
   };
 
+  const handleMessagePress = () => {
+    router.push('/messages');
+  };
+
   if (!isAuthenticated) {
     return null;
   }
@@ -102,19 +165,29 @@ export default function FeedScreen() {
       <View style={styles.header}>
         <View style={styles.headerContent}>
           <Text style={styles.title}>Diora</Text>
-          <TouchableOpacity 
-            style={styles.notificationButton}
-            onPress={handleNotificationPress}
-          >
-            <Bell size={24} color="#000" strokeWidth={2} />
-            {unreadCount > 0 && (
-              <View style={styles.notificationBadge}>
-                <Text style={styles.notificationBadgeText}>
-                  {unreadCount > 99 ? '99+' : unreadCount}
-                </Text>
-              </View>
-            )}
-          </TouchableOpacity>
+        
+          <View style={{ flexDirection: 'row', gap: 12 }}>
+            <TouchableOpacity 
+              style={styles.notificationButton}
+              onPress={handleNotificationPress}
+            >
+              <Bell size={24} color={theme.text} strokeWidth={2} />
+              {unreadCount > 0 && (
+                <View style={styles.notificationBadge}>
+                  <Text style={styles.notificationBadgeText}>
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </Text>
+                </View>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.notificationButton}
+              onPress={handleMessagePress}
+            >
+              <MessageCircle size={24} color={theme.text} strokeWidth={2} />
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
 
@@ -133,61 +206,3 @@ export default function FeedScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8f9fa',
-    paddingTop: -100,
-    paddingBottom: -100,
-  },
-  header: {
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e9ecef',
-  },
-  headerContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  title: {
-    fontSize: 32,
-    fontFamily: 'DancingScript-Bold',
-    color: '#000',
-  },
-  notificationButton: {
-    position: 'relative',
-    padding: 8,
-  },
-  notificationBadge: {
-    position: 'absolute',
-    top: 2,
-    right: 2,
-    backgroundColor: '#FF6B6B',
-    borderRadius: 10,
-    minWidth: 20,
-    height: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#fff',
-  },
-  notificationBadgeText: {
-    color: '#fff',
-    fontSize: 11,
-    fontFamily: 'Inter-Bold',
-  },
-  subtitle: {
-    fontSize: 14,
-    fontFamily: 'Inter-Regular',
-    color: '#666',
-    marginTop: 2,
-  },
-  feed: {
-    padding: 16,
-    paddingBottom: 50,
-  },
-});

@@ -14,6 +14,7 @@ import { AuthProvider } from '@/contexts/AuthContext';
 import { ShoppingProvider } from '@/contexts/ShoppingContext';
 import { NotificationProvider } from '@/contexts/NotificationContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
+import { MessageProvider } from '@/contexts/MessageContext';
 import React from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { View } from 'react-native';
@@ -61,6 +62,7 @@ function AppReadyWrapper({ insets }: { insets: EdgeInsets }) {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
+      <MessageProvider>
       <SafeAreaProvider>
           <NotificationProvider>
             <ShoppingProvider>
@@ -81,6 +83,7 @@ function AppReadyWrapper({ insets }: { insets: EdgeInsets }) {
             </ShoppingProvider>
           </NotificationProvider>
       </SafeAreaProvider>
+      </MessageProvider>
     </GestureHandlerRootView>
   );
 }

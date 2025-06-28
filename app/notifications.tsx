@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { ArrowLeft, Heart, MessageCircle, UserPlus, AtSign, Package, Tag, MoveVertical as MoreVertical, Trash2, Check, CheckCheck, Star } from 'lucide-react-native';
+import { ArrowLeft, Heart, MessageCircle, UserPlus, AtSign, Package, Tag, MoveVertical as MoreVertical, Trash2, Check, CheckCheck, Star, BellOff, Menu } from 'lucide-react-native';
 import { useNotifications, Notification } from '@/contexts/NotificationContext';
 import { useTheme } from '@/contexts/ThemeContext';
 
@@ -27,6 +27,8 @@ const createStyle = (theme: any) => StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.border,
   },
   headerLeft: {
     flexDirection: 'row',
@@ -42,31 +44,10 @@ const createStyle = (theme: any) => StyleSheet.create({
     padding: 8,
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 24,
     fontFamily: 'Inter-Bold',
     color: theme.text,
     marginLeft: 8,
-  },
-  markAllButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    backgroundColor: theme.card,
-    borderRadius: 16,
-  },
-  markAllText: {
-    fontSize: 14,
-    fontFamily: 'Inter-Medium',
-    color: theme.text,
-  },
-  unreadBanner: {
-    backgroundColor: theme.primary,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-  },
-  unreadBannerText: {
-    fontSize: 14,
-    fontFamily: 'Inter-Medium',
-    color: "#000",
   },
   notificationsList: {
     paddingBottom: 50,
@@ -322,11 +303,11 @@ export default function NotificationsScreen() {
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
       <View style={styles.emptyIconContainer}>
-        <Heart size={48} color={theme.text} />
+        <BellOff size={48} color={theme.text} />
       </View>
       <Text style={styles.emptyTitle}>No notifications yet</Text>
       <Text style={styles.emptyMessage}>
-        When people interact with your posts, you'll see notifications here
+        No notifications to show. You will see updates here when you receive new notifications.
       </Text>
     </View>
   );
@@ -334,79 +315,48 @@ export default function NotificationsScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <TouchableOpacity 
-            style={styles.headerButton} 
-            onPress={selectionMode ? exitSelectionMode : () => router.back()}
-          >
-            <ArrowLeft size={24} color={theme.text} />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>
-            {selectionMode ? `${selectedNotifications.length} selected` : 'Notifications'}
-          </Text>
-        </View>
+        <TouchableOpacity 
+          style={styles.headerButton} 
+          onPress={selectionMode ? exitSelectionMode : () => router.back()}
+        >
+          <ArrowLeft size={24} color={theme.text} />
+        </TouchableOpacity>
 
-        <View style={styles.headerRight}>
-          {selectionMode ? (
-            <>
-              <TouchableOpacity 
-                style={styles.headerButton}
-                onPress={markSelectedAsRead}
-              >
-                <CheckCheck size={24} color={theme.text} />
-              </TouchableOpacity>
-              <TouchableOpacity 
-                style={styles.headerButton}
-                onPress={deleteSelected}
-              >
-                <Trash2 size={24} color={theme.error} />
-              </TouchableOpacity>
-            </>
-          ) : (
-            <>
-              {unreadCount > 0 && (
-                <TouchableOpacity 
-                  style={styles.markAllButton}
-                  onPress={markAllAsRead}
-                >
-                  <Text style={styles.markAllText}>Mark all read</Text>
-                </TouchableOpacity>
-              )}
-              <TouchableOpacity 
-                style={styles.headerButton}
-                onPress={() => {
-                  Alert.alert(
-                    'Clear All Notifications',
-                    'Are you sure you want to delete all notifications?',
-                    [
-                      { text: 'Cancel', style: 'cancel' },
-                      {
-                        text: 'Clear All',
-                        style: 'destructive',
-                        onPress: clearAllNotifications,
-                      },
-                    ]
-                  );
-                }}
-              >
-                <MoreVertical size={24} color={theme.text} />
-              </TouchableOpacity>
-            </>
-          )}
-        </View>
+        <Text style={styles.headerTitle}>
+          {selectionMode ? `${selectedNotifications.length} selected` : 'Notifications'}
+        </Text>
+
+        {selectionMode ? (
+          <>
+            <TouchableOpacity 
+              style={styles.headerButton}
+              onPress={markSelectedAsRead}
+            >
+              <CheckCheck size={24} color={theme.text} />
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.headerButton}
+              onPress={deleteSelected}
+            >
+              <Trash2 size={24} color={theme.error} />
+            </TouchableOpacity>
+          </>
+        ) : (
+          <>
+            <TouchableOpacity
+              style={styles.headerButton}
+              onPress={markAllAsRead}
+            >
+              <Check size={24} color={theme.text} />
+            </TouchableOpacity>
+          </>
+        ) }
       </View>
 
       {notifications.length === 0 ? (
         renderEmptyState()
       ) : (
         <>
-          {unreadCount > 0 && !selectionMode && (
-            <View style={styles.unreadBanner}>
-              <Text style={styles.unreadBannerText}>
-                {unreadCount} unread notification{unreadCount !== 1 ? 's' : ''}
-              </Text>
-            </View>
-          )}
 
           <FlatList
             data={notifications}
