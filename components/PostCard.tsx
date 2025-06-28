@@ -388,7 +388,6 @@ export default function PostCard({ post, onStar }: PostCardProps) {
       >
         <TouchableWithoutFeedback onPress={() => setShowComments(false)}>
           <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
-            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
               <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 keyboardVerticalOffset={0}
@@ -445,11 +444,9 @@ export default function PostCard({ post, onStar }: PostCardProps) {
                   </View>
                 </View>
               </KeyboardAvoidingView>
-            </TouchableWithoutFeedback>
           </View>
         </TouchableWithoutFeedback>
       </Modal>
-
     </>
   );
 }

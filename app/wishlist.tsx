@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Product, useShopping } from '@/contexts/ShoppingContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import { mockProducts } from '@/mock/Product';
 
 const createStyles = (theme: any) =>
   StyleSheet.create({
@@ -307,7 +308,7 @@ const Wishlist = () => {
   const renderProduct = ({ item }: { item: Product }) => (
     <View style={styles.productCard}>
       <TouchableOpacity onPress={() => handleProductPress(item)}>
-        <Image source={{ uri: item.image }} style={styles.productImage} />
+        <Image source={{ uri: item.imageUrl }} style={styles.productImage} />
       </TouchableOpacity>
       <TouchableOpacity
         style={[
@@ -360,7 +361,7 @@ const Wishlist = () => {
           renderEmptyState()
         ) : (
           <FlatList
-            data={wishlist}
+            data={wishlist.map(item => mockProducts.find(product => product.id === item.productId) as Product)}
             renderItem={renderProduct}
             keyExtractor={(item) => item.id}
             numColumns={2}
@@ -386,7 +387,7 @@ const Wishlist = () => {
 
             <ScrollView style={styles.productModalContent}>
               <Image
-                source={{ uri: selectedProduct.image }}
+                source={{ uri: selectedProduct.imageUrl }}
                 style={styles.productModalImage}
               />
               <Text style={styles.productModalName}>

@@ -13,7 +13,7 @@ export const mockProducts: Product[] = [
         'Classic vintage-style denim jacket perfect for layering. Made from premium cotton denim with authentic distressing.',
       sizes: ['S', 'M', 'L', 'XL'],
       colors: ['Blue', 'Black', 'White'],
-      stock: 0,
+      stock: 3,
       rating: 0,
     },
     {
@@ -29,7 +29,7 @@ export const mockProducts: Product[] = [
         'Elegant flowy maxi dress for special occasions. Features a flattering silhouette and premium fabric.',
       sizes: ['XS', 'S', 'M', 'L'],
       colors: ['Floral', 'Solid Pink', 'Navy'],
-      stock: 0,
+      stock: 6,
       rating: 0,
     },
     {
@@ -61,7 +61,7 @@ export const mockProducts: Product[] = [
         'High-waisted jeans with a comfortable fit. Perfect for any casual occasion.',
       sizes: ['26', '28', '30', '32', '34'],
       colors: ['Dark Blue', 'Light Blue', 'Black'],
-      stock: 0,
+      stock: 10,
       rating: 0,
     },
     {

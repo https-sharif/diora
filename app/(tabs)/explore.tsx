@@ -7,178 +7,19 @@ import { router } from 'expo-router';
 import { useShopping, Product } from '@/contexts/ShoppingContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import Color from 'color';
+import { User, ShopProfile } from '@/contexts/AuthContext';
+import { mockShops } from '@/mock/Shop';
+import { mockProducts } from '@/mock/Product';
+import { mockUsers } from '@/mock/User';
+import { mockPosts } from '@/mock/Post';
+import { Post } from '@/components/PostCard';
 
 const { width, height } = Dimensions.get('window');
 
-const trendingUsers = [
-  {
-    id: '1',
-    username: 'fashion_guru',
-    avatar: 'https://images.pexels.com/photos/1036623/pexels-photo-1036623.jpeg?auto=compress&cs=tinysrgb&w=150',
-    followers: '12.5K',
-    isShop: false,
-    category: 'Users',
-    bio: 'Fashion enthusiast & style blogger',
-    location: 'New York',
-    verified: true,
-  },
-  {
-    id: '2',
-    username: 'vintage_store',
-    avatar: 'https://images.pexels.com/photos/1926769/pexels-photo-1926769.jpeg?auto=compress&cs=tinysrgb&w=150',
-    followers: '8.2K',
-    isShop: true,
-    category: 'Shops',
-    bio: 'Curated vintage fashion pieces',
-    location: 'Los Angeles',
-    verified: false,
-  },
-  {
-    id: '3',
-    username: 'street_wear',
-    avatar: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=150',
-    followers: '15.7K',
-    isShop: true,
-    category: 'Shops',
-    bio: 'Urban streetwear collection',
-    location: 'Chicago',
-    verified: true,
-  },
-  {
-    id: '4',
-    username: 'boho_chic',
-    avatar: 'https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=150',
-    followers: '9.3K',
-    isShop: false,
-    category: 'Users',
-    bio: 'Bohemian style inspiration',
-    location: 'Austin',
-    verified: false,
-  },
-];
-
-const trendingProducts = [
-  {
-    id: 'p1',
-    name: 'Vintage Denim Jacket',
-    price: 120,
-    image: 'https://images.pexels.com/photos/1126993/pexels-photo-1126993.jpeg?auto=compress&cs=tinysrgb&w=400',
-    brand: 'Urban Threads',
-    rating: 4.8,
-    reviews: 127,
-    category: 'Products',
-    subcategory: 'Outerwear',
-    tags: ['vintage', 'denim', 'casual'],
-    stock: 15,
-    discount: 25,
-    description: 'A classic vintage denim jacket for all seasons.',
-    sizes: ['S', 'M', 'L', 'XL'],
-    colors: ['Blue'],
-    isAvailable: true,
-  },
-  {
-    id: 'p2',
-    name: 'Silk Scarf Collection',
-    price: 45.99,
-    image: 'https://images.pexels.com/photos/1381556/pexels-photo-1381556.jpeg?auto=compress&cs=tinysrgb&w=400',
-    brand: 'Luxury Accessories',
-    rating: 4.6,
-    reviews: 89,
-    category: 'Products',
-    subcategory: 'Accessories',
-    tags: ['silk', 'luxury', 'accessories'],
-    stock: 15,
-    description: 'Elegant silk scarves in various patterns.',
-    sizes: ['One Size'],
-    colors: ['Red', 'Blue', 'Green'],
-    isAvailable: true,
-  },
-  {
-    id: 'p3',
-    name: 'High-Waisted Jeans',
-    price: 69.99,
-    image: 'https://images.pexels.com/photos/1040424/pexels-photo-1040424.jpeg?auto=compress&cs=tinysrgb&w=400',
-    brand: 'Denim Co',
-    rating: 4.7,
-    reviews: 203,
-    category: 'Products',
-    subcategory: 'Bottoms',
-    tags: ['denim', 'high-waisted', 'casual'],
-    stock: 0,
-    description: 'Trendy high-waisted jeans for everyday wear.',
-    sizes: ['XS', 'S', 'M', 'L'],
-    colors: ['Blue', 'Black'],
-    isAvailable: false,
-  },
-  {
-    id: 'p4',
-    name: 'Flowy Maxi Dress',
-    price: 129.99,
-    image: 'https://images.pexels.com/photos/1457983/pexels-photo-1457983.jpeg?auto=compress&cs=tinysrgb&w=400',
-    brand: 'Boho Chic',
-    rating: 4.9,
-    reviews: 156,
-    category: 'Products',
-    subcategory: 'Dresses',
-    tags: ['maxi', 'flowy', 'boho'],
-    stock: 15,
-    description: 'A beautiful flowy maxi dress for summer.',
-    sizes: ['S', 'M', 'L'],
-    colors: ['White', 'Pink'],
-    isAvailable: true,
-  },
-];
-
-const exploreGrid = [
-  {
-    id: '1',
-    image: 'https://images.pexels.com/photos/1126993/pexels-photo-1126993.jpeg?auto=compress&cs=tinysrgb&w=400',
-    user: 'fashionista_jane',
-    userAvatar: 'https://images.pexels.com/photos/1036623/pexels-photo-1036623.jpeg?auto=compress&cs=tinysrgb&w=100',
-    stars: 128,
-    comments: 23,
-    category: 'Posts',
-    caption: 'Loving this vintage look! Perfect for a casual day out ✨',
-    timestamp: '2h ago',
-    tags: ['vintage', 'casual', 'ootd'],
-  },
-  {
-    id: '2',
-    image: 'https://images.pexels.com/photos/1043474/pexels-photo-1043474.jpeg?auto=compress&cs=tinysrgb&w=400',
-    user: 'style_maven',
-    userAvatar: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=100',
-    stars: 256,
-    comments: 41,
-    category: 'Posts',
-    caption: 'Black and white never goes out of style 🖤🤍',
-    timestamp: '4h ago',
-    tags: ['minimalist', 'monochrome', 'chic'],
-  },
-  {
-    id: '3',
-    image: 'https://images.pexels.com/photos/1457983/pexels-photo-1457983.jpeg?auto=compress&cs=tinysrgb&w=400',
-    user: 'trendy_alex',
-    userAvatar: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=100',
-    stars: 89,
-    comments: 12,
-    category: 'Posts',
-    caption: 'Summer vibes with this flowy dress 🌸',
-    timestamp: '6h ago',
-    tags: ['summer', 'flowy', 'dress'],
-  },
-  {
-    id: '4',
-    image: 'https://images.pexels.com/photos/1040424/pexels-photo-1040424.jpeg?auto=compress&cs=tinysrgb&w=400',
-    user: 'urban_chic',
-    userAvatar: 'https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=100',
-    stars: 167,
-    comments: 28,
-    category: 'Posts',
-    caption: 'Street style inspiration from NYC 🏙️',
-    timestamp: '8h ago',
-    tags: ['streetstyle', 'urban', 'nyc'],
-  },
-];
+const trendingUsers : User[] = mockUsers.slice(0, 4);
+const trendingShops : ShopProfile[] = mockShops.slice(0, 4);
+const trendingProducts : Product[] = mockProducts.slice(0, 4);
+const exploreGrid : Post[] = mockPosts.slice(0, 4);
 
 const filterOptions = {
   contentType: ['All', 'Users', 'Shops', 'Products', 'Posts'],
@@ -715,8 +556,8 @@ export default function ExploreScreen() {
   });
 
   const applyFilters = () => {
-    let filteredUsers = trendingUsers.filter(user => !user.isShop);
-    let filteredShops = trendingUsers.filter(user => user.isShop);
+    let filteredUsers = trendingUsers;
+    let filteredShops = trendingShops;
     let filteredProducts = trendingProducts;
     let filteredPosts = exploreGrid;
 
@@ -724,23 +565,17 @@ export default function ExploreScreen() {
       const query = searchQuery.toLowerCase();
       filteredUsers = filteredUsers.filter(user =>
         user.username.toLowerCase().includes(query) ||
-        user.bio.toLowerCase().includes(query) ||
-        user.location.toLowerCase().includes(query)
+        user.fullName.toLowerCase().includes(query)
       );
       filteredShops = filteredShops.filter(user =>
-        user.username.toLowerCase().includes(query) ||
-        user.bio.toLowerCase().includes(query) ||
-        user.location.toLowerCase().includes(query)
+        user.username.toLowerCase().includes(query)
       );
       filteredProducts = filteredProducts.filter(product =>
         product.name.toLowerCase().includes(query) ||
-        product.brand.toLowerCase().includes(query) ||
-        product.tags.some(tag => tag.toLowerCase().includes(query))
+        product.brand.toLowerCase().includes(query)
       );
       filteredPosts = filteredPosts.filter(post =>
-        post.user.toLowerCase().includes(query) ||
-        post.caption.toLowerCase().includes(query) ||
-        post.tags.some(tag => tag.toLowerCase().includes(query))
+        post.caption?.toLowerCase().includes(query)
       );
     }
 
@@ -750,12 +585,10 @@ export default function ExploreScreen() {
         filteredProducts = [];
         filteredPosts = [];
         filteredShops = [];
-        filteredUsers = filteredUsers.filter(user => !user.isShop);
       } else if (filters.contentType === 'Shops') {
         filteredUsers = [];
         filteredProducts = [];
         filteredPosts = [];
-        filteredShops = filteredShops.filter(user => user.isShop);
       } else if (filters.contentType === 'Products') {
         filteredUsers = [];
         filteredPosts = [];
@@ -812,34 +645,34 @@ export default function ExploreScreen() {
     if (filters.style !== 'All') {
       const style = filters.style.toLowerCase();
       filteredProducts = filteredProducts.filter(product =>
-        product.tags.some(tag => tag.toLowerCase().includes(style))
+        product.name.toLowerCase().includes(style)
       );
       filteredPosts = filteredPosts.filter(post =>
-        post.tags.some(tag => tag.toLowerCase().includes(style))
+        post.caption?.toLowerCase().includes(style)
       );
     }
 
     if (filters.verification !== 'All') {
       if (filters.verification === 'Verified Only') {
-        filteredUsers = filteredUsers.filter(user => user.verified);
+        filteredUsers = filteredUsers.filter(user => user.isVerified);
       } else {
-        filteredUsers = filteredUsers.filter(user => !user.verified);
+        filteredUsers = filteredUsers.filter(user => !user.isVerified);
       }
     }
 
     if (filters.followers !== 'All') {
       const followersRange = filters.followers.split('-');
       filteredUsers = filteredUsers.filter(user => {
-        const followersCount = parseFloat(user.followers.replace(/K$/, '')) * 1000;
-        const minimum = parseFloat(followersRange[0].replace(/K$/, '')) * 1000;
-        const maximum = followersRange[1] ? parseFloat(followersRange[1].replace(/K$/, '')) * 1000 : Infinity;
+        const followersCount = user.followers.length;
+        const minimum = parseFloat(followersRange[0]);
+        const maximum = followersRange[1] ? parseFloat(followersRange[1]) : Infinity;
         return followersCount >= minimum && followersCount < maximum;
       });
 
       filteredShops = filteredShops.filter(user => {
-        const followersCount = parseFloat(user.followers.replace(/K$/, '')) * 1000;
-        const minimum = parseFloat(followersRange[0].replace(/K$/, '')) * 1000;
-        const maximum = followersRange[1] ? parseFloat(followersRange[1].replace(/K$/, '')) * 1000 : Infinity;
+        const followersCount = user.followers.length;
+        const minimum = parseFloat(followersRange[0]);
+        const maximum = followersRange[1] ? parseFloat(followersRange[1]) : Infinity;
         return followersCount >= minimum && followersCount < maximum;
       });
     }
@@ -927,23 +760,37 @@ export default function ExploreScreen() {
     },
   });
 
-  type TrendingUser = {
-    id: string;
-    username: string;
-    avatar: string;
-    followers: string;
-    isShop: boolean;
-    category: string;
-    bio: string;
-    location: string;
-    verified: boolean;
-  };
+  const renderShopCard = ({ item }: { item: ShopProfile }) => (
+    <TouchableOpacity 
+      style={styles.userCard}
+      onPress={() => router.push(`/shop/${item.username}`)}
+    >
+      <Image source={{ uri: item.logoUrl }} style={styles.userAvatar} />
+      <View style={styles.userInfo}>
+        <View style={styles.userNameRow}>
+          <Text style={styles.userName}>{item.username}</Text>
+          { item.isVerified && 
+            <View style={styles.verifiedBadgeContainer}>
+              <Check size={10} color="white" />
+            </View>
+          }
+          <Store size={14} color="#FFD700" />
+        </View>
+        <Text style={styles.userLocation}>📍 {item.location}</Text>
+        <Text style={styles.userFollowers}>{item.followers} followers</Text>
+      </View>
+      <TouchableOpacity style={styles.followButton}>
+        <Text style={styles.followButtonText}>Follow</Text>
+      </TouchableOpacity>
+    </TouchableOpacity>
+  );
 
-  const renderUserCard = ({ item }: { item: TrendingUser }) => (
+
+  const renderUserCard = ({ item }: { item: User }) => (
     <TouchableOpacity 
       style={styles.userCard}
       onPress={() => {
-        if (item.isShop) {
+        if ('isShop' in item && item.isShop) {
           router.push(`/shop/${item.username}`);
         } else {
           router.push(`/user/${item.username}`);
@@ -954,15 +801,13 @@ export default function ExploreScreen() {
       <View style={styles.userInfo}>
         <View style={styles.userNameRow}>
           <Text style={styles.userName}>{item.username}</Text>
-          { item.verified && 
+          { item.isVerified && 
             <View style={styles.verifiedBadgeContainer}>
               <Check size={10} color="white" />
             </View>
           }
-          {item.isShop && <Store size={14} color="#FFD700" />}
         </View>
         <Text style={styles.userBio} numberOfLines={2}>{item.bio}</Text>
-        <Text style={styles.userLocation}>📍 {item.location}</Text>
         <Text style={styles.userFollowers}>{item.followers} followers</Text>
       </View>
       <TouchableOpacity style={styles.followButton}>
@@ -977,7 +822,7 @@ export default function ExploreScreen() {
       onPress={() => router.push(`/product/${item.id}`)}
     >
       <View style={styles.productImageContainer}>
-        <Image source={{ uri: item.image }} style={styles.productImage} />
+        <Image source={{ uri: item.imageUrl }} style={styles.productImage} />
         {item.discount && (
           <View style={styles.discountBadge}>
             <Text style={styles.discountText}>-{item.discount}%</Text>
@@ -1021,7 +866,7 @@ export default function ExploreScreen() {
         </View>
         <View style={styles.ratingRow}>
           <Star size={12} color="#FFD700" fill="#FFD700" />
-          <Text style={styles.ratingText}>{item.rating} ({item.reviews})</Text>
+          {/* <Text style={styles.ratingText}>{item.rating} ({item.reviews})</Text> */}
         </View>
       </View>
     </TouchableOpacity>
@@ -1040,14 +885,14 @@ export default function ExploreScreen() {
     tags: string[];
   };
 
-  const renderGridItem = ({ item }: { item: ExploreGridItem }) => (
+  const renderGridItem = ({ item }: { item: Post }) => (
     <TouchableOpacity 
       style={styles.gridItem}
       onPress={() => router.push(`/post/${item.id}`)}
       onLongPress={() => handleLongPress(item)}
       delayLongPress={500}
     >
-      <Image source={{ uri: item.image }} style={styles.gridImage} />
+      <Image source={{ uri: item.imageUrl }} style={styles.gridImage} />
     </TouchableOpacity>
   );
 
@@ -1124,12 +969,12 @@ export default function ExploreScreen() {
           )}
 
           {/* Trending Shops */}
-          {filteredShops.length > 0 && filteredShops.some(user => user.isShop) && (
+          {filteredShops.length > 0 && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Trending Shops</Text>
               <FlatList
                 data={filteredShops}
-                renderItem={renderUserCard}
+                renderItem={renderShopCard}
                 keyExtractor={(item) => item.id}
                 scrollEnabled={false}
               />

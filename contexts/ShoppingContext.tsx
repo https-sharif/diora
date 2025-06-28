@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { v4 as uuidv4 } from 'uuid';
 
 export interface Review {
   id: string;
@@ -67,7 +66,6 @@ export function ShoppingProvider({ children }: { children: React.ReactNode }) {
       console.error('User not authenticated');
       return;
     }
-
     const userId = user.id;
     setCart(prev => {
       const existingItem = prev.find(item => 
@@ -85,11 +83,10 @@ export function ShoppingProvider({ children }: { children: React.ReactNode }) {
             : item
         );
       }
-      
       return [
         ...prev,
         {
-          id: uuidv4(),
+          id: (cart.length + 1).toString(),
           userId,
           productId: product.id,
           quantity: 1,
@@ -122,18 +119,11 @@ export function ShoppingProvider({ children }: { children: React.ReactNode }) {
       console.error('User not authenticated');
       return;
     }
-    setWishlist(prev => {
-      const exists = prev.find(item => item.productId === product.id && item.userId === user.id);
-      if (exists) return prev;
-      return [
-        ...prev,
-        {
-          id: uuidv4(),
-          userId: user.id,
-          productId: product.id,
-        }
-      ];
-    });
+    setWishlist(prev => [...prev, { 
+      id: (wishlist.length + 1).toString(), 
+      userId: user.id, 
+      productId: product.id 
+    }]);
   };
 
   const removeFromWishlist = (productId: string) => {

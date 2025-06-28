@@ -16,10 +16,11 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { useShopping } from '@/contexts/ShoppingContext';
+import { CartItem, Product, useShopping } from '@/contexts/ShoppingContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 import { Animated } from 'react-native';
+import { mockProducts } from '@/mock/Product';
 
 const createStyles = (theme: any) =>
   StyleSheet.create({
@@ -212,7 +213,8 @@ const Cart = () => {
     </View>
   );
 
-  const renderCartItem = ({ item }: { item: any }) => {
+  const renderCartItem = ({ item }: { item: CartItem }) => {
+    const product = mockProducts.find(product => product.id === item.productId) as Product;
     const renderRightActions = (
       progress: Animated.AnimatedInterpolation<number>
     ) => {
@@ -242,7 +244,7 @@ const Cart = () => {
         extrapolate: 'clamp',
       });
       return (
-        <TouchableOpacity onPress={() => addToWishlist(item)}>
+        <TouchableOpacity onPress={() => addToWishlist(product)}>
           <Animated.View
             style={[styles.swipeActionLeft, { transform: [{ translateX }] }]}
           >
@@ -264,19 +266,19 @@ const Cart = () => {
             onPress={() => router.push(`/product/${item.id}`)}
             activeOpacity={0.7}
           >
-            <Image source={{ uri: item.image }} style={styles.cartItemImage} />
+            <Image source={{ uri: product.imageUrl }} style={styles.cartItemImage} />
           </TouchableOpacity>
           <View style={styles.cartItemInfo}>
             <TouchableOpacity
               onPress={() => router.push(`/product/${item.id}`)}
               activeOpacity={0.7}
             >
-              <Text style={styles.cartItemName}>{item.name}</Text>
+              <Text style={styles.cartItemName}>{product.name}</Text>
             </TouchableOpacity>
             <Text style={styles.cartItemDetails}>
               {item.selectedSize} • {item.selectedColor}
             </Text>
-            <Text style={styles.cartItemPrice}>${item.price}</Text>
+            <Text style={styles.cartItemPrice}>${product.price}</Text>
           </View>
           <View style={styles.cartItemActions}>
             <View style={styles.quantityControls}>
@@ -331,7 +333,7 @@ const Cart = () => {
             <View style={styles.cartFooter}>
               <View style={styles.cartTotal}>
                 <Text style={styles.cartTotalText}>
-                  Total: ${getCartTotal().toFixed(2)}
+                  Total: ${getCartTotal(cart.map(item => mockProducts.find(product => product.id === item.productId) as Product)).toFixed(2)}
                 </Text>
               </View>
               <TouchableOpacity style={styles.checkoutButton}>

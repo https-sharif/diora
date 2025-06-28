@@ -176,11 +176,11 @@ export default function UserProfileScreen() {
                 <Text style={styles.statLabel}>Posts</Text>
               </View>
               <View style={styles.statItem}>
-                <Text style={styles.statNumber}>{userProfile.followers.toLocaleString()}</Text>
+                <Text style={styles.statNumber}>{userProfile.followers.length.toLocaleString()}</Text>
                 <Text style={styles.statLabel}>Followers</Text>
               </View>
               <View style={styles.statItem}>
-                <Text style={styles.statNumber}>{userProfile.following}</Text>
+                <Text style={styles.statNumber}>{userProfile.following.length.toLocaleString()}</Text>
                 <Text style={styles.statLabel}>Following</Text>
               </View>
             </View>

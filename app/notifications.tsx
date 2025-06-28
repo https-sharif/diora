@@ -191,7 +191,6 @@ export default function NotificationsScreen() {
     markAsRead, 
     markAllAsRead, 
     deleteNotification, 
-    clearAllNotifications 
   } = useNotifications();
   const [selectedNotifications, setSelectedNotifications] = useState<string[]>([]);
   const [selectionMode, setSelectionMode] = useState(false);
