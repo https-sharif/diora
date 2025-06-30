@@ -13,8 +13,12 @@ import { Settings, Grid2x2 as Grid, Heart, LogOut } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import { mockPosts } from '@/mock/Post';
+import { mockUsers } from '@/mock/User';
+import { Post } from '@/types/Post';
+import { Theme } from '@/types/Theme';  
 
-const createStyles = (theme: any) =>
+const createStyles = (theme: Theme) =>
   StyleSheet.create({
     container: {
       flex: 1,
@@ -136,7 +140,6 @@ const createStyles = (theme: any) =>
       backgroundColor: theme.background,
     },
     postsRow: {
-      justifyContent: 'space-between',
       paddingHorizontal: 2,
     },
     postItem: {
@@ -151,144 +154,6 @@ const createStyles = (theme: any) =>
     },
   });
 
-const userPosts = [
-  {
-    id: '1',
-    image:
-      'https://images.pexels.com/photos/1126993/pexels-photo-1126993.jpeg?auto=compress&cs=tinysrgb&w=300',
-    stars: 128,
-  },
-  {
-    id: '2',
-    image:
-      'https://images.pexels.com/photos/1043474/pexels-photo-1043474.jpeg?auto=compress&cs=tinysrgb&w=300',
-    stars: 256,
-  },
-  {
-    id: '3',
-    image:
-      'https://images.pexels.com/photos/1457983/pexels-photo-1457983.jpeg?auto=compress&cs=tinysrgb&w=300',
-    stars: 89,
-  },
-  {
-    id: '4',
-    image:
-      'https://images.pexels.com/photos/1040424/pexels-photo-1040424.jpeg?auto=compress&cs=tinysrgb&w=300',
-    stars: 167,
-  },
-  {
-    id: '5',
-    image:
-      'https://images.pexels.com/photos/1381556/pexels-photo-1381556.jpeg?auto=compress&cs=tinysrgb&w=300',
-    stars: 203,
-  },
-  {
-    id: '6',
-    image:
-      'https://images.pexels.com/photos/1462637/pexels-photo-1462637.jpeg?auto=compress&cs=tinysrgb&w=300',
-    stars: 145,
-  },
-  {
-    id: '7',
-    image:
-      'https://images.pexels.com/photos/1126993/pexels-photo-1126993.jpeg?auto=compress&cs=tinysrgb&w=300',
-    stars: 128,
-  },
-  {
-    id: '8',
-    image:
-      'https://images.pexels.com/photos/1043474/pexels-photo-1043474.jpeg?auto=compress&cs=tinysrgb&w=300',
-    stars: 256,
-  },
-  {
-    id: '9',
-    image:
-      'https://images.pexels.com/photos/1457983/pexels-photo-1457983.jpeg?auto=compress&cs=tinysrgb&w=300',
-    stars: 89,
-  },
-  {
-    id: '10',
-    image:
-      'https://images.pexels.com/photos/1040424/pexels-photo-1040424.jpeg?auto=compress&cs=tinysrgb&w=300',
-    stars: 167,
-  },
-  {
-    id: '11',
-    image:
-      'https://images.pexels.com/photos/1381556/pexels-photo-1381556.jpeg?auto=compress&cs=tinysrgb&w=300',
-    stars: 203,
-  },
-  {
-    id: '12',
-    image:
-      'https://images.pexels.com/photos/1462637/pexels-photo-1462637.jpeg?auto=compress&cs=tinysrgb&w=300',
-    stars: 145,
-  },
-  {
-    id: '13',
-    image:
-      'https://images.pexels.com/photos/1126993/pexels-photo-1126993.jpeg?auto=compress&cs=tinysrgb&w=300',
-    stars: 128,
-  },
-  {
-    id: '14',
-    image:
-      'https://images.pexels.com/photos/1043474/pexels-photo-1043474.jpeg?auto=compress&cs=tinysrgb&w=300',
-    stars: 256,
-  },
-  {
-    id: '15',
-    image:
-      'https://images.pexels.com/photos/1457983/pexels-photo-1457983.jpeg?auto=compress&cs=tinysrgb&w=300',
-    stars: 89,
-  },
-  {
-    id: '16',
-    image:
-      'https://images.pexels.com/photos/1040424/pexels-photo-1040424.jpeg?auto=compress&cs=tinysrgb&w=300',
-    stars: 167,
-  },
-  {
-    id: '17',
-    image:
-      'https://images.pexels.com/photos/1381556/pexels-photo-1381556.jpeg?auto=compress&cs=tinysrgb&w=300',
-    stars: 203,
-  },
-  {
-    id: '18',
-    image:
-      'https://images.pexels.com/photos/1462637/pexels-photo-1462637.jpeg?auto=compress&cs=tinysrgb&w=300',
-    stars: 145,
-  },
-];
-
-const likedPosts = [
-  {
-    id: '1',
-    image:
-      'https://images.pexels.com/photos/1036623/pexels-photo-1036623.jpeg?auto=compress&cs=tinysrgb&w=300',
-    stars: 200,
-  },
-  {
-    id: '2',
-    image:
-      'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=300',
-    stars: 180,
-  },
-  {
-    id: '3',
-    image:
-      'https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=300',
-    stars: 220,
-  },
-  {
-    id: '4',
-    image:
-      'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=300',
-    stars: 150,
-  },
-];
-
 export default function ProfileScreen() {
   const { user, logout } = useAuth();
   const [activeTab, setActiveTab] = React.useState<'posts' | 'liked'>('posts');
@@ -296,6 +161,8 @@ export default function ProfileScreen() {
     setActiveTab(tab);
   };
   const { theme } = useTheme();
+  const myPosts = mockPosts.filter(post => post.userId === user?.id);
+  const likedPosts = mockPosts.filter(post => user?.likedPosts.includes(post.id));
 
   const styles = createStyles(theme);
 
@@ -307,14 +174,19 @@ export default function ProfileScreen() {
     router.push('/settings');
   };
 
-  const renderPost = ({ item }: { item: (typeof userPosts)[0] }) => (
-    <TouchableOpacity
-      style={styles.postItem}
-      onPress={() => handlePostPress(item.id)}
-    >
-      <Image source={{ uri: item.image }} style={styles.postImage} />
-    </TouchableOpacity>
-  );
+  const renderPost = ({ item }: { item: Post }) => {
+    const user = mockUsers.find(user => user.id === item.userId);
+    if (!user) return null;
+
+    return (
+      <TouchableOpacity
+        style={styles.postItem}
+        onPress={() => handlePostPress(item.id)}
+      >
+        <Image source={{ uri: item.imageUrl }} style={styles.postImage} />
+      </TouchableOpacity>
+    )
+  }
 
   if (!user) return null;
 
@@ -349,7 +221,7 @@ export default function ProfileScreen() {
         {/* Stats */}
         <View style={styles.statsSection}>
           <View style={styles.statItem}>
-            <Text style={styles.statNumber}>{user.posts}</Text>
+            <Text style={styles.statNumber}>{user.posts.toLocaleString()}</Text>
             <Text style={styles.statLabel}>Posts</Text>
           </View>
           <View style={styles.statItem}>
@@ -405,7 +277,7 @@ export default function ProfileScreen() {
         {/* Posts Grid */}
         {activeTab === 'posts' && (
           <FlatList
-            data={userPosts}
+            data={myPosts}
             renderItem={renderPost}
             keyExtractor={(item) => item.id}
             numColumns={3}

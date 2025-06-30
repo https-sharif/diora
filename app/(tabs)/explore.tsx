@@ -1,25 +1,28 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { View, Text, TextInput, StyleSheet, ScrollView, TouchableOpacity, Image, FlatList, Modal, Dimensions, Animated, PanResponder, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import { BlurView } from 'expo-blur';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Search, Filter, X, Check, Star, Heart, Store, Bookmark, SearchX } from 'lucide-react-native';
 import { router } from 'expo-router';
-import { useShopping, Product } from '@/contexts/ShoppingContext';
+import { useShopping } from '@/contexts/ShoppingContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import Color from 'color';
-import { User, ShopProfile } from '@/contexts/AuthContext';
+import { User } from '@/types/User';
+import { ShopProfile } from '@/types/ShopProfile';
+import { Product } from '@/types/Product';
+import { Post } from '@/types/Post';
+import { Theme } from '@/types/Theme';
 import { mockShops } from '@/mock/Shop';
 import { mockProducts } from '@/mock/Product';
 import { mockUsers } from '@/mock/User';
 import { mockPosts } from '@/mock/Post';
-import { Post } from '@/components/PostCard';
 
 const { width, height } = Dimensions.get('window');
 
 const trendingUsers : User[] = mockUsers.slice(0, 4);
 const trendingShops : ShopProfile[] = mockShops.slice(0, 4);
 const trendingProducts : Product[] = mockProducts.slice(0, 4);
-const exploreGrid : Post[] = mockPosts.slice(0, 4);
+const exploreGrid : Post[] = mockPosts.slice(0, 9);
 
 const filterOptions = {
   contentType: ['All', 'Users', 'Shops', 'Products', 'Posts'],
@@ -32,7 +35,7 @@ const filterOptions = {
   likes: ['All', '0-100', '100-500', '500-1000', '1000+'],
 };
 
-const createStyles = (theme: any) => {
+const createStyles = (theme: Theme) => {
   const outOfStockOverlay = Color(theme.text).alpha(0.5).toString();
   const bookmarkInactiveColor = Color(theme.text).alpha(0.5).toString();
 
@@ -197,6 +200,7 @@ const createStyles = (theme: any) => {
     borderRadius: 12,
     paddingHorizontal: 8,
     paddingVertical: 4,
+    zIndex: 10,
   },
   discountText: {
     color: '#fff',
@@ -212,6 +216,7 @@ const createStyles = (theme: any) => {
     backgroundColor: outOfStockOverlay,
     justifyContent: 'center',
     alignItems: 'center',
+    zIndex: 5,
   },
   outOfStockText: {
     color: theme.background,
@@ -225,6 +230,7 @@ const createStyles = (theme: any) => {
     backgroundColor: bookmarkInactiveColor,
     borderRadius: 16,
     padding: 8,
+    zIndex: 15,
   },
   wishlistButtonActive: {
     backgroundColor: theme.text,
@@ -274,8 +280,10 @@ const createStyles = (theme: any) => {
   },
   ratingRow: {
     flexDirection: 'row',
-    alignItems: 'center',
     gap: 4,
+    position: 'absolute',
+    bottom: 16,
+    right: 16,
   },
   ratingText: {
     fontSize: 12,
@@ -283,7 +291,6 @@ const createStyles = (theme: any) => {
     color: theme.textSecondary,
   },
   gridRow: {
-    justifyContent: 'space-between',
     paddingHorizontal: 16,
     width: '99%',
   },
@@ -526,12 +533,10 @@ export default function ExploreScreen() {
   const { addToWishlist, isInWishlist, removeFromWishlist } = useShopping();
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilter, setShowFilter] = useState(false);
-  const [enlargedPost, setEnlargedPost] = useState<ExploreGridItem | null>(null);
+  const [enlargedPost, setEnlargedPost] = useState<Post | null>(null);
   const [scaleAnim] = useState(new Animated.Value(1));
   const [opacityAnim] = useState(new Animated.Value(0));
   const { theme } = useTheme();
-
-  const insets = useSafeAreaInsets();
 
   const styles = createStyles(theme);
 
@@ -696,7 +701,7 @@ export default function ExploreScreen() {
 
   const { filteredUsers, filteredProducts, filteredPosts, filteredShops } = applyFilters();
 
-  const handleLongPress = (post : any) => {
+  const handleLongPress = (post : Post) => {
     setEnlargedPost(post);
     Animated.parallel([
       Animated.spring(scaleAnim, {
@@ -763,7 +768,7 @@ export default function ExploreScreen() {
   const renderShopCard = ({ item }: { item: ShopProfile }) => (
     <TouchableOpacity 
       style={styles.userCard}
-      onPress={() => router.push(`/shop/${item.username}`)}
+      onPress={() => router.push(`/shop/${item.id}`)}
     >
       <Image source={{ uri: item.logoUrl }} style={styles.userAvatar} />
       <View style={styles.userInfo}>
@@ -791,9 +796,9 @@ export default function ExploreScreen() {
       style={styles.userCard}
       onPress={() => {
         if ('isShop' in item && item.isShop) {
-          router.push(`/shop/${item.username}`);
+          router.push(`/shop/${item.id}`);
         } else {
-          router.push(`/user/${item.username}`);
+          router.push(`/user/${item.id}`);
         }
       }}
     >
@@ -822,7 +827,7 @@ export default function ExploreScreen() {
       onPress={() => router.push(`/product/${item.id}`)}
     >
       <View style={styles.productImageContainer}>
-        <Image source={{ uri: item.imageUrl }} style={styles.productImage} />
+        <Image source={{ uri: item.imageUrl[0] }} style={styles.productImage} />
         {item.discount && (
           <View style={styles.discountBadge}>
             <Text style={styles.discountText}>-{item.discount}%</Text>
@@ -866,24 +871,11 @@ export default function ExploreScreen() {
         </View>
         <View style={styles.ratingRow}>
           <Star size={12} color="#FFD700" fill="#FFD700" />
-          {/* <Text style={styles.ratingText}>{item.rating} ({item.reviews})</Text> */}
+          <Text style={styles.ratingText}>{item.rating.toFixed(1)}</Text>
         </View>
       </View>
     </TouchableOpacity>
   );
-
-  type ExploreGridItem = {
-    id: string;
-    image: string;
-    user: string;
-    userAvatar: string;
-    stars: number;
-    comments: number;
-    category: string;
-    caption: string;
-    timestamp: string;
-    tags: string[];
-  };
 
   const renderGridItem = ({ item }: { item: Post }) => (
     <TouchableOpacity 
@@ -928,6 +920,47 @@ export default function ExploreScreen() {
     </View>
   );
 
+  const renderEnlargedPost = (enlargedPost: Post) => {
+    if (!enlargedPost) return null;
+
+    const user = mockUsers.find(user => user.id === enlargedPost.userId);
+    if (!user) return null;
+
+    return (
+      <>
+        <View style={styles.enlargedHeader}>
+          <View style={styles.enlargedUserInfo}>
+            <Image source={{ uri: user.avatar }} style={styles.enlargedUserAvatar} />
+            <View>
+              <Text style={styles.enlargedUsername}>{user.username}</Text>
+              <Text style={styles.enlargedTimestamp}>{enlargedPost.createdAt}</Text>
+            </View>
+          </View>
+          <TouchableOpacity onPress={handleCloseEnlarged}>
+            <X size={24} color="#fff" />
+          </TouchableOpacity>
+        </View>
+
+        <Image source={{ uri: enlargedPost.imageUrl }} style={styles.enlargedImage} />
+        
+        <View style={styles.enlargedFooter}>
+          <View style={styles.enlargedActions}>
+            <View style={styles.enlargedStat}>
+              <Star size={20} color="#FFD700" fill="#FFD700" />
+              <Text style={styles.enlargedStatText}>{enlargedPost.stars}</Text>
+            </View>
+            <View style={styles.enlargedStat}>
+              <Heart size={20} color="#fff" />
+              <Text style={styles.enlargedStatText}>{enlargedPost.comments}</Text>
+            </View>
+          </View>
+          <Text style={styles.enlargedCaption}>{enlargedPost.caption}</Text>
+        </View>
+      </>
+    )
+  }
+
+  
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <SafeAreaView style={styles.container}>
@@ -1174,39 +1207,7 @@ export default function ExploreScreen() {
                   { transform: [{ scale: scaleAnim }] }
                 ]}
               >
-                <View style={styles.enlargedHeader}>
-                  <View style={styles.enlargedUserInfo}>
-                    <Image source={{ uri: enlargedPost.userAvatar }} style={styles.enlargedUserAvatar} />
-                    <View>
-                      <Text style={styles.enlargedUsername}>{enlargedPost.user}</Text>
-                      <Text style={styles.enlargedTimestamp}>{enlargedPost.timestamp}</Text>
-                    </View>
-                  </View>
-                  <TouchableOpacity onPress={handleCloseEnlarged}>
-                    <X size={24} color="#fff" />
-                  </TouchableOpacity>
-                </View>
-
-                <Image source={{ uri: enlargedPost.image }} style={styles.enlargedImage} />
-                
-                <View style={styles.enlargedFooter}>
-                  <View style={styles.enlargedActions}>
-                    <View style={styles.enlargedStat}>
-                      <Star size={20} color="#FFD700" fill="#FFD700" />
-                      <Text style={styles.enlargedStatText}>{enlargedPost.stars}</Text>
-                    </View>
-                    <View style={styles.enlargedStat}>
-                      <Heart size={20} color="#fff" />
-                      <Text style={styles.enlargedStatText}>{enlargedPost.comments}</Text>
-                    </View>
-                  </View>
-                  <Text style={styles.enlargedCaption}>{enlargedPost.caption}</Text>
-                  <View style={styles.enlargedTags}>
-                    {enlargedPost.tags.map((tag, index) => (
-                      <Text key={index} style={styles.enlargedTag}>#{tag}</Text>
-                    ))}
-                  </View>
-                </View>
+                {renderEnlargedPost(enlargedPost)}
               </Animated.View>
             </Animated.View>
           </Modal>

@@ -4,7 +4,6 @@ import {
   Minus,
   Plus,
   ShoppingBag,
-  X,
 } from 'lucide-react-native';
 import {
   View,
@@ -16,13 +15,16 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { CartItem, Product, useShopping } from '@/contexts/ShoppingContext';
+import { useShopping } from '@/contexts/ShoppingContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 import { Animated } from 'react-native';
 import { mockProducts } from '@/mock/Product';
+import { CartItem } from '@/types/CartItem';
+import { Product } from '@/types/Product';
+import { Theme } from '@/types/Theme';
 
-const createStyles = (theme: any) =>
+const createStyles = (theme: Theme) =>
   StyleSheet.create({
     container: {
       flex: 1,
@@ -266,7 +268,7 @@ const Cart = () => {
             onPress={() => router.push(`/product/${item.id}`)}
             activeOpacity={0.7}
           >
-            <Image source={{ uri: product.imageUrl }} style={styles.cartItemImage} />
+            <Image source={{ uri: product.imageUrl[0] }} style={styles.cartItemImage} />
           </TouchableOpacity>
           <View style={styles.cartItemInfo}>
             <TouchableOpacity

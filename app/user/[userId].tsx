@@ -9,7 +9,6 @@ import {
   FlatList,
   Modal,
   Alert,
-  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -28,13 +27,16 @@ import {
 } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNotifications } from '@/contexts/NotificationContext';
-import { User } from '@/contexts/AuthContext';
-import { Post } from '@/components/PostCard';
 import { mockUsers } from '@/mock/User';
 import { mockPosts } from '@/mock/Post';
+import { User } from '@/types/User';
+import { Post } from '@/types/Post';
+import { Theme } from '@/types/Theme';
+
+
 
 export default function UserProfileScreen() {
-  const { username } = useLocalSearchParams<{ username: string }>();
+  const { userId } = useLocalSearchParams<{ userId: string }>();
   const { user: currentUser, followUser } = useAuth();
   const { addNotification } = useNotifications();
   
@@ -46,7 +48,7 @@ export default function UserProfileScreen() {
   const [posts, setPosts] = useState<Post[]>([]);
 
   useEffect(() => {
-    const user = mockUsers.find(user => user.username === username);
+    const user = mockUsers.find(user => user.id === userId);
     if (user) {
       setUserProfile(user);
       setIsFollowing(user.followers.includes(currentUser?.id || ''));
@@ -59,7 +61,7 @@ export default function UserProfileScreen() {
     setSelectedTab('posts');
 
     setLoading(false);
-  }, [username]);
+  }, [userId]);
 
   const handleFollow = () => {
     if (!userProfile) return;

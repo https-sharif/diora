@@ -15,16 +15,17 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ArrowLeft, Star, MessageCircle, Share, X, Send, Heart } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
-import { Post, Comment } from '@/components/PostCard';
 import { mockPosts } from '@/mock/Post';
 import { mockComments } from '@/mock/Comment';
+import { Comment } from '@/types/Comment';
+import { Post } from '@/types/Post';
 
 
 const { width } = Dimensions.get('window');
 
 
 export default function PostDetailScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { postId } = useLocalSearchParams<{ postId: string }>();
   const [isStarred, setIsStarred] = useState(false);
   const [starCount, setStarCount] = useState(0);
   const [comments, setComments] = useState<Comment[]>([]);
@@ -33,7 +34,7 @@ export default function PostDetailScreen() {
   const [showImageModal, setShowImageModal] = useState(false);
   const { user } = useAuth();
 
-  const post = mockPosts.find(post => post.id === id);
+  const post = mockPosts.find(post => post.id === postId) as Post;
 
   const [aspectRatio, setAspectRatio] = useState(1);
 

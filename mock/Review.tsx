@@ -1,4 +1,4 @@
-import { Review } from "@/contexts/ShoppingContext";
+import { Review } from "@/types/Review";
 
 export const mockReviews: Review[] = [
   {
@@ -48,7 +48,7 @@ export const mockReviews: Review[] = [
   },
   {
     id: '6',
-    userId: '6',
+    userId: '4',
     targetId: '6',
     targetType: 'product',
     rating: 1,
@@ -57,8 +57,8 @@ export const mockReviews: Review[] = [
   },
   {
     id: '7',
-    userId: '7',
-    targetId: '7',
+    userId: '3',
+    targetId: '1',
     targetType: 'shop',
     rating: 1,
     comment: 'This shop is not good!',
@@ -66,8 +66,8 @@ export const mockReviews: Review[] = [
   },
   {
     id: '8',
-    userId: '8',
-    targetId: '8',
+    userId: '2',
+    targetId: '2',
     targetType: 'shop',
     rating: 2,
     comment: 'Scam shop! Dont buy anything from here!',
@@ -75,8 +75,8 @@ export const mockReviews: Review[] = [
   },
   {
     id: '9',
-    userId: '9',
-    targetId: '9',
+    userId: '1',
+    targetId: '3',
     targetType: 'shop',
     rating: 3,
     comment: 'This shop is average! Gave me a tough time with the return policy.',
@@ -84,8 +84,8 @@ export const mockReviews: Review[] = [
   },
   {
     id: '10',
-    userId: '10',
-    targetId: '10',
+    userId: '2',
+    targetId: '1',
     targetType: 'shop',
     rating: 5,
     comment: 'This shop is great! Great customer service!',

@@ -14,17 +14,18 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ArrowLeft, Heart, Share, Star, ShoppingCart, Store, Plus, Minus } from 'lucide-react-native';
-import { useShopping, Review } from '@/contexts/ShoppingContext';
+import { useShopping } from '@/contexts/ShoppingContext';
 import { mockProducts } from '@/mock/Product';
 import { mockReviews } from '@/mock/Review';
 import { mockUsers } from '@/mock/User';
 import { mockShops } from '@/mock/Shop';
-import { ShopProfile } from '@/contexts/AuthContext';
+import { ShopProfile } from '@/types/ShopProfile';
+import { Review } from '@/types/Review';
 
 const { width } = Dimensions.get('window')
 
 export default function ProductDetailScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { productId } = useLocalSearchParams<{ productId: string }>();
   const { 
     addToCart, 
     addToWishlist, 
@@ -40,19 +41,25 @@ export default function ProductDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [store, setStore] = useState<ShopProfile | null>(null);
 
-  const product = mockProducts.find(product => product.id === id);
+  const product = mockProducts.find(product => product.id === productId);
 
   useEffect(() => {
     if (product) {
       setSelectedImageIndex(0);
       setSelectedSize(product.sizes[0]);
       setSelectedColor(product.colors[0]);
-      setReviews(mockReviews.filter(review => review.targetId === id && review.targetType === 'product'));
+      setReviews(mockReviews.filter(review => review.targetId === productId && review.targetType === 'product'));
       const shop = mockShops.find(shop => shop.id === product.storeId);
       setStore(shop || null);
       setLoading(false);
     }
   }, [product]);
+
+  useEffect(() => {
+    if (product && selectedImageIndex >= product.imageUrl.length) {
+      setSelectedImageIndex(0);
+    }
+  }, [selectedImageIndex]);
 
   if (!product) {
     return (
@@ -153,11 +160,13 @@ export default function ProductDetailScreen() {
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Main Image */}
         <View style={styles.imageContainer}>
-          <Image 
-            source={{ uri: product.imageUrl }} 
-            style={styles.mainImage} 
+          <Image
+            source={{ uri: product.imageUrl[selectedImageIndex] }}
+            style={styles.mainImage}
+            resizeMode="contain"
           />
-        </View>
+        </View>           
+
 
         {/* Image Thumbnails */}
         <FlatList
@@ -219,7 +228,7 @@ export default function ProductDetailScreen() {
         <View style={styles.optionSection}>
           <Text style={styles.optionTitle}>Size</Text>
           <View style={styles.optionButtons}>
-            {product.sizes.map(size => (
+            {product.sizes.map((size: string) => (
               <TouchableOpacity
                 key={size}
                 style={[
@@ -243,7 +252,7 @@ export default function ProductDetailScreen() {
         <View style={styles.optionSection}>
           <Text style={styles.optionTitle}>Color</Text>
           <View style={styles.optionButtons}>
-            {product.colors.map(color => (
+            {product.colors.map((color: string) => (
               <TouchableOpacity
                 key={color}
                 style={[
@@ -337,10 +346,12 @@ const styles = StyleSheet.create({
   imageContainer: {
     width: '100%',
     height: width,
+    aspectRatio: 1,
   },
   mainImage: {
     width: '100%',
     height: '100%',
+    resizeMode: 'contain',
   },
   thumbnailContainer: {
     backgroundColor: '#f8f9fa',

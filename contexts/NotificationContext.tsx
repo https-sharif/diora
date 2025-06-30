@@ -1,18 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { mockNotifications } from '@/mock/Notification';
+import { Notification } from '@/types/Notification';
 
-export interface Notification {
-  id: string;
-  type: 'like' | 'comment' | 'follow' | 'mention' | 'order' | 'promotion';
-  title: string;
-  message: string;
-  timestamp: string;
-  read: boolean;
-  avatar?: string;
-  postImage?: string;
-  actionUrl?: string;
-  data?: any;
-}
 interface NotificationSettings {
   likes: boolean;
   comments: boolean;

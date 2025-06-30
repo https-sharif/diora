@@ -1,45 +1,8 @@
 import React, { createContext, useContext, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-
-export interface Review {
-  id: string;
-  userId: string;
-  targetId: string;
-  targetType: 'product' | 'shop';
-  rating: number;
-  comment?: string;
-  createdAt: string;
-}
-export interface Product {
-  id: string;
-  storeId: string;
-  name: string;
-  price: number;
-  imageUrl: string;
-  brand: string;
-  category: string;
-  description: string;
-  sizes: string[];
-  colors: string[];
-  stock: number;
-  rating: number;
-  discount?: number;
-}
-
-export interface CartItem {
-  id: string;
-  userId: string;
-  productId: string;
-  quantity: number;
-  selectedSize?: string;
-  selectedColor?: string;
-}
-
-export interface WishlistItem {
-  id: string;
-  userId: string;
-  productId: string;
-}
+import { Product } from '@/types/Product';
+import { CartItem } from '@/types/CartItem';
+import { WishlistItem } from '@/types/WishlistItem';
 
 interface ShoppingContextType {
   cart: CartItem[];

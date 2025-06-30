@@ -15,8 +15,9 @@ import { router } from 'expo-router';
 import PostCard from '@/components/PostCard';
 import { useTheme } from '@/contexts/ThemeContext';
 import { mockPosts } from '@/mock/Post';
+import { Theme } from '@/types/Theme';
 
-const createStyles = (theme : any) => {
+const createStyles = (theme : Theme) => {
   return StyleSheet.create({
     container: {
       flex: 1,

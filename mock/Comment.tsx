@@ -1,4 +1,4 @@
-import { Comment } from '@/components/PostCard';
+import { Comment } from '@/types/Comment';
 
 export const mockComments: Comment[] = [
   {

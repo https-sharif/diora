@@ -11,7 +11,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { ArrowLeft, Heart, MessageCircle, UserPlus, AtSign, Package, Tag, MoveVertical as MoreVertical, Trash2, Check, CheckCheck, Star, BellOff, Menu } from 'lucide-react-native';
-import { useNotifications, Notification } from '@/contexts/NotificationContext';
+import { useNotifications } from '@/contexts/NotificationContext';
+import { Notification } from '@/types/Notification';
 import { useTheme } from '@/contexts/ThemeContext';
 
 const createStyle = (theme: any) => StyleSheet.create({

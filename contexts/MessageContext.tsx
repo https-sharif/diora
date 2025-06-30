@@ -1,38 +1,13 @@
 import React, { createContext, useContext, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-
-export interface Message {
-  id: string;
-  text: string;
-  timestamp: string;
-  senderId: string;
-  type: 'text' | 'image' | 'voice' | 'product' | 'notification';
-  status: 'sending' | 'sent' | 'delivered' | 'read';
-  replyTo?: string;
-  reactions?: Array<{
-    emoji: string;
-    userId: string;
-  }>;
-  productId?: string;
-  imageUrl?: string;
-  voiceDuration?: number;
-}
-
-export interface Conversation {
-  id: string;
-  name?: string;
-  avatar?: string;
-  isGroup: boolean;
-  participants: Array<string>;
-  lastMessageId?: string;
-  unreadCount: number;
-  isOnline: boolean;
-  isTyping: boolean;
-}
+import { mockConversations } from '@/mock/Conversation';
+import { mockMessages } from '@/mock/Message';
+import { Conversation } from '@/types/Conversation';
+import { Message } from '@/types/Message';
 
 interface MessageContextType {
   conversations: Conversation[];
-  messages: Record<string, Message[]>;
+  messages: Message[];
   sendMessage: (conversationId: string, messageText: string, replyToId?: string) => void;
   updateMessageStatus: (conversationId: string, messageId: string, status: Message['status']) => void;
   handleReaction: (conversationId: string, messageId: string, emoji: string) => void;
@@ -43,43 +18,9 @@ interface MessageContextType {
 
 const MessageContext = createContext<MessageContextType | undefined>(undefined);
 
-const mockConversations: Conversation[] = [
-  {
-    id: '1',
-    unreadCount: 2,
-    isOnline: true,
-    isTyping: false,
-    isGroup: false,
-    participants: ['1', '2'],
-    lastMessageId: '1',
-  },
-  {
-    id: '2',
-    name: 'Group Chat',
-    avatar: 'https://images.pexels.com/photos/1036623/pexels-photo-1036623.jpeg?auto=compress&cs=tinysrgb&w=150',
-    unreadCount: 0,
-    isOnline: false,
-    isTyping: true,
-    isGroup: true,
-    participants: ['user1', 'user2', 'user3'],
-    lastMessageId: '11',
-  },
-  {
-    id: '3',
-    name: 'Style Maven',
-    avatar: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=150',
-    unreadCount: 0,
-    isOnline: true,
-    isTyping: false,
-    isGroup: false,
-    participants: ['me', 'user4'],
-    lastMessageId: '14',
-  },
-];
-
 export function MessageProvider({ children }: { children: React.ReactNode }) {
   const [conversations, setConversations] = useState<Conversation[]>(mockConversations);
-  const [messages, setMessages] = useState<Record<string, Message[]>>({});
+  const [messages, setMessages] = useState<Message[]>(mockMessages);
   const { user: currentUser } = useAuth();
 
   const sendMessage = (conversationId: string, messageText: string, replyToId?: string) => {
@@ -89,17 +30,17 @@ export function MessageProvider({ children }: { children: React.ReactNode }) {
       id: Date.now().toString(),
       text: messageText,
       timestamp: new Date().toISOString(),
+      conversationId: conversationId,
       senderId: currentUser?.id || 'me',
       type: 'text',
       status: 'sending',
       replyTo: replyToId,
+      reactions: '',
     };
 
-    // Add message to the messages state
-    setMessages(prev => ({
-      ...prev,
-      [conversationId]: [...(prev[conversationId] || []), newMessage],
-    }));
+    setMessages(prev => {
+      return [...prev, newMessage];
+    });
 
     // Update last message in conversations
     setConversations(prev =>
@@ -108,13 +49,11 @@ export function MessageProvider({ children }: { children: React.ReactNode }) {
           ? {
               ...conv,
               lastMessageId: newMessage.id,
-              lastMessageTime: newMessage.timestamp,
             }
           : conv
       )
     );
 
-    // Fake status updates
     setTimeout(() => {
       updateMessageStatus(conversationId, newMessage.id, 'sent');
     }, 1000);
@@ -126,30 +65,21 @@ export function MessageProvider({ children }: { children: React.ReactNode }) {
 
 
   const updateMessageStatus = (conversationId: string, messageId: string, status: Message['status']) => {
-    setMessages(prev => ({
-      ...prev,
-      [conversationId]: prev[conversationId].map(msg =>
-        msg.id === messageId ? { ...msg, status } : msg
-      ),
-    }));
+    setMessages(prev => prev.map(msg =>
+      msg.id === messageId ? { ...msg, status } : msg
+    ));
   };
 
 
   const handleReaction = (conversationId: string, messageId: string, emoji: string) => {
-    setMessages(prev => ({
-      ...prev,
-      [conversationId]: prev[conversationId].map(msg =>
+    setMessages(prev => prev.map(msg =>
         msg.id === messageId
           ? {
               ...msg,
-              reactions: [
-                ...(msg.reactions || []),
-                { emoji, userId: 'me', userName: 'You' }
-              ],
+              reactions: emoji,
             }
           : msg
-      )
-    }));
+      ));
   };
 
 
