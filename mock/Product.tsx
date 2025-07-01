@@ -1,4 +1,4 @@
-import { Product } from "@/contexts/ShoppingContext";
+import { Product } from "@/types/Product";
 
 export const mockProducts: Product[] = [
     {
@@ -6,7 +6,7 @@ export const mockProducts: Product[] = [
       storeId: '1',
       name: 'Vintage Denim Jacket',
       price: 89.99,
-      imageUrl: 'https://images.pexels.com/photos/1126993/pexels-photo-1126993.jpeg?auto=compress&cs=tinysrgb&w=400',
+      imageUrl: [`https://picsum.photos/seed/${Math.random()}/600/300`, `https://picsum.photos/seed/${Math.random()}/600`, `https://picsum.photos/seed/${Math.random()}/600`, `https://picsum.photos/seed/${Math.random()}/600`],
       brand: 'Urban Threads',
       category: 'Tops',
       description:
@@ -14,15 +14,15 @@ export const mockProducts: Product[] = [
       sizes: ['S', 'M', 'L', 'XL'],
       colors: ['Blue', 'Black', 'White'],
       stock: 3,
-      rating: 0,
+      rating: 4.5,
+      discount: 10,
     },
     {
       id: '2',
       storeId: '3',
       name: 'Flowy Maxi Dress',
       price: 129.99,
-      imageUrl:
-        'https://images.pexels.com/photos/1457983/pexels-photo-1457983.jpeg?auto=compress&cs=tinysrgb&w=400',
+      imageUrl: [`https://picsum.photos/seed/${Math.random()}/600`, `https://picsum.photos/seed/${Math.random()}/600`, `https://picsum.photos/seed/${Math.random()}/600`, `https://picsum.photos/seed/${Math.random()}/600`],
       brand: 'Boho Chic',
       category: 'Dresses',
       description:
@@ -30,15 +30,14 @@ export const mockProducts: Product[] = [
       sizes: ['XS', 'S', 'M', 'L'],
       colors: ['Floral', 'Solid Pink', 'Navy'],
       stock: 6,
-      rating: 0,
+      rating: 4.5,
     },
     {
       id: '3',
       storeId: '2',
       name: 'Classic Sneakers',
       price: 79.99,
-      imageUrl:
-        'https://images.pexels.com/photos/1464625/pexels-photo-1464625.jpeg?auto=compress&cs=tinysrgb&w=400',
+      imageUrl: [`https://picsum.photos/seed/${Math.random()}/600`, `https://picsum.photos/seed/${Math.random()}/600`, `https://picsum.photos/seed/${Math.random()}/600`, `https://picsum.photos/seed/${Math.random()}/600`],
       brand: 'Street Style',
       category: 'Shoes',
       description:
@@ -46,15 +45,14 @@ export const mockProducts: Product[] = [
       sizes: ['6', '7', '8', '9', '10'],
       colors: ['White', 'Black', 'Gray'],
       stock: 0,
-      rating: 0,
+    rating: 4.3,
     },
     {
       id: '4',
       storeId: '1',
       name: 'High-Waisted Jeans',
       price: 69.99,
-      imageUrl:
-        'https://images.pexels.com/photos/1040424/pexels-photo-1040424.jpeg?auto=compress&cs=tinysrgb&w=400',
+      imageUrl: [`https://picsum.photos/seed/${Math.random()}/600`, `https://picsum.photos/seed/${Math.random()}/600`, `https://picsum.photos/seed/${Math.random()}/600`, `https://picsum.photos/seed/${Math.random()}/600`],
       brand: 'Classic Fit',
       category: 'Bottoms',
       description:
@@ -62,15 +60,14 @@ export const mockProducts: Product[] = [
       sizes: ['26', '28', '30', '32', '34'],
       colors: ['Dark Blue', 'Light Blue', 'Black'],
       stock: 10,
-      rating: 0,
+      rating: 4.2,
     },
     {
       id: '5',
       storeId: '2',
       name: 'Silk Scarf',
       price: 39.99,
-      imageUrl:
-        'https://images.pexels.com/photos/1381556/pexels-photo-1381556.jpeg?auto=compress&cs=tinysrgb&w=400',
+      imageUrl: [`https://picsum.photos/seed/${Math.random()}/600`, `https://picsum.photos/seed/${Math.random()}/600`, `https://picsum.photos/seed/${Math.random()}/600`, `https://picsum.photos/seed/${Math.random()}/600`],
       brand: 'Luxury Accessories',
       category: 'Accessories',
       description:
@@ -78,15 +75,15 @@ export const mockProducts: Product[] = [
       sizes: ['One Size'],
       colors: ['Red', 'Blue', 'Gold'],
       stock: 0,
-      rating: 0,
+      discount: 10,
+      rating: 3.1,
     },
     {
       id: '6',
       storeId: '3',
       name: 'Casual Blazer',
       price: 149.99,
-      imageUrl:
-        'https://images.pexels.com/photos/1462637/pexels-photo-1462637.jpeg?auto=compress&cs=tinysrgb&w=400',
+      imageUrl: [`https://picsum.photos/seed/${Math.random()}/600`, `https://picsum.photos/seed/${Math.random()}/600`, `https://picsum.photos/seed/${Math.random()}/600`, `https://picsum.photos/seed/${Math.random()}/600`],
       brand: 'Professional Wear',
       category: 'Tops',
       description:
@@ -94,6 +91,6 @@ export const mockProducts: Product[] = [
       sizes: ['S', 'M', 'L', 'XL'],
       colors: ['Black', 'Navy', 'Beige'],
       stock: 0,
-      rating: 0,
+      rating: 4.7,
     },
   ];

@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, FlatList, TextInput, Modal, Alert, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ShoppingCart, Heart, Search, Filter, X, Bookmark, } from 'lucide-react-native';
+import { ShoppingCart, Heart, Search, Filter, X, Bookmark, Star, } from 'lucide-react-native';
 import { router } from 'expo-router';
-import { useShopping, Product } from '@/contexts/ShoppingContext';
+import { useShopping } from '@/contexts/ShoppingContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import Color from 'color';
 import { mockProducts } from '@/mock/Product';
+import { Product } from '@/types/Product';
+import { Theme } from '@/types/Theme';
 
 const categories = [
   'All',
@@ -17,9 +19,10 @@ const categories = [
   'Accessories',
 ];
 
-const createStyles = (theme: any) => {
+const createStyles = (theme: Theme) => {
   const bookmarkInactiveColor = Color(theme.text).alpha(0.5).toString();
-
+  const outOfStockOverlay = Color(theme.text).alpha(0.5).toString();
+  
   return StyleSheet.create({
     container: {
       flex: 1,
@@ -137,6 +140,40 @@ const createStyles = (theme: any) => {
       marginBottom: 16,
       position: 'relative',
     },
+    productImageContainer: {
+      position: 'relative',
+    },
+    discountBadge: {
+      position: 'absolute',
+      top: 8,
+      left: 8,
+      backgroundColor: '#FF3B30',
+      borderRadius: 12,
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      zIndex: 10,
+    },
+    discountText: {
+      color: '#fff',
+      fontSize: 12,
+      fontFamily: 'Inter-Bold',
+    },
+    outOfStockOverlay: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: outOfStockOverlay,
+      justifyContent: 'center',
+      alignItems: 'center',
+      zIndex: 5,
+    },
+    outOfStockText: {
+      color: theme.background,
+      fontSize: 14,
+      fontFamily: 'Inter-Bold',
+    },
     productImage: {
       width: '100%',
       height: 160,
@@ -151,6 +188,7 @@ const createStyles = (theme: any) => {
     },
     wishlistButtonActive: {
       backgroundColor: theme.text,
+      zIndex: 15,
     },
     productInfo: {
       padding: 12,
@@ -167,11 +205,38 @@ const createStyles = (theme: any) => {
       color: theme.text,
       marginBottom: 4,
     },
+    priceRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      marginBottom: 4,
+    },
     productPrice: {
       fontSize: 16,
       fontFamily: 'Inter-Bold',
       color: theme.text,
-      marginBottom: 8,
+    },
+    originalPrice: {
+      fontSize: 14,
+      fontFamily: 'Inter-Regular',
+      color: theme.textSecondary,
+      textDecorationLine: 'line-through',
+    },
+    ratingRow: {
+      flexDirection: 'row',
+      gap: 4,
+      position: 'absolute',
+      bottom: 16,
+      right: 16,
+    },
+    ratingText: {
+      fontSize: 12,
+      fontFamily: 'Inter-Medium',
+      color: theme.textSecondary,
+    },
+    addToCartContainer: {
+      paddingHorizontal: 12,
+      paddingBottom: 12,
     },
     addToCartButton: {
       backgroundColor: theme.accent,
@@ -181,7 +246,7 @@ const createStyles = (theme: any) => {
     },
     addToCartText: {
       color: '#000',
-      fontSize: 12,
+      fontSize: 14,
       fontFamily: 'Inter-SemiBold',
     },
     productModal: {
@@ -302,7 +367,6 @@ export default function ShoppingScreen() {
 
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
-  const [showCart, setShowCart] = useState(false);
 
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [selectedSize, setSelectedSize] = useState<string>('');
@@ -346,7 +410,19 @@ export default function ShoppingScreen() {
   const renderProduct = ({ item }: { item: Product }) => (
     <View style={styles.productCard}>
       <TouchableOpacity onPress={() => handleProductPress(item)}>
-        <Image source={{ uri: item.imageUrl }} style={styles.productImage} />
+        <View style={styles.productImageContainer}>
+          {item.discount && (
+            <View style={styles.discountBadge}>
+              <Text style={styles.discountText}>-{item.discount}%</Text>
+            </View>
+          )}
+          {!item.stock && (
+            <View style={styles.outOfStockOverlay}>
+              <Text style={styles.outOfStockText}>Out of Stock</Text>
+            </View>
+          )}
+          <Image source={{ uri: item.imageUrl[0] }} style={styles.productImage} />
+        </View>
       </TouchableOpacity>
       <TouchableOpacity
         style={[
@@ -363,13 +439,28 @@ export default function ShoppingScreen() {
         />
       </TouchableOpacity>
 
+      
       <View style={styles.productInfo}>
         <Text style={styles.productBrand}>{item.brand}</Text>
         <TouchableOpacity onPress={() => handleProductPress(item)}>
           <Text style={styles.productName}>{item.name}</Text>
         </TouchableOpacity>
-        <Text style={styles.productPrice}>${item.price}</Text>
-
+        <View style={styles.priceRow}>
+          {item.discount ? (
+            <>
+              <Text style={styles.productPrice}>${(item.price - (item.price * (item.discount / 100))).toFixed(2)}</Text>
+              <Text style={styles.originalPrice}>${item.price.toFixed(2)}</Text>
+            </>
+          ) : (
+            <Text style={styles.productPrice}>${item.price.toFixed(2)}</Text>
+          )}
+        </View>
+        <View style={styles.ratingRow}>
+          <Star size={12} color="#FFD700" fill="#FFD700" />
+          <Text style={styles.ratingText}>{item.rating.toFixed(1)}</Text>
+        </View>
+      </View>
+      <View style={styles.addToCartContainer}>
         <TouchableOpacity
           style={styles.addToCartButton}
           onPress={() => handleAddToCart(item)}
@@ -477,7 +568,7 @@ export default function ShoppingScreen() {
 
               <ScrollView style={styles.productModalContent}>
                 <Image
-                  source={{ uri: selectedProduct.imageUrl }}
+                  source={{ uri: selectedProduct.imageUrl[0] }}
                   style={styles.productModalImage}
                 />
                 <Text style={styles.productModalName}>

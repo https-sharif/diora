@@ -9,6 +9,7 @@ import {
   FlatList,
   Modal,
   Alert,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -20,7 +21,6 @@ import {
   MoreHorizontal,
   Star,
   MapPin,
-  Clock,
   Phone,
   Mail,
   Globe,
@@ -30,14 +30,20 @@ import {
   UserPlus,
   UserMinus
 } from 'lucide-react-native';
-import { Product, Review, useShopping } from '@/contexts/ShoppingContext';
-import { ShopProfile, useAuth } from '@/contexts/AuthContext';
+import { useShopping } from '@/contexts/ShoppingContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { mockProducts } from '@/mock/Product';
 import { mockReviews } from '@/mock/Review';
 import { mockShops } from '@/mock/Shop';
+import { mockUsers } from '@/mock/User';
+import { User } from '@/types/User';
+import { ShopProfile } from '@/types/ShopProfile';
+import { Product } from '@/types/Product';
+import { Review } from '@/types/Review';
+import { Theme } from '@/types/Theme';
 
 export default function ShopProfileScreen() {
-  const { shopname } = useLocalSearchParams<{ shopname: string }>();
+  const { shopId } = useLocalSearchParams<{ shopId: string }>();
   const { addToWishlist, isInWishlist } = useShopping();
   
   const [shopProfile, setShopProfile] = useState<ShopProfile | null>(null);
@@ -50,14 +56,14 @@ export default function ShopProfileScreen() {
   const [isFollowing, setIsFollowing] = useState(false);
 
   useEffect(() => {
-    if (shopname) {
-      const profile = mockShops.find(p => p.username === shopname);
+    if (shopId) {
+      const profile = mockShops.find(p => p.id === shopId);
       if (profile) {
         setShopProfile(profile);
       }
     }
     setLoading(false);
-  }, [shopname]);
+  }, [shopId]);
 
   
   useEffect(() => {
@@ -103,12 +109,12 @@ export default function ShopProfileScreen() {
     router.push(`/product/${productId}`);
   };
 
-  const renderProduct = ({ item }: { item: any }) => (
+  const renderProduct = ({ item }: { item: Product }) => (
     <TouchableOpacity 
       style={styles.productItem}
       onPress={() => handleProductPress(item.id)}
     >
-      <Image source={{ uri: item.image }} style={styles.productImage} />
+      <Image source={{ uri: item.imageUrl[0] }} style={styles.productImage} />
       {item.discount && (
         <View style={styles.discountBadge}>
           <Text style={styles.discountText}>-{item.discount}%</Text>
@@ -152,35 +158,40 @@ export default function ShopProfileScreen() {
     </TouchableOpacity>
   );
 
-  const renderReview = ({ item }: { item: any }) => (
-    <View style={styles.reviewItem}>
-      <View style={styles.reviewHeader}>
-        <Image source={{ uri: item.avatar }} style={styles.reviewAvatar} />
-        <View style={styles.reviewInfo}>
-          <Text style={styles.reviewUser}>{item.user}</Text>
-          <View style={styles.reviewRating}>
-            {[...Array(5)].map((_, i) => (
-              <Star
-                key={i}
-                size={14}
-                color={i < item.rating ? '#FFD700' : '#E0E0E0'}
-                fill={i < item.rating ? '#FFD700' : 'transparent'}
-              />
-            ))}
-            <Text style={styles.reviewDate}>{item.date}</Text>
+  const renderReview = ({ item }: { item: Review }) => {
+    const user = mockUsers.find(user => user.id === item.userId) as User;
+    if (!user) return null;
+
+    return (
+      <View style={styles.reviewItem}>
+        <View style={styles.reviewHeader}>
+          <Image source={{ uri: user.avatar }} style={styles.reviewAvatar} />
+          <View style={styles.reviewInfo}>
+            <Text style={styles.reviewUser}>{user.fullName}</Text>
+            <View style={styles.reviewRating}>
+              {[...Array(5)].map((_, i) => (
+                <Star
+                  key={i}
+                  size={14}
+                  color={i < item.rating ? '#FFD700' : '#E0E0E0'}
+                  fill={i < item.rating ? '#FFD700' : 'transparent'}
+                />
+              ))}
+              <Text style={styles.reviewDate}>{item.createdAt}</Text>
+            </View>
           </View>
         </View>
+        <Text style={styles.reviewComment}>{item.comment}</Text>
+        {item.images && (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.reviewImages}>
+            {item.images.map((image : any , index : number) => (
+              <Image key={index} source={{ uri: image }} style={styles.reviewImage} />
+            ))}
+          </ScrollView>
+        )}
       </View>
-      <Text style={styles.reviewComment}>{item.comment}</Text>
-      {item.images && (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.reviewImages}>
-          {item.images.map((image : any , index : number) => (
-            <Image key={index} source={{ uri: image }} style={styles.reviewImage} />
-          ))}
-        </ScrollView>
-      )}
-    </View>
-  );
+    );
+  };
 
   if (loading) {
     return (
@@ -246,7 +257,7 @@ export default function ShopProfileScreen() {
                 <Text style={styles.statLabel}>Products</Text>
               </View>
               <View style={styles.statItem}>
-                <Text style={styles.statNumber}>{shopProfile.followers.toLocaleString()}</Text>
+                <Text style={styles.statNumber}>{shopProfile.followers.length}</Text>
                 <Text style={styles.statLabel}>Followers</Text>
               </View>
               <View style={styles.statItem}>
@@ -293,7 +304,7 @@ export default function ShopProfileScreen() {
                 </View>
               )}
               {shopProfile.website && (
-                <TouchableOpacity style={styles.contactItem}>
+                <TouchableOpacity style={styles.contactItem} onPress={() => Linking.openURL(shopProfile.website!)}>
                   <Globe size={16} color="#007AFF" />
                   <Text style={[styles.contactText, styles.websiteText]}>{shopProfile.website}</Text>
                 </TouchableOpacity>

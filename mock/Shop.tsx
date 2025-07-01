@@ -1,4 +1,4 @@
-import { ShopProfile } from "@/contexts/AuthContext";
+import { ShopProfile } from "@/types/ShopProfile";
 
 export const mockShops: ShopProfile[] = [
   {
@@ -6,8 +6,8 @@ export const mockShops: ShopProfile[] = [
     name: 'Vintage Denim',
     username: 'vintage_denim',
     userId: '1',
-    logoUrl: 'https://images.pexels.com/photos/1126993/pexels-photo-1126993.jpeg?auto=compress&cs=tinysrgb&w=400',
-    coverImageUrl: 'https://images.pexels.com/photos/1126993/pexels-photo-1126993.jpeg?auto=compress&cs=tinysrgb&w=400',
+    logoUrl: 'https://picsum.photos/seed/13/600',
+    coverImageUrl: 'https://picsum.photos/seed/14/600/300',
     description: 'We sell vintage denim jackets and jeans',
     location: 'New York, NY',
     contactEmail: 'vintage@denim.com',
@@ -26,8 +26,8 @@ export const mockShops: ShopProfile[] = [
     name: 'Streetwear',
     username: 'streetwear',
     userId: '2',
-    logoUrl: 'https://images.pexels.com/photos/1126993/pexels-photo-1126993.jpeg?auto=compress&cs=tinysrgb&w=400',
-    coverImageUrl: 'https://images.pexels.com/photos/1126993/pexels-photo-1126993.jpeg?auto=compress&cs=tinysrgb&w=400',
+    logoUrl: 'https://picsum.photos/seed/16/600',
+    coverImageUrl: 'https://picsum.photos/seed/17/600/300',
     description: 'We sell streetwear clothing and accessories',
     location: 'New York, NY',
     contactEmail: 'streetwear@gmail.com',
@@ -46,8 +46,8 @@ export const mockShops: ShopProfile[] = [
     name: 'Casual Wear',
     username: 'casual_wear',
     userId: '3',
-    logoUrl: 'https://images.pexels.com/photos/1126993/pexels-photo-1126993.jpeg?auto=compress&cs=tinysrgb&w=400',
-    coverImageUrl: 'https://images.pexels.com/photos/1126993/pexels-photo-1126993.jpeg?auto=compress&cs=tinysrgb&w=400',
+    logoUrl: 'https://picsum.photos/seed/19/600',
+    coverImageUrl: 'https://picsum.photos/seed/21/600/300',
     description: 'We sell casual wear clothing and accessories',
     location: 'New York, NY',
     contactEmail: 'casual@gmail.com',

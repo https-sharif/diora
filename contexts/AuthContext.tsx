@@ -1,45 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { router } from 'expo-router';
-export interface ShopProfile {
-  id: string;
-  userId: string;
-  name: string;
-  username: string;
-  logoUrl?: string;
-  coverImageUrl?: string;
-  description?: string;
-  location?: string;
-  contactEmail?: string;
-  contactPhone?: string;
-  website?: string;
-  socialLinks?: {
-    instagram?: string;
-    facebook?: string;
-    twitter?: string;
-    tiktok?: string;
-  };
-  categories: string[];
-  productIds: string[];
-  rating: number;
-  followers: string[];
-  isVerified: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface User {
-  id: string;
-  email: string;
-  username: string;
-  fullName: string;
-  avatar?: string;
-  bio?: string;
-  isVerified?: boolean;
-  followers: string[];
-  following: string[];
-  createdAt?: string;
-  posts: string[];
-}
+import { User } from '@/types/User';
 
 interface AuthContextType {
   user: User | null;
@@ -88,7 +49,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (__DEV__) {
       const mockUser: User = {
-        id: 'dev',
+        id: '1',
         email: 'dev@example.com',
         username: 'devUser',
         fullName: 'Dev User',
@@ -97,7 +58,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         bio: 'Dev mode auto-login',
         followers: ['dev1', 'dev2'],
         following: ['dev3', 'dev4'],
-        posts: ['1', '2', '3'],
+        likedPosts: ['1', '2', '3'],
+        posts: 3,
       };
       setUser(mockUser);
       setLoading(false);
@@ -130,7 +92,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         bio: 'Fashion lover & trendsetter ✨',
         followers: ['dev1', 'dev2'],
         following: ['dev3', 'dev4'],
-        posts: ['1', '2', '3'],
+        likedPosts: ['1', '2', '3'],
+        posts: 3,
       };
 
       setUser(mockUser);
@@ -161,7 +124,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         bio: 'New to Diora ✨',
         followers: [],
         following: [],
-        posts: []
+        likedPosts: [],
+        posts: 0,
       };
 
       setUser(mockUser);

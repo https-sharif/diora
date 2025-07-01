@@ -1,20 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Theme } from '@/types/Theme';
 
 const THEME_KEY = 'app_theme';
-interface Theme {
-  background: string;
-  card: string;
-  text: string;
-  textSecondary: string;
-  border: string;
-  primary: string;
-  accent: string;
-  accentSecondary: string;
-  success: string;
-  warning: string;
-  error: string;
-}
 
 interface ThemeContextType {
   theme: Theme;

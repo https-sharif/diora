@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -12,7 +12,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Search, Plus, ArrowLeft } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useTheme } from '@/contexts/ThemeContext';
-import { useMessage, Message, Conversation } from '@/contexts/MessageContext';
+import { useMessage } from '@/contexts/MessageContext';
+import { Conversation } from '@/types/Conversation';
+import { useAuth } from '@/contexts/AuthContext';
+import { mockUsers } from '@/mock/User';
+import { mockMessages } from '@/mock/Message';
 
 const createStyles = (theme: any) => {
   return StyleSheet.create({
@@ -165,18 +169,18 @@ const createStyles = (theme: any) => {
 export default function MessagesScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [newChatVisible, setNewChatVisible] = useState(false);
+  const [myConversations, setMyConversations] = useState<Conversation[]>([]);
+
   const { theme } = useTheme();
   const { conversations, messages } = useMessage();
-
+  const { user } = useAuth();
   const styles = createStyles(theme);
 
-  const filteredConversations = conversations.filter(conv => {
-    const name = conv.name || '';
-
-    return (
-      name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  });
+  useEffect(() => {
+    if (user) {
+      setMyConversations(conversations.filter(conv => conv.participants.includes(user.id)));
+    }
+  }, [user, conversations]);
 
   const handleConversationPress = (conversationId: string) => {
     router.push(`/message/${conversationId}`);
@@ -202,52 +206,67 @@ export default function MessagesScreen() {
   };
 
   const renderConversationItem = ({ item }: { item: Conversation }) => {
-  const lastMessage = messages[item.id]?.slice(-1)[0];
+    const conversationLastMessage = myConversations.find(conversation => conversation.id === item.id)?.lastMessageId;
+    
+    const lastMessage = mockMessages.find(message => message.id === conversationLastMessage);
 
-  return (
-    <TouchableOpacity
-      style={styles.conversationItem}
-      onPress={() => handleConversationPress(item.id)}
-      activeOpacity={0.7}
-    >
-      <View style={styles.avatarContainer}>
-        <Image source={{ uri: item.avatar }} style={styles.avatar} />
-        {item.isOnline && <View style={styles.onlineIndicator} />}
-      </View>
+    const participants = myConversations.find(c => c.id === item.id)?.participants;
+    let senderName = '';
+    let senderAvatar = '';
+    if(participants && participants.length > 2) {
+      senderName = conversations.find(c => c.id === item.id)?.name || '';
+      senderAvatar = item.avatar || '';
+    } else {
+      const senderId = participants?.find(p => p !== user?.id);
+      const sender = mockUsers.find(u => u.id === senderId);
+      senderName = sender?.username || 'Unknown';
+      senderAvatar = sender?.avatar || '';
+    }
 
-      <View style={styles.conversationContent}>
-        <View style={styles.conversationHeader}>
-          <Text style={styles.conversationName} numberOfLines={1}>
-            {item.name || 'Unnamed Chat'}
-          </Text>
-          <Text style={styles.conversationTime}>
-            {lastMessage ? formatTime(lastMessage.timestamp) : ''}
-          </Text>
+    return (
+      <TouchableOpacity
+        style={styles.conversationItem}
+        onPress={() => handleConversationPress(item.id)}
+        activeOpacity={0.7}
+      >
+        <View style={styles.avatarContainer}>
+          <Image source={{ uri: senderAvatar }} style={styles.avatar} />
+          {item.isOnline && <View style={styles.onlineIndicator} />}
         </View>
 
-        <View style={styles.conversationFooter}>
-          <Text
-            style={[
-              styles.lastMessage,
-              item.unreadCount > 0 && styles.unreadMessage,
-              item.isTyping && styles.typingMessage,
-            ]}
-            numberOfLines={1}
-          >
-            {item.isTyping ? 'Typing...' : lastMessage?.text || ''}
-          </Text>
+        <View style={styles.conversationContent}>
+          <View style={styles.conversationHeader}>
+            <Text style={styles.conversationName} numberOfLines={1}>
+              {senderName}
+            </Text>
+            <Text style={styles.conversationTime}>
+              {lastMessage ? formatTime(lastMessage.timestamp) : ''}
+            </Text>
+          </View>
 
-          {item.unreadCount > 0 && (
-            <View style={styles.unreadBadge}>
-              <Text style={styles.unreadBadgeText}>
-                {item.unreadCount > 99 ? '99+' : item.unreadCount}
-              </Text>
-            </View>
-          )}
+          <View style={styles.conversationFooter}>
+            <Text
+              style={[
+                styles.lastMessage,
+                item.unreadCount > 0 && styles.unreadMessage,
+                item.isTyping && styles.typingMessage,
+              ]}
+              numberOfLines={1}
+            >
+              {item.isTyping ? 'Typing...' : lastMessage?.text || ''}
+            </Text>
+
+            {item.unreadCount > 0 && (
+              <View style={styles.unreadBadge}>
+                <Text style={styles.unreadBadgeText}>
+                  {item.unreadCount > 99 ? '99+' : item.unreadCount}
+                </Text>
+              </View>
+            )}
+          </View>
         </View>
-      </View>
-    </TouchableOpacity>
-  )};
+      </TouchableOpacity>
+    )};
 
   return (
     <SafeAreaView style={styles.container}>
@@ -283,7 +302,7 @@ export default function MessagesScreen() {
       </View>
 
       <FlatList
-        data={filteredConversations}
+        data={myConversations}
         renderItem={renderConversationItem}
         keyExtractor={(item) => item.id}
         style={styles.conversationsList}

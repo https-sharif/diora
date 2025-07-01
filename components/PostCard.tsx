@@ -3,37 +3,20 @@ import { View, Text, Image, TouchableOpacity, Dimensions, Modal, ScrollView, Tex
 import { Star, MessageCircle, X, Send, Heart } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { mockComments } from '@/mock/Comment';
-
-export interface Comment {
-  id: string;
-  userId: string;
-  username: string;
-  avatar?: string;
-  text: string;
-  createdAt: string;
-  replies?: Comment[];
-  likes: number;
-}
-export interface Post {
-  id: string;
-  userId: string;
-  username: string;
-  avatar?: string;
-  imageUrl: string;
-  caption?: string;
-  stars: number;
-  comments: string[];
-  createdAt: string;
-}
+import { Post } from '@/types/Post';
+import { Comment } from '@/types/Comment';
+import { Theme } from '@/types/Theme';
+import { router } from 'expo-router';
+import { mockUsers } from '@/mock/User';
 
 interface PostCardProps {
   post: Post;
   onStar?: (postId: string) => void;
 }
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
-const createStyles = (theme: any) => {
+const createStyles = (theme: Theme) => {
   return StyleSheet.create({
     container: {
       backgroundColor: theme.background,
@@ -58,6 +41,7 @@ const createStyles = (theme: any) => {
       width: 44,
       height: 44,
       borderRadius: 22,
+      backgroundColor: theme.card,
     },
     userInfo: {
       marginLeft: 12,
@@ -111,31 +95,6 @@ const createStyles = (theme: any) => {
     captionUsername: {
       fontFamily: 'Inter-Bold',
     },
-    commentsModal: {
-      flex: 1,
-      backgroundColor: theme.card,
-    },
-    commentsHeader: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      padding: 16,
-      borderBottomWidth: 1,
-      borderBottomColor: theme.border,
-    },
-    commentsTitle: {
-      fontSize: 20,
-      fontFamily: 'Inter-Bold',
-      color: theme.text,
-    },
-    commentsList: {
-      flex: 1,
-      padding: 16,
-    },
-    commentItem: {
-      flexDirection: 'row',
-      marginBottom: 16,
-    },
     replyItem: {
       marginLeft: 40,
       marginTop: 8,
@@ -187,46 +146,9 @@ const createStyles = (theme: any) => {
       fontFamily: 'Inter-Medium',
       color: theme.textSecondary,
     },
-    commentInput: {
-      borderTopWidth: 1,
-      borderTopColor: theme.border,
-      padding: 16,
-      paddingBottom: 32,
-      backgroundColor: theme.card,
-    },
-    replyingIndicator: {
+    commentItem: {
       flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      backgroundColor: theme.card,
-      padding: 8,
-      borderRadius: 8,
-      marginBottom: 8,
-    },
-    replyingText: {
-      fontSize: 12,
-      fontFamily: 'Inter-Medium',
-      color: theme.textSecondary,
-    },
-    commentInputRow: {
-      flexDirection: 'row',
-      alignItems: 'flex-end',
-      gap: 12,
-    },
-    commentTextInput: {
-      flex: 1,
-      borderWidth: 1,
-      borderColor: theme.border,
-      color: theme.text,
-      borderRadius: 20,
-      paddingHorizontal: 16,
-      paddingVertical: 12,
-      fontSize: 14,
-      fontFamily: 'Inter-Regular',
-      maxHeight: 100,
-    },
-    sendButton: {
-      padding: 12,
+      marginBottom: 16,
     },
   });
 }
@@ -238,6 +160,7 @@ export default function PostCard({ post, onStar }: PostCardProps) {
   const [comments, setComments] = useState<Comment[]>(mockComments);
   const [newComment, setNewComment] = useState('');
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [userAvatar, setUserAvatar] = useState<string | null>(null);
 
   const { theme } = useTheme();
   const styles = createStyles(theme);
@@ -245,13 +168,18 @@ export default function PostCard({ post, onStar }: PostCardProps) {
   const [imageHeight, setImageHeight] = useState(0);
 
   useEffect(() => {
+    const user = mockUsers.find((user) => user.id === post.userId);
+    if (user) {
+      setUserAvatar(user.avatar!);
+    }
+
     Image.getSize(post.imageUrl, (width, height) => {
       const screenWidth = Dimensions.get('window').width - 32;
       const scaleFactor = width / screenWidth;
       const scaledHeight = height / scaleFactor;
       setImageHeight(scaledHeight);
     });
-  }, [post.imageUrl]);
+  }, [post.imageUrl, post.userId]);
 
   const handleStar = () => {
     const newStarred = !isStarred;
@@ -263,7 +191,7 @@ export default function PostCard({ post, onStar }: PostCardProps) {
   const formatNumber = (num : number) => {
     if (num >= 1_000_000) return (num / 1_000_000).toFixed(1).replace('.0', '') + 'M';
     if (num > 9999) return (num / 1000).toFixed(1).replace('.0', '') + 'K';
-    return num.toLocaleString(); // 9999 and below: just commas
+    return num.toLocaleString();
   };
 
 
@@ -302,10 +230,20 @@ export default function PostCard({ post, onStar }: PostCardProps) {
       key={comment.id}
       style={[styles.commentItem, isReply && styles.replyItem]}
     >
-      <Image source={{ uri: comment.avatar }} style={styles.commentAvatar} />
+      <TouchableOpacity onPress={() => {
+        router.push(`/user/${comment.userId}`);
+        setShowComments(false);
+      }}>
+        <Image source={{ uri: comment.avatar }} style={styles.commentAvatar} />
+      </TouchableOpacity>
       <View style={styles.commentContent}>
         <View style={styles.commentHeader}>
-          <Text style={styles.commentUser}>{comment.username}</Text>
+          <TouchableOpacity onPress={() => {
+            router.push(`/user/${comment.userId}`);
+            setShowComments(false);
+          }}>
+            <Text style={styles.commentUser}>{comment.username}</Text>
+          </TouchableOpacity>
           <Text style={styles.commentTime}>{comment.createdAt}</Text>
         </View>
         <Text style={styles.commentText}>{comment.text}</Text>
@@ -332,9 +270,13 @@ export default function PostCard({ post, onStar }: PostCardProps) {
     <>
       <View style={styles.container}>
         <View style={styles.header}>
-          <Image source={{ uri: post.avatar }} style={styles.avatar} />
+          <TouchableOpacity onPress={() => router.push(`/user/${post.userId}`)}>
+            <Image source={{ uri: userAvatar! }} style={styles.avatar} />
+          </TouchableOpacity>
           <View style={styles.userInfo}>
-            <Text style={styles.username}>{post.username}</Text>
+            <TouchableOpacity onPress={() => router.push(`/user/${post.userId}`)}>
+              <Text style={styles.username}>{post.username}</Text>
+            </TouchableOpacity>
             <Text style={styles.timestamp}>{post.createdAt}</Text>
           </View>
         </View>
@@ -380,7 +322,7 @@ export default function PostCard({ post, onStar }: PostCardProps) {
       </View>
 
       {/* Comments Modal */}
-      <Modal
+      {/* <Modal
         visible={showComments}
         animationType="slide"
         transparent
@@ -446,7 +388,7 @@ export default function PostCard({ post, onStar }: PostCardProps) {
               </KeyboardAvoidingView>
           </View>
         </TouchableWithoutFeedback>
-      </Modal>
+      </Modal> */}
     </>
   );
 }

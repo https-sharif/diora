@@ -13,11 +13,13 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { Product, useShopping } from '@/contexts/ShoppingContext';
+import { useShopping } from '@/contexts/ShoppingContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { mockProducts } from '@/mock/Product';
+import { Product } from '@/types/Product';
+import { Theme } from '@/types/Theme';
 
-const createStyles = (theme: any) =>
+const createStyles = (theme: Theme) =>
   StyleSheet.create({
     container: {
       flex: 1,
@@ -308,7 +310,7 @@ const Wishlist = () => {
   const renderProduct = ({ item }: { item: Product }) => (
     <View style={styles.productCard}>
       <TouchableOpacity onPress={() => handleProductPress(item)}>
-        <Image source={{ uri: item.imageUrl }} style={styles.productImage} />
+        <Image source={{ uri: item.imageUrl[0] }} style={styles.productImage} />
       </TouchableOpacity>
       <TouchableOpacity
         style={[
@@ -387,7 +389,7 @@ const Wishlist = () => {
 
             <ScrollView style={styles.productModalContent}>
               <Image
-                source={{ uri: selectedProduct.imageUrl }}
+                source={{ uri: selectedProduct.imageUrl[0] }}
                 style={styles.productModalImage}
               />
               <Text style={styles.productModalName}>
