@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, StyleSheet, ScrollView, TouchableOpacity, Image, FlatList, Modal, Dimensions, Animated, PanResponder, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Search, Filter, X, Check, Star, Heart, Store, Bookmark, SearchX } from 'lucide-react-native';
+import { Search, Filter, X, Check, Star, MessageCircle, Store, Bookmark, SearchX } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useShopping } from '@/contexts/ShoppingContext';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -16,6 +16,7 @@ import { mockShops } from '@/mock/Shop';
 import { mockProducts } from '@/mock/Product';
 import { mockUsers } from '@/mock/User';
 import { mockPosts } from '@/mock/Post';
+import { useAuth } from '@/contexts/AuthContext';
 
 const { width, height } = Dimensions.get('window');
 
@@ -136,7 +137,7 @@ const createStyles = (theme: Theme) => {
     justifyContent: 'center',
     alignItems: 'center',
   },
-  userBio: {
+  userFullName: {
     fontSize: 14,
     fontFamily: 'Inter-Regular',
     color: theme.textSecondary,
@@ -156,13 +157,23 @@ const createStyles = (theme: Theme) => {
     marginTop: 4,
   },
   followButton: {
-    backgroundColor: theme.accent,
+    backgroundColor: theme.text,
     borderRadius: 20,
     paddingHorizontal: 20,
     paddingVertical: 8,
   },
   followButtonText: {
-    color: '#000',
+    color: theme.background,
+    fontSize: 14,
+    fontFamily: 'Inter-SemiBold',
+  },
+  followingButton: {
+    backgroundColor: theme.card,
+    borderWidth: 1,
+    borderColor: theme.border,
+  },
+  followingButtonText: {
+    color: theme.text,
     fontSize: 14,
     fontFamily: 'Inter-SemiBold',
   },
@@ -220,7 +231,7 @@ const createStyles = (theme: Theme) => {
   },
   outOfStockText: {
     color: theme.background,
-    fontSize: 14,
+    fontSize: 20,
     fontFamily: 'Inter-Bold',
   },
   wishlistButton: {
@@ -229,6 +240,8 @@ const createStyles = (theme: Theme) => {
     right: 8,
     backgroundColor: bookmarkInactiveColor,
     borderRadius: 16,
+    borderWidth: 1,
+    borderColor: theme.border,
     padding: 8,
     zIndex: 15,
   },
@@ -536,17 +549,11 @@ export default function ExploreScreen() {
   const [enlargedPost, setEnlargedPost] = useState<Post | null>(null);
   const [scaleAnim] = useState(new Animated.Value(1));
   const [opacityAnim] = useState(new Animated.Value(0));
+  const { user, followUser, likePost } = useAuth();
   const { theme } = useTheme();
 
   const styles = createStyles(theme);
-
-  const toggleWishlist = (product: Product) => {
-    if (isInWishlist(product.id)) {
-      removeFromWishlist(product.id);
-    } else {
-      addToWishlist(product);
-    }
-  };
+  const isLiked = user?.likedPosts?.includes(enlargedPost?.id || '');
   
   const [filters, setFilters] = useState({
     contentType: 'All',
@@ -784,8 +791,8 @@ export default function ExploreScreen() {
         <Text style={styles.userLocation}>📍 {item.location}</Text>
         <Text style={styles.userFollowers}>{item.followers} followers</Text>
       </View>
-      <TouchableOpacity style={styles.followButton}>
-        <Text style={styles.followButtonText}>Follow</Text>
+      <TouchableOpacity style={[styles.followButton, user?.following.includes(item.id) && styles.followingButton]} onPress={() => followUser(item.id)}>
+        <Text style={[styles.followButtonText, user?.following.includes(item.id) && styles.followingButtonText]}>{user?.following.includes(item.id) ? 'Following' : 'Follow'}</Text>
       </TouchableOpacity>
     </TouchableOpacity>
   );
@@ -808,15 +815,14 @@ export default function ExploreScreen() {
           <Text style={styles.userName}>{item.username}</Text>
           { item.isVerified && 
             <View style={styles.verifiedBadgeContainer}>
-              <Check size={10} color="white" />
+              <Check size={10} color="#fff" />
             </View>
           }
         </View>
-        <Text style={styles.userBio} numberOfLines={2}>{item.bio}</Text>
-        <Text style={styles.userFollowers}>{item.followers} followers</Text>
+          <Text style={styles.userFullName} numberOfLines={2}>{item.fullName}</Text>
       </View>
-      <TouchableOpacity style={styles.followButton}>
-        <Text style={styles.followButtonText}>Follow</Text>
+      <TouchableOpacity style={[styles.followButton, user?.following.includes(item.id) && styles.followingButton]} onPress={() => followUser(item.id)}>
+        <Text style={[styles.followButtonText, user?.following.includes(item.id) && styles.followingButtonText]}>{user?.following.includes(item.id) ? 'Following' : 'Follow'}</Text>
       </TouchableOpacity>
     </TouchableOpacity>
   );
@@ -843,7 +849,7 @@ export default function ExploreScreen() {
           styles.wishlistButton,
           isInWishlist(item.id) && styles.wishlistButtonActive,
         ]}
-        onPress={() => toggleWishlist(item)}
+        onPress={() => addToWishlist(item)}
         activeOpacity={0.7}
         >
           <Bookmark
@@ -946,11 +952,22 @@ export default function ExploreScreen() {
         <View style={styles.enlargedFooter}>
           <View style={styles.enlargedActions}>
             <View style={styles.enlargedStat}>
-              <Star size={20} color="#FFD700" fill="#FFD700" />
+              <TouchableOpacity onPress={() => {
+                likePost(enlargedPost.id)
+              }
+              }>
+                <Star size={20} color={isLiked ? '#FFD700' : '#fff'} fill={isLiked ? '#FFD700' : 'transparent'} />
+              </TouchableOpacity>
               <Text style={styles.enlargedStatText}>{enlargedPost.stars}</Text>
             </View>
             <View style={styles.enlargedStat}>
-              <Heart size={20} color="#fff" />
+              <TouchableOpacity onPress={() => {
+                  router.push(`/post/${enlargedPost.id}`);
+                  handleCloseEnlarged();
+                }
+              }>
+                <MessageCircle size={20} color="#fff" />
+              </TouchableOpacity>
               <Text style={styles.enlargedStatText}>{enlargedPost.comments}</Text>
             </View>
           </View>

@@ -108,6 +108,7 @@ export const CommentBottomSheet = ({
     } else {
       bottomSheetRef.current?.close();
     }
+    console.log('BottomSheet visible:', visible);    
   }, [visible]);
 
   return (
@@ -120,7 +121,7 @@ export const CommentBottomSheet = ({
       backgroundStyle={{ backgroundColor: theme.card }}
       handleIndicatorStyle={{ backgroundColor: theme.textSecondary }}
     >
-      <View style={{ flex: 1, paddingHorizontal: 16 }}>
+      <View style={{ flex: 1, paddingHorizontal: 16, zIndex: 1000 }}>
         <View style={styles.commentsHeader}>
           <Text style={styles.commentsTitle}>Comments</Text>
           <TouchableOpacity onPress={() => setVisible(false)}>

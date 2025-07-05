@@ -8,7 +8,7 @@ export const mockPosts: Post[] = [
       imageUrl: `https://picsum.photos/seed/${Math.random()}/600/300`,
       caption: 'Loving this vintage look! Perfect for a casual day out ✨ #vintage #ootd',
       stars: 128,
-      comments: ['1', '2', '3'],
+      comments: 3,
       createdAt: '2h ago',
     },
     {
@@ -18,7 +18,7 @@ export const mockPosts: Post[] = [
       imageUrl: `https://picsum.photos/seed/${Math.random()}/600/300`,
       caption: 'Black and white never goes out of style 🖤🤍 #minimalism #chic',
       stars: 258888,
-      comments: ['4', '5', '6'],
+      comments: 3,
       createdAt: '4h ago',
     },
     {
@@ -28,7 +28,7 @@ export const mockPosts: Post[] = [
       imageUrl: `https://picsum.photos/seed/${Math.random()}/600/300`,
       caption: 'Summer vibes with this flowy dress 🌸 Perfect for brunch dates!',
       stars: 89,
-      comments: ['7', '8', '9'],
+      comments: 3,
       createdAt: '6h ago',
     },
     {
@@ -38,7 +38,7 @@ export const mockPosts: Post[] = [
       imageUrl: `https://picsum.photos/seed/${Math.random()}/600/300`,
       caption: 'Street style inspiration from NYC 🏙️ #streetstyle #urban',
       stars: 167,
-      comments: ['10', '11', '12'],
+      comments: 3,
       createdAt: '8h ago',
     },
     {
@@ -48,7 +48,7 @@ export const mockPosts: Post[] = [
       imageUrl: `https://picsum.photos/seed/${Math.random()}/600/300`,
       caption: 'Street style inspiration from NYC 🏙️ #streetstyle #urban',
       stars: 167,
-      comments: ['10', '11', '12'],
+      comments: 3,
       createdAt: '8h ago',
     },
     {
@@ -58,7 +58,7 @@ export const mockPosts: Post[] = [
       imageUrl: `https://picsum.photos/seed/${Math.random()}/600/300`,
       caption: 'Street style inspiration from NYC 🏙️ #streetstyle #urban',
       stars: 167,
-      comments: ['10', '11', '12'],
+      comments: 3,
       createdAt: '8h ago',
     },
     {
@@ -68,7 +68,7 @@ export const mockPosts: Post[] = [
       imageUrl: `https://picsum.photos/seed/${Math.random()}/600/300`,
       caption: 'Street style inspiration from NYC 🏙️ #streetstyle #urban',
       stars: 167,
-      comments: ['10', '11', '12'],
+      comments: 3,
       createdAt: '8h ago',
     },
     {
@@ -78,7 +78,7 @@ export const mockPosts: Post[] = [
       imageUrl: `https://picsum.photos/seed/${Math.random()}/600/300`,
       caption: 'Street style inspiration from NYC 🏙️ #streetstyle #urban',
       stars: 167,
-      comments: ['10', '11', '12'],
+      comments: 3,
       createdAt: '8h ago',
     },
   ];

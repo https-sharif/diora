@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
-import { ArrowLeft, Heart, Share, Star, ShoppingCart, Store, Plus, Minus } from 'lucide-react-native';
+import { ArrowLeft, Share, Star, ShoppingCart, Store, Plus, Minus, Bookmark } from 'lucide-react-native';
 import { useShopping } from '@/contexts/ShoppingContext';
 import { mockProducts } from '@/mock/Product';
 import { mockReviews } from '@/mock/Review';
@@ -21,17 +21,373 @@ import { mockUsers } from '@/mock/User';
 import { mockShops } from '@/mock/Shop';
 import { ShopProfile } from '@/types/ShopProfile';
 import { Review } from '@/types/Review';
+import { Theme } from '@/types/Theme';
+import { useTheme } from '@/contexts/ThemeContext';
+import ProductSlashIcon from '@/icon/ProductSlashIcon';
 
 const { width } = Dimensions.get('window')
 
+const createStyles = (theme: Theme) => {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.background,
+      paddingTop: -59,
+      paddingBottom: -34,
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.border,
+    },
+    headerTitle: {
+      fontSize: 18,
+      fontFamily: 'Inter-SemiBold',
+      color: theme.text,
+    },
+    headerButton: {
+      padding: 8,
+    },
+    headerActions: {
+      flexDirection: 'row',
+      gap: 8,
+    },
+    content: {
+      flex: 1,
+    },
+    imageContainer: {
+      width: '100%',
+      height: width,
+      aspectRatio: 1,
+      backgroundColor: theme.background,
+    },
+    loadingContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    loadingText: {
+      fontSize: 16,
+      fontFamily: 'Inter-Regular',
+      color: theme.textSecondary,
+    },
+    mainImage: {
+      width: '100%',
+      height: '100%',
+      resizeMode: 'contain',
+    },
+    thumbnailContainer: {
+      backgroundColor: theme.card,
+    },
+    thumbnailContent: {
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      gap: 8,
+    },
+    thumbnailImage: {
+      width: 60,
+      height: 60,
+      borderRadius: 8,
+    },
+    productInfo: {
+      padding: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.border,
+    },
+    productBrand: {
+      fontSize: 14,
+      fontFamily: 'Inter-Medium',
+      color: theme.textSecondary,
+      marginBottom: 4,
+    },
+    productName: {
+      fontSize: 24,
+      fontFamily: 'Inter-Bold',
+      color: theme.text,
+      marginBottom: 8,
+    },
+    priceContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+    },
+    originalPrice: {
+      fontSize: 20,
+      fontFamily: 'Inter-Bold',
+      color: theme.textSecondary,
+      marginBottom: 12,
+      textDecorationLine: 'line-through',
+    },
+    productPrice: {
+      fontSize: 28,
+      fontFamily: 'Inter-Bold',
+      color: theme.text,
+      marginBottom: 12,
+    },
+    ratingContainer: {
+      marginBottom: 16,
+    },
+    rating: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+    },
+    ratingText: {
+      fontSize: 14,
+      fontFamily: 'Inter-Medium',
+      color: theme.textSecondary,
+    },
+    productDescription: {
+      fontSize: 16,
+      fontFamily: 'Inter-Regular',
+      color: theme.text,
+      lineHeight: 24,
+    },
+    storeSection: {
+      padding: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.border,
+    },
+    sectionTitle: {
+      fontSize: 18,
+      fontFamily: 'Inter-Bold',
+      color: theme.text,
+      marginBottom: 16,
+    },
+    storeInfo: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    storeAvatar: {
+      width: 50,
+      height: 50,
+      borderRadius: 25,
+    },
+    storeDetails: {
+      flex: 1,
+      marginLeft: 12,
+    },
+    storeName: {
+      fontSize: 16,
+      fontFamily: 'Inter-SemiBold',
+      color: theme.text,
+      marginBottom: 4,
+    },
+    storeStats: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+    },
+    storeRating: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+    },
+    storeRatingText: {
+      fontSize: 14,
+      fontFamily: 'Inter-Medium',
+      color: theme.textSecondary,
+    },
+    storeFollowers: {
+      fontSize: 14,
+      fontFamily: 'Inter-Regular',
+      color: theme.textSecondary,
+    },
+    visitStoreButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: theme.accent,
+      borderRadius: 20,
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      gap: 4,
+    },
+    visitStoreText: {
+      fontSize: 14,
+      fontFamily: 'Inter-SemiBold',
+      color: '#000',
+    },
+    optionSection: {
+      padding: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.border,
+    },
+    optionTitle: {
+      fontSize: 18,
+      fontFamily: 'Inter-SemiBold',
+      color: theme.text,
+      marginBottom: 12,
+    },
+    optionButtons: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 8,
+    },
+    optionButton: {
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      borderRadius: 20,
+      borderWidth: 1,
+      borderColor: theme.border,
+      backgroundColor: theme.card,
+    },
+    optionButtonActive: {
+      backgroundColor: theme.accentSecondary,
+      borderColor: theme.accentSecondary,
+    },
+    optionButtonText: {
+      fontSize: 14,
+      fontFamily: 'Inter-Medium',
+      color: theme.textSecondary,
+    },
+    optionButtonTextActive: {
+      color: '#000',
+    },
+    quantitySection: {
+      padding: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.border,
+    },
+    quantityControls: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 16,
+    },
+    quantityButton: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: theme.accentSecondary,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    quantityButtonDisabled: {
+      opacity: 0.5,
+    },
+    quantityText: {
+      fontSize: 20,
+      fontFamily: 'Inter-SemiBold',
+      color: theme.text,
+      minWidth: 30,
+      textAlign: 'center',
+    },
+    reviewsSection: {
+      padding: 16,
+    },
+    reviewItem: {
+      marginBottom: 16,
+      paddingBottom: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.border,
+    },
+    reviewHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 8,
+    },
+    reviewAvatar: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+    },
+    reviewInfo: {
+      marginLeft: 12,
+    },
+    reviewUser: {
+      fontSize: 14,
+      fontFamily: 'Inter-SemiBold',
+      color: theme.text,
+      marginBottom: 2,
+    },
+    reviewRating: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+    },
+    reviewDate: {
+      fontSize: 12,
+      fontFamily: 'Inter-Regular',
+      color: theme.textSecondary,
+    },
+    reviewComment: {
+      fontSize: 14,
+      fontFamily: 'Inter-Regular',
+      color: theme.text,
+      lineHeight: 20,
+    },
+    bottomPadding: {
+      height: 34,
+    },
+    footer: {
+      padding: 16,
+      borderTopWidth: 1,
+      borderTopColor: theme.border,
+      backgroundColor: theme.background,
+    },
+    addToCartButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: theme.accent,
+      borderRadius: 12,
+      paddingVertical: 16,
+      gap: 8,
+    },
+    addToCartButtonDisabled: {
+      opacity: 0.5,
+    },
+    addToCartButtonDisabledText: {
+      color: theme.text,
+    },
+    addToCartText: {
+      color: '#000',
+      fontSize: 16,
+      fontFamily: 'Inter-SemiBold',
+    },
+    errorContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: 20,
+    },
+    emptyIconContainer: {
+      width: 80,
+      height: 80,
+      borderRadius: 40,
+      backgroundColor: theme.card,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginBottom: 24,
+    },
+    errorText: {
+      fontSize: 18,
+      fontFamily: 'Inter-SemiBold',
+      color: theme.textSecondary,
+      marginBottom: 20,
+    },
+    backButton: {
+      backgroundColor: theme.accent,
+      borderRadius: 12,
+      paddingHorizontal: 24,
+      paddingVertical: 12,
+    },
+    backButtonText: {
+      color: '#000',
+      fontSize: 16,
+      fontFamily: 'Inter-SemiBold',
+    },
+  });
+}
+
 export default function ProductDetailScreen() {
   const { productId } = useLocalSearchParams<{ productId: string }>();
-  const { 
-    addToCart, 
-    addToWishlist, 
-    removeFromWishlist, 
-    isInWishlist 
-  } = useShopping();
+  const { addToCart, addToWishlist, removeFromWishlist, isInWishlist } = useShopping();
+  const { theme } = useTheme();
+  const styles = createStyles(theme);
   
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [selectedSize, setSelectedSize] = useState('');
@@ -65,6 +421,9 @@ export default function ProductDetailScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.errorContainer}>
+          <View style={styles.emptyIconContainer}>
+            <ProductSlashIcon size={40} />
+          </View>
           <Text style={styles.errorText}>Product not found</Text>
           <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
             <Text style={styles.backButtonText}>Go Back</Text>
@@ -84,14 +443,6 @@ export default function ProductDetailScreen() {
       addToCart(product, selectedSize, selectedColor);
     }
     Alert.alert('Success', `${quantity} item(s) added to cart!`);
-  };
-
-  const toggleWishlist = () => {
-    if (isInWishlist(product.id)) {
-      removeFromWishlist(product.id);
-    } else {
-      addToWishlist(product);
-    }
   };
 
   const renderImageItem = ({ item, index }: { item: string; index: number }) => (
@@ -129,7 +480,9 @@ export default function ProductDetailScreen() {
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
-        <ActivityIndicator size="large" color="#000" />
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>Loading product...</Text>
+        </View>
       </SafeAreaView>
     );
   }
@@ -138,20 +491,21 @@ export default function ProductDetailScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.headerButton} onPress={() => router.back()}>
-          <ArrowLeft size={24} color="#000" />
+          <ArrowLeft size={24} color={theme.text} />
         </TouchableOpacity>
+        <Text style={styles.headerTitle}>{product.name}</Text>
         <View style={styles.headerActions}>
           <TouchableOpacity style={styles.headerButton}>
-            <Share size={24} color="#000" />
+            <Share size={24} color={theme.text} />
           </TouchableOpacity>
           <TouchableOpacity 
             style={styles.headerButton}
-            onPress={toggleWishlist}
+            onPress={() => addToWishlist(product)}
           >
-            <Heart
+            <Bookmark
               size={24}
-              color={isInWishlist(product.id) ? '#FF6B6B' : '#000'}
-              fill={isInWishlist(product.id) ? '#FF6B6B' : 'transparent'}
+              color={theme.text}
+              fill={isInWishlist(product.id) ? theme.text : 'transparent'}
             />
           </TouchableOpacity>
         </View>
@@ -183,19 +537,23 @@ export default function ProductDetailScreen() {
         <View style={styles.productInfo}>
           <Text style={styles.productBrand}>{product.brand}</Text>
           <Text style={styles.productName}>{product.name}</Text>
-          <Text style={styles.productPrice}>${product.price}</Text>
-          
+          <View style={styles.priceContainer}>
+            <Text style={styles.productPrice}>${(product.discount && product.discount > 0 ? (product.price * (1 - product.discount / 100)).toFixed(2) : product.price)}</Text>
+            {product.discount && product.discount > 0 && (
+              <Text style={styles.originalPrice}>${product.price}</Text>
+            )}
+          </View>
           <View style={styles.ratingContainer}>
             <View style={styles.rating}>
               {[...Array(5)].map((_, i) => (
                 <Star
                   key={i}
                   size={16}
-                  color={i < Math.floor(product.rating) ? '#FFD700' : '#E0E0E0'}
+                  color={i < Math.floor(product.rating) ? '#FFD700' : theme.textSecondary}
                   fill={i < Math.floor(product.rating) ? '#FFD700' : 'transparent'}
                 />
               ))}
-              <Text style={styles.ratingText}>{product.rating} ({reviews.length} reviews)</Text>
+              <Text style={styles.ratingText}>{(product.rating / reviews.length).toFixed(1)} ({reviews.length} reviews)</Text>
             </View>
           </View>
 
@@ -217,7 +575,7 @@ export default function ProductDetailScreen() {
                 <Text style={styles.storeFollowers}>{store?.followers.length} followers</Text>
               </View>
             </View>
-            <TouchableOpacity style={styles.visitStoreButton}>
+            <TouchableOpacity style={styles.visitStoreButton} onPress={() => router.push(`/shop/${store?.id}`)}>
               <Store size={16} color="#000" />
               <Text style={styles.visitStoreText}>Visit</Text>
             </TouchableOpacity>
@@ -277,17 +635,19 @@ export default function ProductDetailScreen() {
           <Text style={styles.optionTitle}>Quantity</Text>
           <View style={styles.quantityControls}>
             <TouchableOpacity 
-              style={styles.quantityButton}
+              style={[styles.quantityButton, (!product.stock || quantity <= 1) && styles.quantityButtonDisabled]}
               onPress={() => setQuantity(Math.max(1, quantity - 1))}
+              disabled={!product.stock || quantity <= 1}
             >
-              <Minus size={20} color="#666" />
+              <Minus size={20} color="#000" />
             </TouchableOpacity>
             <Text style={styles.quantityText}>{quantity}</Text>
             <TouchableOpacity 
-              style={styles.quantityButton}
-              onPress={() => setQuantity(quantity + 1)}
+              style={[styles.quantityButton, (!product.stock || quantity >= product.stock) && styles.quantityButtonDisabled]}
+              onPress={() => setQuantity(Math.min(product.stock, quantity + 1))}
+              disabled={!product.stock || quantity >= product.stock}
             >
-              <Plus size={20} color="#666" />
+              <Plus size={20} color="#000" />
             </TouchableOpacity>
           </View>
         </View>
@@ -308,319 +668,11 @@ export default function ProductDetailScreen() {
 
       {/* Add to Cart Button */}
       <View style={styles.footer}>
-        <TouchableOpacity style={styles.addToCartButton} onPress={handleAddToCart}>
-          <ShoppingCart size={20} color="#fff" />
-          <Text style={styles.addToCartText}>Add to Cart - ${(product.price * quantity).toFixed(2)}</Text>
+        <TouchableOpacity style={[styles.addToCartButton, !product.stock && styles.addToCartButtonDisabled]} onPress={handleAddToCart} disabled={!product.stock}>
+          {product.stock ? <ShoppingCart size={20} color="#000" /> : null}
+          <Text style={[styles.addToCartText, !product.stock && styles.addToCartButtonDisabledText]}>{!product.stock ? 'Out of Stock' : 'Add to Cart'}</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    paddingTop: -59,
-    paddingBottom: -34,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e9ecef',
-  },
-  headerButton: {
-    padding: 8,
-  },
-  headerActions: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  content: {
-    flex: 1,
-  },
-  imageContainer: {
-    width: '100%',
-    height: width,
-    aspectRatio: 1,
-  },
-  mainImage: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'contain',
-  },
-  thumbnailContainer: {
-    backgroundColor: '#f8f9fa',
-  },
-  thumbnailContent: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    gap: 8,
-  },
-  thumbnailImage: {
-    width: 60,
-    height: 60,
-    borderRadius: 8,
-  },
-  productInfo: {
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f8f9fa',
-  },
-  productBrand: {
-    fontSize: 14,
-    fontFamily: 'Inter-Medium',
-    color: '#666',
-    marginBottom: 4,
-  },
-  productName: {
-    fontSize: 24,
-    fontFamily: 'Inter-Bold',
-    color: '#000',
-    marginBottom: 8,
-  },
-  productPrice: {
-    fontSize: 28,
-    fontFamily: 'Inter-Bold',
-    color: '#000',
-    marginBottom: 12,
-  },
-  ratingContainer: {
-    marginBottom: 16,
-  },
-  rating: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  ratingText: {
-    fontSize: 14,
-    fontFamily: 'Inter-Medium',
-    color: '#666',
-  },
-  productDescription: {
-    fontSize: 16,
-    fontFamily: 'Inter-Regular',
-    color: '#666',
-    lineHeight: 24,
-  },
-  storeSection: {
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f8f9fa',
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontFamily: 'Inter-Bold',
-    color: '#000',
-    marginBottom: 16,
-  },
-  storeInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  storeAvatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-  },
-  storeDetails: {
-    flex: 1,
-    marginLeft: 12,
-  },
-  storeName: {
-    fontSize: 16,
-    fontFamily: 'Inter-SemiBold',
-    color: '#000',
-    marginBottom: 4,
-  },
-  storeStats: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  storeRating: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  storeRatingText: {
-    fontSize: 14,
-    fontFamily: 'Inter-Medium',
-    color: '#666',
-  },
-  storeFollowers: {
-    fontSize: 14,
-    fontFamily: 'Inter-Regular',
-    color: '#666',
-  },
-  visitStoreButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f8f9fa',
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    gap: 4,
-  },
-  visitStoreText: {
-    fontSize: 14,
-    fontFamily: 'Inter-SemiBold',
-    color: '#000',
-  },
-  optionSection: {
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f8f9fa',
-  },
-  optionTitle: {
-    fontSize: 18,
-    fontFamily: 'Inter-SemiBold',
-    color: '#000',
-    marginBottom: 12,
-  },
-  optionButtons: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  optionButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#e9ecef',
-    backgroundColor: '#f8f9fa',
-  },
-  optionButtonActive: {
-    backgroundColor: '#000',
-    borderColor: '#000',
-  },
-  optionButtonText: {
-    fontSize: 14,
-    fontFamily: 'Inter-Medium',
-    color: '#666',
-  },
-  optionButtonTextActive: {
-    color: '#fff',
-  },
-  quantitySection: {
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f8f9fa',
-  },
-  quantityControls: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 16,
-  },
-  quantityButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#f8f9fa',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  quantityText: {
-    fontSize: 18,
-    fontFamily: 'Inter-SemiBold',
-    color: '#000',
-    minWidth: 30,
-    textAlign: 'center',
-  },
-  reviewsSection: {
-    padding: 16,
-  },
-  reviewItem: {
-    marginBottom: 16,
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f8f9fa',
-  },
-  reviewHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  reviewAvatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-  },
-  reviewInfo: {
-    marginLeft: 12,
-  },
-  reviewUser: {
-    fontSize: 14,
-    fontFamily: 'Inter-SemiBold',
-    color: '#000',
-    marginBottom: 2,
-  },
-  reviewRating: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  reviewDate: {
-    fontSize: 12,
-    fontFamily: 'Inter-Regular',
-    color: '#999',
-  },
-  reviewComment: {
-    fontSize: 14,
-    fontFamily: 'Inter-Regular',
-    color: '#666',
-    lineHeight: 20,
-  },
-  bottomPadding: {
-    height: 34,
-  },
-  footer: {
-    padding: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#e9ecef',
-    backgroundColor: '#fff',
-  },
-  addToCartButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#000',
-    borderRadius: 12,
-    paddingVertical: 16,
-    gap: 8,
-  },
-  addToCartText: {
-    color: '#fff',
-    fontSize: 16,
-    fontFamily: 'Inter-SemiBold',
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  errorText: {
-    fontSize: 18,
-    fontFamily: 'Inter-SemiBold',
-    color: '#666',
-    marginBottom: 20,
-  },
-  backButton: {
-    backgroundColor: '#000',
-    borderRadius: 12,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-  },
-  backButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontFamily: 'Inter-SemiBold',
-  },
-});

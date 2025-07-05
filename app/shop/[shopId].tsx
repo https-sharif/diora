@@ -10,12 +10,14 @@ import {
   Modal,
   Alert,
   Linking,
+  Animated,
+  PanResponder,
+  Dimensions
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { 
   ArrowLeft, 
-  Heart, 
   MessageCircle, 
   Share, 
   MoreHorizontal,
@@ -28,7 +30,8 @@ import {
   X,
   Flag,
   UserPlus,
-  UserMinus
+  UserMinus,
+  Bookmark
 } from 'lucide-react-native';
 import { useShopping } from '@/contexts/ShoppingContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -41,6 +44,526 @@ import { ShopProfile } from '@/types/ShopProfile';
 import { Product } from '@/types/Product';
 import { Review } from '@/types/Review';
 import { Theme } from '@/types/Theme';
+import { useTheme } from '@/contexts/ThemeContext';
+import Color from 'color';
+import { BlurView } from 'expo-blur';
+
+const { width, height } = Dimensions.get('window');
+
+const createStyles = (theme: Theme) => {
+  const outOfStockOverlay = Color(theme.text).alpha(0.5).toString();
+  const bookmarkInactiveColor = Color(theme.text).alpha(0.5).toString();
+  
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.background,
+      paddingTop: -100,
+      paddingBottom: -100,
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      backgroundColor: theme.background,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.border,
+    },
+    headerButton: {
+      padding: 8,
+      width: 40,
+    },
+    headerTitle: {
+      fontSize: 18,
+      fontFamily: 'Inter-SemiBold',
+      color: theme.text,
+    },
+    headerActions: {
+      flexDirection: 'row',
+    },
+    content: {
+      flex: 1,
+    },
+    loadingContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    loadingText: {
+      fontSize: 16,
+      fontFamily: 'Inter-Regular',
+      color: theme.textSecondary,
+    },
+    errorContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: 20,
+    },
+    errorText: {
+      fontSize: 18,
+      fontFamily: 'Inter-SemiBold',
+      color: theme.textSecondary,
+      marginBottom: 20,
+    },
+    backButton: {
+      backgroundColor: theme.accent,
+      borderRadius: 12,
+      paddingHorizontal: 24,
+      paddingVertical: 12,
+    },
+    backButtonText: {
+      color: '#000',
+      fontSize: 16,
+      fontFamily: 'Inter-SemiBold',
+    },
+    coverImage: {
+      width: '100%',
+      height: 200,
+    },
+    shopSection: {
+      backgroundColor: theme.background,
+      padding: 20,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.border,
+    },
+    shopHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 16,
+      marginTop: -40,
+    },
+    shopAvatar: {
+      width: 80,
+      height: 80,
+      borderRadius: 40,
+      marginRight: 20,
+      borderWidth: 4,
+      borderColor: theme.background,
+    },
+    shopStats: {
+      flex: 1,
+      flexDirection: 'row',
+      justifyContent: 'space-around',
+      marginTop: 25,
+    },
+    statItem: {
+      alignItems: 'center',
+    },
+    statNumber: {
+      fontSize: 18,
+      fontFamily: 'Inter-Bold',
+      color: theme.text,
+    },
+    statLabel: {
+      fontSize: 12,
+      fontFamily: 'Inter-Regular',
+      color: theme.textSecondary,
+      marginTop: 2,
+      textAlign: 'center',
+    },
+    ratingContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+    },
+    shopInfo: {
+      marginBottom: 16,
+    },
+    nameContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 8,
+    },
+    shopName: {
+      fontSize: 24,
+      fontFamily: 'Inter-Bold',
+      color: theme.text,
+      marginRight: 8,
+    },
+    verifiedBadge: {
+      backgroundColor: '#007AFF',
+      borderRadius: 10,
+      width: 20,
+      height: 20,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    verifiedText: {
+      color: '#fff',
+      fontSize: 12,
+      fontFamily: 'Inter-Bold',
+    },
+    shopDescription: {
+      fontSize: 16,
+      fontFamily: 'Inter-Regular',
+      color: theme.text,
+      lineHeight: 22,
+      marginBottom: 16,
+    },
+    contactInfo: {
+      marginBottom: 12,
+    },
+    contactItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 8,
+      gap: 8,
+    },
+    contactText: {
+      fontSize: 14,
+      fontFamily: 'Inter-Regular',
+      color: theme.textSecondary,
+    },
+    websiteText: {
+      color: '#007AFF',
+    },
+    establishedText: {
+      fontSize: 14,
+      fontFamily: 'Inter-Regular',
+      color: theme.accent,
+    },
+    categories: {
+      marginBottom: 20,
+    },
+    categoriesTitle: {
+      fontSize: 16,
+      fontFamily: 'Inter-SemiBold',
+      color: theme.text,
+      marginBottom: 8,
+    },
+    categoryTags: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 8,
+    },
+    categoryTag: {
+      backgroundColor: theme.accentSecondary,
+      borderRadius: 16,
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderWidth: 1,
+      borderColor: theme.accentSecondary,
+    },
+    categoryTagText: {
+      fontSize: 14,
+      fontFamily: 'Inter-Medium',
+      color: theme.background,
+    },
+    actionButtons: {
+      flexDirection: 'row',
+      gap: 12,
+    },
+    followButton: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: theme.text,
+      borderRadius: 8,
+      paddingVertical: 12,
+      gap: 8,
+    },
+    followingButton: {
+      backgroundColor: theme.card,
+      borderWidth: 1,
+      borderColor: theme.border,
+    },
+    followButtonText: {
+      color: theme.background,
+      fontSize: 16,
+      fontFamily: 'Inter-SemiBold',
+    },
+    followingButtonText: {
+      color: theme.text,
+    },
+    contactButton: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: theme.accent,
+      borderRadius: 8,
+      paddingVertical: 12,
+      borderWidth: 1,
+      borderColor: theme.border,
+      gap: 8,
+    },
+    contactButtonText: {
+      color: '#000',
+      fontSize: 16,
+      fontFamily: 'Inter-SemiBold',
+    },
+    tabsSection: {
+      flexDirection: 'row',
+      backgroundColor: theme.background,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.border,
+    },
+    tab: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: 16,
+      gap: 8,
+    },
+    activeTab: {
+      borderBottomWidth: 2,
+      borderBottomColor: theme.text,
+    },
+    tabText: {
+      fontSize: 14,
+      fontFamily: 'Inter-Medium',
+      color: theme.textSecondary,
+    },
+    activeTabText: {
+      fontSize: 14,
+      fontFamily: 'Inter-SemiBold',
+      color: theme.text,
+    },
+    productsGrid: {
+      backgroundColor: theme.background,
+      marginTop: 16,
+    },
+    productsRow: {
+      justifyContent: 'space-between',
+      paddingHorizontal: 16,
+    },
+    productItem: {
+      width: '48%',
+      backgroundColor: theme.card,
+      borderRadius: 12,
+      overflow: 'hidden',
+      marginBottom: 16,
+      shadowColor: theme.text,
+      shadowOffset: {
+        width: 0,
+        height: 2,
+      },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 4,
+      position: 'relative',
+    },
+    productImageContainer: {
+      position: 'relative',
+    },
+    productImage: {
+      width: '100%',
+      height: 160,
+    },
+    discountBadge: {
+      position: 'absolute',
+      top: 8,
+      left: 8,
+      backgroundColor: theme.error,
+      borderRadius: 12,
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      zIndex: 10,
+    },
+    discountText: {
+      color: '#fff',
+      fontSize: 12,
+      fontFamily: 'Inter-Bold',
+    },
+    outOfStockOverlay: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: outOfStockOverlay,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    outOfStockText: {
+      color: theme.background,
+      fontSize: 20,
+      fontFamily: 'Inter-Bold',
+    },
+    wishlistButton: {
+      position: 'absolute',
+      top: 8,
+      right: 8,
+      backgroundColor: bookmarkInactiveColor,
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: theme.border,
+      padding: 8,
+      zIndex: 15,
+    },
+    productInfo: {
+      padding: 12,
+    },
+    productName: {
+      fontSize: 14,
+      fontFamily: 'Inter-SemiBold',
+      color: theme.text,
+      marginBottom: 4,
+    },
+    priceContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      marginBottom: 4,
+    },
+    productPrice: {
+      fontSize: 16,
+      fontFamily: 'Inter-Bold',
+      color: theme.text,
+    },
+    originalPrice: {
+      fontSize: 14,
+      fontFamily: 'Inter-Regular',
+      color: theme.textSecondary,
+      textDecorationLine: 'line-through',
+    },
+    discountPrice: {
+      fontSize: 16,
+      fontFamily: 'Inter-Bold',
+      color: theme.text,
+    },
+    productCategory: {
+      fontSize: 12,
+      fontFamily: 'Inter-Regular',
+      color: theme.textSecondary,
+    },
+    ratingRow: {
+      flexDirection: 'row',
+      gap: 4,
+      position: 'absolute',
+      bottom: 16,
+      right: 16,
+    },
+    ratingText: {
+      fontSize: 12,
+      fontFamily: 'Inter-Medium',
+      color: theme.textSecondary,
+    },
+    reviewsContainer: {
+      backgroundColor: theme.background,
+      paddingBottom: 84,
+    },
+    reviewItem: {
+      padding: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.border,
+    },
+    reviewHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 8,
+    },
+    reviewAvatar: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+    },
+    reviewInfo: {
+      marginLeft: 12,
+    },
+    reviewUser: {
+      fontSize: 14,
+      fontFamily: 'Inter-SemiBold',
+      color: theme.text,
+      marginBottom: 2,
+    },
+    reviewRating: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+    },
+    reviewDate: {
+      fontSize: 12,
+      fontFamily: 'Inter-Regular',
+      color: theme.textSecondary,
+    },
+    reviewComment: {
+      fontSize: 14,
+      fontFamily: 'Inter-Regular',
+      color: theme.text,
+      lineHeight: 20,
+      marginBottom: 8,
+    },
+    reviewImages: {
+      marginTop: 8,
+    },
+    reviewImage: {
+      width: 80,
+      height: 80,
+      borderRadius: 8,
+      marginRight: 8,
+    },
+    bottomPadding: {
+      height: 34,
+    },
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      justifyContent: 'flex-end',
+    },
+    moreMenu: {
+      backgroundColor: theme.card,
+      borderTopLeftRadius: 16,
+      borderTopRightRadius: 16,
+      paddingBottom: 34,
+    },
+    moreMenuHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: 20,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.border,
+    },
+    moreMenuTitle: {
+      fontSize: 18,
+      fontFamily: 'Inter-Bold',
+      color: theme.text,
+    },
+    moreMenuItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: 20,
+      gap: 16,
+    },
+    moreMenuItemText: {
+      fontSize: 16,
+      fontFamily: 'Inter-Medium',
+      color: theme.text,
+    },
+    enlargedContainer: {
+      flex: 1,
+      backgroundColor: 'rgba(255, 255, 255, 0.05)',
+  
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    enlargedBackdrop: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+    },
+    enlargedContent: {
+      width: width * 0.9,
+      maxHeight: height * 0.8,
+      backgroundColor: 'rgba(55, 55, 55, 0.8)',
+      borderRadius: 20,
+      overflow: 'hidden',
+    },
+    enlargedImage: {
+      width: '100%',
+      height: width * 0.9,
+      resizeMode: 'contain',
+    },
+  });
+}
 
 export default function ShopProfileScreen() {
   const { shopId } = useLocalSearchParams<{ shopId: string }>();
@@ -54,37 +577,103 @@ export default function ShopProfileScreen() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [isFollowing, setIsFollowing] = useState(false);
+  const { theme } = useTheme();
+  const styles = createStyles(theme);
+  const [enlargedPost, setEnlargedPost] = useState<string | null>(null);
+  const [scaleAnim] = useState(new Animated.Value(1));
+  const [opacityAnim] = useState(new Animated.Value(0));
+
+
+  const panResponder = PanResponder.create({
+    onMoveShouldSetPanResponder: (evt, gestureState) => {
+      return Math.abs(gestureState.dy) > 20;
+    },
+    onPanResponderMove: (evt, gestureState) => {
+      const progress = Math.min(Math.abs(gestureState.dy) / 200, 1);
+      scaleAnim.setValue(1 - progress * 0.2);
+      opacityAnim.setValue(1 - progress);
+    },
+    onPanResponderRelease: (evt, gestureState) => {
+      if (Math.abs(gestureState.dy) > 100) {
+        handleCloseEnlarged();
+      } else {
+        Animated.parallel([
+          Animated.spring(scaleAnim, {
+            toValue: 1,
+            useNativeDriver: true,
+          }),
+          Animated.timing(opacityAnim, {
+            toValue: 1,
+            duration: 150,
+            useNativeDriver: true,
+          }),
+        ]).start();
+      }
+    },
+  });
+
+  const handleReviewImage = (image : string) => {
+    setEnlargedPost(image);
+    Animated.parallel([
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        useNativeDriver: true,
+        tension: 50,
+        friction: 8,
+      }),
+      Animated.timing(opacityAnim, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
+  const handleCloseEnlarged = () => {
+    Animated.parallel([
+      Animated.spring(scaleAnim, {
+        toValue: 0.8,
+        useNativeDriver: true,
+        tension: 50,
+        friction: 8,
+      }),
+      Animated.timing(opacityAnim, {
+        toValue: 0,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      setEnlargedPost(null);
+      scaleAnim.setValue(1);
+    });
+  };
 
   useEffect(() => {
     if (shopId) {
       const profile = mockShops.find(p => p.id === shopId);
       if (profile) {
         setShopProfile(profile);
+        setIsFollowing(user?.id ? user.following.includes(profile.id) : false);
+        const fetchedProducts: Product[] = mockProducts.filter(product => profile.productIds.includes(product.id));
+        setProducts(fetchedProducts);
+
+        const fetchedReviews: Review[] = mockReviews.filter(review => review.targetId === profile.id && review.targetType === 'shop');
+        setReviews(fetchedReviews);
       }
     }
     setLoading(false);
   }, [shopId]);
 
-  
-  useEffect(() => {
-    if (shopProfile) {
-      setIsFollowing(user?.id ? shopProfile.followers.includes(user.id) : false);
-      const fetchedProducts: Product[] = mockProducts.filter(product => shopProfile.productIds.includes(product.id));
-      setProducts(fetchedProducts);
-
-      const fetchedReviews: Review[] = mockReviews.filter(review => review.targetId === shopProfile.id && review.targetType === 'shop');
-      setReviews(fetchedReviews);
-    }
-  }, [shopProfile]);
-
   const toggleFollow = () => {
     if (!shopProfile || !user) return;
     followUser(shopProfile.id);
+    setIsFollowing(!isFollowing);
   };
 
 
   const handleContact = () => {
-    Alert.alert('Contact Shop', `Contact ${shopProfile?.name}`);
+    if (!shopProfile) return;
+    router.push(`/message/${shopProfile.userId}`);
   };
 
   const handleShare = () => {
@@ -114,17 +703,19 @@ export default function ShopProfileScreen() {
       style={styles.productItem}
       onPress={() => handleProductPress(item.id)}
     >
-      <Image source={{ uri: item.imageUrl[0] }} style={styles.productImage} />
-      {item.discount && (
-        <View style={styles.discountBadge}>
-          <Text style={styles.discountText}>-{item.discount}%</Text>
-        </View>
-      )}
-      {item.stock == 0 && (
-        <View style={styles.outOfStockOverlay}>
-          <Text style={styles.outOfStockText}>Out of Stock</Text>
-        </View>
-      )}
+      <View style={styles.productImageContainer}>
+        <Image source={{ uri: item.imageUrl[0] }} style={styles.productImage} />
+        {item.discount && (
+          <View style={styles.discountBadge}>
+            <Text style={styles.discountText}>-{item.discount}%</Text>
+          </View>
+        )}
+        {item.stock == 0 && (
+          <View style={styles.outOfStockOverlay}>
+            <Text style={styles.outOfStockText}>Out of Stock</Text>
+          </View>
+        )}
+      </View>
       <TouchableOpacity
         style={styles.wishlistButton}
         onPress={() => {
@@ -132,10 +723,10 @@ export default function ShopProfileScreen() {
           addToWishlist({ ...item });
         }}
       >
-        <Heart
+        <Bookmark
           size={16}
-          color={isInWishlist(item.id) ? '#FF6B6B' : '#666'}
-          fill={isInWishlist(item.id) ? '#FF6B6B' : 'transparent'}
+          color={theme.background}
+          fill={isInWishlist(item.id) ? theme.background : 'transparent'}
         />
       </TouchableOpacity>
       
@@ -144,16 +735,20 @@ export default function ShopProfileScreen() {
         <View style={styles.priceContainer}>
           {item.discount ? (
             <>
-              <Text style={styles.originalPrice}>${item.price}</Text>
               <Text style={styles.discountPrice}>
                 ${(item.price * (1 - item.discount / 100)).toFixed(2)}
               </Text>
+              <Text style={styles.originalPrice}>${item.price}</Text>
             </>
           ) : (
             <Text style={styles.productPrice}>${item.price}</Text>
           )}
         </View>
         <Text style={styles.productCategory}>{item.category}</Text>
+      </View>
+      <View style={styles.ratingRow}>
+        <Star size={12} color="#FFD700" fill="#FFD700" />
+        <Text style={styles.ratingText}>{item.rating.toFixed(1)}</Text>
       </View>
     </TouchableOpacity>
   );
@@ -167,13 +762,13 @@ export default function ShopProfileScreen() {
         <View style={styles.reviewHeader}>
           <Image source={{ uri: user.avatar }} style={styles.reviewAvatar} />
           <View style={styles.reviewInfo}>
-            <Text style={styles.reviewUser}>{user.fullName}</Text>
+            <Text style={styles.reviewUser}>{user.username}</Text>
             <View style={styles.reviewRating}>
               {[...Array(5)].map((_, i) => (
                 <Star
                   key={i}
                   size={14}
-                  color={i < item.rating ? '#FFD700' : '#E0E0E0'}
+                  color={i < item.rating ? '#FFD700' : theme.textSecondary}
                   fill={i < item.rating ? '#FFD700' : 'transparent'}
                 />
               ))}
@@ -184,8 +779,10 @@ export default function ShopProfileScreen() {
         <Text style={styles.reviewComment}>{item.comment}</Text>
         {item.images && (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.reviewImages}>
-            {item.images.map((image : any , index : number) => (
-              <Image key={index} source={{ uri: image }} style={styles.reviewImage} />
+            {item.images.map((image : string , index : number) => (
+              <TouchableOpacity key={index} onPress={() => handleReviewImage(image)}>
+                <Image key={index} source={{ uri: image }} style={styles.reviewImage} />
+              </TouchableOpacity>
             ))}
           </ScrollView>
         )}
@@ -208,7 +805,7 @@ export default function ShopProfileScreen() {
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity style={styles.headerButton} onPress={() => router.back()}>
-            <ArrowLeft size={24} color="#000" />
+            <ArrowLeft size={24} color={theme.text} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Shop</Text>
           <View style={styles.headerButton} />
@@ -227,18 +824,15 @@ export default function ShopProfileScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.headerButton} onPress={() => router.back()}>
-          <ArrowLeft size={24} color="#000" />
+          <ArrowLeft size={24} color={theme.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>{shopProfile.name}</Text>
+        <Text style={styles.headerTitle}>{shopProfile.username}</Text>
         <View style={styles.headerActions}>
-          <TouchableOpacity style={styles.headerButton} onPress={handleShare}>
-            <Share size={24} color="#000" />
-          </TouchableOpacity>
           <TouchableOpacity 
             style={styles.headerButton} 
             onPress={() => setShowMoreMenu(true)}
           >
-            <MoreHorizontal size={24} color="#000" />
+            <MoreHorizontal size={24} color={theme.text} />
           </TouchableOpacity>
         </View>
       </View>
@@ -284,7 +878,7 @@ export default function ShopProfileScreen() {
             {/* Contact Info */}
             <View style={styles.contactInfo}>
               <View style={styles.contactItem}>
-                <MapPin size={16} color="#666" />
+                <MapPin size={16} color={theme.textSecondary} />
                 <Text style={styles.contactText}>{shopProfile.location}</Text>
               </View>
               {/* <View style={styles.contactItem}>
@@ -293,13 +887,13 @@ export default function ShopProfileScreen() {
               </View> */}
               {shopProfile.contactPhone && (
                 <View style={styles.contactItem}>
-                  <Phone size={16} color="#666" />
+                  <Phone size={16} color={theme.textSecondary} />
                   <Text style={styles.contactText}>{shopProfile.contactPhone}</Text>
                 </View>
               )}
               {shopProfile.contactEmail && (
                 <View style={styles.contactItem}>
-                  <Mail size={16} color="#666" />
+                  <Mail size={16} color={theme.textSecondary} />
                   <Text style={styles.contactText}>{shopProfile.contactEmail}</Text>
                 </View>
               )}
@@ -333,9 +927,9 @@ export default function ShopProfileScreen() {
               onPress={toggleFollow}
             >
               {isFollowing ? (
-                <UserMinus size={16} color="#666" />
+                <UserMinus size={16} color={theme.text} />
               ) : (
-                <UserPlus size={16} color="#fff" />
+                <UserPlus size={16} color={theme.background} />
               )}
               <Text style={[
                 styles.followButtonText, 
@@ -409,489 +1003,67 @@ export default function ShopProfileScreen() {
       <Modal
         visible={showMoreMenu}
         transparent
-        animationType="fade"
+        animationType="slide"
         onRequestClose={() => setShowMoreMenu(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.moreMenu}>
-            <View style={styles.moreMenuHeader}>
-              <Text style={styles.moreMenuTitle}>More Options</Text>
-              <TouchableOpacity onPress={() => setShowMoreMenu(false)}>
-                <X size={24} color="#000" />
+        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setShowMoreMenu(false)}>
+            <View style={styles.moreMenu}>
+              <View style={styles.moreMenuHeader}>
+                <Text style={styles.moreMenuTitle}>More Options</Text>
+                <TouchableOpacity onPress={() => setShowMoreMenu(false)}>
+                  <X size={24} color={theme.text} />
+                </TouchableOpacity>
+              </View>
+              
+              <TouchableOpacity style={styles.moreMenuItem} onPress={handleShare}>
+                <Share size={20} color={theme.text} />
+                <Text style={styles.moreMenuItemText}>Share Shop</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.moreMenuItem} onPress={handleReport}>
+                <Flag size={20} color={theme.error} />
+                <Text style={[styles.moreMenuItemText, { color: theme.error }]}>Report Shop</Text>
               </TouchableOpacity>
             </View>
-            
-            <TouchableOpacity style={styles.moreMenuItem} onPress={handleReport}>
-              <Flag size={20} color="#FF3B30" />
-              <Text style={styles.moreMenuItemText}>Report Shop</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+        </TouchableOpacity>
       </Modal>
+
+      {enlargedPost && (
+          <Modal
+            visible={!!enlargedPost}
+            transparent
+            animationType="none"
+            onRequestClose={handleCloseEnlarged}
+          >
+            <Animated.View 
+              style={[
+                styles.enlargedContainer,
+                { opacity: opacityAnim }
+              ]}
+              {...panResponder.panHandlers}
+            >
+              <BlurView
+                intensity={10}
+                tint={theme.mode === 'dark' ? 'dark' : 'light'}
+                style={StyleSheet.absoluteFill}
+              />
+              <TouchableOpacity 
+                style={styles.enlargedBackdrop}
+                onPress={handleCloseEnlarged}
+                activeOpacity={1}
+              />
+              
+              <Animated.View 
+                style={[
+                  styles.enlargedContent,
+                  { transform: [{ scale: scaleAnim }] }
+                ]}
+              >
+                <Image source={{ uri: enlargedPost }} style={styles.enlargedImage} />
+              </Animated.View>
+            </Animated.View>
+          </Modal>
+        )}
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8f9fa',
-    paddingTop: -100,
-    paddingBottom: -100,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e9ecef',
-  },
-  headerButton: {
-    padding: 8,
-    width: 40,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontFamily: 'Inter-SemiBold',
-    color: '#000',
-  },
-  headerActions: {
-    flexDirection: 'row',
-  },
-  content: {
-    flex: 1,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    fontSize: 16,
-    fontFamily: 'Inter-Regular',
-    color: '#666',
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  errorText: {
-    fontSize: 18,
-    fontFamily: 'Inter-SemiBold',
-    color: '#666',
-    marginBottom: 20,
-  },
-  backButton: {
-    backgroundColor: '#000',
-    borderRadius: 12,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-  },
-  backButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontFamily: 'Inter-SemiBold',
-  },
-  coverImage: {
-    width: '100%',
-    height: 200,
-  },
-  shopSection: {
-    backgroundColor: '#fff',
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e9ecef',
-  },
-  shopHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-    marginTop: -40,
-  },
-  shopAvatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    marginRight: 20,
-    borderWidth: 4,
-    borderColor: '#fff',
-  },
-  shopStats: {
-    flex: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-  },
-  statItem: {
-    alignItems: 'center',
-  },
-  statNumber: {
-    fontSize: 18,
-    fontFamily: 'Inter-Bold',
-    color: '#000',
-  },
-  statLabel: {
-    fontSize: 12,
-    fontFamily: 'Inter-Regular',
-    color: '#666',
-    marginTop: 2,
-    textAlign: 'center',
-  },
-  ratingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  shopInfo: {
-    marginBottom: 16,
-  },
-  nameContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  shopName: {
-    fontSize: 24,
-    fontFamily: 'Inter-Bold',
-    color: '#000',
-    marginRight: 8,
-  },
-  verifiedBadge: {
-    backgroundColor: '#007AFF',
-    borderRadius: 10,
-    width: 20,
-    height: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  verifiedText: {
-    color: '#fff',
-    fontSize: 12,
-    fontFamily: 'Inter-Bold',
-  },
-  shopDescription: {
-    fontSize: 16,
-    fontFamily: 'Inter-Regular',
-    color: '#000',
-    lineHeight: 22,
-    marginBottom: 16,
-  },
-  contactInfo: {
-    marginBottom: 12,
-  },
-  contactItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-    gap: 8,
-  },
-  contactText: {
-    fontSize: 14,
-    fontFamily: 'Inter-Regular',
-    color: '#666',
-  },
-  websiteText: {
-    color: '#007AFF',
-  },
-  establishedText: {
-    fontSize: 14,
-    fontFamily: 'Inter-Regular',
-    color: '#999',
-  },
-  categories: {
-    marginBottom: 20,
-  },
-  categoriesTitle: {
-    fontSize: 16,
-    fontFamily: 'Inter-SemiBold',
-    color: '#000',
-    marginBottom: 8,
-  },
-  categoryTags: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  categoryTag: {
-    backgroundColor: '#f8f9fa',
-    borderRadius: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderWidth: 1,
-    borderColor: '#e9ecef',
-  },
-  categoryTagText: {
-    fontSize: 14,
-    fontFamily: 'Inter-Medium',
-    color: '#666',
-  },
-  actionButtons: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  followButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#000',
-    borderRadius: 8,
-    paddingVertical: 12,
-    gap: 8,
-  },
-  followingButton: {
-    backgroundColor: '#f8f9fa',
-    borderWidth: 1,
-    borderColor: '#e9ecef',
-  },
-  followButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontFamily: 'Inter-SemiBold',
-  },
-  followingButtonText: {
-    color: '#666',
-  },
-  contactButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#f8f9fa',
-    borderRadius: 8,
-    paddingVertical: 12,
-    borderWidth: 1,
-    borderColor: '#e9ecef',
-    gap: 8,
-  },
-  contactButtonText: {
-    color: '#000',
-    fontSize: 16,
-    fontFamily: 'Inter-SemiBold',
-  },
-  tabsSection: {
-    flexDirection: 'row',
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e9ecef',
-  },
-  tab: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    gap: 8,
-  },
-  activeTab: {
-    borderBottomWidth: 2,
-    borderBottomColor: '#000',
-  },
-  tabText: {
-    fontSize: 14,
-    fontFamily: 'Inter-Medium',
-    color: '#666',
-  },
-  activeTabText: {
-    fontSize: 14,
-    fontFamily: 'Inter-SemiBold',
-    color: '#000',
-  },
-  productsGrid: {
-    backgroundColor: '#fff',
-    paddingBottom: 84,
-  },
-  productsRow: {
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-  },
-  productItem: {
-    width: '48%',
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    overflow: 'hidden',
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 4,
-    position: 'relative',
-  },
-  productImage: {
-    width: '100%',
-    height: 160,
-  },
-  discountBadge: {
-    position: 'absolute',
-    top: 8,
-    left: 8,
-    backgroundColor: '#FF3B30',
-    borderRadius: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  discountText: {
-    color: '#fff',
-    fontSize: 12,
-    fontFamily: 'Inter-Bold',
-  },
-  outOfStockOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  outOfStockText: {
-    color: '#fff',
-    fontSize: 14,
-    fontFamily: 'Inter-Bold',
-  },
-  wishlistButton: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    borderRadius: 16,
-    padding: 8,
-  },
-  productInfo: {
-    padding: 12,
-  },
-  productName: {
-    fontSize: 14,
-    fontFamily: 'Inter-SemiBold',
-    color: '#000',
-    marginBottom: 4,
-  },
-  priceContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 4,
-  },
-  productPrice: {
-    fontSize: 16,
-    fontFamily: 'Inter-Bold',
-    color: '#000',
-  },
-  originalPrice: {
-    fontSize: 14,
-    fontFamily: 'Inter-Regular',
-    color: '#999',
-    textDecorationLine: 'line-through',
-  },
-  discountPrice: {
-    fontSize: 16,
-    fontFamily: 'Inter-Bold',
-    color: '#FF3B30',
-  },
-  productCategory: {
-    fontSize: 12,
-    fontFamily: 'Inter-Regular',
-    color: '#666',
-  },
-  reviewsContainer: {
-    backgroundColor: '#fff',
-    paddingBottom: 84,
-  },
-  reviewItem: {
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f8f9fa',
-  },
-  reviewHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  reviewAvatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-  },
-  reviewInfo: {
-    marginLeft: 12,
-  },
-  reviewUser: {
-    fontSize: 14,
-    fontFamily: 'Inter-SemiBold',
-    color: '#000',
-    marginBottom: 2,
-  },
-  reviewRating: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  reviewDate: {
-    fontSize: 12,
-    fontFamily: 'Inter-Regular',
-    color: '#999',
-  },
-  reviewComment: {
-    fontSize: 14,
-    fontFamily: 'Inter-Regular',
-    color: '#000',
-    lineHeight: 20,
-    marginBottom: 8,
-  },
-  reviewImages: {
-    marginTop: 8,
-  },
-  reviewImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 8,
-    marginRight: 8,
-  },
-  bottomPadding: {
-    height: 34,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
-  },
-  moreMenu: {
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    paddingBottom: 34,
-  },
-  moreMenuHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e9ecef',
-  },
-  moreMenuTitle: {
-    fontSize: 18,
-    fontFamily: 'Inter-Bold',
-    color: '#000',
-  },
-  moreMenuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 20,
-    gap: 16,
-  },
-  moreMenuItemText: {
-    fontSize: 16,
-    fontFamily: 'Inter-Medium',
-    color: '#FF3B30',
-  },
-});

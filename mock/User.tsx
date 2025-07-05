@@ -7,7 +7,7 @@ export const mockUsers: User[] = [
     email: 'john.doe@example.com',
     fullName: 'John Doe',
     followers: ['2', '3', '4'],
-    following: ['2', '3', '4'],
+    following: ['1','2', '3', '4'],
     posts: 3,
     avatar: `https://picsum.photos/seed/1/600`,
     bio: 'I am a software engineer',
