@@ -9,6 +9,7 @@ import {
   Platform,
   Alert,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
@@ -52,6 +53,11 @@ const createStyles = (theme: any) => StyleSheet.create({
   },
   inputContainer: {
     position: 'relative',
+  },
+  logo: {
+    width: 100,
+    height: 100,
+    marginBottom: 16,
   },
   input: {
     backgroundColor: theme.card,
@@ -163,6 +169,10 @@ export default function AuthScreen() {
       >
         <View style={styles.content}>
           <View style={styles.header}>
+          <Image
+            source={theme.mode === 'dark' ? require('../assets/images/darkIcon.png') : require('../assets/images/lightIcon.png')}
+            style={{ width: 100, height: 100 }}
+          />
             <Text style={styles.title}>Diora</Text>
             <Text style={styles.subtitle}>
               {isLogin ? 'Welcome back' : 'Join the fashion community'}

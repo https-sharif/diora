@@ -4,12 +4,22 @@
     "slug": "diora",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/lightIcon.png",
+    "backgroundColor": "#000000",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true
+    },
+    "splash": {
+      "image": "./assets/images/lightIcon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#000000",
+      "dark": {
+        "image": "./assets/images/darkIcon.png",
+        "backgroundColor": "#000000"
+      }
     },
     "web": {
       "bundler": "metro",

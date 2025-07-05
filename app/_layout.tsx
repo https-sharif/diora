@@ -26,6 +26,7 @@ import { useAuth } from '@/contexts/AuthContext';
 
 SplashScreen.preventAutoHideAsync();
 
+
 export default function RootLayout() {
   useFrameworkReady();
   const insets = useSafeAreaInsets();
@@ -33,7 +34,15 @@ export default function RootLayout() {
   return (
     <AuthProvider>
       <ThemeProvider>
-        <AppReadyWrapper insets={insets} />
+        <MessageProvider>
+          <SafeAreaProvider>
+            <NotificationProvider>
+              <ShoppingProvider>
+                <AppReadyWrapper insets={insets} />
+              </ShoppingProvider>
+            </NotificationProvider>
+          </SafeAreaProvider>
+        </MessageProvider>
       </ThemeProvider>
     </AuthProvider>
   );
@@ -62,28 +71,21 @@ function AppReadyWrapper({ insets }: { insets: EdgeInsets }) {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <MessageProvider>
-        <SafeAreaProvider>
-            <NotificationProvider>
-              <ShoppingProvider>
-                <View style={{ flex: 1, backgroundColor: theme.background, paddingBottom: insets.bottom, paddingTop: insets.top }} >
-                  <Stack screenOptions={{ headerShown: false }} >
-                    <Stack.Screen name='empty' options={{ headerShown: false }} />
-                    <Stack.Screen name='auth' options={{ headerShown: false }} />
-                    <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                    <Stack.Screen name="notifications" options={{ headerShown: false }} />
-                    <Stack.Screen name="product/[productId]" options={{ headerShown: false }} />
-                    <Stack.Screen name="post/[postId]" options={{ headerShown: false }} />
-                    <Stack.Screen name="user/[userId]" options={{ headerShown: false }} />
-                    <Stack.Screen name="shop/[shopId]" options={{ headerShown: false }} />
-                    <Stack.Screen name="settings" options={{ headerShown: false }} />
-                  </Stack>
-                </View>
-                <StatusBar style={isDarkMode ? 'light' : 'dark'} animated translucent backgroundColor="transparent" />
-              </ShoppingProvider>
-            </NotificationProvider>
-        </SafeAreaProvider>
-      </MessageProvider>
+      <View style={{ flex: 1, backgroundColor: theme.background, paddingBottom: insets.bottom, paddingTop: insets.top }} >
+      <Stack screenOptions={{ headerShown: false }} >
+        <Stack.Screen name='empty' options={{ headerShown: false }} />
+        <Stack.Screen name='index' options={{ headerShown: false }} />
+        <Stack.Screen name='auth' options={{ headerShown: false }} />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="notifications" options={{ headerShown: false }} />
+        <Stack.Screen name="product/[productId]" options={{ headerShown: false }} />
+        <Stack.Screen name="post/[postId]" options={{ headerShown: false }} />
+        <Stack.Screen name="user/[userId]" options={{ headerShown: false }} />
+        <Stack.Screen name="shop/[shopId]" options={{ headerShown: false }} />
+        <Stack.Screen name="settings" options={{ headerShown: false }} />
+      </Stack>
+    </View>
+    <StatusBar style={isDarkMode ? 'light' : 'dark'} animated translucent backgroundColor="transparent" />
     </GestureHandlerRootView>
   );
 }
