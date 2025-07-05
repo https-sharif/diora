@@ -9,7 +9,7 @@ import {
   FlatList,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Settings, Grid2x2 as Grid, Heart, LogOut } from 'lucide-react-native';
+import { Settings, Grid2x2 as Grid, Star, LogOut } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -260,7 +260,7 @@ export default function ProfileScreen() {
             onPress={() => handleTabPress('liked')}
             activeOpacity={0.7}
           >
-            <Heart
+            <Star
               size={activeTab === 'liked' ? 22 : 20}
               color={activeTab === 'liked' ? theme.text : theme.textSecondary}
             />

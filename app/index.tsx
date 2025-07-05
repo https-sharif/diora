@@ -27,13 +27,7 @@ export default function Index() {
 
   useEffect(() => {
     if (loading) {
-      Animated.timing(fadeAnim, {
-        toValue: 0,
-        duration: 800,
-        useNativeDriver: true,
-      }).start(() => {
-        router.replace(isAuthenticated ? '/(tabs)' : '/auth');
-      });
+      router.replace(isAuthenticated ? '/(tabs)' : '/auth');
     }
   }, [loading, isAuthenticated]);
 

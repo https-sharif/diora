@@ -22,6 +22,7 @@ const lightTheme: Theme = {
   success: '#4CAF50',
   warning: '#FF9500',
   error: '#FF3B30',
+  mode: 'light',
 };
 
 
@@ -37,6 +38,7 @@ const darkTheme: Theme = {
   success: '#30d158',
   warning: '#ff9f0a',
   error: '#ff453a',
+  mode: 'dark',
 };
 
 

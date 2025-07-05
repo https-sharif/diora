@@ -6,6 +6,6 @@ export interface Post {
   imageUrl: string;
   caption?: string;
   stars: number;
-  comments: string[];
+  comments: number;
   createdAt: string;
 }

@@ -3,7 +3,7 @@ import { Product } from "@/types/Product";
 export const mockProducts: Product[] = [
     {
       id: '1',
-      storeId: '1',
+      storeId: '11',
       name: 'Vintage Denim Jacket',
       price: 89.99,
       imageUrl: [`https://picsum.photos/seed/${Math.random()}/600/300`, `https://picsum.photos/seed/${Math.random()}/600`, `https://picsum.photos/seed/${Math.random()}/600`, `https://picsum.photos/seed/${Math.random()}/600`],
@@ -19,7 +19,7 @@ export const mockProducts: Product[] = [
     },
     {
       id: '2',
-      storeId: '3',
+      storeId: '13',
       name: 'Flowy Maxi Dress',
       price: 129.99,
       imageUrl: [`https://picsum.photos/seed/${Math.random()}/600`, `https://picsum.photos/seed/${Math.random()}/600`, `https://picsum.photos/seed/${Math.random()}/600`, `https://picsum.photos/seed/${Math.random()}/600`],
@@ -34,7 +34,7 @@ export const mockProducts: Product[] = [
     },
     {
       id: '3',
-      storeId: '2',
+      storeId: '12',
       name: 'Classic Sneakers',
       price: 79.99,
       imageUrl: [`https://picsum.photos/seed/${Math.random()}/600`, `https://picsum.photos/seed/${Math.random()}/600`, `https://picsum.photos/seed/${Math.random()}/600`, `https://picsum.photos/seed/${Math.random()}/600`],
@@ -44,12 +44,12 @@ export const mockProducts: Product[] = [
         'Comfortable classic sneakers for everyday wear. Premium materials and cushioned sole.',
       sizes: ['6', '7', '8', '9', '10'],
       colors: ['White', 'Black', 'Gray'],
-      stock: 0,
+      stock: 5,
     rating: 4.3,
     },
     {
       id: '4',
-      storeId: '1',
+      storeId: '11',
       name: 'High-Waisted Jeans',
       price: 69.99,
       imageUrl: [`https://picsum.photos/seed/${Math.random()}/600`, `https://picsum.photos/seed/${Math.random()}/600`, `https://picsum.photos/seed/${Math.random()}/600`, `https://picsum.photos/seed/${Math.random()}/600`],
@@ -64,7 +64,7 @@ export const mockProducts: Product[] = [
     },
     {
       id: '5',
-      storeId: '2',
+      storeId: '12',
       name: 'Silk Scarf',
       price: 39.99,
       imageUrl: [`https://picsum.photos/seed/${Math.random()}/600`, `https://picsum.photos/seed/${Math.random()}/600`, `https://picsum.photos/seed/${Math.random()}/600`, `https://picsum.photos/seed/${Math.random()}/600`],
@@ -80,7 +80,7 @@ export const mockProducts: Product[] = [
     },
     {
       id: '6',
-      storeId: '3',
+      storeId: '13',
       name: 'Casual Blazer',
       price: 149.99,
       imageUrl: [`https://picsum.photos/seed/${Math.random()}/600`, `https://picsum.photos/seed/${Math.random()}/600`, `https://picsum.photos/seed/${Math.random()}/600`, `https://picsum.photos/seed/${Math.random()}/600`],

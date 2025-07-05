@@ -15,7 +15,6 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { 
   ArrowLeft, 
   Grid2x2 as Grid, 
-  Heart, 
   MessageCircle, 
   Share, 
   MoreHorizontal,
@@ -23,7 +22,7 @@ import {
   UserMinus,
   Flag,
   X,
-  Star
+  Star,
 } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNotifications } from '@/contexts/NotificationContext';
@@ -32,7 +31,294 @@ import { mockPosts } from '@/mock/Post';
 import { User } from '@/types/User';
 import { Post } from '@/types/Post';
 import { Theme } from '@/types/Theme';
+import { useTheme } from '@/contexts/ThemeContext';
+import UserSlashIcon from '@/icon/UserSlashIcon';
+import ImageSlashIcon from '@/icon/ImageSlashIcon';
 
+const createStyles = (theme: Theme) => {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.background,
+      paddingTop: -100,
+      paddingBottom: -100,
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      backgroundColor: theme.background,
+      borderBottomWidth: 1, 
+      borderBottomColor: theme.border,
+    },
+    headerButton: {
+      padding: 8,
+      width: 40,
+    },
+    headerTitle: {
+      fontSize: 18,
+      fontFamily: 'Inter-SemiBold',
+      color: theme.text,
+    },
+    headerActions: {
+      flexDirection: 'row',
+    },
+    content: {
+      flex: 1,
+    },
+    loadingContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    loadingText: {
+      fontSize: 16,
+      fontFamily: 'Inter-Regular',
+      color: theme.textSecondary,
+    },
+    errorContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: 20,
+    },
+    errorText: {
+      fontSize: 18,
+      fontFamily: 'Inter-SemiBold',
+      color: theme.textSecondary,
+      marginBottom: 20,
+    },
+    backButton: {
+      backgroundColor: theme.accent,
+      borderRadius: 12,
+      paddingHorizontal: 24,
+      paddingVertical: 12,
+    },
+    backButtonText: {
+      color: '#000',
+      fontSize: 16,
+      fontFamily: 'Inter-SemiBold',
+    },
+    profileSection: {
+      backgroundColor: theme.background,
+      padding: 20,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.border,
+    },
+    profileHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 16,
+    },
+    profileImage: {
+      width: 80,
+      height: 80,
+      borderRadius: 40,
+      marginRight: 20,
+    },
+    profileStats: {
+      flex: 1,
+      flexDirection: 'row',
+      justifyContent: 'space-around',
+    },
+    statItem: {
+      alignItems: 'center',
+    },
+    statNumber: {
+      fontSize: 18,
+      fontFamily: 'Inter-Bold',
+      color: theme.text,
+    },
+    statLabel: {
+      fontSize: 14,
+      fontFamily: 'Inter-Regular',
+      color: theme.textSecondary,
+      marginTop: 2,
+    },
+    profileInfo: {
+      marginBottom: 16,
+    },
+    nameContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 8,
+    },
+    fullName: {
+      fontSize: 20,
+      fontFamily: 'Inter-Bold',
+      color: theme.text,
+      marginRight: 8,
+    },
+    verifiedBadge: {
+      backgroundColor: '#007AFF',
+      borderRadius: 10,
+      width: 20,
+      height: 20,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    verifiedText: {
+      color: '#fff',
+      fontSize: 12,
+      fontFamily: 'Inter-Bold',
+    },
+    bio: {
+      fontSize: 16,
+      fontFamily: 'Inter-Regular',
+      color: theme.text,
+      lineHeight: 22,
+      marginBottom: 8,
+    },
+    actionButtons: {
+      flexDirection: 'row',
+      gap: 12,
+    },
+    followButton: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: theme.text,
+      borderRadius: 8,
+      paddingVertical: 12,
+      gap: 8,
+    },
+    followingButton: {
+      backgroundColor: theme.card,
+      borderWidth: 1,
+      borderColor: theme.border,
+    },
+    followButtonText: {
+      color: theme.background,
+      fontSize: 16,
+      fontFamily: 'Inter-SemiBold',
+    },
+    followingButtonText: {
+      color: theme.text,
+    },
+    messageButton: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: theme.accent,
+      borderRadius: 8,
+      paddingVertical: 12,
+      borderWidth: 1,
+      borderColor: theme.border,
+      gap: 8,
+    },
+    messageButtonText: {
+      color: '#000',
+      fontSize: 16,
+      fontFamily: 'Inter-SemiBold',
+    },
+    tabsSection: {
+      flexDirection: 'row',
+      backgroundColor: theme.background,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.border,
+    },
+    tab: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: 16,
+      gap: 8,
+    },
+    activeTab: {
+      borderBottomWidth: 2,
+      borderBottomColor: theme.text,
+    },
+    tabText: {
+      fontSize: 16,
+      fontFamily: 'Inter-Medium',
+      color: theme.textSecondary,
+    },
+    activeTabText: {
+      fontSize: 16,
+      fontFamily: 'Inter-SemiBold',
+      color: theme.text,
+    },
+    postsGrid: {
+      backgroundColor: theme.background,
+    },
+    postsRow: {
+      paddingHorizontal: 1,
+    },
+    postItem: {
+      width: '33%',
+      aspectRatio: 1,
+      margin: 1,
+      position: 'relative',
+    },
+    postImage: {
+      width: '100%',
+      height: '100%',
+    },
+    emptyState: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingVertical: 60,
+      backgroundColor: theme.background,
+    },
+    emptyIconContainer: {
+      width: 80,
+      height: 80,
+      borderRadius: 40,
+      backgroundColor: theme.card,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginBottom: 24,
+    },
+    emptyTitle: {
+      fontSize: 24,
+      fontFamily: 'Inter-Bold',
+      color: theme.text,
+      marginBottom: 24,
+      textAlign: 'center',
+    },
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      justifyContent: 'flex-end',
+    },
+    moreMenu: {
+      backgroundColor: theme.card,
+      borderTopLeftRadius: 16,
+      borderTopRightRadius: 16,
+      paddingBottom: 34,
+    },
+    moreMenuHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: 20,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.border,
+    },
+    moreMenuTitle: {
+      fontSize: 18,
+      fontFamily: 'Inter-Bold',
+      color: theme.text,
+    },
+    moreMenuItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: 20,
+      gap: 16,
+    },
+    moreMenuItemText: {
+      fontSize: 16,
+      fontFamily: 'Inter-Medium',
+      color: theme.text,
+    },
+  });
+};
 
 
 export default function UserProfileScreen() {
@@ -46,19 +332,24 @@ export default function UserProfileScreen() {
   const [isFollowing, setIsFollowing] = useState(false);
   const [selectedTab, setSelectedTab] = useState<'posts' | 'liked'>('posts');
   const [posts, setPosts] = useState<Post[]>([]);
+  const [likedPosts, setLikedPosts] = useState<Post[]>([]);
+
+  const { theme } = useTheme();
+
+  const styles = createStyles(theme);
 
   useEffect(() => {
     const user = mockUsers.find(user => user.id === userId);
     if (user) {
       setUserProfile(user);
-      setIsFollowing(user.followers.includes(currentUser?.id || ''));
+      setIsFollowing(currentUser?.following.includes(user.id) || false);
     }
 
     const posts = mockPosts.filter(post => post.userId === user?.id);
 
     setPosts(posts);
-
     setSelectedTab('posts');
+    setLikedPosts(mockPosts.filter(post => user?.likedPosts.includes(post.id)));
 
     setLoading(false);
   }, [userId]);
@@ -100,20 +391,9 @@ export default function UserProfileScreen() {
     <TouchableOpacity 
       style={styles.postItem}
       onPress={() => handlePostPress(item.id)}
+      activeOpacity={0.8}
     >
       <Image source={{ uri: item.imageUrl }} style={styles.postImage} />
-      <View style={styles.postOverlay}>
-        <View style={styles.postStats}>
-          <View style={styles.postStat}>
-            <Star size={12} color="#fff" fill="#fff" />
-            <Text style={styles.postStatText}>{item.stars}</Text>
-          </View>
-          <View style={styles.postStat}>
-            <MessageCircle size={12} color="#fff" />
-            <Text style={styles.postStatText}>{item.comments}</Text>
-          </View>
-        </View>
-      </View>
     </TouchableOpacity>
   );
 
@@ -132,16 +412,23 @@ export default function UserProfileScreen() {
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity style={styles.headerButton} onPress={() => router.back()}>
-            <ArrowLeft size={24} color="#000" />
+            <ArrowLeft size={24} color={theme.text} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Profile</Text>
-          <View style={styles.headerButton} />
+          <View style={styles.headerActions}>
+            <TouchableOpacity activeOpacity={1}>
+              <MoreHorizontal size={24} color="transparent" />
+            </TouchableOpacity>
+          </View>
         </View>
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>User not found</Text>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-            <Text style={styles.backButtonText}>Go Back</Text>
-          </TouchableOpacity>
+        <View style={styles.emptyState}>
+        <View style={styles.emptyIconContainer}>
+          <UserSlashIcon />
+        </View>
+        <Text style={styles.emptyTitle}>User not found</Text>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <Text style={styles.backButtonText}>Go Back</Text>
+        </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
@@ -151,18 +438,15 @@ export default function UserProfileScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.headerButton} onPress={() => router.back()}>
-          <ArrowLeft size={24} color="#000" />
+          <ArrowLeft size={24} color={theme.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{userProfile.username}</Text>
         <View style={styles.headerActions}>
-          <TouchableOpacity style={styles.headerButton} onPress={handleShare}>
-            <Share size={24} color="#000" />
-          </TouchableOpacity>
           <TouchableOpacity 
             style={styles.headerButton} 
             onPress={() => setShowMoreMenu(true)}
           >
-            <MoreHorizontal size={24} color="#000" />
+            <MoreHorizontal size={24} color={theme.text} />
           </TouchableOpacity>
         </View>
       </View>
@@ -197,8 +481,7 @@ export default function UserProfileScreen() {
                 </View>
               )}
             </View>
-            <Text style={styles.bio}>{userProfile.bio}</Text>
-            <Text style={styles.joinDate}>Joined {userProfile.createdAt}</Text>
+            {userProfile.bio ? <Text style={styles.bio}>{userProfile.bio}</Text> : null}
           </View>
 
           {/* Action Buttons */}
@@ -208,9 +491,9 @@ export default function UserProfileScreen() {
               onPress={handleFollow}
             >
               {isFollowing ? (
-                <UserMinus size={16} color="#666" />
+                <UserMinus size={18} color={theme.text} />
               ) : (
-                <UserPlus size={16} color="#fff" />
+                <UserPlus size={18} color={theme.background} />
               )}
               <Text style={[
                 styles.followButtonText, 
@@ -221,7 +504,7 @@ export default function UserProfileScreen() {
             </TouchableOpacity>
             
             <TouchableOpacity style={styles.messageButton} onPress={handleMessage}>
-              <MessageCircle size={16} color="#000" />
+              <MessageCircle size={18} color="#000" />
               <Text style={styles.messageButtonText}>Message</Text>
             </TouchableOpacity>
           </View>
@@ -245,7 +528,7 @@ export default function UserProfileScreen() {
             style={[styles.tab, selectedTab === 'liked' && styles.activeTab]}
             onPress={() => setSelectedTab('liked')}
           >
-            <Heart size={20} color={selectedTab === 'liked' ? '#000' : '#666'} />
+            <Star size={20} color={selectedTab === 'liked' ? '#000' : theme.textSecondary} />
             <Text style={[
               styles.tabText, 
               selectedTab === 'liked' && styles.activeTabText
@@ -257,6 +540,7 @@ export default function UserProfileScreen() {
 
         {/* Posts Grid */}
         {selectedTab === 'posts' ? (
+          posts.length > 0 ? (
           <FlatList
             data={posts}
             renderItem={renderPost}
@@ -266,24 +550,44 @@ export default function UserProfileScreen() {
             columnWrapperStyle={styles.postsRow}
             contentContainerStyle={styles.postsGrid}
           />
+          ) : (
+            <View style={styles.emptyState}>
+              <View style={styles.emptyIconContainer}>
+                <ImageSlashIcon size={40} />
+              </View>
+              <Text style={styles.emptyTitle}>No posts yet</Text>
+            </View>
+          )
         ) : (
-          <View style={styles.emptyState}>
-            <Heart size={48} color="#E0E0E0" />
-            <Text style={styles.emptyStateText}>No liked posts yet</Text>
-          </View>
+          likedPosts.length > 0 ? (
+            <FlatList
+            data={likedPosts}
+            renderItem={renderPost}
+            keyExtractor={(item) => item.id}
+            numColumns={3}
+            scrollEnabled={false}
+            columnWrapperStyle={styles.postsRow}
+            contentContainerStyle={styles.postsGrid}
+          />
+          ) : (
+            <View style={styles.emptyState}>
+              <View style={styles.emptyIconContainer}>
+                <ImageSlashIcon size={40} />
+              </View>
+              <Text style={styles.emptyTitle}>No liked posts yet</Text>
+            </View>
+          )
         )}
-
-        <View style={styles.bottomPadding} />
       </ScrollView>
 
       {/* More Menu Modal */}
       <Modal
         visible={showMoreMenu}
         transparent
-        animationType="fade"
+        animationType="slide"
         onRequestClose={() => setShowMoreMenu(false)}
       >
-        <View style={styles.modalOverlay}>
+        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setShowMoreMenu(false)}>
           <View style={styles.moreMenu}>
             <View style={styles.moreMenuHeader}>
               <Text style={styles.moreMenuTitle}>More Options</Text>
@@ -291,372 +595,29 @@ export default function UserProfileScreen() {
                 <X size={24} color="#000" />
               </TouchableOpacity>
             </View>
+
+            <TouchableOpacity style={styles.moreMenuItem} onPress={handleShare}>
+              <Share size={20} color={theme.text} />
+              <Text style={styles.moreMenuItemText}>Share Profile</Text>
+            </TouchableOpacity>
             
             <TouchableOpacity style={styles.moreMenuItem} onPress={handleReport}>
-              <Flag size={20} color="#FF3B30" />
-              <Text style={styles.moreMenuItemText}>Report User</Text>
+              <Flag size={20} color={theme.error} />
+              <Text style={[styles.moreMenuItemText, { color: theme.error }]}>Report User</Text>
             </TouchableOpacity>
             
             <TouchableOpacity 
               style={styles.moreMenuItem}
               onPress={() => {
                 Alert.alert('Block User', `Block ${userProfile.fullName}?`);
-                setShowMoreMenu(false);
               }}
             >
-              <X size={20} color="#FF3B30" />
-              <Text style={styles.moreMenuItemText}>Block User</Text>
+              <X size={20} color={theme.error} />
+              <Text style={[styles.moreMenuItemText, { color: theme.error }]}>Block User</Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </TouchableOpacity>
       </Modal>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8f9fa',
-    paddingTop: -100,
-    paddingBottom: -100,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e9ecef',
-  },
-  headerButton: {
-    padding: 8,
-    width: 40,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontFamily: 'Inter-SemiBold',
-    color: '#000',
-  },
-  headerActions: {
-    flexDirection: 'row',
-  },
-  content: {
-    flex: 1,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    fontSize: 16,
-    fontFamily: 'Inter-Regular',
-    color: '#666',
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  errorText: {
-    fontSize: 18,
-    fontFamily: 'Inter-SemiBold',
-    color: '#666',
-    marginBottom: 20,
-  },
-  backButton: {
-    backgroundColor: '#000',
-    borderRadius: 12,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-  },
-  backButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontFamily: 'Inter-SemiBold',
-  },
-  profileSection: {
-    backgroundColor: '#fff',
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e9ecef',
-  },
-  profileHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  profileImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    marginRight: 20,
-  },
-  profileStats: {
-    flex: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-  },
-  statItem: {
-    alignItems: 'center',
-  },
-  statNumber: {
-    fontSize: 18,
-    fontFamily: 'Inter-Bold',
-    color: '#000',
-  },
-  statLabel: {
-    fontSize: 14,
-    fontFamily: 'Inter-Regular',
-    color: '#666',
-    marginTop: 2,
-  },
-  profileInfo: {
-    marginBottom: 16,
-  },
-  nameContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  fullName: {
-    fontSize: 20,
-    fontFamily: 'Inter-Bold',
-    color: '#000',
-    marginRight: 8,
-  },
-  verifiedBadge: {
-    backgroundColor: '#007AFF',
-    borderRadius: 10,
-    width: 20,
-    height: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  verifiedText: {
-    color: '#fff',
-    fontSize: 12,
-    fontFamily: 'Inter-Bold',
-  },
-  bio: {
-    fontSize: 16,
-    fontFamily: 'Inter-Regular',
-    color: '#000',
-    lineHeight: 22,
-    marginBottom: 8,
-  },
-  location: {
-    fontSize: 14,
-    fontFamily: 'Inter-Regular',
-    color: '#666',
-    marginBottom: 4,
-  },
-  website: {
-    fontSize: 14,
-    fontFamily: 'Inter-Regular',
-    color: '#007AFF',
-    marginBottom: 4,
-  },
-  joinDate: {
-    fontSize: 14,
-    fontFamily: 'Inter-Regular',
-    color: '#999',
-  },
-  stylePreferences: {
-    marginBottom: 20,
-  },
-  styleTitle: {
-    fontSize: 16,
-    fontFamily: 'Inter-SemiBold',
-    color: '#000',
-    marginBottom: 8,
-  },
-  styleTags: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  styleTag: {
-    backgroundColor: '#f8f9fa',
-    borderRadius: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderWidth: 1,
-    borderColor: '#e9ecef',
-  },
-  styleTagText: {
-    fontSize: 14,
-    fontFamily: 'Inter-Medium',
-    color: '#666',
-  },
-  actionButtons: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  followButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#000',
-    borderRadius: 8,
-    paddingVertical: 12,
-    gap: 8,
-  },
-  followingButton: {
-    backgroundColor: '#f8f9fa',
-    borderWidth: 1,
-    borderColor: '#e9ecef',
-  },
-  followButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontFamily: 'Inter-SemiBold',
-  },
-  followingButtonText: {
-    color: '#666',
-  },
-  messageButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#f8f9fa',
-    borderRadius: 8,
-    paddingVertical: 12,
-    borderWidth: 1,
-    borderColor: '#e9ecef',
-    gap: 8,
-  },
-  messageButtonText: {
-    color: '#000',
-    fontSize: 16,
-    fontFamily: 'Inter-SemiBold',
-  },
-  tabsSection: {
-    flexDirection: 'row',
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e9ecef',
-  },
-  tab: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    gap: 8,
-  },
-  activeTab: {
-    borderBottomWidth: 2,
-    borderBottomColor: '#000',
-  },
-  tabText: {
-    fontSize: 16,
-    fontFamily: 'Inter-Medium',
-    color: '#666',
-  },
-  activeTabText: {
-    fontSize: 16,
-    fontFamily: 'Inter-SemiBold',
-    color: '#000',
-  },
-  postsGrid: {
-    backgroundColor: '#fff',
-    paddingBottom: 84,
-  },
-  postsRow: {
-    justifyContent: 'space-between',
-    paddingHorizontal: 2,
-  },
-  postItem: {
-    width: '32%',
-    aspectRatio: 1,
-    margin: 1,
-    position: 'relative',
-  },
-  postImage: {
-    width: '100%',
-    height: '100%',
-  },
-  postOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    opacity: 0,
-  },
-  postStats: {
-    flexDirection: 'row',
-    gap: 16,
-  },
-  postStat: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  postStatText: {
-    color: '#fff',
-    fontSize: 12,
-    fontFamily: 'Inter-SemiBold',
-  },
-  emptyState: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 60,
-    backgroundColor: '#fff',
-  },
-  emptyStateText: {
-    fontSize: 16,
-    fontFamily: 'Inter-Regular',
-    color: '#999',
-    marginTop: 16,
-  },
-  bottomPadding: {
-    height: 34,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
-  },
-  moreMenu: {
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    paddingBottom: 34,
-  },
-  moreMenuHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e9ecef',
-  },
-  moreMenuTitle: {
-    fontSize: 18,
-    fontFamily: 'Inter-Bold',
-    color: '#000',
-  },
-  moreMenuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 20,
-    gap: 16,
-  },
-  moreMenuItemText: {
-    fontSize: 16,
-    fontFamily: 'Inter-Medium',
-    color: '#FF3B30',
-  },
-});

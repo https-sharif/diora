@@ -82,6 +82,11 @@ export function ShoppingProvider({ children }: { children: React.ReactNode }) {
       console.error('User not authenticated');
       return;
     }
+    const existingItem = wishlist.find(item => item.productId === product.id);
+    if (existingItem) {
+      removeFromWishlist(product.id);
+      return;
+    }
     setWishlist(prev => [...prev, { 
       id: (wishlist.length + 1).toString(), 
       userId: user.id, 

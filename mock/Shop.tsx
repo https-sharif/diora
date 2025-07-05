@@ -2,7 +2,7 @@ import { ShopProfile } from "@/types/ShopProfile";
 
 export const mockShops: ShopProfile[] = [
   {
-    id: '1',
+    id: '11',
     name: 'Vintage Denim',
     username: 'vintage_denim',
     userId: '1',
@@ -22,7 +22,7 @@ export const mockShops: ShopProfile[] = [
     updatedAt: '2021-01-01',
   },
   {
-    id: '2',
+    id: '12',
     name: 'Streetwear',
     username: 'streetwear',
     userId: '2',
@@ -42,7 +42,7 @@ export const mockShops: ShopProfile[] = [
     updatedAt: '2021-01-01',
   },    
   {
-    id: '3',
+    id: '13',
     name: 'Casual Wear',
     username: 'casual_wear',
     userId: '3',

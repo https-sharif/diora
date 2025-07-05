@@ -10,4 +10,5 @@ export interface Theme {
   success: string;
   warning: string;
   error: string;
+  mode: string;
 }

@@ -96,11 +96,6 @@ export default function FeedScreen() {
     setRefreshing(false);
   };
 
-  const handleStar = (postId: string) => {
-    
-    console.log('Starred post:', postId);
-  };
-
   const handleNotificationPress = () => {
     router.push('/notifications');
   };
@@ -148,7 +143,7 @@ export default function FeedScreen() {
         data={posts}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <PostCard post={item} onStar={handleStar} />
+          <PostCard post={item} />
         )}
         contentContainerStyle={styles.feed}
         refreshControl={

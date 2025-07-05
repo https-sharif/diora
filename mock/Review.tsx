@@ -63,6 +63,7 @@ export const mockReviews: Review[] = [
     rating: 1,
     comment: 'This shop is not good!',
     createdAt: '2021-01-07',
+    images: [`https://picsum.photos/seed/100/600`, `https://picsum.photos/seed/101/600`],
   },
   {
     id: '8',

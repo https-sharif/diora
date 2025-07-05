@@ -13,6 +13,7 @@ interface AuthContextType {
   ) => Promise<boolean>;
   logout: () => void;
   followUser: (targetUserId: string) => void;
+  likePost: (postId: string) => void;
   isAuthenticated: boolean;
   loading: boolean;
 }
@@ -38,28 +39,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   //   checkAuthStatus();
   // }, []);
 
-  // useEffect(() => {
-  //   if (!loading && user) {
-  //     router.replace('/(tabs)');
-  //   } else if (!loading && !user) {
-  //     router.replace('/auth');
-  //   }
-  // }, [loading, user]);
+  useEffect(() => {
+    if (!loading) {
+      setTimeout(() => {
+        router.replace(user ? '/(tabs)' : '/auth');
+      }, 5000);
+    }
+  }, [loading, user]);
 
   useEffect(() => {
     if (__DEV__) {
       const mockUser: User = {
         id: '1',
-        email: 'dev@example.com',
-        username: 'devUser',
-        fullName: 'Dev User',
-        avatar:
-          'https://images.pexels.com/photos/1036623/pexels-photo-1036623.jpeg?auto=compress&cs=tinysrgb&w=150',
-        bio: 'Dev mode auto-login',
-        followers: ['dev1', 'dev2'],
-        following: ['dev3', 'dev4'],
-        likedPosts: ['1', '2', '3'],
+        username: 'john_doe',
+        email: 'john.doe@example.com',
+        fullName: 'John Doe',
+        followers: ['2', '3', '4'],
+        following: ['1','2', '3',],
         posts: 3,
+        avatar: `https://picsum.photos/seed/1/600`,
+        bio: 'I am a software engineer',
+        isVerified: true,
+        createdAt: '2021-01-01',
+        likedPosts: ['1', '2', '3'],
       };
       setUser(mockUser);
       setLoading(false);
@@ -152,6 +154,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       let updatedFollowing = [...prev.following];
       let updatedFollowers = [...prev.followers];
 
+
       if (isFollowing) {
         // Unfollow: remove targetUserId from following
         updatedFollowing = updatedFollowing.filter(id => id !== targetUserId);
@@ -171,6 +174,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
+  const likePost = (postId: string) => {
+    if (!user) return;
+  
+    setUser(prev => {
+      if (!prev) return prev;
+
+      const isLiked = prev.likedPosts.includes(postId);
+
+      return {
+        ...prev,
+        likedPosts: isLiked
+          ? prev.likedPosts.filter(id => id !== postId)
+          : [...prev.likedPosts, postId],
+      };
+    });
+  };  
 
   return (
     <AuthContext.Provider
@@ -180,6 +199,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         signup,
         logout,
         followUser,
+        likePost,
         isAuthenticated: !!user,
         loading,
       }}

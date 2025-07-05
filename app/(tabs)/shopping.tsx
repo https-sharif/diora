@@ -244,6 +244,12 @@ const createStyles = (theme: Theme) => {
       paddingVertical: 8,
       alignItems: 'center',
     },
+    addToCartButtonDisabled: {
+      opacity: 0.5,
+    },
+    addToCartButtonDisabledText: {
+      color: theme.text,
+    },
     addToCartText: {
       color: '#000',
       fontSize: 14,
@@ -462,10 +468,11 @@ export default function ShoppingScreen() {
       </View>
       <View style={styles.addToCartContainer}>
         <TouchableOpacity
-          style={styles.addToCartButton}
+          style={[styles.addToCartButton, !item.stock && styles.addToCartButtonDisabled]}
           onPress={() => handleAddToCart(item)}
+          disabled={!item.stock}
         >
-          <Text style={styles.addToCartText}>Add to Cart</Text>
+          <Text style={[styles.addToCartText, !item.stock && styles.addToCartButtonDisabledText]}>{!item.stock ? 'Out of Stock' : 'Add to Cart'}</Text>
         </TouchableOpacity>
       </View>
     </View>
