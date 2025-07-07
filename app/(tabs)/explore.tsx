@@ -4,7 +4,7 @@ import { BlurView } from 'expo-blur';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Search, Filter, X, Check, Star, MessageCircle, Store, Bookmark, SearchX } from 'lucide-react-native';
 import { router } from 'expo-router';
-import { useShopping } from '@/contexts/ShoppingContext';
+import { useShopping } from '@/hooks/useShopping';
 import { useTheme } from '@/contexts/ThemeContext';
 import Color from 'color';
 import { User } from '@/types/User';
@@ -16,7 +16,7 @@ import { mockShops } from '@/mock/Shop';
 import { mockProducts } from '@/mock/Product';
 import { mockUsers } from '@/mock/User';
 import { mockPosts } from '@/mock/Post';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 
 const { width, height } = Dimensions.get('window');
 
@@ -802,7 +802,7 @@ export default function ExploreScreen() {
     <TouchableOpacity 
       style={styles.userCard}
       onPress={() => {
-        if ('isShop' in item && item.isShop) {
+        if (item.type === 'shop') {
           router.push(`/shop/${item.id}`);
         } else {
           router.push(`/user/${item.id}`);

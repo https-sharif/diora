@@ -30,11 +30,12 @@ import {
   X,
   TriangleAlert as AlertTriangle,
 } from 'lucide-react-native';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/contexts/ThemeContext';
-import { useNotifications } from '@/contexts/NotificationContext';
+import { useNotification } from '@/hooks/useNotification';
 import { useToast } from '@/hooks/useToast';
 import { Toast } from '@/components/Toast';
+import { NotificationSettings } from '@/stores/useNotificationStore';
 
 interface StylePreference {
   id: string;
@@ -403,7 +404,7 @@ const createTheme = (theme: any) => StyleSheet.create({
 export default function SettingsScreen() {
   const { user, logout } = useAuth();
   const { theme, toggleTheme, isDarkMode } = useTheme();
-  const { settings, setSettings } = useNotifications();
+  const { settings, setSettings } = useNotification();
   const { showToast, visible, hideToast, messages } = useToast();
 
   const styles = createTheme(theme);
@@ -877,7 +878,7 @@ export default function SettingsScreen() {
               <Switch
                 value={settings.likes}
                 onValueChange={(value) =>
-                  setSettings((prev) => ({ ...prev, likes: value }))
+                  setSettings({ likes: value })
                 }
                 trackColor={{ false: theme.border, true: '#4CAF50' }}
                 thumbColor={settings.likes ? '#fff' : '#f4f3f4'}
@@ -891,7 +892,7 @@ export default function SettingsScreen() {
               <Switch
                 value={settings.comments}
                 onValueChange={(value) =>
-                  setSettings((prev) => ({ ...prev, comments: value }))
+                  setSettings({ comments: value })
                 }
                 trackColor={{ false: theme.border, true: '#4CAF50' }}
                 thumbColor={settings.comments ? '#fff' : '#f4f3f4'}
@@ -905,7 +906,7 @@ export default function SettingsScreen() {
               <Switch
                 value={settings.sales}
                 onValueChange={(value) =>
-                  setSettings((prev) => ({ ...prev, sales: value }))
+                  setSettings({ sales: value })
                 }
                 trackColor={{ false: theme.border, true: '#4CAF50' }}
                 thumbColor={settings.sales ? '#fff' : '#f4f3f4'}
@@ -919,7 +920,7 @@ export default function SettingsScreen() {
               <Switch
                 value={settings.messages}
                 onValueChange={(value) =>
-                  setSettings((prev) => ({ ...prev, messages: value }))
+                  setSettings({ messages: value })
                 }
                 trackColor={{ false: theme.border, true: '#4CAF50' }}
                 thumbColor={settings.messages ? '#fff' : '#f4f3f4'}
@@ -941,10 +942,7 @@ export default function SettingsScreen() {
                       { borderColor: theme.border },
                     ]}
                     onPress={() =>
-                      setSettings((prev) => ({
-                        ...prev,
-                        emailFrequency: frequency as any,
-                      }))
+                      setSettings({ emailFrequency: frequency as any })
                     }
                   >
                     <Text

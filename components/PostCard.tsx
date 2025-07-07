@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, Image, TouchableOpacity, Dimensions, Modal, ScrollView, TextInput, StyleSheet, TouchableWithoutFeedback, KeyboardAvoidingView, Platform , Keyboard } from 'react-native';
+import React, { useRef, useEffect, useState } from 'react';
+import { View, Text, Image, TouchableOpacity, Dimensions, Modal, ScrollView, TextInput, StyleSheet, TouchableWithoutFeedback, KeyboardAvoidingView, Platform , Animated } from 'react-native';
 import { Star, MessageCircle, X, Send } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { mockComments } from '@/mock/Comment';
@@ -8,7 +8,7 @@ import { Comment } from '@/types/Comment';
 import { Theme } from '@/types/Theme';
 import { router } from 'expo-router';
 import { mockUsers } from '@/mock/User';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 
 const { width } = Dimensions.get('window');
 
@@ -227,8 +227,8 @@ export default function PostCard({ post }: { post: Post }) {
   const { theme } = useTheme();
   const { user, likePost } = useAuth();
   const styles = createStyles(theme);
-
-  const [imageHeight, setImageHeight] = useState(0);
+  const screenWidth = Dimensions.get('window').width - 32;
+  const animatedHeight = useRef(new Animated.Value(screenWidth)).current;
 
   useEffect(() => {
     const postUser = mockUsers.find((user) => user.id === post.userId);
@@ -236,14 +236,25 @@ export default function PostCard({ post }: { post: Post }) {
       setUserAvatar(postUser.avatar!);
       setIsStarred(user?.likedPosts.includes(post.id) || false);
     }
-
-    Image.getSize(post.imageUrl, (width, height) => {
-      const screenWidth = Dimensions.get('window').width - 32;
-      const scaleFactor = width / screenWidth;
-      const scaledHeight = height / scaleFactor;
-      setImageHeight(scaledHeight);
-    });
+  
+    Image.getSize(
+      post.imageUrl,
+      (width, height) => {
+        const scaleFactor = width / screenWidth;
+        const scaledHeight = height / scaleFactor;
+  
+        Animated.timing(animatedHeight, {
+          toValue: scaledHeight,
+          duration: 250,
+          useNativeDriver: false,
+        }).start();
+      },
+      (error) => {
+        console.warn('Failed to get image size:', error);
+      }
+    );
   }, [post.imageUrl, post.userId, user?.likedPosts]);
+  
 
   const handleStar = () => {
     const newStarred = !isStarred;
@@ -344,18 +355,17 @@ export default function PostCard({ post }: { post: Post }) {
           </View>
         </View>
 
-        <Image
-          source={{ uri: post.imageUrl }}
-          style={{
-            width: '100%',
-            height: imageHeight,
-            borderRadius: 12,
-            resizeMode: 'contain',
-          }}
-        />
+        <TouchableOpacity onPress={() => router.push(`/post/${post.id}`)} activeOpacity={1}>
+          <Animated.Image
+            source={{ uri: post.imageUrl }}
+            style={{ width: screenWidth, height: animatedHeight, borderRadius: 12 }}
+            resizeMode="contain"
+          />
+        </TouchableOpacity>
+
 
         <View style={styles.actions}>
-          <TouchableOpacity style={styles.actionButton} onPress={handleStar}>
+          <TouchableOpacity style={styles.actionButton} onPress={handleStar} activeOpacity={1}>
             <Star
               size={24}
               color={isStarred ? '#FFD700' : theme.text}
@@ -370,6 +380,7 @@ export default function PostCard({ post }: { post: Post }) {
           <TouchableOpacity
             style={styles.actionButton}
             onPress={() => setShowComments(true)}
+            activeOpacity={1}
           >
             <MessageCircle size={24} color={theme.text} strokeWidth={2} />
             <Text style={styles.actionText}>{formatNumber(post.comments)}</Text>

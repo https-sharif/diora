@@ -12,7 +12,7 @@ import {
   Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import { Eye, EyeOff } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import useBlockNavigation from '@/hooks/useBlockNavigation';

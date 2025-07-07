@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -10,10 +10,11 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { ArrowLeft, Heart, MessageCircle, UserPlus, AtSign, Package, Tag, MoveVertical as MoreVertical, Trash2, Check, CheckCheck, Star, BellOff, Menu } from 'lucide-react-native';
-import { useNotifications } from '@/contexts/NotificationContext';
+import { ArrowLeft, Heart, MessageCircle, UserPlus, AtSign, Package, Tag, Trash2, Check, CheckCheck, Star, BellOff } from 'lucide-react-native';
+import { useNotification } from '@/hooks/useNotification';
 import { Notification } from '@/types/Notification';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useAuth } from '@/hooks/useAuth';
 
 const createStyle = (theme: any) => StyleSheet.create({
   container: {
@@ -186,13 +187,28 @@ const getNotificationIcon = (type: Notification['type'], theme : any) => {
 };
 
 export default function NotificationsScreen() {
-  const { 
-    notifications, 
-    unreadCount, 
-    markAsRead, 
-    markAllAsRead, 
-    deleteNotification, 
-  } = useNotifications();
+  const { notifications, markAsRead, markAllAsRead, deleteNotification, settings } = useNotification();
+  
+  const { user } = useAuth();
+  const [myNotifications, setMyNotifications] = useState<Notification[]>([]);
+
+  useEffect(() => {
+    const filteredNotifications = notifications.filter((n) => {
+      if (n.userId !== user?.id) return false;
+  
+      const typeMatch = (
+        (settings.likes && n.type === 'like') ||
+        (settings.comments && n.type === 'comment') ||
+        (settings.sales && n.type === 'order') ||
+        (settings.messages && n.type === 'mention')
+      );
+  
+      return typeMatch;
+    })
+
+    setMyNotifications(filteredNotifications);
+  }, [notifications, user]);
+
   const [selectedNotifications, setSelectedNotifications] = useState<string[]>([]);
   const [selectionMode, setSelectionMode] = useState(false);
   const { theme } = useTheme();
@@ -255,6 +271,27 @@ export default function NotificationsScreen() {
     exitSelectionMode();
   };
 
+  const formatTime = (timestamp: string) => {
+    const seconds = Math.floor((new Date().getTime() - new Date(timestamp).getTime()) / 1000);
+    const intervals = {
+      year: 31536000,
+      month: 2592000,
+      week: 604800,
+      day: 86400,
+      hour: 3600,
+      minute: 60,
+    };
+
+    for (const [unit, value] of Object.entries(intervals)) {
+      const count = Math.floor(seconds / value);
+      if (count >= 1) {
+        return `${count} ${unit}${count > 1 ? 's' : ''} ago`;
+      }
+    }
+
+    return `just now`;
+  };
+
   const renderNotification = ({ item }: { item: Notification }) => (
     <TouchableOpacity
       style={[
@@ -288,7 +325,7 @@ export default function NotificationsScreen() {
         <View style={styles.notificationBody}>
           <Text style={styles.notificationTitle}>{item.title}</Text>
           <Text style={styles.notificationMessage}>{item.message}</Text>
-          <Text style={styles.notificationTime}>{item.timestamp}</Text>
+          <Text style={styles.notificationTime}>{formatTime(item.timestamp)}</Text>
         </View>
 
         <View style={styles.notificationRight}>
@@ -359,7 +396,7 @@ export default function NotificationsScreen() {
         <>
 
           <FlatList
-            data={notifications}
+            data={myNotifications}
             renderItem={renderNotification}
             keyExtractor={(item) => item.id}
             contentContainerStyle={styles.notificationsList}

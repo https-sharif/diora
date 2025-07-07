@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { useShopping } from '@/contexts/ShoppingContext';
+import { useShopping } from '@/hooks/useShopping';
 import { useTheme } from '@/contexts/ThemeContext';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 import { Animated } from 'react-native';
@@ -335,7 +335,7 @@ const Cart = () => {
             <View style={styles.cartFooter}>
               <View style={styles.cartTotal}>
                 <Text style={styles.cartTotalText}>
-                  Total: ${getCartTotal(cart.map(item => mockProducts.find(product => product.id === item.productId) as Product)).toFixed(2)}
+                  Total: ${getCartTotal(cart.map((item : CartItem) => mockProducts.find(product => product.id === item.productId) as Product)).toFixed(2)}
                 </Text>
               </View>
               <TouchableOpacity style={styles.checkoutButton}>

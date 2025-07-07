@@ -14,7 +14,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ArrowLeft, Share, Star, ShoppingCart, Store, Plus, Minus, Bookmark } from 'lucide-react-native';
-import { useShopping } from '@/contexts/ShoppingContext';
+import { useShopping } from '@/hooks/useShopping';
 import { mockProducts } from '@/mock/Product';
 import { mockReviews } from '@/mock/Review';
 import { mockUsers } from '@/mock/User';
