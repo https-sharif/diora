@@ -14,8 +14,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ArrowLeft, Send, Plus, Camera, Mic } from 'lucide-react-native';
-import { useMessage } from '@/contexts/MessageContext';
-import { useAuth } from '@/contexts/AuthContext';
+import { useMessage } from '@/hooks/useMessage';
+import { useAuth } from '@/hooks/useAuth';
 import { mockProducts } from '@/mock/Product';
 import { useTheme } from '@/contexts/ThemeContext';
 import { mockUsers } from '@/mock/User';
@@ -282,7 +282,6 @@ export default function MessageScreen() {
     }, 100);
   };
 
-  // Render individual message
   const renderMessage = ({ item }: { item: Message }) => {
     if (!user) return null;
     const isMe = item.senderId === user.id;

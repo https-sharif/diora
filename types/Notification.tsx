@@ -1,5 +1,6 @@
 export interface Notification {
   id: string;
+  userId: string;
   type: 'like' | 'comment' | 'follow' | 'mention' | 'order' | 'promotion';
   title: string;
   message: string;

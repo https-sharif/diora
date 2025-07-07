@@ -10,11 +10,7 @@ import {
 } from '@expo-google-fonts/inter';
 import { SplashScreen } from 'expo-router';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
-import { AuthProvider } from '@/contexts/AuthContext';
-import { ShoppingProvider } from '@/contexts/ShoppingContext';
-import { NotificationProvider } from '@/contexts/NotificationContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
-import { MessageProvider } from '@/contexts/MessageContext';
 import React from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { View } from 'react-native';
@@ -22,7 +18,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import type { EdgeInsets } from 'react-native-safe-area-context';
 import { SafeAreaProvider } from '@/contexts/SafeAreaContext';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -32,19 +28,11 @@ export default function RootLayout() {
   const insets = useSafeAreaInsets();
 
   return (
-    <AuthProvider>
       <ThemeProvider>
-        <MessageProvider>
-          <SafeAreaProvider>
-            <NotificationProvider>
-              <ShoppingProvider>
-                <AppReadyWrapper insets={insets} />
-              </ShoppingProvider>
-            </NotificationProvider>
-          </SafeAreaProvider>
-        </MessageProvider>
+        <SafeAreaProvider>
+          <AppReadyWrapper insets={insets} />
+        </SafeAreaProvider>
       </ThemeProvider>
-    </AuthProvider>
   );
 }
 

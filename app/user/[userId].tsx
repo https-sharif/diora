@@ -24,8 +24,8 @@ import {
   X,
   Star,
 } from 'lucide-react-native';
-import { useAuth } from '@/contexts/AuthContext';
-import { useNotifications } from '@/contexts/NotificationContext';
+import { useAuth } from '@/hooks/useAuth';
+import { useNotification } from '@/hooks/useNotification';
 import { mockUsers } from '@/mock/User';
 import { mockPosts } from '@/mock/Post';
 import { User } from '@/types/User';
@@ -324,7 +324,7 @@ const createStyles = (theme: Theme) => {
 export default function UserProfileScreen() {
   const { userId } = useLocalSearchParams<{ userId: string }>();
   const { user: currentUser, followUser } = useAuth();
-  const { addNotification } = useNotifications();
+  const { addNotification } = useNotification();
   
   const [userProfile, setUserProfile] = useState<User | null>(null);
   const [showMoreMenu, setShowMoreMenu] = useState(false);

@@ -14,6 +14,7 @@ export const mockUsers: User[] = [
     isVerified: true,
     createdAt: '2021-01-01',
     likedPosts: ['1', '2', '3'],
+    type: 'user',
   },
   {
     id: '2',
@@ -28,6 +29,7 @@ export const mockUsers: User[] = [
     isVerified: false,
     createdAt: '2021-01-01',
     likedPosts: ['1', '5', '6'],
+    type: 'user',
   },
   {
     id: '3',
@@ -42,6 +44,7 @@ export const mockUsers: User[] = [
     isVerified: true,
     createdAt: '2021-01-01',
     likedPosts: ['2', '5', '6'],
+    type: 'user',
   },
   {
     id: '4',
@@ -54,6 +57,7 @@ export const mockUsers: User[] = [
     isVerified: false,
     avatar: `https://picsum.photos/seed/4/600`,
     likedPosts: ['3', '4', '1'],
+    type: 'user',
   },
   {
     id: '5',
@@ -68,6 +72,7 @@ export const mockUsers: User[] = [
     isVerified: true,
     createdAt: '2021-01-01',
     likedPosts: ['4', '5', '6'],
+    type: 'user',
   },
   {
     id: '6',
@@ -82,6 +87,7 @@ export const mockUsers: User[] = [
     isVerified: true,
     createdAt: '2021-01-01',
     likedPosts: ['4', '5', '6'],
+    type: 'user',
   },
   {
     id: '7',
@@ -96,6 +102,7 @@ export const mockUsers: User[] = [
     isVerified: true,
     createdAt: '2021-01-01',
     likedPosts: ['4', '5', '6'],
+    type: 'user',
   },
   {
     id: '8',
@@ -110,5 +117,6 @@ export const mockUsers: User[] = [
     isVerified: true,
     createdAt: '2021-01-01',
     likedPosts: ['4', '5', '6'],
+    type: 'user',
   }
 ];

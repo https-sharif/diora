@@ -11,7 +11,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Settings, Grid2x2 as Grid, Star, LogOut } from 'lucide-react-native';
 import { router } from 'expo-router';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/contexts/ThemeContext';
 import { mockPosts } from '@/mock/Post';
 import { mockUsers } from '@/mock/User';
@@ -157,6 +157,7 @@ const createStyles = (theme: Theme) =>
 export default function ProfileScreen() {
   const { user, logout } = useAuth();
   const [activeTab, setActiveTab] = React.useState<'posts' | 'liked'>('posts');
+
   const handleTabPress = (tab: 'posts' | 'liked') => {
     setActiveTab(tab);
   };
@@ -188,7 +189,9 @@ export default function ProfileScreen() {
     )
   }
 
-  if (!user) return null;
+  if (!user) {
+    return null;
+  }
 
   return (
     <SafeAreaView style={styles.container}>

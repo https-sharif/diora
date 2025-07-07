@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, FlatList, 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ShoppingCart, Heart, Search, Filter, X, Bookmark, Star, } from 'lucide-react-native';
 import { router } from 'expo-router';
-import { useShopping } from '@/contexts/ShoppingContext';
+import { useShopping } from '@/hooks/useShopping';
 import { useTheme } from '@/contexts/ThemeContext';
 import Color from 'color';
 import { mockProducts } from '@/mock/Product';

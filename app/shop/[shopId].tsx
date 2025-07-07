@@ -33,8 +33,8 @@ import {
   UserMinus,
   Bookmark
 } from 'lucide-react-native';
-import { useShopping } from '@/contexts/ShoppingContext';
-import { useAuth } from '@/contexts/AuthContext';
+import { useShopping } from '@/hooks/useShopping';
+import { useAuth } from '@/hooks/useAuth';
 import { mockProducts } from '@/mock/Product';
 import { mockReviews } from '@/mock/Review';
 import { mockShops } from '@/mock/Shop';

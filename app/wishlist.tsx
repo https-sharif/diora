@@ -1,4 +1,4 @@
-import { ArrowLeft, Bookmark, Heart, Menu, PackageMinus,  X } from 'lucide-react-native';
+import { ArrowLeft, Bookmark, Menu, PackageMinus,  X } from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
   View,
@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { useShopping } from '@/contexts/ShoppingContext';
+import { useShopping } from '@/hooks/useShopping';
 import { useTheme } from '@/contexts/ThemeContext';
 import { mockProducts } from '@/mock/Product';
 import { Product } from '@/types/Product';

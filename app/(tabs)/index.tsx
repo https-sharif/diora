@@ -9,8 +9,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Bell, MessageCircle } from 'lucide-react-native';
-import { useAuth } from '@/contexts/AuthContext';
-import { useNotifications } from '@/contexts/NotificationContext';
+import { useAuth } from '@/hooks/useAuth';
+import { useNotification } from '@/hooks/useNotification';
 import { router } from 'expo-router';
 import PostCard from '@/components/PostCard';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -76,7 +76,7 @@ const createStyles = (theme : Theme) => {
 
 export default function FeedScreen() {
   const { isAuthenticated } = useAuth();
-  const { unreadCount } = useNotifications();
+  const { unreadCount } = useNotification();
   const [posts, setPosts] = useState(mockPosts);
   const [refreshing, setRefreshing] = useState(false);
   const { theme }  = useTheme();
@@ -103,10 +103,6 @@ export default function FeedScreen() {
   const handleMessagePress = () => {
     router.push('/messages');
   };
-
-  if (!isAuthenticated) {
-    return null;
-  }
 
   return (
     <SafeAreaView style={styles.container}>

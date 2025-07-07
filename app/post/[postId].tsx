@@ -16,7 +16,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ArrowLeft, Star, MessageCircle, Share, X, Send, MoreHorizontal, Flag } from 'lucide-react-native';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import { mockPosts } from '@/mock/Post';
 import { mockComments } from '@/mock/Comment';
 import { Comment } from '@/types/Comment';

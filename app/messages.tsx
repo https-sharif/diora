@@ -12,9 +12,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Search, Plus, ArrowLeft } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useTheme } from '@/contexts/ThemeContext';
-import { useMessage } from '@/contexts/MessageContext';
+import { useMessage } from '@/hooks/useMessage';
 import { Conversation } from '@/types/Conversation';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import { mockUsers } from '@/mock/User';
 import { mockMessages } from '@/mock/Message';
 
