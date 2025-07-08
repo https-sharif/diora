@@ -107,8 +107,7 @@ export const CommentBottomSheet = ({
       bottomSheetRef.current?.snapToIndex(0);
     } else {
       bottomSheetRef.current?.close();
-    }
-    console.log('BottomSheet visible:', visible);    
+    }  
   }, [visible]);
 
   return (

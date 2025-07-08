@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { router } from 'expo-router';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useNotificationStore } from '@/stores/useNotificationStore';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const createStyles = (theme: any) =>
   StyleSheet.create({
@@ -35,7 +36,7 @@ export default function Index() {
 
     const timeout = setTimeout(() => {
       setSplashDone(true);
-    }, 5000);
+    }, 1000);
 
     return () => clearTimeout(timeout);
   }, []);
