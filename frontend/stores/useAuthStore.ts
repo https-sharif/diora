@@ -5,7 +5,6 @@ import { router } from 'expo-router';
 import { mockUsers } from '@/mock/User';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-
 interface AuthState {
   isAuthenticated: boolean;
   user: User | null;
@@ -80,6 +79,7 @@ export const useAuthStore = create<AuthState>()(
             bio: '',
             isVerified: false,
             createdAt: '',
+            type: 'user',
           };
 
           set({ user: newUser, isAuthenticated: true });
@@ -96,6 +96,7 @@ export const useAuthStore = create<AuthState>()(
       logout: () => {
         set({ user: null, isAuthenticated: false });
         router.replace('/auth');
+        AsyncStorage.clear();
       },
 
       followUser: (targetUserId) => {

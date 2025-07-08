@@ -1,12 +1,12 @@
 import { router, Tabs } from 'expo-router';
-import { Home, Search, ShoppingBag, User } from 'lucide-react-native';
+import { BarChart3, Home, Plus, Search, ShoppingBag, User } from 'lucide-react-native';
 import React, { useEffect } from 'react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/hooks/useAuth';
 
 export default function TabLayout() {
   const { theme } = useTheme();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -40,7 +40,11 @@ export default function TabLayout() {
         options={{
           title: 'Feed',
           tabBarIcon: ({ size, color, focused }) => (
-            <Home size={size} color={color} strokeWidth={focused ? 3 : 2} />
+            (user?.type === 'admin') ? (
+              <BarChart3 size={size} color={color} strokeWidth={focused ? 3 : 2} />
+            ) : (
+              <Home size={size} color={color} strokeWidth={focused ? 3 : 2} />
+            )
           ),
         }}
       />
@@ -50,6 +54,15 @@ export default function TabLayout() {
           title: 'Explore',
           tabBarIcon: ({ size, color, focused }) => (
             <Search size={size} color={color} strokeWidth={focused ? 3 : 2} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="create"
+        options={{
+          title: 'Create',
+          tabBarIcon: ({ size, color, focused }) => (
+            <Plus size={size} color={color} strokeWidth={focused ? 3 : 2} />
           ),
         }}
       />

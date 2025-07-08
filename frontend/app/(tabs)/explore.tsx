@@ -917,7 +917,7 @@ export default function ExploreScreen() {
                 {option}
               </Text>
               {selectedValue === option && (
-                <Check size={14} color="#fff" style={styles.filterCheck} />
+                <Check size={14} color="#000" style={styles.filterCheck} />
               )}
             </TouchableOpacity>
           ))}

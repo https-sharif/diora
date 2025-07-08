@@ -11,5 +11,5 @@ export interface User {
   createdAt?: string;
   posts: number;
   likedPosts: string[];
-  isShop?: boolean;
+  type: 'user' | 'shop' | 'admin';
 }
