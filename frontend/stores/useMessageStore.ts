@@ -8,7 +8,7 @@ import { useAuthStore } from '@/stores/useAuthStore';
 interface MessageState {
   conversations: Conversation[];
   messages: Message[];
-  sendMessage: (conversationId: string, messageText: string, replyToId?: string) => void;
+  sendMessage: (conversationId: string, messageText: string, replyToId?: string, imageUri?: string, productId?: string) => void;
   updateMessageStatus: (conversationId: string, messageId: string, status: Message['status']) => void;
   handleReaction: (conversationId: string, messageId: string, emoji: string) => void;
   markConversationAsRead: (conversationId: string) => void;
@@ -19,39 +19,41 @@ export const useMessageStore = create<MessageState>((set, get) => ({
   conversations: mockConversations,
   messages: mockMessages,
 
-  sendMessage: (conversationId, messageText, replyToId) => {
+  sendMessage: (conversationId, messageText, replyToId, imageUri, productId) => {
     const user = useAuthStore.getState().user;
-    if (!messageText.trim()) return;
-
+    if (!messageText.trim() && !imageUri) return;
+  
     const newMessage: Message = {
       id: Date.now().toString(),
       text: messageText,
       timestamp: new Date().toISOString(),
       conversationId,
       senderId: user?.id || 'me',
-      type: 'text',
+      type: imageUri ? 'image' : 'text',
       status: 'sending',
       replyTo: replyToId,
       reactions: '',
+      imageUrl: imageUri || undefined,
+      productId: productId || undefined,
     };
-
+  
     set((state) => ({
       messages: [...state.messages, newMessage],
-      conversations: state.conversations.map(conv =>
+      conversations: state.conversations.map((conv) =>
         conv.id === conversationId
           ? { ...conv, lastMessageId: newMessage.id }
           : conv
       ),
     }));
-
+  
     setTimeout(() => {
       get().updateMessageStatus(conversationId, newMessage.id, 'sent');
     }, 1000);
-
+  
     setTimeout(() => {
       get().updateMessageStatus(conversationId, newMessage.id, 'delivered');
     }, 2000);
-  },
+  },  
 
   updateMessageStatus: (conversationId, messageId, status) => {
     set((state) => ({

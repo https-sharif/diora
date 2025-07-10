@@ -10,10 +10,21 @@ import {
   KeyboardAvoidingView,
   Platform,
   Dimensions,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
-import { ArrowLeft, Send, Plus, Camera, Mic } from 'lucide-react-native';
+import {
+  ArrowLeft,
+  Send,
+  Plus,
+  Camera,
+  Menu,
+  Mic,
+  MessageCircleOff,
+  Inbox,
+} from 'lucide-react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { useMessage } from '@/hooks/useMessage';
 import { useAuth } from '@/hooks/useAuth';
 import { mockProducts } from '@/mock/Product';
@@ -26,11 +37,11 @@ import { Message } from '@/types/Message';
 
 const { width } = Dimensions.get('window');
 
-const createStyles = (theme: Theme) => {
+const createStyles = (theme: Theme, lightTheme: Theme, darkTheme: Theme) => {
   return StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: '#FFFFFF',
+      backgroundColor: theme.background,
       paddingBottom: -100,
       paddingTop: -100,
     },
@@ -40,7 +51,7 @@ const createStyles = (theme: Theme) => {
       paddingHorizontal: 16,
       paddingVertical: 12,
       borderBottomWidth: 0.5,
-      borderBottomColor: '#E5E5EA',
+      borderBottomColor: theme.border,
     },
     backButton: {
       width: 44,
@@ -66,12 +77,12 @@ const createStyles = (theme: Theme) => {
     headerName: {
       fontSize: 17,
       fontFamily: 'Inter-SemiBold',
-      color: '#000000',
+      color: theme.text,
     },
     headerStatus: {
       fontSize: 13,
       fontFamily: 'Inter-Regular',
-      color: '#8E8E93',
+      color: theme.textSecondary,
       marginTop: 1,
     },
     headerActions: {
@@ -112,61 +123,84 @@ const createStyles = (theme: Theme) => {
       paddingVertical: 12,
     },
     myMessageBubble: {
-      backgroundColor: '#007AFF',
+      backgroundColor: darkTheme.card,
       borderBottomRightRadius: 6,
+      borderWidth: 1,
+      borderColor: theme.border,
     },
     otherMessageBubble: {
-      backgroundColor: '#F2F2F7',
+      backgroundColor: darkTheme.accent,
       borderBottomLeftRadius: 6,
     },
     messageText: {
       fontSize: 16,
       fontFamily: 'Inter-Regular',
-      color: '#000000',
+      color: lightTheme.text,
       lineHeight: 22,
     },
     myMessageText: {
-      color: '#FFFFFF',
+      color: darkTheme.text,
     },
     messageImage: {
       width: width * 0.6,
       height: width * 0.6,
+      resizeMode: 'contain',
       borderRadius: 12,
       marginBottom: 4,
     },
     messageTime: {
       fontSize: 12,
       fontFamily: 'Inter-Regular',
-      color: '#8E8E93',
+      color: darkTheme.border,
       marginTop: 4,
       alignSelf: 'flex-end',
     },
     myMessageTime: {
-      color: 'rgba(255, 255, 255, 0.7)',
+      color: darkTheme.textSecondary,
     },
     inputContainer: {
       paddingHorizontal: 16,
       paddingVertical: 12,
       paddingBottom: Platform.OS === 'ios' ? 34 : 12,
       borderTopWidth: 0.5,
-      borderTopColor: '#E5E5EA',
+      borderTopColor: theme.border,
     },
     inputRow: {
       flexDirection: 'row',
       alignItems: 'flex-end',
       gap: 12,
     },
-    attachButton: {
+    modalBackground: {
+      flex: 1,
+      backgroundColor: 'rgba(0,0,0,0.3)',
+      justifyContent: 'flex-end',
+    },
+    dropdownContainer: {
+      backgroundColor: theme.card,
+      paddingVertical: 24,
+      borderTopLeftRadius: 16,
+      borderTopRightRadius: 16,
+      paddingHorizontal: 20,
+    },
+    dropdownItem: {
+      paddingVertical: 15,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.border,
+    },
+    dropdownText: { fontSize: 18 , color: theme.text},
+    cameraButton: {
       width: 36,
       height: 36,
       borderRadius: 18,
-      backgroundColor: '#F2F2F7',
+      backgroundColor: darkTheme.accent,
       justifyContent: 'center',
       alignItems: 'center',
     },
     textInputContainer: {
       flex: 1,
-      backgroundColor: '#F2F2F7',
+      backgroundColor: theme.card,
+      alignContent: 'center',
+      justifyContent: 'center',
       borderRadius: 20,
       paddingHorizontal: 16,
       paddingVertical: 8,
@@ -174,23 +208,27 @@ const createStyles = (theme: Theme) => {
     },
     textInput: {
       fontSize: 16,
+      paddingTop: 0,
       fontFamily: 'Inter-Regular',
-      color: '#000000',
+      color: theme.text,
       minHeight: 20,
     },
     sendButton: {
       width: 36,
       height: 36,
       borderRadius: 18,
-      backgroundColor: '#007AFF',
+      backgroundColor: theme.accent,
       justifyContent: 'center',
       alignItems: 'center',
+    },
+    sendButtonDisabled: {
+      backgroundColor: theme.border,
     },
     micButton: {
       width: 36,
       height: 36,
       borderRadius: 18,
-      backgroundColor: '#F2F2F7',
+      backgroundColor: theme.accent,
       justifyContent: 'center',
       alignItems: 'center',
     },
@@ -199,10 +237,31 @@ const createStyles = (theme: Theme) => {
       justifyContent: 'center',
       alignItems: 'center',
     },
+    errorIconContainer: {
+      width: 80,
+      height: 80,
+      borderRadius: 40,
+      backgroundColor: theme.card,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginBottom: 24,
+    },
     errorText: {
       fontSize: 16,
       fontFamily: 'Inter-Regular',
-      color: '#8E8E93',
+      color: theme.textSecondary,
+      marginBottom: 24,
+    },
+    errorBackButton: {
+      backgroundColor: theme.accent,
+      borderRadius: 12,
+      paddingHorizontal: 24,
+      paddingVertical: 12,
+    },
+    backButtonText: {
+      color: '#000',
+      fontSize: 16,
+      fontFamily: 'Inter-SemiBold',
     },
     productInfo: {
       flexDirection: 'column',
@@ -224,40 +283,49 @@ const createStyles = (theme: Theme) => {
     productPrice: {
       fontSize: 12,
       fontFamily: 'Inter-SemiBold',
-      color: '#8E8E93',
+      color: theme.textSecondary,
     },
     productImage: {
-      width: 140,
-      height: 140,
+      width: 150,
+      height: 150,
       resizeMode: 'contain',
       borderRadius: 8,
     },
   });
-}
+};
+
+
 export default function MessageScreen() {
   const [messageText, setMessageText] = useState('');
   const [myMessages, setMyMessages] = useState<Message[]>([]);
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const flatListRef = useRef<FlatList>(null);
-  const { theme } = useTheme();
-  const styles = createStyles(theme);
+  const { theme, lightTheme, darkTheme } = useTheme();
+  const styles = createStyles(theme, lightTheme, darkTheme);
   const [otherUser, setOtherUser] = useState<User | null>(null);
   const { user } = useAuth();
   const { conversationId } = useLocalSearchParams<{ conversationId: string }>();
-  const { conversations, messages  , sendMessage } = useMessage();
+  const { conversations, messages, sendMessage } = useMessage();
+  const [showDropdown, setShowDropdown] = useState(false);
 
   useEffect(() => {
     if (!conversationId) return;
-    const foundConv = conversations.find(c => c.id == conversationId) as Conversation;
-    const filteredMessages = messages.filter(m => m.conversationId === conversationId);
-  
+    const foundConv = conversations.find(
+      (c) => c.id == conversationId
+    ) as Conversation;
+    const filteredMessages = messages.filter(
+      (m) => m.conversationId === conversationId
+    );
+
     setConversation(foundConv);
     setMyMessages(filteredMessages);
   }, [conversationId, conversations, messages]);
 
   useEffect(() => {
     if (conversation) {
-      const otherUser = mockUsers.find(u => u.id === conversation.participants.find(p => p !== user?.id));
+      const otherUser = mockUsers.find(
+        (u) => u.id === conversation.participants.find((p) => p !== user?.id)
+      );
       if (otherUser) {
         setOtherUser(otherUser);
       }
@@ -265,11 +333,48 @@ export default function MessageScreen() {
   }, [conversation]);
 
   const handleProfilePress = (userId: string) => {
-    if(!conversation?.isGroup) {
+    if (!conversation?.isGroup) {
       router.push(`/user/${userId}`);
     }
-  }
+  };
 
+  const handleGallery = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      alert('Gallery permission denied');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      const photo = result.assets[0];
+      sendMessage(conversationId, '', undefined, photo.uri);
+    }
+  };
+
+  const handleCamera = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      alert('Camera permission denied');
+      return;
+    }
+  
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ['images'],
+      allowsEditing: false,
+      quality: 1,
+    });
+  
+    if (!result.canceled) {
+      const photo = result.assets[0];
+      sendMessage(conversationId, '', undefined, photo.uri);
+    }
+  };
+  
   // Send message handler
   const handleSendMessage = () => {
     if (!messageText.trim() || !conversationId) return;
@@ -285,22 +390,32 @@ export default function MessageScreen() {
   const renderMessage = ({ item }: { item: Message }) => {
     if (!user) return null;
     const isMe = item.senderId === user.id;
-    
+
     const formattedTime = new Date(item.timestamp).toLocaleTimeString([], {
       hour: '2-digit',
       minute: '2-digit',
     });
 
-    const product = item.productId ? mockProducts.find(p => p.id === item.productId) : null;
+    const product = item.productId
+      ? mockProducts.find((p) => p.id === item.productId)
+      : null;
 
     return (
-      <View style={[styles.messageContainer, isMe && styles.myMessageContainer]}>
+      <View
+        style={[styles.messageContainer, isMe && styles.myMessageContainer]}
+      >
         {!isMe && conversation?.avatar && (
-          <Image source={{ uri: conversation.avatar }} style={styles.messageAvatar} />
+          <Image
+            source={{ uri: conversation.avatar }}
+            style={styles.messageAvatar}
+          />
         )}
 
         {isMe && conversation?.avatar && (
-          <Image source={{ uri: conversation.avatar }} style={styles.messageAvatar} />
+          <Image
+            source={{ uri: conversation.avatar }}
+            style={styles.messageAvatar}
+          />
         )}
 
         <View
@@ -314,13 +429,26 @@ export default function MessageScreen() {
               {item.text}
             </Text>
           ) : item.type === 'image' && item.imageUrl ? (
-            <Image source={{ uri: item.imageUrl }} style={styles.messageImage} />
+            <Image
+              source={{ uri: item.imageUrl }}
+              style={styles.messageImage}
+            />
           ) : item.type === 'product' && item.productId ? (
-            <TouchableOpacity onPress={() => router.push(`/product/${item.productId}`)} activeOpacity={0.8}>
+            <TouchableOpacity
+              onPress={() => router.push(`/product/${item.productId}`)}
+              activeOpacity={0.8}
+            >
               <View style={styles.productContainer}>
-                <Image source={{ uri: product?.imageUrl[0] }} style={styles.productImage} />
+                <Image
+                  source={{ uri: product?.imageUrl[0] }}
+                  style={styles.productImage}
+                />
                 <View style={styles.productInfo}>
-                  <Text style={[styles.productName, isMe && styles.myProductName]}>{product?.name}</Text>
+                  <Text
+                    style={[styles.productName, isMe && styles.myProductName]}
+                  >
+                    {product?.name}
+                  </Text>
                   <Text style={styles.productPrice}>${product?.price}</Text>
                 </View>
               </View>
@@ -343,7 +471,16 @@ export default function MessageScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.errorContainer}>
+          <View style={styles.errorIconContainer}>
+            <MessageCircleOff size={40} color={theme.text} strokeWidth={2} />
+          </View>
           <Text style={styles.errorText}>Conversation not found</Text>
+          <TouchableOpacity
+            style={styles.errorBackButton}
+            onPress={() => router.back()}
+          >
+            <Text style={styles.backButtonText}>Go Back</Text>
+          </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
@@ -354,18 +491,29 @@ export default function MessageScreen() {
       <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 50 : 0}
       >
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-            <ArrowLeft size={24} color="#000000" strokeWidth={2} />
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+          >
+            <ArrowLeft size={24} color={theme.text} strokeWidth={2} />
           </TouchableOpacity>
 
           <View style={styles.headerInfo}>
-            <Image source={{ uri: conversation.avatar || otherUser?.avatar }} style={styles.headerAvatar} />
+            <Image
+              source={{ uri: conversation.avatar || otherUser?.avatar }}
+              style={styles.headerAvatar}
+            />
             <View style={styles.headerText}>
-              <TouchableOpacity onPress={() => handleProfilePress(otherUser?.id || '')}>
-                <Text style={styles.headerName}>{conversation.name || otherUser?.username}</Text>
+              <TouchableOpacity
+                onPress={() => handleProfilePress(otherUser?.id || '')}
+              >
+                <Text style={styles.headerName}>
+                  {conversation.name || otherUser?.username}
+                </Text>
               </TouchableOpacity>
               <Text style={styles.headerStatus}>
                 {conversation.isOnline ? 'Online' : 'Last seen recently'}
@@ -375,29 +523,82 @@ export default function MessageScreen() {
 
           <View style={styles.headerActions}>
             <TouchableOpacity style={styles.headerAction}>
-              <Camera size={22} color="#000000" strokeWidth={2} />
+              <Menu size={22} color={theme.text} strokeWidth={2} />
             </TouchableOpacity>
           </View>
         </View>
 
         {/* Messages */}
-        <FlatList
-          ref={flatListRef}
-          data={myMessages}
-          renderItem={renderMessage}
-          keyExtractor={item => item.id}
-          style={styles.messagesList}
-          contentContainerStyle={styles.messagesContent}
-          showsVerticalScrollIndicator={false}
-          onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
-        />
+        {myMessages.length > 0 ? (
+          <FlatList
+            ref={flatListRef}
+            data={myMessages}
+            renderItem={renderMessage}
+            keyExtractor={(item) => item.id}
+            style={styles.messagesList}
+            contentContainerStyle={styles.messagesContent}
+            showsVerticalScrollIndicator={false}
+            onContentSizeChange={() =>
+              flatListRef.current?.scrollToEnd({ animated: true })
+            }
+          />
+        ) : (
+          <View style={styles.errorContainer}>
+            <View style={styles.errorIconContainer}>
+              <Inbox size={40} color={theme.text} strokeWidth={2} />
+            </View>
+            <Text style={styles.errorText}>
+              No chats yet. Be the first to say hey.
+            </Text>
+          </View>
+        )}
 
         {/* Input */}
         <View style={styles.inputContainer}>
           <View style={styles.inputRow}>
-            <TouchableOpacity style={styles.attachButton}>
-              <Plus size={24} color="#8E8E93" strokeWidth={2} />
+            <TouchableOpacity style={styles.cameraButton} onPress={() => setShowDropdown(true)}>
+              <Plus size={24} color='#000' strokeWidth={2} />
             </TouchableOpacity>
+            <Modal
+                visible={showDropdown}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setShowDropdown(false)}
+              >
+                <TouchableOpacity
+                  style={styles.modalBackground}
+                  activeOpacity={1}
+                  onPressOut={() => setShowDropdown(false)}
+                >
+                  <View
+                    style={styles.dropdownContainer}
+                  >
+                    <TouchableOpacity
+                      onPress={() => {
+                        setShowDropdown(false);
+                        setTimeout(() => {
+                          handleCamera();
+                        }, 600);
+                      }}
+                      style={styles.dropdownItem}
+                    >
+                      <Text style={styles.dropdownText}>Take Photo</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      onPress={() => {
+                        setShowDropdown(false);
+                        setTimeout(() => {
+                          handleGallery();
+                        }, 600);
+                      }}
+                      style={styles.dropdownItem}
+                    >
+                      <Text style={styles.dropdownText}>Open from {Platform.OS === 'ios' ? 'Photos' : 'Gallery'}</Text>
+                    </TouchableOpacity>
+                  </View>
+                </TouchableOpacity>
+              </Modal>
 
             <View style={styles.textInputContainer}>
               <TextInput
@@ -407,21 +608,20 @@ export default function MessageScreen() {
                 onChangeText={setMessageText}
                 multiline
                 maxLength={1000}
-                placeholderTextColor="#8E8E93"
+                placeholderTextColor={theme.textSecondary}
               />
             </View>
 
-            {messageText.trim() ? (
-              <TouchableOpacity style={styles.sendButton} onPress={handleSendMessage}>
-                <Send size={20} color="#FFFFFF" strokeWidth={2} />
-              </TouchableOpacity>
-            ) : (
-              <TouchableOpacity style={styles.micButton}>
-                <Mic size={20} color="#8E8E93" strokeWidth={2} />
-              </TouchableOpacity>
-            )}
+            <TouchableOpacity
+              style={[styles.sendButton,  styles.sendButtonDisabled]}
+              onPress={handleSendMessage}
+              disabled={messageText.trim() === ''}
+            >
+              <Send size={20} color={messageText.trim() === '' ? theme.primary : '#000'} strokeWidth={2} />
+            </TouchableOpacity>
           </View>
         </View>
+
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

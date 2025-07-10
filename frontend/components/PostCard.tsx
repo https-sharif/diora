@@ -415,7 +415,7 @@ export default function PostCard({ post }: { post: Post }) {
             <TouchableWithoutFeedback onPress={() => {}}>
               <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                keyboardVerticalOffset={0}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? -10 : 0}
                 style={{
                   height: '80%',
                   backgroundColor: theme.card,

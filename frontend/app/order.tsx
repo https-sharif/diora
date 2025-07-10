@@ -207,7 +207,7 @@ const mockAnalytics: ShopAnalytics = {
 
 export default function OrdersScreen() {
   const { user } = useAuth();
-  const isShopOwner = user?.type === 'shop';
+  const isShopOwner = user?.type !== 'user';
   
   // Customer states
   const [orders, setOrders] = useState<Order[]>(mockOrders);
@@ -995,6 +995,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8f9fa',
+    paddingVertical: -100,
   },
   header: {
     flexDirection: 'row',
@@ -1021,23 +1022,30 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#e9ecef',
+    height: 60,
+    flexGrow: 0,
   },
   filterContent: {
     paddingHorizontal: 16,
-    paddingVertical: 12,
     gap: 8,
+    height: 40,
+    flexGrow: 0,
+    flexShrink: 0,
+    paddingVertical: 10,
   },
   filterChip: {
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingVertical: 10,
     borderRadius: 20,
     backgroundColor: '#f8f9fa',
     borderWidth: 1,
     borderColor: '#e9ecef',
+    height: 40,
   },
   activeFilterChip: {
     backgroundColor: '#000',
     borderColor: '#000',
+    height: 40,
   },
   filterChipText: {
     fontSize: 14,
@@ -1301,26 +1309,31 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#e9ecef',
+    height: 60,
+    flexGrow: 0,
+    flexShrink: 0,
   },
   tabContent: {
     paddingHorizontal: 16,
-    paddingVertical: 12,
     gap: 8,
+    paddingVertical: 10,
+    height: 40,
   },
   tab: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 10,
     borderRadius: 25,
     backgroundColor: '#f8f9fa',
     borderWidth: 1,
     borderColor: '#e9ecef',
     gap: 8,
+    height: 40,
   },
   activeTab: {
     backgroundColor: '#000',
     borderColor: '#000',
+    height: 40,
   },
   tabText: {
     fontSize: 14,

@@ -296,7 +296,7 @@ const Wishlist = () => {
   const handleAddToCart = (product: Product) => {
     setSelectedProduct(product);
     setSelectedSize(product.sizes[0]);
-    setSelectedColor(product.colors[0]);
+    setSelectedColor(product.variants[0]);
   };
 
   const confirmAddToCart = () => {
@@ -431,7 +431,7 @@ const Wishlist = () => {
               <View style={styles.optionSection}>
                 <Text style={styles.optionTitle}>Color</Text>
                 <View style={styles.optionButtons}>
-                  {selectedProduct.colors.map((color) => (
+                  {selectedProduct.variants.map((color) => (
                     <TouchableOpacity
                       key={color}
                       style={[

@@ -3,6 +3,6 @@ export interface CartItem {
   userId: string;
   productId: string;
   quantity: number;
-  selectedSize?: string;
-  selectedColor?: string;
+  size?: string;
+  variant?: string;
 }

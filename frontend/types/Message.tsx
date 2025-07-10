@@ -4,7 +4,7 @@ export interface Message {
     timestamp: string;
     conversationId: string;
     senderId: string;
-    type: 'text' | 'image' | 'voice' | 'product' | 'notification';
+    type: 'text' | 'image' | 'product' | 'notification';
     status: 'sending' | 'sent' | 'delivered' | 'read';
     replyTo?: string;
     reactions?: string;

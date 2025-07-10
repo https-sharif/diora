@@ -3,7 +3,7 @@ import { Product } from "@/types/Product";
 export const mockProducts: Product[] = [
     {
       id: '1',
-      storeId: '11',
+      shopId: '11',
       name: 'Vintage Denim Jacket',
       price: 89.99,
       imageUrl: [`https://picsum.photos/seed/${Math.random()}/600/300`, `https://picsum.photos/seed/${Math.random()}/600`, `https://picsum.photos/seed/${Math.random()}/600`, `https://picsum.photos/seed/${Math.random()}/600`],
@@ -12,14 +12,14 @@ export const mockProducts: Product[] = [
       description:
         'Classic vintage-style denim jacket perfect for layering. Made from premium cotton denim with authentic distressing.',
       sizes: ['S', 'M', 'L', 'XL'],
-      colors: ['Blue', 'Black', 'White'],
+      variants: ['Blue', 'Black', 'White'],
       stock: 3,
       rating: 4.5,
       discount: 10,
     },
     {
       id: '2',
-      storeId: '13',
+      shopId: '13',
       name: 'Flowy Maxi Dress',
       price: 129.99,
       imageUrl: [`https://picsum.photos/seed/${Math.random()}/600`, `https://picsum.photos/seed/${Math.random()}/600`, `https://picsum.photos/seed/${Math.random()}/600`, `https://picsum.photos/seed/${Math.random()}/600`],
@@ -28,13 +28,13 @@ export const mockProducts: Product[] = [
       description:
         'Elegant flowy maxi dress for special occasions. Features a flattering silhouette and premium fabric.',
       sizes: ['XS', 'S', 'M', 'L'],
-      colors: ['Floral', 'Solid Pink', 'Navy'],
+      variants: ['Floral', 'Solid Pink', 'Navy'],
       stock: 6,
       rating: 4.5,
     },
     {
       id: '3',
-      storeId: '12',
+      shopId: '12',
       name: 'Classic Sneakers',
       price: 79.99,
       imageUrl: [`https://picsum.photos/seed/${Math.random()}/600`, `https://picsum.photos/seed/${Math.random()}/600`, `https://picsum.photos/seed/${Math.random()}/600`, `https://picsum.photos/seed/${Math.random()}/600`],
@@ -43,13 +43,13 @@ export const mockProducts: Product[] = [
       description:
         'Comfortable classic sneakers for everyday wear. Premium materials and cushioned sole.',
       sizes: ['6', '7', '8', '9', '10'],
-      colors: ['White', 'Black', 'Gray'],
+      variants: ['White', 'Black', 'Gray'],
       stock: 5,
     rating: 4.3,
     },
     {
       id: '4',
-      storeId: '11',
+      shopId: '11',
       name: 'High-Waisted Jeans',
       price: 69.99,
       imageUrl: [`https://picsum.photos/seed/${Math.random()}/600`, `https://picsum.photos/seed/${Math.random()}/600`, `https://picsum.photos/seed/${Math.random()}/600`, `https://picsum.photos/seed/${Math.random()}/600`],
@@ -58,13 +58,13 @@ export const mockProducts: Product[] = [
       description:
         'High-waisted jeans with a comfortable fit. Perfect for any casual occasion.',
       sizes: ['26', '28', '30', '32', '34'],
-      colors: ['Dark Blue', 'Light Blue', 'Black'],
+      variants: ['Dark Blue', 'Light Blue', 'Black'],
       stock: 10,
       rating: 4.2,
     },
     {
       id: '5',
-      storeId: '12',
+      shopId: '12',
       name: 'Silk Scarf',
       price: 39.99,
       imageUrl: [`https://picsum.photos/seed/${Math.random()}/600`, `https://picsum.photos/seed/${Math.random()}/600`, `https://picsum.photos/seed/${Math.random()}/600`, `https://picsum.photos/seed/${Math.random()}/600`],
@@ -73,14 +73,14 @@ export const mockProducts: Product[] = [
       description:
         'Premium silk scarf with elegant patterns. Perfect accessory for any outfit.',
       sizes: ['One Size'],
-      colors: ['Red', 'Blue', 'Gold'],
+      variants: ['Red', 'Blue', 'Gold'],
       stock: 0,
       discount: 10,
       rating: 3.1,
     },
     {
       id: '6',
-      storeId: '13',
+      shopId: '13',
       name: 'Casual Blazer',
       price: 149.99,
       imageUrl: [`https://picsum.photos/seed/${Math.random()}/600`, `https://picsum.photos/seed/${Math.random()}/600`, `https://picsum.photos/seed/${Math.random()}/600`, `https://picsum.photos/seed/${Math.random()}/600`],
@@ -89,7 +89,7 @@ export const mockProducts: Product[] = [
       description:
         'Versatile blazer for work and casual occasions. Tailored fit with premium fabric.',
       sizes: ['S', 'M', 'L', 'XL'],
-      colors: ['Black', 'Navy', 'Beige'],
+      variants: ['Black', 'Navy', 'Beige'],
       stock: 0,
       rating: 4.7,
     },

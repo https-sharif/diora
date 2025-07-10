@@ -8,6 +8,8 @@ interface ThemeContextType {
   theme: Theme;
   isDarkMode: boolean;
   toggleTheme: () => void;
+  lightTheme: Theme;
+  darkTheme: Theme;
 }
 
 const lightTheme: Theme = {
@@ -23,6 +25,7 @@ const lightTheme: Theme = {
   warning: '#FF9500',
   error: '#FF3B30',
   mode: 'light',
+  blue: '#007AFF',
 };
 
 
@@ -39,6 +42,7 @@ const darkTheme: Theme = {
   warning: '#ff9f0a',
   error: '#ff453a',
   mode: 'dark',
+  blue: '#007AFF',
 };
 
 
@@ -79,6 +83,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       theme,
       isDarkMode,
       toggleTheme,
+      lightTheme,
+      darkTheme,
     }}>
       {children}
     </ThemeContext.Provider>

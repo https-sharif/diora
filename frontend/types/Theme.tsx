@@ -11,4 +11,5 @@ export interface Theme {
   warning: string;
   error: string;
   mode: string;
+  blue: string;
 }

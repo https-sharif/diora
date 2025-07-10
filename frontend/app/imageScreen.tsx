@@ -180,9 +180,8 @@ const createStyles = (theme: Theme) => {
 
 export default function CreateImageScreen() {
   const navigation = useNavigation();
-  const { images, setImages, contentType, setContentType } = useCreatePost();
+  const { images, setImages, contentType, setContentType, imageUri, setImageUri } = useCreatePost();
   const { theme } = useTheme();
-  const [imageUri, setImageUri] = useState<string | null>(null);
   const styles = createStyles(theme);
   const { user } = useAuth();
 
@@ -250,7 +249,7 @@ export default function CreateImageScreen() {
         </TouchableOpacity>
       </View>
 
-      {user && user.type === 'user' && (
+      {user && user.type === 'shop' && (
         <View style={styles.selectorContainer}>
           <TouchableOpacity
             style={[
