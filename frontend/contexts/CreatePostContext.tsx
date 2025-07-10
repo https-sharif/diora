@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 
 type ContentType = 'post' | 'product';
 
@@ -14,6 +14,8 @@ interface CreatePostContextType {
   setContentType: (type: ContentType) => void;
   images: string[];
   setImages: (uris: string[]) => void;
+  imageUri: string | null;
+  setImageUri: (uri: string | null) => void;
   formData: FormData;
   setFormData: React.Dispatch<React.SetStateAction<FormData>>;
   createPost: () => Promise<void>;
@@ -32,6 +34,7 @@ export const useCreatePost = () => {
 export const CreatePostProvider = ({ children }: { children: React.ReactNode }) => {
   const [contentType, setContentType] = useState<ContentType>('post');
   const [images, setImages] = useState<string[]>([]);
+  const [imageUri, setImageUri] = useState<string | null>(null);
   const [formData, setFormData] = useState<FormData>({
     title: '',
     description: '',
@@ -93,11 +96,12 @@ export const CreatePostProvider = ({ children }: { children: React.ReactNode }) 
       price: '',
       category: [],
     });
+    setImageUri(null);
   };
 
   return (
     <CreatePostContext.Provider
-      value={{ contentType, setContentType, images, setImages, formData, setFormData, reset, createPost, createProduct }}
+      value={{ contentType, setContentType, images, setImages, imageUri, setImageUri, formData, setFormData, reset, createPost, createProduct }}
     >
       {children}
     </CreatePostContext.Provider>

@@ -71,9 +71,7 @@ function AppReadyWrapper({ insets }: { insets: EdgeInsets }) {
         <Stack.Screen name="user/[userId]" options={{ headerShown: false }} />
         <Stack.Screen name="shop/[shopId]" options={{ headerShown: false }} />
         <Stack.Screen name="settings" options={{ headerShown: false }} />
-        <Stack.Screen name="CreatePostFlow" options={{ headerShown: false }} />
-        <Stack.Screen name="CreateImageScreen" options={{ headerShown: false }} />
-        <Stack.Screen name="CreateFormScreen" options={{ headerShown: false }} />
+        <Stack.Screen name="pastOrder" options={{ headerShown: false }} />
       </Stack>
     </View>
     <StatusBar style={isDarkMode ? 'light' : 'dark'} animated translucent backgroundColor="transparent" />

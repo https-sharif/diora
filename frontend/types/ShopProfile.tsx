@@ -19,6 +19,7 @@ export interface ShopProfile {
   categories: string[];
   productIds: string[];
   rating: number;
+  ratingCount: number;
   followers: string[];
   isVerified: boolean;
   createdAt: string;

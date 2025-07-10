@@ -278,7 +278,7 @@ const Cart = () => {
               <Text style={styles.cartItemName}>{product.name}</Text>
             </TouchableOpacity>
             <Text style={styles.cartItemDetails}>
-              {item.selectedSize} • {item.selectedColor}
+              {item.size} • {item.variant}
             </Text>
             <Text style={styles.cartItemPrice}>${product.price}</Text>
           </View>
@@ -328,7 +328,7 @@ const Cart = () => {
               data={cart}
               renderItem={renderCartItem}
               keyExtractor={(item) =>
-                `${item.id}-${item.selectedSize}-${item.selectedColor}`
+                `${item.id}-${item.size}-${item.variant}`
               }
               style={styles.cartList}
             />

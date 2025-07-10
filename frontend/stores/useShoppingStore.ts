@@ -24,7 +24,7 @@ export const useShoppingStore = create<ShoppingStore>((set, get) => ({
   cart: [],
   wishlist: [],
 
-  addToCart: (product, size, color) => {
+  addToCart: (product, size, variant) => {
     const user = useAuthStore.getState().user;
     if (!user) return console.error('User not authenticated');
 
@@ -32,16 +32,16 @@ export const useShoppingStore = create<ShoppingStore>((set, get) => ({
       const existingItem = state.cart.find(
         (item) =>
           item.productId === product.id &&
-          item.selectedSize === size &&
-          item.selectedColor === color
+          item.variant === variant &&
+          item.size === size
       );
 
       if (existingItem) {
         return {
           cart: state.cart.map((item) =>
             item.productId === product.id &&
-            item.selectedSize === size &&
-            item.selectedColor === color
+            item.size === size &&
+            item.variant === variant
               ? { ...item, quantity: item.quantity + 1 }
               : item
           ),
@@ -53,8 +53,8 @@ export const useShoppingStore = create<ShoppingStore>((set, get) => ({
         userId: user.id,
         productId: product.id,
         quantity: 1,
-        selectedSize: size,
-        selectedColor: color,
+        size: size,
+        variant: variant,
       };
 
       return { cart: [...state.cart, newItem] };

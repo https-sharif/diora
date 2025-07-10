@@ -9,6 +9,7 @@ import Color from 'color';
 import { mockProducts } from '@/mock/Product';
 import { Product } from '@/types/Product';
 import { Theme } from '@/types/Theme';
+import ReceiptClockIcon from '@/icon/ReceiptClockIcon';
 
 const categories = [
   'All',
@@ -102,16 +103,12 @@ const createStyles = (theme: Theme) => {
     },
     categoryChip: {
       paddingHorizontal: 16,
-      paddingVertical: 8,
+      paddingVertical: 10,
       borderRadius: 20,
       backgroundColor: theme.background,
       borderWidth: 1,
       borderColor: '#000',
-      flexShrink: 0,
-      alignItems: 'center',
-      justifyContent: 'center',
-      minWidth: 80,
-      height: 32,
+      height: 40,
     },
     categoryChipActive: {
       backgroundColor: theme.primary,
@@ -394,7 +391,7 @@ export default function ShoppingScreen() {
   const handleAddToCart = (product: Product) => {
     setSelectedProduct(product);
     setSelectedSize(product.sizes[0]);
-    setSelectedColor(product.colors[0]);
+    setSelectedColor(product.variants[0]);
   };
 
   const confirmAddToCart = () => {
@@ -502,6 +499,14 @@ export default function ShoppingScreen() {
               >
                 <ShoppingCart size={24} color={theme.text} />
                 {getCartItemCount() > 0 && <View style={styles.badge}></View>}
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.headerButton}
+                onPress={() => {
+                  router.push('/pastOrder');
+                }}
+              >
+                <ReceiptClockIcon size={24} />
               </TouchableOpacity>
             </View>
           </View>
@@ -617,7 +622,7 @@ export default function ShoppingScreen() {
                 <View style={styles.optionSection}>
                   <Text style={styles.optionTitle}>Color</Text>
                   <View style={styles.optionButtons}>
-                    {selectedProduct.colors.map((color) => (
+                    {selectedProduct.variants.map((color) => (
                       <TouchableOpacity
                         key={color}
                         style={[

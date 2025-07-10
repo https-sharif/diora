@@ -403,9 +403,9 @@ export default function ProductDetailScreen() {
     if (product) {
       setSelectedImageIndex(0);
       setSelectedSize(product.sizes[0]);
-      setSelectedColor(product.colors[0]);
+      setSelectedColor(product.variants[0]);
       setReviews(mockReviews.filter(review => review.targetId === productId && review.targetType === 'product'));
-      const shop = mockShops.find(shop => shop.id === product.storeId);
+      const shop = mockShops.find(shop => shop.id === product.shopId);
       setStore(shop || null);
       setLoading(false);
     }
@@ -610,7 +610,7 @@ export default function ProductDetailScreen() {
         <View style={styles.optionSection}>
           <Text style={styles.optionTitle}>Color</Text>
           <View style={styles.optionButtons}>
-            {product.colors.map((color: string) => (
+            {product.variants.map((color: string) => (
               <TouchableOpacity
                 key={color}
                 style={[

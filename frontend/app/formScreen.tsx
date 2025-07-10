@@ -5,6 +5,7 @@ import CategorySelector from '@/components/CategorySelector';
 import { Theme } from '@/types/Theme';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Check, Plus } from 'lucide-react-native';
+import { router, useNavigation } from 'expo-router';
 
 const createStyles = (theme: Theme) => {
   return StyleSheet.create({
@@ -101,11 +102,12 @@ const createStyles = (theme: Theme) => {
 }
 
 export default function CreateFormScreen() {
-  const { formData, setFormData, contentType, images, createPost, createProduct } = useCreatePost();
+  const { formData, setFormData, contentType, images, createPost, createProduct, reset } = useCreatePost();
   const isProduct = contentType === 'product';
   const { theme } = useTheme();
   const styles = createStyles(theme);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const navigation = useNavigation();
 
   const handleChange = (field: keyof typeof formData, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -123,6 +125,9 @@ export default function CreateFormScreen() {
       console.error('Error creating post:', error);
     } finally {
       setIsSubmitting(false);
+      navigation.goBack();
+      router.push('/(tabs)/profile');
+      reset();
     }
   };
 
@@ -130,7 +135,7 @@ export default function CreateFormScreen() {
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={{ flex: 1 }}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 59 : 0}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0}
     >
       <View style={styles.container}>
         <View style={styles.header}>
