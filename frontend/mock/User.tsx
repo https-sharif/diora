@@ -32,7 +32,7 @@ export const mockUsers: User[] = [
     type: 'user',
   },
   {
-    id: '3',
+    id: '68755cb744c8006d06aa9d4e',
     username: 'john_smith',
     email: 'john.smith@example.com',
     fullName: 'John Smith',

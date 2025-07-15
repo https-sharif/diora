@@ -6,6 +6,7 @@ import {
   Text,
   RefreshControl,
   TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Bell, MessageCircle } from 'lucide-react-native';
@@ -16,8 +17,10 @@ import PostCard from '@/components/PostCard';
 import { useTheme } from '@/contexts/ThemeContext';
 import { mockPosts } from '@/mock/Post';
 import { Theme } from '@/types/Theme';
+import axios from 'axios';
+import { API_URL } from '@/constants/api';
 
-const createStyles = (theme : Theme) => {
+const createStyles = (theme: Theme) => {
   return StyleSheet.create({
     container: {
       flex: 1,
@@ -35,6 +38,11 @@ const createStyles = (theme : Theme) => {
     headerContent: {
       flexDirection: 'row',
       justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    loadingContainer: {
+      flex: 1,
+      justifyContent: 'center',
       alignItems: 'center',
     },
     title: {
@@ -70,29 +78,62 @@ const createStyles = (theme : Theme) => {
       paddingBottom: 50,
     },
   });
-}
-
-
+};
 
 export default function FeedScreen() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, token } = useAuth();
   const { unreadCount } = useNotification();
-  const [posts, setPosts] = useState(mockPosts);
+  const [posts, setPosts] = useState();
   const [refreshing, setRefreshing] = useState(false);
-  const { theme }  = useTheme();
+  const { theme } = useTheme();
+  const [loading, setLoading] = useState(false);
 
   const styles = createStyles(theme);
 
+  if (!isAuthenticated) {
+    return null;
+  }
+
   useEffect(() => {
-    if (!isAuthenticated) {
-      router.replace('/auth');
-    }
-  }, [isAuthenticated]);
+    const fetchPosts = async () => {
+      setLoading(true);
+      try {
+        const response = await axios.get(`${API_URL}/api/post`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        console.log('Posts refreshed:', response.data);
+        if (response.data.status) {
+          setPosts(response.data.posts);
+        }
+      } catch (err: any) {
+        console.error('❌ Refresh failed:', err.response?.data || err.message);
+      }
+      setTimeout(() => {
+        setLoading(false);
+      }, 1000);
+    };
+
+    fetchPosts();
+  }, []);
 
   const onRefresh = async () => {
     setRefreshing(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    try {
+      const response = await axios.get(`${API_URL}/api/post`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      console.log('Posts refreshed:', response.data);
+      if (response.data.status) {
+        setPosts(response.data.posts);
+      }
+    } catch (err: any) {
+      console.error('❌ Refresh failed:', err.response?.data || err.message);
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 1000));
     setRefreshing(false);
   };
 
@@ -109,9 +150,9 @@ export default function FeedScreen() {
       <View style={styles.header}>
         <View style={styles.headerContent}>
           <Text style={styles.title}>Diora</Text>
-        
+
           <View style={{ flexDirection: 'row', gap: 12 }}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.notificationButton}
               onPress={handleNotificationPress}
             >
@@ -125,7 +166,7 @@ export default function FeedScreen() {
               )}
             </TouchableOpacity>
 
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.notificationButton}
               onPress={handleMessagePress}
             >
@@ -135,18 +176,25 @@ export default function FeedScreen() {
         </View>
       </View>
 
-      <FlatList
-        data={posts}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <PostCard post={item} />
-        )}
-        contentContainerStyle={styles.feed}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-        showsVerticalScrollIndicator={false}
-      />
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={theme.text} />
+          <Text style={{ color: theme.text, fontSize: 16 , marginTop: 8 }}>
+            Loading posts...
+          </Text>
+        </View>
+      ) : (
+        <FlatList
+          data={posts}
+          keyExtractor={(item) => item._id}
+          renderItem={({ item }) => <PostCard post={item} />}
+          contentContainerStyle={styles.feed}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+          showsVerticalScrollIndicator={false}
+        />
+      )}
     </SafeAreaView>
   );
 }

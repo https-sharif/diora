@@ -4,7 +4,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { router } from 'expo-router';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useNotificationStore } from '@/stores/useNotificationStore';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const createStyles = (theme: any) =>
   StyleSheet.create({
@@ -23,9 +22,8 @@ const createStyles = (theme: any) =>
 export default function Index() {
   const { theme } = useTheme();
   const styles = createStyles(theme);
-  const { isAuthenticated, loading, login } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
   const fadeAnim = useRef(new Animated.Value(1)).current;
-  const [splashDone, setSplashDone] = useState(false);
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
@@ -35,16 +33,24 @@ export default function Index() {
     }).start();
 
     const timeout = setTimeout(() => {
-      setSplashDone(true);
+      if (loading) {
+        setTimeout(() => {
+          if (isAuthenticated) {
+            router.replace('/(tabs)');
+          } else {
+            router.replace('/auth');
+          }
+        }, 500);
+      } else {
+        if (isAuthenticated) {
+          router.replace('/(tabs)');
+        } else {
+          router.replace('/auth');
+        }
+      }
     }, 1000);
-
+  
     return () => clearTimeout(timeout);
-  }, []);
-
-  useEffect(() => {
-    if (__DEV__ && !isAuthenticated) {
-      login('1', '1');
-    }
   }, []);
 
   useEffect(() => {
@@ -68,13 +74,6 @@ export default function Index() {
   
     return () => clearInterval(interval);
   }, []);
-  
-
-  useEffect(() => {
-    if (splashDone && !loading) {
-      router.replace(isAuthenticated ? '/(tabs)' : '/auth');
-    }
-  }, [splashDone, loading, isAuthenticated]);
 
   return (
     <Animated.View style={[styles.container, { opacity: fadeAnim }]}>

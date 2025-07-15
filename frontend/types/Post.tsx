@@ -1,8 +1,10 @@
 export interface Post {
-  id: string;
-  userId: string;
-  username: string;
-  avatar?: string;
+  _id: string;
+  user: {
+    _id: string;
+    username: string;
+    avatar: string;
+  }
   imageUrl: string;
   caption?: string;
   stars: number;

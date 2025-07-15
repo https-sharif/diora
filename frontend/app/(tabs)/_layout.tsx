@@ -8,11 +8,9 @@ export default function TabLayout() {
   const { theme } = useTheme();
   const { isAuthenticated, user } = useAuth();
 
-  useEffect(() => {
-    if (!isAuthenticated) {
-      router.replace('/auth');
-    }
-  }, [isAuthenticated]);
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
     <Tabs

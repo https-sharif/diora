@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import {
@@ -47,13 +47,16 @@ function AppReadyWrapper({ insets }: { insets: EdgeInsets }) {
     'Inter-Bold': Inter_700Bold,
   });
 
+  const [initialLoadComplete, setInitialLoadComplete] = React.useState(false);
+
   useEffect(() => {
-    if (fontsLoaded && !loading) {
+    if (fontsLoaded && !loading && !initialLoadComplete) {
+      setInitialLoadComplete(true);
       SplashScreen.hideAsync();
     }
-  }, [fontsLoaded, loading]);
+  }, [fontsLoaded, loading, initialLoadComplete]);
 
-  if (!fontsLoaded || loading) {
+  if (!fontsLoaded || (!initialLoadComplete && loading)) {
     return null;
   }
 
@@ -61,9 +64,9 @@ function AppReadyWrapper({ insets }: { insets: EdgeInsets }) {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <View style={{ flex: 1, backgroundColor: theme.background, paddingBottom: insets.bottom, paddingTop: insets.top }} >
       <Stack screenOptions={{ headerShown: false }} >
-        <Stack.Screen name='empty' options={{ headerShown: false }} />
-        <Stack.Screen name='index' options={{ headerShown: false }} />
         <Stack.Screen name='auth' options={{ headerShown: false }} />
+        <Stack.Screen name='index' options={{ headerShown: false }} />
+        <Stack.Screen name='empty' options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="notifications" options={{ headerShown: false }} />
         <Stack.Screen name="product/[productId]" options={{ headerShown: false }} />

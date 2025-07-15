@@ -14,6 +14,7 @@ export const useAuth = () => {
   const setUser = useAuthStore(state => state.setUser);
   const setLoading = useAuthStore(state => state.setLoading);
   const reset = useAuthStore(state => state.reset);
+  const token = useAuthStore(state => state.token);
 
-  return { user, logout, login, signup, loading, error, isAuthenticated, followUser, likePost, setIsAuthenticated, setUser, setLoading, reset };
+  return { user, logout, login, signup, loading, error, isAuthenticated, followUser, likePost, setIsAuthenticated, setUser, setLoading, reset, token };
 };
