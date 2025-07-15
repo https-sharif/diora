@@ -9,6 +9,7 @@ import { Theme } from '@/types/Theme';
 import { router } from 'expo-router';
 import { mockUsers } from '@/mock/User';
 import { useAuth } from '@/hooks/useAuth';
+import { format } from 'timeago.js'
 
 const { width } = Dimensions.get('window');
 
@@ -219,7 +220,7 @@ export default function PostCard({ post }: { post: Post }) {
   const [isStarred, setIsStarred] = useState(false);
   const [starCount, setStarCount] = useState(post.stars);
   const [showComments, setShowComments] = useState(false);
-  const [comments, setComments] = useState<Comment[]>(mockComments.filter(c => c.targetId === post.id));
+  const [comments, setComments] = useState<Comment[]>(mockComments.filter(c => c.targetId === post._id));
   const [newComment, setNewComment] = useState('');
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [userAvatar, setUserAvatar] = useState<string | null>(null);
@@ -231,10 +232,10 @@ export default function PostCard({ post }: { post: Post }) {
   const animatedHeight = useRef(new Animated.Value(screenWidth)).current;
 
   useEffect(() => {
-    const postUser = mockUsers.find((user) => user.id === post.userId);
+    const postUser = mockUsers.find((user) => user.id === post.user._id);
     if (postUser) {
       setUserAvatar(postUser.avatar!);
-      setIsStarred(user?.likedPosts.includes(post.id) || false);
+      setIsStarred(user?.likedPosts.includes(post._id) || false);
     }
   
     Image.getSize(
@@ -253,14 +254,14 @@ export default function PostCard({ post }: { post: Post }) {
         console.warn('Failed to get image size:', error);
       }
     );
-  }, [post.imageUrl, post.userId, user?.likedPosts]);
+  }, [post.imageUrl, post.user._id, user?.likedPosts]);
   
 
   const handleStar = () => {
     const newStarred = !isStarred;
     setIsStarred(newStarred);
     setStarCount(prev => newStarred ? prev + 1 : prev - 1);
-    likePost(post.id);
+    likePost(post._id);
   };
 
   const formatNumber = (num : number) => {
@@ -277,10 +278,10 @@ export default function PostCard({ post }: { post: Post }) {
       id: '11',
       userId: user?.id || '',
       username: user?.username || '',
-      targetId: post.id,
+      targetId: post._id,
       avatar: user?.avatar || '',
       text: newComment,
-      createdAt: 'now',
+      createdAt: new Date().toISOString(),
     };
 
     if (replyingTo) {
@@ -318,7 +319,7 @@ export default function PostCard({ post }: { post: Post }) {
           }}>
             <Text style={styles.commentUser}>{comment.username}</Text>
           </TouchableOpacity>
-          <Text style={styles.commentTime}>{comment.createdAt}</Text>
+          <Text style={styles.commentTime}>{format(new Date(comment.createdAt))}</Text>
         </View>
         <Text style={styles.commentText}>{comment.text}</Text>
         <View style={styles.commentActions}>
@@ -344,18 +345,18 @@ export default function PostCard({ post }: { post: Post }) {
     <>
       <View style={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.push(`/user/${post.userId}`)}>
+          <TouchableOpacity onPress={() => router.push(`/user/${post.user._id}`)}>
             <Image source={{ uri: userAvatar! }} style={styles.avatar} />
           </TouchableOpacity>
           <View style={styles.userInfo}>
-            <TouchableOpacity onPress={() => router.push(`/user/${post.userId}`)}>
-              <Text style={styles.username}>{post.username}</Text>
+            <TouchableOpacity onPress={() => router.push(`/user/${post.user._id}`)}>
+              <Text style={styles.username}>{post.user.username}</Text>
             </TouchableOpacity>
-            <Text style={styles.timestamp}>{post.createdAt}</Text>
+            <Text style={styles.timestamp}>{format(new Date(post.createdAt))}</Text>
           </View>
         </View>
 
-        <TouchableOpacity onPress={() => router.push(`/post/${post.id}`)} activeOpacity={1}>
+        <TouchableOpacity onPress={() => router.push(`/post/${post._id}`)} activeOpacity={1}>
           <Animated.Image
             source={{ uri: post.imageUrl }}
             style={{ width: screenWidth, height: animatedHeight, borderRadius: 12 }}
@@ -389,7 +390,7 @@ export default function PostCard({ post }: { post: Post }) {
 
         <View style={styles.content}>
           <Text style={styles.caption}>
-            <Text style={styles.captionUsername}>{post.username}</Text>{' '}
+            <Text style={styles.captionUsername}>{post.user.username}</Text>{' '}
             {post.caption}
           </Text>
         </View>

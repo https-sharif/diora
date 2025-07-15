@@ -16,6 +16,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Eye, EyeOff } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import useBlockNavigation from '@/hooks/useBlockNavigation';
+import { router } from 'expo-router';
 
 const createStyles = (theme: any) => StyleSheet.create({
   container: {
@@ -123,8 +124,7 @@ export default function AuthScreen() {
   const [username, setUsername] = useState('');
   const [fullName, setFullName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const { login, signup } = useAuth();
+  const { login, signup, loading } = useAuth();
   const { theme } = useTheme();
 
   const styles = createStyles(theme);
@@ -142,22 +142,23 @@ export default function AuthScreen() {
       return;
     }
 
-    setLoading(true);
     try {
-      let success = false;
+      let result;
       if (isLogin) {
-        success = await login(email, password);
+        result = await login(email, password);
       } else {
-        success = await signup(email, password, username, fullName);
+        result = await signup(email, password, username, fullName);
       }
 
-      if (!success) {
-        Alert.alert('Error', isLogin ? 'Login failed' : 'Signup failed');
+      if (result.success) {
+        setTimeout(() => {
+          router.replace('/(tabs)');
+        }, 100);
+      } else {
+        Alert.alert('Error', result.error || (isLogin ? 'Login failed' : 'Signup failed'));
       }
-    } catch (error) {
-      Alert.alert('Error', 'Something went wrong');
-    } finally {
-      setLoading(false);
+    } catch (error: any) {
+      Alert.alert('Error', error.message || (isLogin ? 'Login failed' : 'Signup failed'));
     }
   };
 
@@ -188,7 +189,7 @@ export default function AuthScreen() {
                 onChangeText={setEmail}
                 keyboardType="email-address"
                 autoCapitalize="none"
-                placeholderTextColor="#666"
+                placeholderTextColor={theme.textSecondary}
               />
             </View>
 
@@ -223,16 +224,16 @@ export default function AuthScreen() {
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry={!showPassword}
-                placeholderTextColor="#666"
+                placeholderTextColor={theme.textSecondary}
               />
               <TouchableOpacity
                 style={styles.eyeIcon}
                 onPress={() => setShowPassword(!showPassword)}
               >
                 {showPassword ? (
-                  <EyeOff size={20} color="#666" />
+                  <EyeOff size={20} color={theme.textSecondary} />
                 ) : (
-                  <Eye size={20} color="#666" />
+                  <Eye size={20} color={theme.textSecondary} />
                 )}
               </TouchableOpacity>
             </View>

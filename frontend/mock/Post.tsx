@@ -2,9 +2,12 @@ import { Post } from "@/types/Post";
 
 export const mockPosts: Post[] = [
     {
-      id: '1',
-      userId: '1',
-      username: 'fashionista_jane',
+      _id: '6876741e43c724c077be71c7',
+      user: {
+        _id: '1',
+        username: 'fashionista_jane',
+        avatar: `https://picsum.photos/seed/1/600`,
+      },
       imageUrl: `https://picsum.photos/seed/${Math.random()}/600/300`,
       caption: 'Loving this vintage look! Perfect for a casual day out ✨ #vintage #ootd',
       stars: 128,
@@ -12,9 +15,12 @@ export const mockPosts: Post[] = [
       createdAt: '2h ago',
     },
     {
-      id: '2',
-      userId: '2',
-      username: 'style_maven',
+      _id: '2',
+      user: {
+        _id: '2',
+        username: 'trendy_alex',
+        avatar: `https://picsum.photos/seed/2/600`,
+      },
       imageUrl: `https://picsum.photos/seed/${Math.random()}/600/300`,
       caption: 'Black and white never goes out of style 🖤🤍 #minimalism #chic',
       stars: 258888,
@@ -22,9 +28,12 @@ export const mockPosts: Post[] = [
       createdAt: '4h ago',
     },
     {
-      id: '3',
-      userId: '3',
-      username: 'trendy_alex',
+      _id: '3',
+      user: {
+        _id: '3',
+        username: 'casual_chic',
+        avatar: `https://picsum.photos/seed/3/600`,
+      },
       imageUrl: `https://picsum.photos/seed/${Math.random()}/600/300`,
       caption: 'Summer vibes with this flowy dress 🌸 Perfect for brunch dates!',
       stars: 89,
@@ -32,9 +41,12 @@ export const mockPosts: Post[] = [
       createdAt: '6h ago',
     },
     {
-      id: '4',
-      userId: '4',
-      username: 'urban_chic',
+      _id: '4',
+      user: {
+        _id: '4',
+        username: 'urban_chic',
+        avatar: `https://picsum.photos/seed/4/600`,
+      },
       imageUrl: `https://picsum.photos/seed/${Math.random()}/600/300`,
       caption: 'Street style inspiration from NYC 🏙️ #streetstyle #urban',
       stars: 167,
@@ -42,9 +54,12 @@ export const mockPosts: Post[] = [
       createdAt: '8h ago',
     },
     {
-      id: '6',
-      userId: '5',
-      username: 'maria_hill',
+      _id: '6',
+      user: {
+        _id: '5',
+        username: 'maria_hill',
+        avatar: `https://picsum.photos/seed/5/600`,
+      },
       imageUrl: `https://picsum.photos/seed/${Math.random()}/600/300`,
       caption: 'Street style inspiration from NYC 🏙️ #streetstyle #urban',
       stars: 167,
@@ -52,9 +67,12 @@ export const mockPosts: Post[] = [
       createdAt: '8h ago',
     },
     {
-      id: '5',
-      userId: '6',
-      username: 'john_smith',
+      _id: '5',
+      user: {
+        _id: '6',
+        username: 'john_smith',
+        avatar: `https://picsum.photos/seed/6/600`,
+      },
       imageUrl: `https://picsum.photos/seed/${Math.random()}/600/300`,
       caption: 'Street style inspiration from NYC 🏙️ #streetstyle #urban',
       stars: 167,
@@ -62,9 +80,12 @@ export const mockPosts: Post[] = [
       createdAt: '8h ago',
     },
     {
-      id: '7',
-      userId: '7',
-      username: 'harry_potter',
+      _id: '7',
+      user: {
+        _id: '7',
+        username: 'harry_potter',
+        avatar: `https://picsum.photos/seed/7/600`,
+      },
       imageUrl: `https://picsum.photos/seed/${Math.random()}/600/300`,
       caption: 'Street style inspiration from NYC 🏙️ #streetstyle #urban',
       stars: 167,
@@ -72,9 +93,12 @@ export const mockPosts: Post[] = [
       createdAt: '8h ago',
     },
     {
-      id: '8',
-      userId: '8',
-      username: 'hermione_granger',
+      _id: '8',
+      user: {
+        _id: '8',
+        username: 'hermione_granger',
+        avatar: `https://picsum.photos/seed/8/600`,
+      },
       imageUrl: `https://picsum.photos/seed/${Math.random()}/600/300`,
       caption: 'Street style inspiration from NYC 🏙️ #streetstyle #urban',
       stars: 167,
