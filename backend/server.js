@@ -5,6 +5,7 @@ import connectDB from './config/db.js';
 import authRoutes from './routes/auth.js';
 import socialRoutes from './routes/social.js';
 import postRoutes from './routes/post.js';
+import commentRoutes from './routes/comment.js';
 
 dotenv.config();
 
@@ -24,5 +25,6 @@ app.get('/', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/social', socialRoutes);
 app.use('/api/post', postRoutes);
+app.use('/api/comment', commentRoutes);
 
 app.listen(PORT, '0.0.0.0', () => console.log(`Server running on port ${PORT}`));
