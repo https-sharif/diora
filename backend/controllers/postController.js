@@ -54,6 +54,9 @@ export const getAllPost = async (req, res) => {
     console.error(err);
     res.status(500).json({ status: false, message: 'Something went wrong' });
   }
+  finally {
+    console.log('Get all posts request completed');
+  }
 };
 
 export const createPost = async (req, res) => {

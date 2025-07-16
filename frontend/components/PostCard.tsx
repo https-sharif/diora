@@ -1,5 +1,19 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { View, Text, Image, TouchableOpacity, Dimensions, Modal, ScrollView, TextInput, StyleSheet, TouchableWithoutFeedback, KeyboardAvoidingView, Platform , Animated } from 'react-native';
+import {
+  View,
+  Text,
+  Image,
+  TouchableOpacity,
+  Dimensions,
+  Modal,
+  ScrollView,
+  TextInput,
+  StyleSheet,
+  TouchableWithoutFeedback,
+  KeyboardAvoidingView,
+  Platform,
+  Animated,
+} from 'react-native';
 import { Star, MessageCircle, X, Send } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { mockComments } from '@/mock/Comment';
@@ -7,9 +21,10 @@ import { Post } from '@/types/Post';
 import { Comment } from '@/types/Comment';
 import { Theme } from '@/types/Theme';
 import { router } from 'expo-router';
-import { mockUsers } from '@/mock/User';
 import { useAuth } from '@/hooks/useAuth';
-import { format } from 'timeago.js'
+import { format } from 'timeago.js';
+import axios from 'axios';
+import { API_URL } from '@/constants/api';
 
 const { width } = Dimensions.get('window');
 
@@ -214,29 +229,36 @@ const createStyles = (theme: Theme) => {
       padding: 12,
     },
   });
-}
+};
 
 export default function PostCard({ post }: { post: Post }) {
   const [isStarred, setIsStarred] = useState(false);
   const [starCount, setStarCount] = useState(post.stars);
   const [showComments, setShowComments] = useState(false);
-  const [comments, setComments] = useState<Comment[]>(mockComments.filter(c => c.targetId === post._id));
+  const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
-  const [userAvatar, setUserAvatar] = useState<string | null>(null);
 
   const { theme } = useTheme();
-  const { user, likePost } = useAuth();
+  const { user, likePost, token } = useAuth();
   const styles = createStyles(theme);
   const screenWidth = Dimensions.get('window').width - 32;
   const animatedHeight = useRef(new Animated.Value(screenWidth)).current;
 
   useEffect(() => {
-    const postUser = mockUsers.find((user) => user.id === post.user._id);
-    if (postUser) {
-      setUserAvatar(postUser.avatar!);
-      setIsStarred(user?.likedPosts.includes(post._id) || false);
-    }
+    const fetchComments = async () => {
+      console.log('Fetching comments for post:', post._id);
+      const response = await axios.get(`${API_URL}/api/comment/post/${post._id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      console.log('Comments response:', response.data.status);
+      if (response.data.status) {
+        setComments(response.data.comments);
+        console.log('Fetched comments:', response.data.comments);
+      }
+    };
+
+    fetchComments();
 
     Image.getSize(
       post.imageUrl,
@@ -258,87 +280,103 @@ export default function PostCard({ post }: { post: Post }) {
     );
   }, [post.imageUrl, post.user._id, user?.likedPosts]);
 
-  
-
   const handleStar = () => {
     const newStarred = !isStarred;
     setIsStarred(newStarred);
-    setStarCount(prev => newStarred ? prev + 1 : prev - 1);
+    setStarCount((prev) => (newStarred ? prev + 1 : prev - 1));
     likePost(post._id);
   };
 
-  const formatNumber = (num : number) => {
-    if (num >= 1_000_000) return (num / 1_000_000).toFixed(1).replace('.0', '') + 'M';
+  const formatNumber = (num: number) => {
+    if (num >= 1_000_000)
+      return (num / 1_000_000).toFixed(1).replace('.0', '') + 'M';
     if (num > 9999) return (num / 1000).toFixed(1).replace('.0', '') + 'K';
     return num.toLocaleString();
   };
 
+  const handleAddComment = async () => {
+    if (!newComment.trim() || !user) return;
 
-  const handleAddComment = () => {
-    if (!newComment.trim()) return;
+    console.log("user:", user);
+    try {
+      const url = replyingTo ? `${API_URL}/api/comment/reply/${replyingTo}` : `${API_URL}/api/comment/create`;
+      const payload = replyingTo ? { userId: user.id, text: newComment } : { userId: user.id, targetId: post._id, text: newComment };
 
-    const comment: Comment = {
-      id: '11',
-      userId: user?.id || '',
-      username: user?.username || '',
-      targetId: post._id,
-      avatar: user?.avatar || '',
-      text: newComment,
-      createdAt: new Date().toISOString(),
-    };
+      const response = await axios.post(url, payload, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-    if (replyingTo) {
-      setComments((prev) =>
-        prev.map((c) =>
-          c.id === replyingTo
-            ? { ...c, replies: [...(c.replies || []), comment.id] }
-            : c
-        )
-      );
-      setReplyingTo(null);
-    } else {
-      setComments((prev) => [comment, ...prev]);
+      if (response.data.status) {
+        const newAdded = response.data.comment;
+
+        if (replyingTo) {
+          setComments((prev) =>
+            prev.map((comment) =>
+              comment._id === replyingTo
+                ? {
+                    ...comment,
+                    replies: [...(comment.replies || []), newAdded],
+                  }
+                : comment
+            )
+          );
+          setReplyingTo(null);
+        } else {
+          setComments((prev) => [newAdded, ...prev]);
+        }
+
+        setNewComment('');
+      } else {
+        console.error('Failed to add comment:', response.data.message);
+      }
+    } catch (err) {
+      console.error('Error adding comment:', err);
     }
-
-    setNewComment('');
   };
 
   const renderComment = (comment: Comment, isReply = false) => (
     <View
-      key={comment.id}
+      key={comment._id}
       style={[styles.commentItem, isReply && styles.replyItem]}
     >
-      <TouchableOpacity onPress={() => {
-        router.push(`/user/${comment.userId}`);
-        setShowComments(false);
-      }}>
-        <Image source={{ uri: comment.avatar }} style={styles.commentAvatar} />
+      <TouchableOpacity
+        onPress={() => {
+          router.push(`/user/${comment.user._id}`);
+          setShowComments(false);
+        }}
+      >
+        <Image
+          source={{ uri: comment.user.avatar }}
+          style={styles.commentAvatar}
+        />
       </TouchableOpacity>
-      <TouchableOpacity style={styles.commentContent} activeOpacity={1} >
+      <TouchableOpacity style={styles.commentContent} activeOpacity={1}>
         <View style={styles.commentHeader}>
-          <TouchableOpacity onPress={() => {
-            router.push(`/user/${comment.userId}`);
-            setShowComments(false);
-          }}>
-            <Text style={styles.commentUser}>{comment.username}</Text>
+          <TouchableOpacity
+            onPress={() => {
+              router.push(`/user/${comment.user._id}`);
+              setShowComments(false);
+            }}
+          >
+            <Text style={styles.commentUser}>{comment.user.username}</Text>
           </TouchableOpacity>
-          <Text style={styles.commentTime}>{format(new Date(comment.createdAt))}</Text>
+          <Text style={styles.commentTime}>
+            {format(new Date(comment.createdAt))}
+          </Text>
         </View>
         <Text style={styles.commentText}>{comment.text}</Text>
         <View style={styles.commentActions}>
           {!isReply && (
             <TouchableOpacity
               style={styles.commentAction}
-              onPress={() => setReplyingTo(comment.id)}
+              onPress={() => setReplyingTo(comment._id)}
             >
               <Text style={styles.commentActionText}>Reply</Text>
             </TouchableOpacity>
           )}
         </View>
-        {comment.replies?.map(replyId => {
-          const replyComment = mockComments.find(c => c.id === replyId);
-          if (!replyComment) return null;
-          return renderComment(replyComment, true);
+        {comment.replies?.map((item) => {
+          return renderComment(item, true);
         })}
       </TouchableOpacity>
     </View>
@@ -348,37 +386,51 @@ export default function PostCard({ post }: { post: Post }) {
     <>
       <View style={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.push(`/user/${post.user._id}`)}>
-            <Image source={{ uri: userAvatar! }} style={styles.avatar} />
+          <TouchableOpacity
+            onPress={() => router.push(`/user/${post.user._id}`)}
+          >
+            <Image source={{ uri: post.user.avatar! }} style={styles.avatar} />
           </TouchableOpacity>
           <View style={styles.userInfo}>
-            <TouchableOpacity onPress={() => router.push(`/user/${post.user._id}`)}>
+            <TouchableOpacity
+              onPress={() => router.push(`/user/${post.user._id}`)}
+            >
               <Text style={styles.username}>{post.user.username}</Text>
             </TouchableOpacity>
-            <Text style={styles.timestamp}>{format(new Date(post.createdAt))}</Text>
+            <Text style={styles.timestamp}>
+              {format(new Date(post.createdAt))}
+            </Text>
           </View>
         </View>
 
-        <TouchableOpacity onPress={() => router.push(`/post/${post._id}`)} activeOpacity={1}>
+        <TouchableOpacity
+          onPress={() => router.push(`/post/${post._id}`)}
+          activeOpacity={1}
+        >
           <Animated.Image
             source={{ uri: post.imageUrl }}
-            style={{ width: screenWidth, height: animatedHeight, borderRadius: 12 }}
+            style={{
+              width: screenWidth,
+              height: animatedHeight,
+              borderRadius: 12,
+            }}
             resizeMode="contain"
           />
         </TouchableOpacity>
 
-
         <View style={styles.actions}>
-          <TouchableOpacity style={styles.actionButton} onPress={handleStar} activeOpacity={1}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={handleStar}
+            activeOpacity={1}
+          >
             <Star
               size={24}
               color={isStarred ? '#FFD700' : theme.text}
               fill={isStarred ? '#FFD700' : 'transparent'}
               strokeWidth={2}
             />
-            <Text style={styles.actionText}>
-              {formatNumber(starCount)}
-            </Text>
+            <Text style={styles.actionText}>{formatNumber(starCount)}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -449,7 +501,11 @@ export default function PostCard({ post }: { post: Post }) {
                   {replyingTo && (
                     <View style={styles.replyingIndicator}>
                       <Text style={styles.replyingText}>
-                        Replying to {comments.find((c) => c.id === replyingTo)?.username}
+                        Replying to{' '}
+                        {
+                          comments.find((c) => c._id === replyingTo)?.user
+                            .username
+                        }
                       </Text>
                       <TouchableOpacity onPress={() => setReplyingTo(null)}>
                         <X size={16} color={theme.textSecondary} />
@@ -474,7 +530,9 @@ export default function PostCard({ post }: { post: Post }) {
                       >
                         <Send
                           size={20}
-                          color={newComment.trim() ? theme.text : theme.textSecondary}
+                          color={
+                            newComment.trim() ? theme.text : theme.textSecondary
+                          }
                         />
                       </TouchableOpacity>
                     </View>

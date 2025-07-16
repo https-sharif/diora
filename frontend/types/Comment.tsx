@@ -1,10 +1,12 @@
 export interface Comment {
-  id: string;
-  userId: string;
-  username: string;
-  targetId: string;
-  avatar?: string;
+  _id: string;
+  user: {
+    _id: string;
+    username: string;
+    avatar?: string;
+  };
+  targetId?: string;
   text: string;
   createdAt: string;
-  replies?: string[];
+  replies?: Comment[];
 }
