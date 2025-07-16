@@ -15,7 +15,6 @@ import { useNotification } from '@/hooks/useNotification';
 import { router } from 'expo-router';
 import PostCard from '@/components/PostCard';
 import { useTheme } from '@/contexts/ThemeContext';
-import { mockPosts } from '@/mock/Post';
 import { Theme } from '@/types/Theme';
 import axios from 'axios';
 import { API_URL } from '@/constants/api';
@@ -108,9 +107,7 @@ export default function FeedScreen() {
       } catch (err: any) {
         console.error('❌ Refresh failed:', err.response?.data || err.message);
       }
-      setTimeout(() => {
-        setLoading(false);
-      }, 1000);
+      setLoading(false);
     };
 
     fetchPosts();
@@ -186,7 +183,7 @@ export default function FeedScreen() {
       ) : (
         <FlatList
           data={posts}
-          keyExtractor={(item) => item._id}
+          keyExtractor={(item) => item._id.toString()}
           renderItem={({ item }) => <PostCard post={item} />}
           contentContainerStyle={styles.feed}
           refreshControl={

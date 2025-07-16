@@ -1,4 +1,6 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useState } from 'react';
+import { useAuth } from '@/hooks/useAuth';
+import { API_URL } from '@/constants/api';
 
 type ContentType = 'post' | 'product';
 
@@ -35,6 +37,7 @@ export const CreatePostProvider = ({ children }: { children: React.ReactNode }) 
   const [contentType, setContentType] = useState<ContentType>('post');
   const [images, setImages] = useState<string[]>([]);
   const [imageUri, setImageUri] = useState<string | null>(null);
+  const { token } = useAuth();
   const [formData, setFormData] = useState<FormData>({
     title: '',
     description: '',
@@ -43,21 +46,47 @@ export const CreatePostProvider = ({ children }: { children: React.ReactNode }) 
   });
 
   const createPost = async () => {
-    // Validate data for post
-    if (images.length === 0) {
-      throw new Error('Post requires at least one image!');
+    if (images.length === 0) throw new Error('Post requires at least one image!');
+
+    console.log('Creating post');
+
+    try {
+      const form = new FormData();
+
+      const uri = images[0];
+      const filename = uri.split('/').pop() || 'image.jpg';
+      const match = /\.(\w+)$/.exec(filename);
+      const type = match ? `image/${match[1]}` : 'image/jpeg';
+
+      form.append('image', {
+        uri,
+        name: filename,
+        type,
+      } as any);
+
+      form.append('caption', formData.description);
+      
+
+      const res = await fetch(`${API_URL}/api/post/create`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          Authorization: `Bearer ${token}`,
+        },
+        body: form,
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.message || 'Failed to create post');
+
+      console.log('Post created:', data);
+    } catch (error) {
+      console.error('Upload failed:', error);
+      throw error;
     }
-    const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
-    await delay(1000); 
-    console.log('Post created');
-    // Call your API or logic to create post here
-    // Example dummy:
-    // return {
-    //   type: 'post',
-    //   images,
-    //   description: formData.description,
-    // };
   };
+
   
   const createProduct = async () => {
     // Validate product data

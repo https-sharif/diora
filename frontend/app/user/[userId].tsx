@@ -345,11 +345,11 @@ export default function UserProfileScreen() {
       setIsFollowing(currentUser?.following.includes(user.id) || false);
     }
 
-    const posts = mockPosts.filter(post => post.userId === user?.id);
+    const posts = mockPosts.filter(post => post.user._id === user?.id);
 
     setPosts(posts);
     setSelectedTab('posts');
-    setLikedPosts(mockPosts.filter(post => user?.likedPosts.includes(post.id)));
+    setLikedPosts(mockPosts.filter(post => user?.likedPosts.includes(post._id)));
 
     setLoading(false);
   }, [userId]);
@@ -390,7 +390,7 @@ export default function UserProfileScreen() {
   const renderPost = ({ item }: { item: Post }) => (
     <TouchableOpacity 
       style={styles.postItem}
-      onPress={() => handlePostPress(item.id)}
+      onPress={() => handlePostPress(item._id)}
       activeOpacity={0.8}
     >
       <Image source={{ uri: item.imageUrl }} style={styles.postImage} />
@@ -544,7 +544,7 @@ export default function UserProfileScreen() {
           <FlatList
             data={posts}
             renderItem={renderPost}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item) => item._id}
             numColumns={3}
             scrollEnabled={false}
             columnWrapperStyle={styles.postsRow}
@@ -563,7 +563,7 @@ export default function UserProfileScreen() {
             <FlatList
             data={likedPosts}
             renderItem={renderPost}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item) => item._id}
             numColumns={3}
             scrollEnabled={false}
             columnWrapperStyle={styles.postsRow}

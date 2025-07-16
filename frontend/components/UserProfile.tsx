@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -17,6 +17,8 @@ import { mockPosts } from '@/mock/Post';
 import { mockUsers } from '@/mock/User';
 import { Post } from '@/types/Post';
 import { Theme } from '@/types/Theme';  
+import axios from 'axios';
+import { API_URL } from '@/constants/api';
 
 const createStyles = (theme: Theme) =>
   StyleSheet.create({
@@ -155,17 +157,40 @@ const createStyles = (theme: Theme) =>
   });
 
 export default function UserProfile() {
-  const { user, logout } = useAuth();
+  const { user, logout, token } = useAuth();
   const [activeTab, setActiveTab] = React.useState<'posts' | 'liked'>('posts');
-
-  const handleTabPress = (tab: 'posts' | 'liked') => {
-    setActiveTab(tab);
-  };
   const { theme } = useTheme();
-  const myPosts = mockPosts.filter(post => post.userId === user?.id);
-  const likedPosts = mockPosts.filter(post => user?.likedPosts.includes(post.id));
-
   const styles = createStyles(theme);
+  const [myPosts, setMyPosts] = useState([]);
+  const [myLikedPosts, setMyLikedPosts] = useState([]);
+
+  const fetchData = async () => {
+    console.log('Fetching user posts and liked posts...');
+    try {
+      const likedPostsResponse = await axios.get(`${API_URL}/api/post/${user?.id}/liked`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setMyLikedPosts(likedPostsResponse.data.posts);
+
+      const myPostsResponse = await axios.get(`${API_URL}/api/post/${user?.id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setMyPosts(myPostsResponse.data.posts);
+
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    if (user?.id) fetchData();
+  }, [user?.id, user?.posts, user?.likedPosts]);
+
+  const handleTabPress = (tab: 'posts' | 'liked') => { setActiveTab(tab) };
 
   const handlePostPress = (postId: string) => {
     router.push(`/post/${postId}`);
@@ -176,13 +201,10 @@ export default function UserProfile() {
   };
 
   const renderPost = ({ item }: { item: Post }) => {
-    const user = mockUsers.find(user => user.id === item.userId);
-    if (!user) return null;
-
     return (
       <TouchableOpacity
         style={styles.postItem}
-        onPress={() => handlePostPress(item.id)}
+        onPress={() => handlePostPress(item._id)}
       >
         <Image source={{ uri: item.imageUrl }} style={styles.postImage} />
       </TouchableOpacity>
@@ -282,7 +304,7 @@ export default function UserProfile() {
           <FlatList
             data={myPosts}
             renderItem={renderPost}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item) => item._id}
             numColumns={3}
             scrollEnabled={false}
             columnWrapperStyle={styles.postsRow}
@@ -293,9 +315,9 @@ export default function UserProfile() {
         {/* Liked Posts */}
         {activeTab === 'liked' && (
           <FlatList
-            data={likedPosts}
+            data={myLikedPosts}
             renderItem={renderPost}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item) => item._id}
             numColumns={3}
             scrollEnabled={false}
             columnWrapperStyle={styles.postsRow}

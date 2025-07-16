@@ -553,7 +553,7 @@ export default function ExploreScreen() {
   const { theme } = useTheme();
 
   const styles = createStyles(theme);
-  const isLiked = user?.likedPosts?.includes(enlargedPost?.id || '');
+  const isLiked = user?.likedPosts?.includes(enlargedPost?._id || '');
   
   const [filters, setFilters] = useState({
     contentType: 'All',
@@ -886,7 +886,7 @@ export default function ExploreScreen() {
   const renderGridItem = ({ item }: { item: Post }) => (
     <TouchableOpacity 
       style={styles.gridItem}
-      onPress={() => router.push(`/post/${item.id}`)}
+      onPress={() => router.push(`/post/${item._id}`)}
       onLongPress={() => handleLongPress(item)}
       delayLongPress={500}
     >
@@ -929,7 +929,7 @@ export default function ExploreScreen() {
   const renderEnlargedPost = (enlargedPost: Post) => {
     if (!enlargedPost) return null;
 
-    const user = mockUsers.find(user => user.id === enlargedPost.userId);
+    const user = mockUsers.find(user => user.id === enlargedPost.user._id);
     if (!user) return null;
 
     return (
@@ -953,7 +953,7 @@ export default function ExploreScreen() {
           <View style={styles.enlargedActions}>
             <View style={styles.enlargedStat}>
               <TouchableOpacity onPress={() => {
-                likePost(enlargedPost.id)
+                likePost(enlargedPost._id)
               }
               }>
                 <Star size={20} color={isLiked ? '#FFD700' : '#fff'} fill={isLiked ? '#FFD700' : 'transparent'} />
@@ -962,7 +962,7 @@ export default function ExploreScreen() {
             </View>
             <View style={styles.enlargedStat}>
               <TouchableOpacity onPress={() => {
-                  router.push(`/post/${enlargedPost.id}`);
+                  router.push(`/post/${enlargedPost._id}`);
                   handleCloseEnlarged();
                 }
               }>
@@ -1052,7 +1052,7 @@ export default function ExploreScreen() {
               <FlatList
                 data={filteredPosts}
                 renderItem={renderGridItem}
-                keyExtractor={(item) => item.id}
+                keyExtractor={(item) => item._id}
                 numColumns={3}
                 scrollEnabled={false}
                 columnWrapperStyle={styles.gridRow}

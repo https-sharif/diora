@@ -237,13 +237,15 @@ export default function PostCard({ post }: { post: Post }) {
       setUserAvatar(postUser.avatar!);
       setIsStarred(user?.likedPosts.includes(post._id) || false);
     }
-  
+
     Image.getSize(
       post.imageUrl,
       (width, height) => {
         const scaleFactor = width / screenWidth;
-        const scaledHeight = height / scaleFactor;
-  
+        let scaledHeight = height / scaleFactor;
+
+        if (scaledHeight > 400) scaledHeight = 400;
+
         Animated.timing(animatedHeight, {
           toValue: scaledHeight,
           duration: 250,
@@ -255,6 +257,7 @@ export default function PostCard({ post }: { post: Post }) {
       }
     );
   }, [post.imageUrl, post.user._id, user?.likedPosts]);
+
   
 
   const handleStar = () => {
