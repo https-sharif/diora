@@ -70,13 +70,6 @@ const createStyles = (theme: Theme) => {
       color: theme.textSecondary,
       marginTop: 2,
     },
-    postImage: {
-      width: '100%',
-      height: width,
-      marginHorizontal: 16,
-      borderRadius: 12,
-      resizeMode: 'contain',
-    },
     actions: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -260,6 +253,8 @@ export default function PostCard({ post }: { post: Post }) {
 
     fetchComments();
 
+    setIsStarred(post.stars > 0 && user?.likedPosts?.includes(post._id) || false);
+
     Image.getSize(
       post.imageUrl,
       (width, height) => {
@@ -278,7 +273,7 @@ export default function PostCard({ post }: { post: Post }) {
         console.warn('Failed to get image size:', error);
       }
     );
-  }, [post.imageUrl, post.user._id, user?.likedPosts]);
+  }, [post._id, post.imageUrl, post.stars, post.user._id, user?.likedPosts]);
 
   const handleStar = () => {
     const newStarred = !isStarred;
@@ -300,7 +295,7 @@ export default function PostCard({ post }: { post: Post }) {
     console.log("user:", user);
     try {
       const url = replyingTo ? `${API_URL}/api/comment/reply/${replyingTo}` : `${API_URL}/api/comment/create`;
-      const payload = replyingTo ? { userId: user.id, text: newComment } : { userId: user.id, targetId: post._id, text: newComment };
+      const payload = { userId: user.id, targetId: post._id, text: newComment };
 
       const response = await axios.post(url, payload, {
         headers: { Authorization: `Bearer ${token}` },
@@ -325,6 +320,7 @@ export default function PostCard({ post }: { post: Post }) {
           setComments((prev) => [newAdded, ...prev]);
         }
 
+        post.comments += 1;
         setNewComment('');
       } else {
         console.error('Failed to add comment:', response.data.message);

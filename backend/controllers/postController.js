@@ -112,3 +112,22 @@ export const getLikedPosts = async (req, res) => {
     res.status(500).json({ status: false, message: 'Something went wrong' });
   }
 };
+
+export const getPost = async (req, res) => {
+  try {
+    console.log('Get post route/controller hit');
+    const postId = req.params.postId;
+    const post = await Post.findById(postId)
+      .populate('user', 'username avatar')
+      .populate('comments.user', 'username avatar');
+
+    if (!post) {
+      return res.status(404).json({ status: false, message: 'Post not found' });
+    }
+
+    res.json({ status: true, post });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ status: false, message: 'Something went wrong' });
+  }
+};
