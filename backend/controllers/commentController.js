@@ -1,9 +1,10 @@
 import Comment from '../models/Comment.js';
+import Post from '../models/Post.js';
 
 export const createComment = async (req, res) => {
   console.log('Create comment route/controller hit');
 
-    console.log('Creating comment for target ID:', req.body.targetId);
+  console.log('Creating comment for target ID:', req.body.targetId);
   console.log('Request body:', req.body);
 
   const { userId, targetId, text } = req.body;
@@ -14,6 +15,13 @@ export const createComment = async (req, res) => {
       targetId,
       text,
     });
+
+    const post = await Post.findById(targetId);
+    if (!post) {
+      return res.status(404).json({ status: false, message: 'Post not found' });
+    }
+    post.comments += 1;
+    await post.save();
 
     await comment.save();
     await comment.populate('user', 'username avatar');
@@ -32,16 +40,26 @@ export const createReply = async (req, res) => {
   console.log('Replying to comment ID:', req.params.commentId);
   console.log('Request body:', req.body);
   const commentId = req.params.commentId;
-  const { userId, text } = req.body;
+  const { userId, text, targetId } = req.body;
 
   try {
     const parentComment = await Comment.findById(commentId);
+    const post = await Post.findById(targetId);
+
 
     if (!parentComment) {
       return res
         .status(404)
         .json({ status: false, message: 'Parent comment not found' });
     }
+
+    if (!post) {
+      return res.status(404).json({ status: false, message: 'Post not found' });
+    }
+    console.log('Post comment found:', post);
+
+    post.comments += 1;
+    await post.save();
 
     const newReply = new Comment({ user: userId, text });
     await newReply.save();
@@ -72,9 +90,7 @@ export const getComments = async (req, res) => {
       });
 
     if (!comments || comments.length === 0) {
-      return res
-        .status(404)
-        .json({ status: false, message: 'No comments found' });
+      return res.status(200).json({ status: true, message: 'No comments found', comments: [] });
     }
 
     res.json({ status: true, comments });
