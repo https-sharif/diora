@@ -27,7 +27,6 @@ import {
   Flag,
 } from 'lucide-react-native';
 import { useAuth } from '@/hooks/useAuth';
-import { mockComments } from '@/mock/Comment';
 import { Comment } from '@/types/Comment';
 import { Post } from '@/types/Post';
 import { Theme } from '@/types/Theme';
@@ -471,7 +470,7 @@ export default function PostDetailScreen() {
         ? `${API_URL}/api/comment/reply/${replyingTo}`
         : `${API_URL}/api/comment/create`;
 
-      const payload = { userId: user.id, targetId: post._id, text: newComment };
+      const payload = { userId: user._id, targetId: post._id, text: newComment };
 
       const response = await axios.post(url, payload, {
         headers: { Authorization: `Bearer ${token}` },
@@ -631,7 +630,7 @@ export default function PostDetailScreen() {
 
           <TouchableOpacity style={styles.actionButton}>
             <MessageCircle size={24} color={theme.text} strokeWidth={2} />
-            <Text style={styles.actionText}>{comments.length}</Text>
+            <Text style={styles.actionText}>{post.comments}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.actionButton} onPress={handleShare}>
@@ -650,7 +649,7 @@ export default function PostDetailScreen() {
         )}
         {/* Comments */}
         <View style={styles.commentsSection}>
-          <Text style={styles.commentsTitle}>Comments ({comments.length})</Text>
+          <Text style={styles.commentsTitle}>Comments ({post.comments})</Text>
           <ScrollView
             style={[styles.commentsList, { flex: 1 }]}
             contentContainerStyle={{ paddingBottom: 80 }}

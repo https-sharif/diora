@@ -49,7 +49,7 @@ export const signup = async (req, res) => {
     });
 
     const safeUser = {
-      id: newUser._id,
+      _id: newUser._id,
       email: newUser.email,
       username: newUser.username,
       fullName: newUser.fullName,
@@ -101,7 +101,7 @@ export const login = async (req, res) => {
     });
 
     const safeUser = {
-      id: user._id,
+      _id: user._id,
       email: user.email,
       username: user.username,
       fullName: user.fullName,

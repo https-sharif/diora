@@ -13,8 +13,6 @@ import { Settings, Grid2x2 as Grid, Star, LogOut } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/contexts/ThemeContext';
-import { mockPosts } from '@/mock/Post';
-import { mockUsers } from '@/mock/User';
 import { Post } from '@/types/Post';
 import { Theme } from '@/types/Theme';  
 import axios from 'axios';
@@ -167,14 +165,16 @@ export default function UserProfile() {
   const fetchData = async () => {
     console.log('Fetching user posts and liked posts...');
     try {
-      const likedPostsResponse = await axios.get(`${API_URL}/api/post/user/${user?.id}/liked`, {
+      console.log('User ID:', user?._id);
+      const likedPostsResponse = await axios.get(`${API_URL}/api/post/user/${user?._id}/liked`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
+      console.log('Liked posts response:', likedPostsResponse.data);
       setMyLikedPosts(likedPostsResponse.data.posts);
 
-      const myPostsResponse = await axios.get(`${API_URL}/api/post/user/${user?.id}`, {
+      const myPostsResponse = await axios.get(`${API_URL}/api/post/user/${user?._id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -187,8 +187,12 @@ export default function UserProfile() {
   };
 
   useEffect(() => {
-    if (user?.id) fetchData();
-  }, [user?.id, user?.posts, user?.likedPosts]);
+    fetchData();
+  }, []);
+
+  useEffect(() => {
+    if (user?._id) fetchData();
+  }, [user, user?.posts, user?.likedPosts, token]);
 
   const handleTabPress = (tab: 'posts' | 'liked') => { setActiveTab(tab) };
 
@@ -246,7 +250,7 @@ export default function UserProfile() {
         {/* Stats */}
         <View style={styles.statsSection}>
           <View style={styles.statItem}>
-            <Text style={styles.statNumber}>{user.posts.toLocaleString()}</Text>
+            <Text style={styles.statNumber}>{user.posts}</Text>
             <Text style={styles.statLabel}>Posts</Text>
           </View>
           <View style={styles.statItem}>

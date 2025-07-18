@@ -34,6 +34,8 @@ import { Theme } from '@/types/Theme';
 import { useTheme } from '@/contexts/ThemeContext';
 import UserSlashIcon from '@/icon/UserSlashIcon';
 import ImageSlashIcon from '@/icon/ImageSlashIcon';
+import axios from 'axios';
+import { API_URL } from '@/constants/api';
 
 const createStyles = (theme: Theme) => {
   return StyleSheet.create({
@@ -323,8 +325,7 @@ const createStyles = (theme: Theme) => {
 
 export default function UserProfileScreen() {
   const { userId } = useLocalSearchParams<{ userId: string }>();
-  const { user: currentUser, followUser } = useAuth();
-  const { addNotification } = useNotification();
+  const { user, followUser, token} = useAuth();
   
   const [userProfile, setUserProfile] = useState<User | null>(null);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
@@ -339,30 +340,78 @@ export default function UserProfileScreen() {
   const styles = createStyles(theme);
 
   useEffect(() => {
-    const user = mockUsers.find(user => user.id === userId);
-    if (user) {
-      setUserProfile(user);
-      setIsFollowing(currentUser?.following.includes(user.id) || false);
-    }
+    const fetchUserProfile = async () => {
+      try {
+        console.log('Fetching user profile for userId:', userId);
+        const response = await axios.get(`${API_URL}/api/social/user/${userId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        console.log('API response:', response.data);
 
-    const posts = mockPosts.filter(post => post.user._id === user?.id);
+        if (!response.data.status) {
+          throw new Error('Failed to fetch user profile');
+        } 
+        console.log('User profile fetched successfully:', response.data.user);
+        setUserProfile(response.data.user); 
+        console.log('User profile state set:', userProfile);
+        setIsFollowing(user?.following.includes(user._id) || false);
+      }
+      catch (error) {
+        console.error('Error fetching user profile:', error);
+        setLoading(false);
+        return;
+      }
+    };
 
-    setPosts(posts);
+    const fetchPosts = async () => {
+      try {
+        console.log('Fetching posts for userId:', userId);
+        const response = await axios.get(`${API_URL}/api/post/user/${userId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        console.log('Posts fetched successfully:', response.data.posts);
+        setPosts(response.data.posts);
+      } catch (error) {
+        console.error('Error fetching posts:', error);
+      }
+    };
+
+    const fetchLikedPosts = async () => {
+      try {
+        console.log('Fetching liked posts for userId:', userId);
+        const response = await axios.get(`${API_URL}/api/post/user/${userId}/liked`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        console.log('Liked posts fetched successfully:', response.data.posts);
+        setLikedPosts(response.data.posts);
+      } catch (error) {
+        console.error('Error fetching liked posts:', error);
+      }
+    };
+
+    fetchUserProfile();
+    fetchPosts();
+    fetchLikedPosts();
+
     setSelectedTab('posts');
-    setLikedPosts(mockPosts.filter(post => user?.likedPosts.includes(post._id)));
-
     setLoading(false);
   }, [userId]);
 
   const handleFollow = () => {
     if (!userProfile) return;
     
-    followUser(userProfile.id);
+    followUser(userProfile._id);
     setIsFollowing(!isFollowing);
   };
 
   const handleMessage = () => {
-    router.push(`/message/${userProfile?.id}`);
+    router.push(`/message/${userProfile?._id}`);
   };
 
   const handleShare = () => {
@@ -462,11 +511,11 @@ export default function UserProfileScreen() {
                 <Text style={styles.statLabel}>Posts</Text>
               </View>
               <View style={styles.statItem}>
-                <Text style={styles.statNumber}>{userProfile.followers.length.toLocaleString()}</Text>
+                <Text style={styles.statNumber}>{userProfile.followers.length}</Text>
                 <Text style={styles.statLabel}>Followers</Text>
               </View>
               <View style={styles.statItem}>
-                <Text style={styles.statNumber}>{userProfile.following.length.toLocaleString()}</Text>
+                <Text style={styles.statNumber}>{userProfile.following.length}</Text>
                 <Text style={styles.statLabel}>Following</Text>
               </View>
             </View>
@@ -485,29 +534,31 @@ export default function UserProfileScreen() {
           </View>
 
           {/* Action Buttons */}
-          <View style={styles.actionButtons}>
-            <TouchableOpacity 
-              style={[styles.followButton, isFollowing && styles.followingButton]}
-              onPress={handleFollow}
-            >
-              {isFollowing ? (
-                <UserMinus size={18} color={theme.text} />
-              ) : (
-                <UserPlus size={18} color={theme.background} />
-              )}
-              <Text style={[
-                styles.followButtonText, 
-                isFollowing && styles.followingButtonText
-              ]}>
-                {isFollowing ? 'Following' : 'Follow'}
-              </Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity style={styles.messageButton} onPress={handleMessage}>
-              <MessageCircle size={18} color="#000" />
-              <Text style={styles.messageButtonText}>Message</Text>
-            </TouchableOpacity>
-          </View>
+          {userProfile._id !== user?._id && (
+            <View style={styles.actionButtons}>
+              <TouchableOpacity 
+                style={[styles.followButton, isFollowing && styles.followingButton]}
+                onPress={handleFollow}
+              >
+                {isFollowing ? (
+                  <UserMinus size={18} color={theme.text} />
+                ) : (
+                  <UserPlus size={18} color={theme.background} />
+                )}
+                <Text style={[
+                  styles.followButtonText, 
+                  isFollowing && styles.followingButtonText
+                ]}>
+                  {isFollowing ? 'Following' : 'Follow'}
+                </Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity style={styles.messageButton} onPress={handleMessage}>
+                <MessageCircle size={18} color="#000" />
+                <Text style={styles.messageButtonText}>Message</Text>
+              </TouchableOpacity>
+            </View>
+            )}
         </View>
 
         {/* Posts Tab */}
