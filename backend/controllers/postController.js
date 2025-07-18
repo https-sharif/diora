@@ -61,6 +61,15 @@ export const getAllPost = async (req, res) => {
 
 export const createPost = async (req, res) => {
   try {
+    console.log('Create post route/controller hit');
+    const userId = req.user.id;
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ status: false, message: 'User not found' });
+    }
+
     const imageUrl = req.file.path;
     const newPost = new Post({
       user: req.user.id,
@@ -68,6 +77,9 @@ export const createPost = async (req, res) => {
       caption: req.body.caption,
     });
     await newPost.save();
+    user.posts += 1;
+    await user.save();
+
     res.status(201).json({ status: true, post: newPost });
   } catch (err) {
     console.error(err);
@@ -77,7 +89,8 @@ export const createPost = async (req, res) => {
 
 export const getUserPosts = async (req, res) => {
   try {
-    const userId = req.params.userId || req.user.id;
+    console.log('Get user posts route/controller hit');
+    const userId = req.params.userId;
     const posts = await Post.find({ user: userId })
       .sort({ createdAt: -1 })
       .populate('user', 'username avatar');
@@ -97,7 +110,8 @@ export const getUserPosts = async (req, res) => {
 
 export const getLikedPosts = async (req, res) => {
   try {
-    const userId = req.params.userId || req.user.id;
+    console.log('Get liked posts route/controller hit');
+    const userId = req.params.userId;
     const user = await User.findById(userId);
 
     const likedPostIds = user?.likedPosts.map((id) => id.toString()) || [];

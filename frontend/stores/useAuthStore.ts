@@ -113,7 +113,7 @@ export const useAuthStore = create<AuthState>()(
             await AsyncStorage.setItem('token', data.token);
 
             const newUser: User = {
-              id: data.user._id,
+              _id: data.user._id,
               username: data.user.username,
               fullName: data.user.fullName,
               email: data.user.email,

@@ -16,7 +16,6 @@ import {
 } from 'react-native';
 import { Star, MessageCircle, X, Send } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
-import { mockComments } from '@/mock/Comment';
 import { Post } from '@/types/Post';
 import { Comment } from '@/types/Comment';
 import { Theme } from '@/types/Theme';
@@ -25,8 +24,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { format } from 'timeago.js';
 import axios from 'axios';
 import { API_URL } from '@/constants/api';
-
-const { width } = Dimensions.get('window');
 
 const createStyles = (theme: Theme) => {
   return StyleSheet.create({
@@ -253,7 +250,7 @@ export default function PostCard({ post }: { post: Post }) {
 
     fetchComments();
 
-    setIsStarred(post.stars > 0 && user?.likedPosts?.includes(post._id) || false);
+    setIsStarred(user?.likedPosts?.includes(post._id) || false);
 
     Image.getSize(
       post.imageUrl,
