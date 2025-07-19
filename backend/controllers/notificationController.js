@@ -1,4 +1,5 @@
 import Notification from '../models/Notification.js';
+import { getIO, onlineUsers } from '../sockets/socketSetup.js';
 
 export const addNotification = async (req, res) => {
   console.log('Add notification route/controller hit');
@@ -43,6 +44,14 @@ export const addNotification = async (req, res) => {
     if (userNotifs.length) {
       const idsToDelete = userNotifs.map((n) => n._id);
       await Notification.deleteMany({ _id: { $in: idsToDelete } });
+    }
+
+    const io = getIO();
+    const targetSocketId = onlineUsers.get(userId);
+
+    if (targetSocketId) {
+      io.to(targetSocketId).emit('notification', newNotification);
+      console.log(`Socket notification sent to user ${userId}`);
     }
 
     res.status(201).json({ status: true, notification: newNotification });
