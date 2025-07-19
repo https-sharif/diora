@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, TextInput, StyleSheet, ScrollView, TouchableOpacity, Image, FlatList, Modal, Dimensions, Animated, PanResponder, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -12,18 +12,16 @@ import { ShopProfile } from '@/types/ShopProfile';
 import { Product } from '@/types/Product';
 import { Post } from '@/types/Post';
 import { Theme } from '@/types/Theme';
+import { mockUsers } from '@/mock/User';
 import { mockShops } from '@/mock/Shop';
 import { mockProducts } from '@/mock/Product';
-import { mockUsers } from '@/mock/User';
 import { mockPosts } from '@/mock/Post';
 import { useAuth } from '@/hooks/useAuth';
+import axios from 'axios';
+import { API_URL } from '@/constants/api';
+import LoadingView from '@/components/Loading';
 
 const { width, height } = Dimensions.get('window');
-
-const trendingUsers : User[] = mockUsers.slice(0, 4);
-const trendingShops : ShopProfile[] = mockShops.slice(0, 4);
-const trendingProducts : Product[] = mockProducts.slice(0, 4);
-const exploreGrid : Post[] = mockPosts.slice(0, 9);
 
 const filterOptions = {
   contentType: ['All', 'Users', 'Shops', 'Products', 'Posts'],
@@ -549,12 +547,56 @@ export default function ExploreScreen() {
   const [enlargedPost, setEnlargedPost] = useState<Post | null>(null);
   const [scaleAnim] = useState(new Animated.Value(1));
   const [opacityAnim] = useState(new Animated.Value(0));
-  const { user, followUser, likePost } = useAuth();
+  const { user, followUser, likePost, token } = useAuth();
   const { theme } = useTheme();
+
+  const [exploreData, setExploreData] = useState({
+    trendingUsers: [] as User[],
+    trendingShops: mockShops.slice(0, 4) as ShopProfile[],
+    trendingProducts: mockProducts.slice(0, 4) as Product[],
+    exploreGrid: mockPosts.slice(0, 9) as Post[],
+  });
+
+  const [loading, setLoading] = useState({
+    trendingUsers: false,
+    trendingShops: false,
+    trendingProducts: false,
+    exploreGrid: false,
+  });
+
 
   const styles = createStyles(theme);
   const isLiked = user?.likedPosts?.includes(enlargedPost?._id || '');
-  
+
+  useEffect(() => {
+    if (!user) return;
+    const fetchTrendingData = async () => {
+      setLoading(prevState => ({ ...prevState, trendingUsers: true }));
+
+      try {
+        const response = await axios.get(`${API_URL}/api/user/trending`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if(response.data.status) {
+          setExploreData(prevState => ({
+            ...prevState,
+            trendingUsers: response.data.trendingUsers
+          }));
+        }
+        
+      }
+      catch (err : any) {
+        console.error('Error fetching trending user data: ', err.response?.data || err.message);
+      }
+      finally {
+        setLoading(prevState => ({ ...prevState, trendingUsers: false }));
+      }
+    };
+
+    fetchTrendingData();
+  }, []);
+
   const [filters, setFilters] = useState({
     contentType: 'All',
     priceRange: 'All',
@@ -568,10 +610,10 @@ export default function ExploreScreen() {
   });
 
   const applyFilters = () => {
-    let filteredUsers = trendingUsers;
-    let filteredShops = trendingShops;
-    let filteredProducts = trendingProducts;
-    let filteredPosts = exploreGrid;
+    let filteredUsers = exploreData.trendingUsers;
+    let filteredShops = exploreData.trendingShops;
+    let filteredProducts = exploreData.trendingProducts;
+    let filteredPosts = exploreData.exploreGrid;
 
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
@@ -802,11 +844,7 @@ export default function ExploreScreen() {
     <TouchableOpacity 
       style={styles.userCard}
       onPress={() => {
-        if (item.type === 'shop') {
-          router.push(`/shop/${item.id}`);
-        } else {
-          router.push(`/user/${item.id}`);
-        }
+          router.push(`/user/${item._id}`);
       }}
     >
       <Image source={{ uri: item.avatar }} style={styles.userAvatar} />
@@ -821,8 +859,8 @@ export default function ExploreScreen() {
         </View>
           <Text style={styles.userFullName} numberOfLines={2}>{item.fullName}</Text>
       </View>
-      <TouchableOpacity style={[styles.followButton, user?.following.includes(item.id) && styles.followingButton]} onPress={() => followUser(item.id)}>
-        <Text style={[styles.followButtonText, user?.following.includes(item.id) && styles.followingButtonText]}>{user?.following.includes(item.id) ? 'Following' : 'Follow'}</Text>
+      <TouchableOpacity style={[styles.followButton, user?.following.includes(item._id) && styles.followingButton]} onPress={() => followUser(item._id)}>
+        <Text style={[styles.followButtonText, user?.following.includes(item._id) && styles.followingButtonText]}>{user?.following.includes(item._id) ? 'Following' : 'Follow'}</Text>
       </TouchableOpacity>
     </TouchableOpacity>
   );
@@ -929,7 +967,7 @@ export default function ExploreScreen() {
   const renderEnlargedPost = (enlargedPost: Post) => {
     if (!enlargedPost) return null;
 
-    const user = mockUsers.find(user => user.id === enlargedPost.user._id);
+    const user = mockUsers.find(user => user._id === enlargedPost.user._id);
     if (!user) return null;
 
     return (
@@ -977,7 +1015,7 @@ export default function ExploreScreen() {
     )
   }
 
-  
+ 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <SafeAreaView style={styles.container}>
@@ -1004,17 +1042,21 @@ export default function ExploreScreen() {
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1 }}>
 
           {/* Trending Users */}
-          {filteredUsers.length > 0 && (
+          {exploreData.trendingUsers.length > 0 && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>
                 {searchQuery ? 'People & Shops' : 'Trending Creators'}
               </Text>
-              <FlatList
-                data={filteredUsers}
-                renderItem={renderUserCard}
-                keyExtractor={(item) => item.id}
-                scrollEnabled={false}
+              {loading.trendingUsers ? (
+                <LoadingView />
+              ) : (
+                <FlatList
+                  data={exploreData.trendingUsers}
+                  renderItem={renderUserCard}
+                  keyExtractor={(item) => item._id}
+                  scrollEnabled={false}
               />
+              )}
             </View>
           )}
 
@@ -1061,7 +1103,7 @@ export default function ExploreScreen() {
           )}
 
           {/* No Results */}
-          {filteredUsers.length === 0 && filteredShops.length === 0 && filteredProducts.length === 0 && filteredPosts.length === 0 && (
+          {exploreData.trendingUsers.length === 0 && filteredShops.length === 0 && filteredProducts.length === 0 && filteredPosts.length === 0 && (
             <View style={styles.noResults}>
               <View style={styles.noResultsIconContainer}>
                 <SearchX size={48} color={theme.text} />

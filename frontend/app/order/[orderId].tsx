@@ -12,6 +12,7 @@ import {
   Alert,
   Dimensions,
 } from 'react-native';
+import { useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Package, Truck, CircleCheck as CheckCircle, Clock, Filter, Download, X, Search, Calendar, DollarSign, MapPin, Phone, Mail, Star, TrendingUp, Users, ShoppingCart, ChartBar as BarChart3, Settings, Plus, CreditCard as Edit, Trash2, Eye, CircleAlert as AlertCircle, RefreshCw, Tag, Percent, Gift, Target } from 'lucide-react-native';
 import { useAuth } from '@/hooks/useAuth';
@@ -206,6 +207,7 @@ const mockAnalytics: ShopAnalytics = {
 };
 
 export default function OrdersScreen() {
+  const orderId =  useLocalSearchParams<{ orderID: string }>();
   const { user } = useAuth();
   const isShopOwner = user?.type !== 'user';
   

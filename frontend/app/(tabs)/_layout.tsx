@@ -3,10 +3,18 @@ import { BarChart3, Home, Plus, Search, ShoppingBag, User } from 'lucide-react-n
 import React, { useEffect } from 'react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/hooks/useAuth';
+import { useNotification } from '@/hooks/useNotification';
 
 export default function TabLayout() {
   const { theme } = useTheme();
   const { isAuthenticated, user } = useAuth();
+  const { fetchNotifications } = useNotification();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchNotifications();
+    }
+  }, [isAuthenticated, fetchNotifications]);
 
   if (!isAuthenticated) {
     return null;

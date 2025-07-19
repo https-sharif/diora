@@ -22,7 +22,7 @@ const createStyles = (theme: any) =>
 export default function Index() {
   const { theme } = useTheme();
   const styles = createStyles(theme);
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, user } = useAuth();
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
@@ -51,28 +51,6 @@ export default function Index() {
     }, 1000);
   
     return () => clearTimeout(timeout);
-  }, []);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const types = ['like', 'comment', 'follow'] as const;
-      const randomType = types[Math.floor(Math.random() * types.length)];
-      const messages = {
-        like: 'Someone liked your post',
-        comment: 'Someone commented on your post',
-        follow: 'Someone started following you',
-      };
-  
-      useNotificationStore.getState().addNotification({
-        type: randomType,
-        title: `New ${randomType}`,
-        message: messages[randomType],
-        avatar: 'https://images.pexels.com/photos/1036623/pexels-photo-1036623.jpeg?auto=compress&cs=tinysrgb&w=100',
-        userId: '1',
-      });
-    }, 30000);
-  
-    return () => clearInterval(interval);
   }, []);
 
   return (

@@ -8,7 +8,6 @@ import {
   TextInput,
   Switch,
   Image,
-  Alert,
   Modal,
   ActivityIndicator,
   TouchableWithoutFeedback,
@@ -17,8 +16,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import {
   ArrowLeft,
-  User,
-  Shield,
   Bell,
   Palette,
   Trash2,
@@ -26,22 +23,16 @@ import {
   Eye,
   EyeOff,
   Camera,
-  Check,
   X,
   TriangleAlert as AlertTriangle,
 } from 'lucide-react-native';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/contexts/ThemeContext';
-import { useNotification } from '@/hooks/useNotification';
 import { useToast } from '@/hooks/useToast';
 import { Toast } from '@/components/Toast';
-import { NotificationSettings } from '@/stores/useNotificationStore';
-
-interface StylePreference {
-  id: string;
-  name: string;
-  selected: boolean;
-}
+import axios from 'axios';
+import { API_URL } from '@/constants/api';
+import * as ImagePicker from 'expo-image-picker';
 
 interface SocialAccount {
   id: string;
@@ -300,12 +291,6 @@ const createTheme = (theme: any) => StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  modalOverlay2: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   modalContent: {
     borderRadius: 16,
     padding: 24,
@@ -369,6 +354,7 @@ const createTheme = (theme: any) => StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
+    borderRadius: 16,
   },
   imagePickerHeader: {
     flexDirection: 'row',
@@ -402,9 +388,8 @@ const createTheme = (theme: any) => StyleSheet.create({
 
 
 export default function SettingsScreen() {
-  const { user, logout } = useAuth();
+  const { user, logout, setUser, token } = useAuth();
   const { theme, toggleTheme, isDarkMode } = useTheme();
-  const { settings, setSettings } = useNotification();
   const { showToast, visible, hideToast, messages } = useToast();
 
   const styles = createTheme(theme);
@@ -414,14 +399,6 @@ export default function SettingsScreen() {
   const [username, setUsername] = useState(user?.username || '');
   const [bio, setBio] = useState(user?.bio || '');
   const [profileImage, setProfileImage] = useState(user?.avatar || '');
-  const [stylePreferences, setStylePreferences] = useState<StylePreference[]>([
-    { id: '1', name: 'Casual', selected: true },
-    { id: '2', name: 'Formal', selected: false },
-    { id: '3', name: 'Vintage', selected: true },
-    { id: '4', name: 'Streetwear', selected: false },
-    { id: '5', name: 'Boho', selected: false },
-    { id: '6', name: 'Minimalist', selected: true },
-  ]);
 
   // Security State
   const [currentPassword, setCurrentPassword] = useState('');
@@ -445,7 +422,40 @@ export default function SettingsScreen() {
   const [showImagePicker, setShowImagePicker] = useState(false);
   const [downloadLoading, setDownloadLoading] = useState(false);
 
-  const handleSaveProfile = () => {
+  const openCamera = async () => {
+    const permission = await ImagePicker.requestCameraPermissionsAsync();
+    if (!permission.granted) return;
+
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: 'images',
+      allowsEditing: true,
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      const imageUri = result.assets[0].uri;
+      setProfileImage(imageUri);
+    }
+  };
+
+  const openGallery = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: 'images',
+      allowsEditing: true,
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      const imageUri = result.assets[0].uri;
+      setProfileImage(imageUri);
+    }
+  };
+
+  const handleSaveProfile = async () => {
+    if (!user) return;
+
+    console.log(user);
+
     if (fullName.length < 2 || fullName.length > 50) {
       showToast('error', 'Full name must be between 2-50 characters');
       return;
@@ -460,6 +470,44 @@ export default function SettingsScreen() {
       showToast('error', 'Bio must be less than 200 characters');
       return;
     }
+
+    if (!profileImage) {
+      showToast('error', 'Please select a profile image');
+      return;
+    }
+
+    const formData = new FormData();
+
+    if (profileImage) {
+      formData.append('avatar', {
+        uri: profileImage,
+        name: 'avatar.jpg',
+        type: 'image/jpeg',
+      } as any);
+    }
+
+    formData.append('fullName', fullName);
+    formData.append('username', username);
+    formData.append('bio', bio);
+    console.log('Updating profile with data:', {
+      fullName,
+      username,
+      bio,
+      profileImage,
+    }, token);
+
+    const response = await axios.put(`${API_URL}/api/user/update`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+
+    console.log('Profile updated:', response.data.user);
+
+    setUser(response.data.user);
+
     showToast('success', 'Profile updated successfully');
   };
 
@@ -490,14 +538,6 @@ export default function SettingsScreen() {
     showToast(
       'alert',
       'A verification email has been sent to your new email address'
-    );
-  };
-
-  const toggleStylePreference = (id: string) => {
-    setStylePreferences((prev) =>
-      prev.map((style) =>
-        style.id === id ? { ...style, selected: !style.selected } : style
-      )
     );
   };
 
@@ -666,7 +706,7 @@ export default function SettingsScreen() {
                   },
                 ]}
                 value={username}
-                onChangeText={setUsername}
+                onChangeText={(text) => setUsername(text.toLowerCase())}
                 placeholder="Enter your username"
                 placeholderTextColor={theme.textSecondary}
                 maxLength={20}
@@ -704,39 +744,6 @@ export default function SettingsScreen() {
               >
                 {bio.length}/200
               </Text>
-            </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={[styles.inputLabel, { color: theme.text }]}>
-                Style Preferences
-              </Text>
-              <View style={styles.stylePreferences}>
-                {stylePreferences.map((style) => (
-                  <TouchableOpacity
-                    key={style.id}
-                    style={[
-                      styles.styleChip,
-                      style.selected && styles.styleChipSelected,
-                      { borderColor: theme.border },
-                    ]}
-                    onPress={() => toggleStylePreference(style.id)}
-                  >
-                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
-                      <Text
-                        style={[
-                          styles.styleChipText,
-                          style.selected && styles.styleChipTextSelected,
-                          { color: style.selected ? "#000" : theme.text },
-                          { width: style.selected ?  65 : 85 }
-                        ]}
-                      >
-                        {style.name}
-                      </Text>
-                      {style.selected && <Check size={14} color='#000' style={{ marginLeft: 6 }} />}
-                    </View>
-                  </TouchableOpacity>
-                ))}
-              </View>
             </View>
 
             <TouchableOpacity
@@ -876,12 +883,21 @@ export default function SettingsScreen() {
               'Like Notifications',
               'Get notified when someone likes your posts',
               <Switch
-                value={settings.likes}
+                value={user?.settings.notifications.likes}
                 onValueChange={(value) =>
-                  setSettings({ likes: value })
+                  setUser({
+                    ...user,
+                    settings: {
+                      ...user.settings,
+                      notifications: {
+                        ...user.settings.notifications,
+                        likes: value,
+                      },
+                    },
+                  })
                 }
                 trackColor={{ false: theme.border, true: '#4CAF50' }}
-                thumbColor={settings.likes ? '#fff' : '#f4f3f4'}
+                thumbColor={user?.settings.notifications.likes ? '#fff' : '#f4f3f4'}
               />
             )}
 
@@ -890,12 +906,21 @@ export default function SettingsScreen() {
               'Comment Notifications',
               'Get notified when someone comments on your posts',
               <Switch
-                value={settings.comments}
+                value={user?.settings.notifications.comments}
                 onValueChange={(value) =>
-                  setSettings({ comments: value })
+                  setUser({
+                    ...user,
+                    settings: {
+                      ...user.settings,
+                      notifications: {
+                        ...user.settings.notifications,
+                        comments: value,
+                      },
+                    },
+                  })
                 }
                 trackColor={{ false: theme.border, true: '#4CAF50' }}
-                thumbColor={settings.comments ? '#fff' : '#f4f3f4'}
+                thumbColor={user?.settings.notifications.comments ? '#fff' : '#f4f3f4'}
               />
             )}
 
@@ -904,12 +929,21 @@ export default function SettingsScreen() {
               'Sales Alerts',
               'Get notified about sales and promotions',
               <Switch
-                value={settings.sales}
+                value={user?.settings.notifications.promotion}
                 onValueChange={(value) =>
-                  setSettings({ sales: value })
+                  setUser({
+                    ...user,
+                    settings: {
+                      ...user.settings,
+                      notifications: {
+                        ...user.settings.notifications,
+                        promotion: value,
+                      },
+                    },
+                  })  
                 }
                 trackColor={{ false: theme.border, true: '#4CAF50' }}
-                thumbColor={settings.sales ? '#fff' : '#f4f3f4'}
+                thumbColor={user?.settings.notifications.promotion ? '#fff' : '#f4f3f4'}
               />
             )}
 
@@ -918,12 +952,21 @@ export default function SettingsScreen() {
               'Direct Messages',
               'Get notified about new messages',
               <Switch
-                value={settings.messages}
+                value={user?.settings.notifications.messages}
                 onValueChange={(value) =>
-                  setSettings({ messages: value })
+                  setUser({
+                    ...user,
+                    settings: {
+                      ...user.settings,
+                      notifications: {
+                        ...user.settings.notifications,
+                        messages: value,
+                      },
+                    },
+                  })
                 }
                 trackColor={{ false: theme.border, true: '#4CAF50' }}
-                thumbColor={settings.messages ? '#fff' : '#f4f3f4'}
+                thumbColor={user?.settings.notifications.messages ? '#fff' : '#f4f3f4'}
               />
             )}
 
@@ -937,22 +980,31 @@ export default function SettingsScreen() {
                     key={frequency}
                     style={[
                       styles.frequencyOption,
-                      settings.emailFrequency === frequency &&
+                      user?.settings.notifications.emailFrequency === frequency &&
                         styles.frequencyOptionSelected,
                       { borderColor: theme.border },
                     ]}
                     onPress={() =>
-                      setSettings({ emailFrequency: frequency as any })
+                      setUser({
+                        ...user,
+                        settings: {
+                          ...user.settings,
+                          notifications: {
+                            ...user.settings.notifications,
+                            emailFrequency: frequency as any,
+                          },
+                        },
+                      })
                     }
                   >
                     <Text
                       style={[
                         styles.frequencyOptionText,
-                        settings.emailFrequency === frequency &&
+                        user?.settings.notifications.emailFrequency === frequency &&
                           styles.frequencyOptionTextSelected,
                         {
                           color:
-                            settings.emailFrequency === frequency
+                            user?.settings.notifications.emailFrequency === frequency
                               ? '#000'
                               : theme.text,
                         },
@@ -1150,11 +1202,11 @@ export default function SettingsScreen() {
       <Modal
         visible={showImagePicker}
         transparent
-        animationType="slide"
+        animationType="fade"
         onRequestClose={() => setShowImagePicker(false)}
       >
         <TouchableWithoutFeedback onPress={() => setShowImagePicker(false)}>
-          <View style={styles.modalOverlay2}>
+          <View style={styles.modalOverlay}>
             <TouchableWithoutFeedback onPress={() => {}}>
               <View style={[styles.imagePickerModal, { backgroundColor: theme.card }]}>
                 {/* Your modal content */}
@@ -1167,13 +1219,13 @@ export default function SettingsScreen() {
                   </TouchableOpacity>
                 </View>
                 <View style={styles.imagePickerOptions}>
-                  <TouchableOpacity style={styles.imagePickerOption}>
+                  <TouchableOpacity style={styles.imagePickerOption} onPress={openCamera}>
                     <Camera size={24} color={theme.text} />
                     <Text style={[styles.imagePickerOptionText, { color: theme.text }]}>
                       Take Photo
                     </Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={styles.imagePickerOption}>
+                  <TouchableOpacity style={styles.imagePickerOption} onPress={openGallery}>
                     <Download size={24} color={theme.text} />
                     <Text style={[styles.imagePickerOptionText, { color: theme.text }]}>
                       Choose from Gallery

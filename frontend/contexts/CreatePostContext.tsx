@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { API_URL } from '@/constants/api';
+import { User } from '@/types/User';
 
 type ContentType = 'post' | 'product';
 
@@ -37,7 +38,7 @@ export const CreatePostProvider = ({ children }: { children: React.ReactNode }) 
   const [contentType, setContentType] = useState<ContentType>('post');
   const [images, setImages] = useState<string[]>([]);
   const [imageUri, setImageUri] = useState<string | null>(null);
-  const { token } = useAuth();
+  const { token, user, setUser } = useAuth();
   const [formData, setFormData] = useState<FormData>({
     title: '',
     description: '',
@@ -47,8 +48,7 @@ export const CreatePostProvider = ({ children }: { children: React.ReactNode }) 
 
   const createPost = async () => {
     if (images.length === 0) throw new Error('Post requires at least one image!');
-
-    console.log('Creating post');
+    if(!user) throw new Error('User not authenticated!');
 
     try {
       const form = new FormData();
@@ -79,8 +79,8 @@ export const CreatePostProvider = ({ children }: { children: React.ReactNode }) 
       const data = await res.json();
 
       if (!res.ok) throw new Error(data.message || 'Failed to create post');
-
-      console.log('Post created:', data);
+      user.posts += 1;
+      setUser(user as User);
     } catch (error) {
       console.error('Upload failed:', error);
       throw error;

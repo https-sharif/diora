@@ -2,7 +2,7 @@ import { User } from "@/types/User";
 
 export const mockUsers: User[] = [
   {
-    id: '1',
+    _id: '1',
     username: 'john_doe',
     email: 'john.doe@example.com',
     fullName: 'John Doe',
@@ -17,7 +17,7 @@ export const mockUsers: User[] = [
     type: 'user',
   },
   {
-    id: '2',
+    _id: '2',
     username: 'jane_doe',
     email: 'jane.doe@example.com',
     fullName: 'Jane Doe',
@@ -32,7 +32,7 @@ export const mockUsers: User[] = [
     type: 'user',
   },
   {
-    id: '68755cb744c8006d06aa9d4e',
+    _id: '68755cb744c8006d06aa9d4e',
     username: 'john_smith',
     email: 'john.smith@example.com',
     fullName: 'John Smith',
@@ -47,7 +47,7 @@ export const mockUsers: User[] = [
     type: 'user',
   },
   {
-    id: '4',
+    _id: '4',
     username: 'maria_hill',
     email: 'maria.hill@example.com',
     fullName: 'Maria Hill',
@@ -60,7 +60,7 @@ export const mockUsers: User[] = [
     type: 'user',
   },
   {
-    id: '5',
+    _id: '5',
     username: 'jane_smith',
     email: 'jane.smith@example.com',
     fullName: 'Jane Smith',
@@ -75,7 +75,7 @@ export const mockUsers: User[] = [
     type: 'user',
   },
   {
-    id: '6',
+    _id: '6',
     username: 'margaret_doe',
     email: 'margaret.doe@example.com',
     fullName: 'Margaret Doe',
@@ -90,7 +90,7 @@ export const mockUsers: User[] = [
     type: 'user',
   },
   {
-    id: '7',
+    _id: '7',
     username: 'harry_potter',
     email: 'harry.potter@example.com',
     fullName: 'Harry Potter',
@@ -105,7 +105,7 @@ export const mockUsers: User[] = [
     type: 'user',
   },
   {
-    id: '8',
+    _id: '8',
     username: 'hermione_granger',
     email: 'hermione.granger@example.com',
     fullName: 'Hermione Granger',

@@ -18,6 +18,15 @@ const storage = new CloudinaryStorage({
   },
 });
 
+const deleteImage = async (publicId) => {
+  try {
+    await cloudinary.uploader.destroy(publicId);
+    console.log(`Deleted image with public ID: ${publicId}`);
+  } catch (error) {
+    console.error(`Error deleting image with public ID ${publicId}:`, error);
+  }
+}
+
 const parser = multer({ storage });
 
-export { cloudinary, parser };
+export { cloudinary, parser, deleteImage };

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import {
@@ -19,6 +19,9 @@ import type { EdgeInsets } from 'react-native-safe-area-context';
 import { SafeAreaProvider } from '@/contexts/SafeAreaContext';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useAuth } from '@/hooks/useAuth';
+import { useNotification } from '@/hooks/useNotification';
+import { useMessage } from '@/hooks/useMessage';
+import initSocket, { getSocket } from './utils/useSocket';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -38,7 +41,30 @@ export default function RootLayout() {
 
 function AppReadyWrapper({ insets }: { insets: EdgeInsets }) {
   const { theme, isDarkMode } = useTheme();
-  const { loading } = useAuth();
+  const { user, loading } = useAuth();
+  const { handleIncomingNotification } = useNotification();
+  const { sendMessage } = useMessage();
+
+  useEffect(() => {
+    if (user?._id) {
+      console.log('🚀 Setting up socket for user:', user._id);
+      initSocket(user._id, (notif) => {
+        console.log('📨 Socket notification callback triggered:', notif);
+        handleIncomingNotification(notif);
+      });
+
+      const socket = getSocket();
+
+      socket.on('message', sendMessage);
+
+      return () => {
+        socket.off('notification');
+        socket.off('message', sendMessage);
+        socket.disconnect();
+      };
+    }
+  }, [user?._id]);
+
 
   const [fontsLoaded] = useFonts({
     'Inter-Regular': Inter_400Regular,

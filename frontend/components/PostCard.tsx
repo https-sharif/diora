@@ -16,7 +16,6 @@ import {
 } from 'react-native';
 import { Star, MessageCircle, X, Send } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
-import { mockComments } from '@/mock/Comment';
 import { Post } from '@/types/Post';
 import { Comment } from '@/types/Comment';
 import { Theme } from '@/types/Theme';
@@ -25,8 +24,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { format } from 'timeago.js';
 import axios from 'axios';
 import { API_URL } from '@/constants/api';
-
-const { width } = Dimensions.get('window');
 
 const createStyles = (theme: Theme) => {
   return StyleSheet.create({
@@ -240,20 +237,19 @@ export default function PostCard({ post }: { post: Post }) {
 
   useEffect(() => {
     const fetchComments = async () => {
-      console.log('Fetching comments for post:', post._id);
+      
       const response = await axios.get(`${API_URL}/api/comment/post/${post._id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      console.log('Comments response:', response.data.status);
+      
       if (response.data.status) {
         setComments(response.data.comments);
-        console.log('Fetched comments:', response.data.comments);
       }
     };
 
     fetchComments();
 
-    setIsStarred(post.stars > 0 && user?.likedPosts?.includes(post._id) || false);
+    setIsStarred(user?.likedPosts?.includes(post._id) || false);
 
     Image.getSize(
       post.imageUrl,
@@ -292,10 +288,9 @@ export default function PostCard({ post }: { post: Post }) {
   const handleAddComment = async () => {
     if (!newComment.trim() || !user) return;
 
-    console.log("user:", user);
     try {
       const url = replyingTo ? `${API_URL}/api/comment/reply/${replyingTo}` : `${API_URL}/api/comment/create`;
-      const payload = { userId: user.id, targetId: post._id, text: newComment };
+      const payload = { userId: user._id, targetId: post._id, text: newComment };
 
       const response = await axios.post(url, payload, {
         headers: { Authorization: `Bearer ${token}` },

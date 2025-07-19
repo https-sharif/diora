@@ -40,6 +40,27 @@ export const signup = async (req, res) => {
       posts: 0,
       likedPosts: [],
       type: 'user',
+      isVerified: false,
+      avatar: '',
+      avatarId: '',
+      bio: '',
+      settings: {
+        theme: 'light',
+        notifications: {
+          likes: true,
+          comments: true,
+          follow: true,
+          mention: true,
+          order: true,
+          promotion: true,
+          system: true,
+          warning: true,
+          messages: true,
+          reportUpdate: true,
+          emailFrequency: 'instant',
+        },
+      },
+
     });
 
     await newUser.save();
@@ -49,7 +70,7 @@ export const signup = async (req, res) => {
     });
 
     const safeUser = {
-      id: newUser._id,
+      _id: newUser._id,
       email: newUser.email,
       username: newUser.username,
       fullName: newUser.fullName,
@@ -62,9 +83,11 @@ export const signup = async (req, res) => {
       likedPosts: newUser.likedPosts,
       type: newUser.type,
       createdAt: newUser.createdAt,
+      settings: newUser.settings,
+      avatarId: newUser.avatarId,
     };
 
-    res.status(201).json({ status: true, token, user: safeUser });
+    res.status(201).json({ status: true, user: safeUser, token });
   } catch (error) {
     res.status(500).json({ status: false, message: 'Server error' });
   }
@@ -101,7 +124,7 @@ export const login = async (req, res) => {
     });
 
     const safeUser = {
-      id: user._id,
+      _id: user._id,
       email: user.email,
       username: user.username,
       fullName: user.fullName,
@@ -114,12 +137,14 @@ export const login = async (req, res) => {
       likedPosts: user.likedPosts,
       type: user.type,
       createdAt: user.createdAt,
+      settings: user.settings,
+      avatarId: user.avatarId,
     };
 
     res.json({
       status: true,
-      token,
       user: safeUser,
+      token,
       message: 'Login successful',
     });
   } catch (error) {
