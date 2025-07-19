@@ -80,7 +80,7 @@ const createStyles = (theme: Theme) => {
 };
 
 export default function FeedScreen() {
-  const { isAuthenticated, token } = useAuth();
+  const { isAuthenticated, user, token } = useAuth();
   const { unreadCount } = useNotification();
   const [posts, setPosts] = useState();
   const [refreshing, setRefreshing] = useState(false);
@@ -94,13 +94,14 @@ export default function FeedScreen() {
   }
 
   useEffect(() => {
+    if(!user) return;
     const fetchPosts = async () => {
       setLoading(true);
       try {
         const response = await axios.get(`${API_URL}/api/post`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        console.log('Posts refreshed:', response.data);
+        
         if (response.data.status) {
           setPosts(response.data.posts);
         }
@@ -114,6 +115,7 @@ export default function FeedScreen() {
   }, []);
 
   const onRefresh = async () => {
+    if(!user) return;
     setRefreshing(true);
 
     try {
@@ -122,7 +124,7 @@ export default function FeedScreen() {
           Authorization: `Bearer ${token}`,
         },
       });
-      console.log('Posts refreshed:', response.data);
+      
       if (response.data.status) {
         setPosts(response.data.posts);
       }

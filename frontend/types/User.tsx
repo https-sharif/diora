@@ -12,4 +12,21 @@ export interface User {
   posts: number;
   likedPosts: string[];
   type: 'user' | 'shop' | 'admin';
+  avatarId?: string;
+  settings: {
+    theme: 'light' | 'dark';
+    notifications: {
+      likes: boolean;
+      comments: boolean;
+      follow: boolean;
+      mention: boolean;
+      order: boolean;
+      promotion: boolean;
+      system: boolean;
+      warning: boolean;
+      reportUpdate: boolean;
+      messages: boolean;
+      emailFrequency: 'instant' | 'daily' | 'weekly';
+    };
+  };
 }

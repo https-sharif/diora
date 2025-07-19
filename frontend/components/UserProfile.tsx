@@ -163,15 +163,15 @@ export default function UserProfile() {
   const [myLikedPosts, setMyLikedPosts] = useState([]);
 
   const fetchData = async () => {
-    console.log('Fetching user posts and liked posts...');
+    if (!user) return;
+    
     try {
-      console.log('User ID:', user?._id);
       const likedPostsResponse = await axios.get(`${API_URL}/api/post/user/${user?._id}/liked`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      console.log('Liked posts response:', likedPostsResponse.data);
+      
       setMyLikedPosts(likedPostsResponse.data.posts);
 
       const myPostsResponse = await axios.get(`${API_URL}/api/post/user/${user?._id}`, {

@@ -388,17 +388,17 @@ export default function PastOrderScreen() {
   const getPaymentMethodIcon = (paymentMethod: Order['paymentMethod']) => {
     switch (paymentMethod) {
       case 'cod':
-        return <Banknote size={16} color="#007AFF" />;
+        return <Banknote size={16} color={theme.blue} />;
       case 'card':
-        return <CreditCard size={16} color="#007AFF" />;
+        return <CreditCard size={16} color={theme.blue} />;
       case 'bkash':
-        return <Wallet size={16} color="#007AFF" />;
+        return <Wallet size={16} color={theme.blue} />;
     }
   };
 
   useEffect(() => {
     if (user) {
-      setOrders(mockOrders.filter((order) => order.userId === user.id));
+      setOrders(mockOrders.filter((order) => order.userId === user._id));
     }
   }, [user]);
 
