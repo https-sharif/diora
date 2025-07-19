@@ -1,13 +1,15 @@
 export interface Notification {
-  id: string;
+  _id: string;
   userId: string;
-  type: 'like' | 'comment' | 'follow' | 'mention' | 'order' | 'promotion';
+  fromUserId?: string;
+  type: 'like' | 'comment' | 'follow' | 'mention' | 'order' | 'promotion' | 'system' | 'warning' | 'reportUpdate';
+  postId?: string;
+  productId?: string;
   title: string;
   message: string;
   timestamp: string;
   read: boolean;
   avatar?: string;
-  postImage?: string;
   actionUrl?: string;
-  data?: any;
+  orderId?: string;
 }

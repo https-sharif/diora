@@ -50,8 +50,6 @@ export const CreatePostProvider = ({ children }: { children: React.ReactNode }) 
     if (images.length === 0) throw new Error('Post requires at least one image!');
     if(!user) throw new Error('User not authenticated!');
 
-    console.log('Creating post');
-
     try {
       const form = new FormData();
 
@@ -83,7 +81,6 @@ export const CreatePostProvider = ({ children }: { children: React.ReactNode }) 
       if (!res.ok) throw new Error(data.message || 'Failed to create post');
       user.posts += 1;
       setUser(user as User);
-      console.log('Post created:', data);
     } catch (error) {
       console.error('Upload failed:', error);
       throw error;

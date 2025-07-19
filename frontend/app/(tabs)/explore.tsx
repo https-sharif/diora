@@ -547,7 +547,7 @@ export default function ExploreScreen() {
   const [enlargedPost, setEnlargedPost] = useState<Post | null>(null);
   const [scaleAnim] = useState(new Animated.Value(1));
   const [opacityAnim] = useState(new Animated.Value(0));
-  const { user, followUser, likePost, token} = useAuth();
+  const { user, followUser, likePost, token } = useAuth();
   const { theme } = useTheme();
 
   const [exploreData, setExploreData] = useState({
@@ -569,22 +569,21 @@ export default function ExploreScreen() {
   const isLiked = user?.likedPosts?.includes(enlargedPost?._id || '');
 
   useEffect(() => {
+    if (!user) return;
     const fetchTrendingData = async () => {
       setLoading(prevState => ({ ...prevState, trendingUsers: true }));
 
       try {
-        const response = await axios.get(`${API_URL}/api/social/user/trending`, {
+        const response = await axios.get(`${API_URL}/api/user/trending`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        console.log(response.data);
         if(response.data.status) {
           setExploreData(prevState => ({
             ...prevState,
             trendingUsers: response.data.trendingUsers
           }));
         }
-
         
       }
       catch (err : any) {
@@ -593,8 +592,6 @@ export default function ExploreScreen() {
       finally {
         setLoading(prevState => ({ ...prevState, trendingUsers: false }));
       }
-
-
     };
 
     fetchTrendingData();

@@ -126,7 +126,25 @@ export const useAuthStore = create<AuthState>()(
               isVerified: data.user.isVerified,
               createdAt: data.user.createdAt,
               type: data.user.type,
+              settings: {
+                theme: data.user.settings.theme,
+                notifications: {
+                  likes: data.user.settings.notifications.likes,
+                  comments: data.user.settings.notifications.comments,
+                  follow: data.user.settings.notifications.follow,
+                  mention: data.user.settings.notifications.mention,
+                  order: data.user.settings.notifications.order,
+                  promotion: data.user.settings.notifications.promotion,
+                  system: data.user.settings.notifications.system,
+                  warning: data.user.settings.notifications.warning,
+                  reportUpdate: data.user.settings.notifications.reportUpdate,
+                  messages: data.user.settings.notifications.messages,
+                  emailFrequency: data.user.settings.notifications.emailFrequency,
+                },
+              },
+              avatarId: data.user.avatarId,
             };
+
             set({
               token: data.token,
               user: newUser,
@@ -159,7 +177,7 @@ export const useAuthStore = create<AuthState>()(
 
         try {
           const res = await axios.put(
-            `${API_URL}/api/social/follow/${targetUserId}`,
+            `${API_URL}/api/user/follow/${targetUserId}`,
             {},
             { headers: { Authorization: `Bearer ${token}` } }
           );

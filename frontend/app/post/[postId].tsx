@@ -349,20 +349,17 @@ export default function PostDetailScreen() {
       const post = response.data.post;
 
       if (!post) {
-        console.log('Post not found');
         setIsLoading(false);
         return;
       }
       setPost(post);
 
-      console.log('Fetching comments for post ID:', postId);
       const commentsResponse = await axios.get(
         `${API_URL}/api/comment/post/${postId}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      console.log('Fetched comments:', commentsResponse.data.comments);
 
       if (!commentsResponse.data.status) {
         console.error(
@@ -373,11 +370,7 @@ export default function PostDetailScreen() {
         return;
       }
       setComments(commentsResponse.data.comments);
-      console.log(
-        'Fetched post and comments:',
-        post,
-        commentsResponse.data.comments
-      );
+
       setIsLoading(false);
 
       setIsStarred(
@@ -464,7 +457,6 @@ export default function PostDetailScreen() {
   const handleAddComment = async () => {
     if (!newComment.trim() || !user) return;
 
-    console.log('user:', user);
     try {
       const url = replyingTo
         ? `${API_URL}/api/comment/reply/${replyingTo}`

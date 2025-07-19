@@ -322,7 +322,6 @@ const createStyles = (theme: Theme) => {
   });
 };
 
-
 export default function UserProfileScreen() {
   const { userId } = useLocalSearchParams<{ userId: string }>();
   const { user, followUser, token} = useAuth();
@@ -342,20 +341,18 @@ export default function UserProfileScreen() {
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
-        console.log('Fetching user profile for userId:', userId);
-        const response = await axios.get(`${API_URL}/api/social/user/${userId}`, {
+        const response = await axios.get(`${API_URL}/api/user/${userId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
-        console.log('API response:', response.data);
 
         if (!response.data.status) {
           throw new Error('Failed to fetch user profile');
         } 
-        console.log('User profile fetched successfully:', response.data.user);
+
         setUserProfile(response.data.user); 
-        console.log('User profile state set:', userProfile);
+
         setIsFollowing(user?.following.includes(user._id) || false);
       }
       catch (error) {
@@ -367,13 +364,13 @@ export default function UserProfileScreen() {
 
     const fetchPosts = async () => {
       try {
-        console.log('Fetching posts for userId:', userId);
+        
         const response = await axios.get(`${API_URL}/api/post/user/${userId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
-        console.log('Posts fetched successfully:', response.data.posts);
+        
         setPosts(response.data.posts);
       } catch (error) {
         console.error('Error fetching posts:', error);
@@ -382,13 +379,13 @@ export default function UserProfileScreen() {
 
     const fetchLikedPosts = async () => {
       try {
-        console.log('Fetching liked posts for userId:', userId);
+        
         const response = await axios.get(`${API_URL}/api/post/user/${userId}/liked`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
-        console.log('Liked posts fetched successfully:', response.data.posts);
+        
         setLikedPosts(response.data.posts);
       } catch (error) {
         console.error('Error fetching liked posts:', error);

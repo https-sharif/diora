@@ -187,28 +187,7 @@ const getNotificationIcon = (type: Notification['type'], theme : any) => {
 };
 
 export default function NotificationsScreen() {
-  const { notifications, markAsRead, markAllAsRead, deleteNotification, settings } = useNotification();
-  
-  const { user } = useAuth();
-  const [myNotifications, setMyNotifications] = useState<Notification[]>([]);
-
-  useEffect(() => {
-    const filteredNotifications = notifications.filter((n) => {
-      if (n.userId !== user?.id) return false;
-  
-      const typeMatch = (
-        (settings.likes && n.type === 'like') ||
-        (settings.comments && n.type === 'comment') ||
-        (settings.sales && n.type === 'order') ||
-        (settings.messages && n.type === 'mention')
-      );
-  
-      return typeMatch;
-    })
-
-    setMyNotifications(filteredNotifications);
-  }, [notifications, user]);
-
+  const { notifications, markAsRead, markAllAsRead, deleteNotification } = useNotification();
   const [selectedNotifications, setSelectedNotifications] = useState<string[]>([]);
   const [selectionMode, setSelectionMode] = useState(false);
   const { theme } = useTheme();
@@ -217,12 +196,12 @@ export default function NotificationsScreen() {
 
   const handleNotificationPress = (notification: Notification) => {
     if (selectionMode) {
-      toggleSelection(notification.id);
+      toggleSelection(notification._id);
       return;
     }
 
     if (!notification.read) {
-      markAsRead(notification.id);
+      markAsRead(notification._id);
     }
 
     if (notification.actionUrl) {
@@ -297,18 +276,18 @@ export default function NotificationsScreen() {
       style={[
         styles.notificationItem,
         !item.read && styles.unreadNotification,
-        selectedNotifications.includes(item.id) && styles.selectedNotification,
+        selectedNotifications.includes(item._id) && styles.selectedNotification,
       ]}
       onPress={() => handleNotificationPress(item)}
-      onLongPress={() => handleLongPress(item.id)}
+      onLongPress={() => handleLongPress(item._id)}
     >
       <View style={styles.notificationContent}>
         {selectionMode && (
             <View style={[
               styles.selectionCircle,
-              selectedNotifications.includes(item.id) && styles.selectedCircle
+              selectedNotifications.includes(item._id) && styles.selectedCircle
             ]}>
-              {selectedNotifications.includes(item.id) && (
+              {selectedNotifications.includes(item._id) && (
                 <Check size={12} color={theme.text} />
               )}
             </View>
@@ -329,9 +308,10 @@ export default function NotificationsScreen() {
         </View>
 
         <View style={styles.notificationRight}>
-          {item.postImage && (
-            <Image source={{ uri: item.postImage }} style={styles.postThumbnail} />
-          )}
+          {/* Implement Later */}
+          {/* {item.postImage && (
+            // <Image source={{ uri: item.postImage }} style={styles.postThumbnail} />
+          )} */}
         </View>
       </View>
     </TouchableOpacity>
@@ -394,11 +374,10 @@ export default function NotificationsScreen() {
         renderEmptyState()
       ) : (
         <>
-
           <FlatList
-            data={myNotifications}
+            data={notifications}
             renderItem={renderNotification}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item) => item._id}
             contentContainerStyle={styles.notificationsList}
             showsVerticalScrollIndicator={false}
           />
