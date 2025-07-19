@@ -8,7 +8,7 @@ import userRoutes from './routes/user.js';
 import postRoutes from './routes/post.js';
 import commentRoutes from './routes/comment.js';
 import notificationRoutes from './routes/notification.js';
-import { setupSocket } from './sockets/socketSetup.js';
+import { initSocket } from './sockets/socketSetup.js';
 
 dotenv.config();
 
@@ -32,6 +32,6 @@ app.use('/api/comment', commentRoutes);
 app.use('/api/notification', notificationRoutes);
 
 const server = http.createServer(app);
-setupSocket(server, app);
+const io = initSocket(server);
 
 server.listen(PORT, '0.0.0.0', () => console.log(`Server running on port ${PORT}`));

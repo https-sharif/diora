@@ -28,7 +28,7 @@ export const useMessageStore = create<MessageState>((set, get) => ({
       text: messageText,
       timestamp: new Date().toISOString(),
       conversationId,
-      senderId: user?.id || 'me',
+      senderId: user?._id || 'me',
       type: imageUri ? 'image' : 'text',
       status: 'sending',
       replyTo: replyToId,

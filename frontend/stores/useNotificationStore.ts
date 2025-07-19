@@ -13,6 +13,7 @@ interface NotificationStore {
   addNotification: (
     notification: Omit<Notification, '_id' | 'timestamp' | 'read'>
   ) => void;
+  handleIncomingNotification: (notification: any) => void;
   deleteNotification: (id: string) => void;
   clearAllNotifications: () => void;
 }
@@ -145,6 +146,22 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
     } catch (err) {
       console.error('Error adding notification:', err);
     }
+  },
+
+  handleIncomingNotification: (notification) => {
+    console.log('Received socket notification:', notification);
+    
+    const newNotification: Notification = {
+      ...notification,
+      _id: notification._id,
+      timestamp: notification.createdAt || notification.timestamp,
+      read: notification.read || false,
+    };
+
+    set((state) => ({
+      notifications: [newNotification, ...state.notifications],
+      unreadCount: !newNotification.read ? state.unreadCount + 1 : state.unreadCount,
+    }));
   },
 
   deleteNotification: async (id) => {
