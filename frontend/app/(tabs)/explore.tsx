@@ -541,7 +541,7 @@ const createStyles = (theme: Theme) => {
 }
 
 export default function ExploreScreen() {
-  const { addToWishlist, isInWishlist, removeFromWishlist } = useShopping();
+  const { addToWishlist, isInWishlist } = useShopping();
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilter, setShowFilter] = useState(false);
   const [enlargedPost, setEnlargedPost] = useState<Post | null>(null);
@@ -554,14 +554,14 @@ export default function ExploreScreen() {
     trendingUsers: [] as User[],
     trendingShops: mockShops.slice(0, 4) as ShopProfile[],
     trendingProducts: mockProducts.slice(0, 4) as Product[],
-    exploreGrid: mockPosts.slice(0, 9) as Post[],
+    trendingPosts: [] as Post[],
   });
 
   const [loading, setLoading] = useState({
     trendingUsers: false,
     trendingShops: false,
     trendingProducts: false,
-    exploreGrid: false,
+    trendingPosts: false,
   });
 
 
@@ -570,7 +570,7 @@ export default function ExploreScreen() {
 
   useEffect(() => {
     if (!user) return;
-    const fetchTrendingData = async () => {
+    const fetchTrendingUser = async () => {
       setLoading(prevState => ({ ...prevState, trendingUsers: true }));
 
       try {
@@ -594,7 +594,32 @@ export default function ExploreScreen() {
       }
     };
 
-    fetchTrendingData();
+    const fetchTrendingPosts = async () => {
+      setLoading(prevState => ({ ...prevState, trendingPosts: true }));
+
+      try {
+        const response = await axios.get(`${API_URL}/api/post/trending`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if(response.data.status) {
+          setExploreData(prevState => ({
+            ...prevState,
+            trendingPosts: response.data.trendingPosts
+          }));
+        }
+        
+      }
+      catch (err : any) {
+        console.error('Error fetching trending posts data: ', err.response?.data || err.message);
+      }
+      finally {
+        setLoading(prevState => ({ ...prevState, exploreGrid: false }));
+      }
+    }
+
+    fetchTrendingUser();
+    fetchTrendingPosts();
   }, []);
 
   const [filters, setFilters] = useState({
@@ -613,7 +638,7 @@ export default function ExploreScreen() {
     let filteredUsers = exploreData.trendingUsers;
     let filteredShops = exploreData.trendingShops;
     let filteredProducts = exploreData.trendingProducts;
-    let filteredPosts = exploreData.exploreGrid;
+    let filteredPosts = exploreData.trendingPosts;
 
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
@@ -735,8 +760,6 @@ export default function ExploreScreen() {
       const likesRange = filters.likes.split('-');
       filteredPosts = filteredPosts.filter(post => {
         const likesCount = post.stars;
-        const minimum = parseFloat(likesRange[0].replace('+', '')) * 1000;
-        const maximum = likesRange[1] ? parseFloat(likesRange[1]) * 1000 : Infinity;
         if (likesRange.length === 1) {
           return likesCount >= parseFloat(likesRange[0]);
         } else {
@@ -1088,11 +1111,11 @@ export default function ExploreScreen() {
           )}
 
           {/* Discover Posts */}
-          {filteredPosts.length > 0 && (
+          {exploreData.trendingPosts.length > 0 && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Discover</Text>
               <FlatList
-                data={filteredPosts}
+                data={exploreData.trendingPosts}
                 renderItem={renderGridItem}
                 keyExtractor={(item) => item._id}
                 numColumns={3}
