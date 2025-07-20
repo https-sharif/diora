@@ -452,7 +452,7 @@ export default function ProductDetailScreen() {
   );
 
   const renderReview = ({ item }: { item: Review }) => {
-    const user = mockUsers.find(user => user.id === item.userId);
+    const user = mockUsers.find(user => user._id === item.userId);
     return (
     <View style={styles.reviewItem}>
       <View style={styles.reviewHeader}>

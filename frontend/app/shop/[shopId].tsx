@@ -653,7 +653,7 @@ export default function ShopProfileScreen() {
       const profile = mockShops.find(p => p.id === shopId);
       if (profile) {
         setShopProfile(profile);
-        setIsFollowing(user?.id ? user.following.includes(profile.id) : false);
+        setIsFollowing(user?._id ? user.following.includes(profile.id) : false);
         const fetchedProducts: Product[] = mockProducts.filter(product => profile.productIds.includes(product.id));
         setProducts(fetchedProducts);
 
@@ -754,7 +754,7 @@ export default function ShopProfileScreen() {
   );
 
   const renderReview = ({ item }: { item: Review }) => {
-    const user = mockUsers.find(user => user.id === item.userId) as User;
+    const user = mockUsers.find(user => user._id === item.userId) as User;
     if (!user) return null;
 
     return (

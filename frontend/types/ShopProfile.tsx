@@ -1,5 +1,5 @@
 export interface ShopProfile {
-  id: string;
+  _id: string;
   userId: string;
   name: string;
   username: string;
@@ -20,8 +20,6 @@ export interface ShopProfile {
   productIds: string[];
   rating: number;
   ratingCount: number;
-  followers: string[];
+  followers: number;
   isVerified: boolean;
-  createdAt: string;
-  updatedAt: string;
 }
