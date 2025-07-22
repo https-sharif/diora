@@ -1,6 +1,8 @@
+import { ShopProfile } from "./ShopProfile";
+
 export interface Product {
     _id: string;
-    shopId: string;
+    shopId: ShopProfile;
     name: string;
     price: number;
     imageUrl: string[];
