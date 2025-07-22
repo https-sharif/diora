@@ -25,7 +25,6 @@ export const likePost = async (req, res) => {
       user.likedPosts.push(postId);
       post.stars += 1;
 
-      if (userId !== post.user._id.toString()) {
         const notification = new Notification({
           type: 'like',
           userId: post.user._id,
@@ -43,7 +42,6 @@ export const likePost = async (req, res) => {
         if (targetSocketId) {
           io.to(targetSocketId).emit('notification', notification);
         }
-      }
     }
 
     await user.save();
@@ -116,9 +114,10 @@ export const getUserPosts = async (req, res) => {
       .sort({ createdAt: -1 })
       .populate('user', 'username avatar');
 
+
     if (!posts || posts.length === 0) {
       return res
-        .status(404)
+        .status(204)
         .json({ status: false, message: 'No posts found for this user' });
     }
 

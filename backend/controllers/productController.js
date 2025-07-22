@@ -15,10 +15,7 @@ export const getProductById = async (req, res) => {
   console.log('Get product by ID route/controller hit');
   try {
     const productId = req.params.productId;
-    const product = await Product.findById(productId).populate(
-      'shopId',
-      'name'
-    );
+    const product = await Product.findById(productId).populate('shopId', 'name');
 
     if (!product) {
       return res
@@ -111,6 +108,29 @@ export const deleteProduct = async (req, res) => {
     }
 
     res.json({ status: true, message: 'Product deleted successfully' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ status: false, message: 'Something went wrong' });
+  }
+};
+
+export const getTrendingProducts = async (req, res) => {
+  console.log('Get trending products route/controller hit');
+  try {
+    const trendingProducts = await Product.find()
+      .sort({ rating: -1, reviewCount: -1 })
+      .limit(6)
+      .populate('shopId', 'name');
+
+    if (!trendingProducts || trendingProducts.length === 0) {
+      return res
+        .status(404)
+        .json({ status: false, message: 'No trending products found' });
+    }
+
+    console.log('Trending products:', trendingProducts);
+
+    res.json({ status: true, trendingProducts });
   } catch (err) {
     console.error(err);
     res.status(500).json({ status: false, message: 'Something went wrong' });
