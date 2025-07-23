@@ -480,7 +480,7 @@ export default function ProductDetailScreen() {
   );
 
   const renderReview = ({ item }: { item: Review }) => {
-    const user = mockUsers.find(user => user._id === item.userId);
+    const user = mockUsers.find(user => user._id === item.user._id);
     return (
     <View style={styles.reviewItem}>
       <View style={styles.reviewHeader}>
@@ -676,7 +676,7 @@ export default function ProductDetailScreen() {
           <FlatList
             data={reviews}
             renderItem={renderReview}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item) => item._id}
             scrollEnabled={false}
           />
         </View>

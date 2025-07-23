@@ -216,7 +216,7 @@ const Cart = () => {
   );
 
   const renderCartItem = ({ item }: { item: CartItem }) => {
-    const product = mockProducts.find(product => product.id === item.productId) as Product;
+    const product = mockProducts.find(product => product._id === item.productId) as Product;
     const renderRightActions = (
       progress: Animated.AnimatedInterpolation<number>
     ) => {
@@ -335,7 +335,7 @@ const Cart = () => {
             <View style={styles.cartFooter}>
               <View style={styles.cartTotal}>
                 <Text style={styles.cartTotalText}>
-                  Total: ${getCartTotal(cart.map((item : CartItem) => mockProducts.find(product => product.id === item.productId) as Product)).toFixed(2)}
+                  Total: ${getCartTotal(cart.map((item : CartItem) => mockProducts.find(product => product._id === item.productId) as Product)).toFixed(2)}
                 </Text>
               </View>
               <TouchableOpacity style={styles.checkoutButton}>
