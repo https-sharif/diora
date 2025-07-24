@@ -124,8 +124,8 @@ export const getTrendingProducts = async (req, res) => {
 
     if (!trendingProducts || trendingProducts.length === 0) {
       return res
-        .status(404)
-        .json({ status: false, message: 'No trending products found' });
+        .status(200)
+        .json({ status: true, message: 'No trending products found', trendingProducts: [] });
     }
 
     console.log('Trending products:', trendingProducts);

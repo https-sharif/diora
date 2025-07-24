@@ -54,22 +54,7 @@ export const getUserProfile = async (req, res) => {
       return res.status(404).json({ status: false, message: 'User not found' });
     }
 
-    const userProfile = {
-      _id: user._id,
-      username: user.username,
-      email: user.email,
-      bio: user.bio,
-      posts: user.posts,
-      isVerified: user.isVerified,
-      fullName: user.fullName,
-      type: user.type,
-      avatar: user.avatar,
-      followers: user.followers,
-      following: user.following,
-      likedPosts: user.likedPosts.length,
-    };
-
-    res.json({ status: true, user: userProfile });
+    res.json({ status: true, user });
   } catch (err) {
     console.error(err);
     res.status(500).json({ status: false, message: 'Something went wrong' });

@@ -25,7 +25,7 @@ interface AuthState {
     fullName: string
   ) => Promise<{ success: boolean; error: string | null }>;
   logout: () => void;
-  followUser: (targetUserId: string) => void;
+  followUser: (targetUserId: string, targetType: 'user' | 'shop') => void;
   likePost: (postId: string) => void;
   setIsAuthenticated: (val: boolean) => void;
   setUser: (user: User | null) => void;
@@ -172,13 +172,13 @@ export const useAuthStore = create<AuthState>()(
         router.replace('/auth');
       },
 
-      followUser: async (targetUserId) => {
+      followUser: async (targetUserId, targetType) => {
         const { user, token } = get();
         if (!user) return;
 
         try {
           const res = await axios.put(
-            `${API_URL}/api/user/follow/${targetUserId}`,
+            `${API_URL}/api/${targetType}/follow/${targetUserId}`,
             {},
             { headers: { Authorization: `Bearer ${token}` } }
           );

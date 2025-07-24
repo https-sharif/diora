@@ -117,7 +117,7 @@ export const getUserPosts = async (req, res) => {
 
     if (!posts || posts.length === 0) {
       return res
-        .status(204)
+        .status(200)
         .json({ status: false, message: 'No posts found for this user' });
     }
 
