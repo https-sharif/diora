@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -16,6 +16,7 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -36,23 +37,29 @@ import {
   UserMinus,
   Bookmark,
   Send,
+  ImageIcon,
 } from 'lucide-react-native';
+import ImageSlashIcon from '@/icon/ImageSlashIcon';
 import { useShopping } from '@/hooks/useShopping';
 import { useAuth } from '@/hooks/useAuth';
-import { mockReviews } from '@/mock/Review';
-import { User } from '@/types/User';
 import { ShopProfile } from '@/types/ShopProfile';
 import { Product } from '@/types/Product';
 import { Review } from '@/types/Review';
+import { Post } from '@/types/Post';
 import { Theme } from '@/types/Theme';
 import { useTheme } from '@/contexts/ThemeContext';
 import Color from 'color';
 import { BlurView } from 'expo-blur';
 import axios from 'axios';
 import { API_URL } from '@/constants/api';
-import { format } from 'timeago.js';
+import { cancel, format } from 'timeago.js';
+import { EmptyState } from '@/components/EmptyState';
+import ProductSlashIcon from '@/icon/ProductSlashIcon';
+import StarSlashIcon from '@/icon/StarSlashIcon';
+import { set } from 'zod';
 
 const { width, height } = Dimensions.get('window');
+const isSmallScreen = width < 360;
 
 const createStyles = (theme: Theme) => {
   const outOfStockOverlay = Color(theme.text).alpha(0.5).toString();
@@ -401,6 +408,23 @@ const createStyles = (theme: Theme) => {
       padding: 8,
       zIndex: 15,
     },
+    postsGrid: {
+      backgroundColor: theme.background,
+    },
+    postsRow: {
+      paddingHorizontal: 1,
+    },
+    postItem: {
+      width: '33%',
+      aspectRatio: 1,
+      margin: 1,
+      position: 'relative',
+    },
+    postImage: {
+      width: '100%',
+      height: '100%',
+      backgroundColor: theme.card,
+    },
     productInfo: {
       padding: 12,
     },
@@ -597,10 +621,11 @@ export default function ShopProfileScreen() {
 
   const [shopProfile, setShopProfile] = useState<ShopProfile | null>(null);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
-  const [selectedTab, setSelectedTab] = useState<'products' | 'reviews'>('products');
+  const [selectedTab, setSelectedTab] = useState<'posts' | 'products' | 'reviews'>('posts');
   const [loading, setLoading] = useState(true);
   const { user, followUser, token } = useAuth();
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [posts, setPosts] = useState<Post[]>([]);
   const [isFollowing, setIsFollowing] = useState(false);
   const { theme } = useTheme();
   const styles = createStyles(theme);
@@ -608,7 +633,111 @@ export default function ShopProfileScreen() {
   const [scaleAnim] = useState(new Animated.Value(1));
   const [opacityAnim] = useState(new Animated.Value(0));
   const [newReview, setNewReview] = useState('');
+  const [hasReviewed, setHasReviewed] = useState(false);
   const [rating, setRating] = useState(0);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [selectedReview, setSelectedReview] = useState<Review | null>(null);
+  const [editingReview, setEditingReview] = useState(false);
+  const reviewInputRef = useRef<TextInput>(null);
+
+  useEffect(() => {
+    const fetchShopProfile = async () => {
+      try {
+        setLoading(true);
+
+        const response = await axios.get(`${API_URL}/api/shop/${shopId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.data.status === false) {
+          setShopProfile(null);
+          return;
+        }
+        const shop = response.data.shop;
+
+        setShopProfile(shop);
+
+        if (user) {
+          setIsFollowing(user.following.includes(shop._id));
+        }
+      } catch (error) {
+        console.error('Error fetching shop profile:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const fetchReviews = async () => {
+      try {
+        const response = await axios.get(
+          `${API_URL}/api/review/shop/${shopId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (response.data.status === false) {
+          setReviews([]);
+          return;
+        }
+
+        setReviews(response.data.reviews);
+      } catch (error) {
+        console.error('Error fetching reviews:', error);
+      }
+    };
+
+    const fetchPosts = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/api/post/shop/${shopId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.data.status === false) {
+          return;
+        }
+
+        setPosts(response.data.posts);
+      } catch (error) {
+        console.error('Error fetching posts:', error);
+      }
+    };
+
+    const fetchReviewedStatus = async () => {
+      if (!user) return;
+
+      try {
+        const response = await axios.get(
+          `${API_URL}/api/review/reviewed/${user._id}/shop/${shopId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (response.data.status === false) {
+          setHasReviewed(false);
+          return;
+        }
+
+        setHasReviewed(response.data.reviewed);
+      } catch (error) {
+        console.error('Error fetching reviewed status:', error);
+      }
+    };
+
+    fetchShopProfile();
+    fetchReviews();
+    fetchPosts();
+    fetchReviewedStatus();
+  }, [shopId]);
 
   const panResponder = PanResponder.create({
     onMoveShouldSetPanResponder: (evt, gestureState) => {
@@ -674,80 +803,38 @@ export default function ShopProfileScreen() {
     });
   };
 
-  useEffect(() => {
-    const fetchShopProfile = async () => {
-      try {
-        setLoading(true);
-
-        const response = await axios.get(`${API_URL}/api/shop/${shopId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (response.data.status === false) {
-          setShopProfile(null);
-          return;
-        }
-        const shop = response.data.shop;
-
-        setShopProfile(shop);
-
-        if (user) {
-          setIsFollowing(user.following.includes(shop._id));
-        }
-      } catch (error) {
-        console.error('Error fetching shop profile:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    const fetchReviews = async () => {
-      try {
-        const response = await axios.get(
-          `${API_URL}/api/review/shop/${shopId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        if (response.data.status === false) {
-          setReviews([]);
-          return;
-        }
-
-        setReviews(response.data.reviews);
-      } catch (error) {
-        console.error('Error fetching reviews:', error);
-      }
-    };
-
-    fetchShopProfile();
-    fetchReviews();
-  }, [shopId]);
-
   const toggleFollow = () => {
     if (!shopProfile || !user) return;
-    followUser(shopProfile._id);
+    followUser(shopProfile._id, 'shop');
     setIsFollowing(!isFollowing);
   };
 
-  const handleSubmitReview = async () => {
-    if (!shopProfile || !user) return;
-    if (rating === 0) return;
+  const cancelEditReview = () => {
+    if (!selectedReview) return;
+    setEditingReview(false);
+    setNewReview('');
+    setRating(0);
+    setReviews([selectedReview, ...reviews]);
+    setHasReviewed(true);
+    setSelectedReview(null);
+  };
 
+  const handleEditReview = () => {
+    if (!selectedReview) return;
+    setShowReviewModal(false);
+    setEditingReview(true);
+    setNewReview(selectedReview.comment || '');
+    setRating(selectedReview.rating);
+    setReviews(reviews.filter((review) => review._id !== selectedReview._id));
+    setHasReviewed(false);
+    reviewInputRef.current?.focus();
+  };
+
+  const handleDeleteReview = async () => {
+    if (!selectedReview || !user) return;
     try {
-      const response = await axios.post(
-        `${API_URL}/api/review`,
-        {
-          targetId: shopProfile._id,
-          targetType: 'shop',
-          comment: newReview.trim(),
-          rating,
-        },
+      const response = await axios.delete(
+        `${API_URL}/api/review/shop/${selectedReview._id}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -759,17 +846,73 @@ export default function ShopProfileScreen() {
         Alert.alert('Error', response.data.message);
         return;
       }
+      setReviews(reviews.filter((review) => review._id !== selectedReview._id));
+      setSelectedReview(null);
+      setShowReviewModal(false);
+      setHasReviewed(false);
+
+      Alert.alert(
+        'Review Deleted',
+        'Your review has been deleted successfully.'
+      );
+    } catch (error) {
+      console.error('Error deleting review:', error);
+      Alert.alert('Error', 'Failed to delete review. Please try again later.');
+    }
+  };
+
+  const handleSubmitReview = async () => {
+    if (!shopProfile || !user) return;
+    if (rating === 0) return;
+
+    try {
+      let response;
+      if (editingReview) {
+        response = await axios.put(
+          `${API_URL}/api/review/shop/${selectedReview?._id}`,
+          {
+            comment: newReview.trim(),
+            rating,
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+      } else {
+        response = await axios.post(
+          `${API_URL}/api/review`,
+          {
+            targetId: shopProfile._id,
+            targetType: 'shop',
+            comment: newReview.trim(),
+            rating,
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+      }
+
+      if (response.data.status === false) {
+        Alert.alert('Error', response.data.message);
+        return;
+      }
 
       const review = response.data.review;
 
+      
       setReviews([...reviews, review]);
+      setEditingReview(false);
+      setSelectedReview(null);
       setNewReview('');
       setRating(0);
-
-      Alert.alert('Review Submitted', 'Thank you for your feedback!');
+      setHasReviewed(true);
     } catch (error) {
       console.error('Error submitting review:', error);
-      Alert.alert('Error', 'Failed to submit review. Please try again later.');
       return;
     }
   };
@@ -802,6 +945,10 @@ export default function ShopProfileScreen() {
 
   const handleProductPress = (productId: string) => {
     router.push(`/product/${productId}`);
+  };
+
+  const handlePostPress = (postId: string) => {
+    router.push(`/post/${postId}`);
   };
 
   const renderProduct = ({ item }: { item: Product }) => (
@@ -863,7 +1010,14 @@ export default function ShopProfileScreen() {
 
   const renderReview = ({ item }: { item: Review }) => {
     return (
-      <View style={styles.reviewItem}>
+      <Pressable
+        style={styles.reviewItem}
+        onLongPress={() => {
+          if (!user || user._id !== item.user._id) return;
+          setSelectedReview(item);
+          setShowReviewModal(true);
+        }}
+      >
         <View style={styles.reviewHeader}>
           <TouchableOpacity
             onPress={() => router.push(`/user/${item.user._id}`)}
@@ -872,9 +1026,11 @@ export default function ShopProfileScreen() {
               source={{ uri: item.user.avatar }}
               style={styles.reviewAvatar}
             />
-          </TouchableOpacity> 
+          </TouchableOpacity>
           <View style={styles.reviewInfo}>
-            <TouchableOpacity onPress={() => router.push(`/user/${item.user._id}`)}>
+            <TouchableOpacity
+              onPress={() => router.push(`/user/${item.user._id}`)}
+            >
               <Text style={styles.reviewUser}>{item.user.username}</Text>
             </TouchableOpacity>
             <View style={styles.reviewRating}>
@@ -887,7 +1043,7 @@ export default function ShopProfileScreen() {
                 />
               ))}
               <Text style={styles.reviewDate}>
-                {format(new Date(item.createdAt))}
+                {format(new Date(item.updatedAt))}
               </Text>
             </View>
           </View>
@@ -915,8 +1071,128 @@ export default function ShopProfileScreen() {
             ))}
           </ScrollView>
         )}
-      </View>
+      </Pressable>
     );
+  };
+
+  const renderPost = ({ item }: { item: Post }) => (
+    <TouchableOpacity
+      style={styles.postItem}
+      onPress={() => handlePostPress(item._id)}
+      activeOpacity={0.8}
+    >
+      <Image source={{ uri: item.imageUrl }} style={styles.postImage} />
+    </TouchableOpacity>
+  );
+
+  const renderTabContent = () => {
+    if (!shopProfile) return null;
+
+    switch (selectedTab) {
+      case 'products':
+        return shopProfile.productIds.length > 0 ? (
+          <FlatList
+            data={shopProfile.productIds}
+            renderItem={({ item }) => renderProduct({ item })}
+            keyExtractor={(item) => item._id}
+            numColumns={2}
+            scrollEnabled={false}
+            columnWrapperStyle={styles.productsRow}
+            contentContainerStyle={styles.productsGrid}
+          />
+        ) : (
+          <EmptyState
+            text="No products available"
+            icon={<ProductSlashIcon size={40} />}
+          />
+        );
+
+      case 'reviews':
+        return (
+          <View style={styles.reviewsBox}>
+            {!hasReviewed && (
+              <>
+                <Text style={styles.reviewHeading}>Leave a review</Text>
+                <View style={styles.ratingContainer}>
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <TouchableOpacity
+                      key={star}
+                      onPress={() => setRating(star)}
+                    >
+                      <Star
+                        size={24}
+                        color={star <= rating ? '#FFD700' : theme.textSecondary}
+                        fill={star <= rating ? '#FFD700' : 'none'}
+                      />
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                <View style={styles.reviewInputContainer}>
+                  <TextInput
+                    ref={reviewInputRef}
+                    placeholder="Write a review..."
+                    value={newReview}
+                    onChangeText={setNewReview}
+                    style={styles.reviewInput}
+                    placeholderTextColor={theme.textSecondary}
+                    multiline={true}
+                    numberOfLines={3}
+                  />
+                  <>
+                    <TouchableOpacity
+                      onPress={handleSubmitReview}
+                      style={styles.headerButton}
+                    >
+                      <Send size={24} color={theme.text} />
+                    </TouchableOpacity>
+                    {editingReview && (
+                      <TouchableOpacity
+                        onPress={cancelEditReview}
+                        style={styles.headerButton}
+                      >
+                        <X size={24} color={theme.error} />
+                      </TouchableOpacity>
+                    )}
+                  </>
+                </View>
+              </>
+            )}
+
+            {reviews.length > 0 ? (
+              <FlatList
+                data={reviews}
+                renderItem={renderReview}
+                keyExtractor={(item) => item._id}
+                scrollEnabled={false}
+              />
+            ) : (
+              <EmptyState
+                text="No reviews yet"
+                icon={<StarSlashIcon size={40} />}
+              />
+            )}
+          </View>
+        );
+
+      case 'posts':
+        return posts.length > 0 ? (
+          <FlatList
+            data={posts}
+            renderItem={renderPost}
+            keyExtractor={(item) => item._id}
+            numColumns={3}
+            scrollEnabled={false}
+            columnWrapperStyle={styles.postsRow}
+            contentContainerStyle={styles.postsGrid}
+          />
+        ) : (
+          <EmptyState text="No posts yet" icon={<ImageSlashIcon size={40} />} />
+        );
+
+      default:
+        return null;
+    }
   };
 
   if (loading) {
@@ -1008,7 +1284,12 @@ export default function ShopProfileScreen() {
                 <View style={styles.statItem}>
                   <View style={styles.ratingContainer}>
                     <Star size={16} color="#FFD700" fill="#FFD700" />
-                    <Text style={styles.statNumber}>{shopProfile.rating}</Text>
+                    <Text style={styles.statNumber}>
+                      {(shopProfile.ratingCount > 0
+                        ? shopProfile.rating / shopProfile.ratingCount
+                        : 0.0
+                      ).toFixed(1)}
+                    </Text>
                   </View>
                   <Text style={styles.statLabel}>{reviews.length} reviews</Text>
                 </View>
@@ -1114,8 +1395,32 @@ export default function ShopProfileScreen() {
             </View>
           </View>
 
-          {/* Tabs */}
+          {/* Tabs Section */}
           <View style={styles.tabsSection}>
+            {/* Posts */}
+            <TouchableOpacity
+              style={[styles.tab, selectedTab === 'posts' && styles.activeTab]}
+              onPress={() => setSelectedTab('posts')}
+            >
+              <ImageIcon
+                size={20}
+                color={
+                  selectedTab === 'posts' ? theme.text : theme.textSecondary
+                }
+              />
+              {!isSmallScreen && (
+                <Text
+                  style={[
+                    styles.tabText,
+                    selectedTab === 'posts' && styles.activeTabText,
+                  ]}
+                >
+                  Posts ({posts.length})
+                </Text>
+              )}
+            </TouchableOpacity>
+
+            {/* Products */}
             <TouchableOpacity
               style={[
                 styles.tab,
@@ -1125,17 +1430,23 @@ export default function ShopProfileScreen() {
             >
               <ShoppingBag
                 size={20}
-                color={selectedTab === 'products' ? '#000' : '#666'}
+                color={
+                  selectedTab === 'products' ? theme.text : theme.textSecondary
+                }
               />
-              <Text
-                style={[
-                  styles.tabText,
-                  selectedTab === 'products' && styles.activeTabText,
-                ]}
-              >
-                Products ({shopProfile.productIds.length})
-              </Text>
+              {!isSmallScreen && (
+                <Text
+                  style={[
+                    styles.tabText,
+                    selectedTab === 'products' && styles.activeTabText,
+                  ]}
+                >
+                  Products ({shopProfile.productIds.length})
+                </Text>
+              )}
             </TouchableOpacity>
+
+            {/* Reviews */}
             <TouchableOpacity
               style={[
                 styles.tab,
@@ -1145,70 +1456,24 @@ export default function ShopProfileScreen() {
             >
               <Star
                 size={20}
-                color={selectedTab === 'reviews' ? '#000' : '#666'}
+                color={
+                  selectedTab === 'reviews' ? theme.text : theme.textSecondary
+                }
               />
-              <Text
-                style={[
-                  styles.tabText,
-                  selectedTab === 'reviews' && styles.activeTabText,
-                ]}
-              >
-                Reviews ({reviews.length})
-              </Text>
+              {!isSmallScreen && (
+                <Text
+                  style={[
+                    styles.tabText,
+                    selectedTab === 'reviews' && styles.activeTabText,
+                  ]}
+                >
+                  Reviews ({reviews.length})
+                </Text>
+              )}
             </TouchableOpacity>
           </View>
 
-          {/* Content */}
-          {selectedTab === 'products' ? (
-            <FlatList
-              data={shopProfile.productIds}
-              renderItem={({ item }) => renderProduct({ item })}
-              keyExtractor={(item) => item._id}
-              numColumns={2}
-              scrollEnabled={false}
-              columnWrapperStyle={styles.productsRow}
-              contentContainerStyle={styles.productsGrid}
-            />
-          ) : (
-            <View style={styles.reviewsBox}>
-              <Text style={styles.reviewHeading}>Leave a review</Text>
-              <View style={styles.ratingContainer}>
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <TouchableOpacity key={star} onPress={() => setRating(star)}>
-                    <Star
-                      size={24}
-                      color={star <= rating ? '#FFD700' : theme.textSecondary}
-                      fill={star <= rating ? '#FFD700' : 'none'}
-                    />
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              <View style={styles.reviewInputContainer}>
-                <TextInput
-                  placeholder="Write a review..."
-                  value={newReview}
-                  onChangeText={setNewReview}
-                  style={styles.reviewInput}
-                  placeholderTextColor={theme.textSecondary}
-                  multiline={true}
-                  numberOfLines={3}
-                />
-                <TouchableOpacity
-                  onPress={handleSubmitReview}
-                  style={styles.headerButton}
-                >
-                  <Send size={24} color={theme.text} />
-                </TouchableOpacity>
-              </View>
-              <FlatList
-                data={reviews}
-                renderItem={renderReview}
-                keyExtractor={(item) => item._id}
-                scrollEnabled={false}
-              />
-            </View>
-          )}
+          {renderTabContent()}
 
           <View style={styles.bottomPadding} />
         </ScrollView>
@@ -1288,6 +1553,46 @@ export default function ShopProfileScreen() {
           </Animated.View>
         </Modal>
       )}
+
+      <Modal
+        visible={showReviewModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowReviewModal(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowReviewModal(false)}
+        >
+          <View style={styles.moreMenu}>
+            <View style={styles.moreMenuHeader}>
+              <Text style={styles.moreMenuTitle}>Manage Review</Text>
+              <TouchableOpacity onPress={() => setShowReviewModal(false)}>
+                <X size={24} color={theme.text} />
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity
+              style={styles.moreMenuItem}
+              onPress={handleEditReview}
+            >
+              <Share size={20} color={theme.text} />
+              <Text style={styles.moreMenuItemText}>Edit Review</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.moreMenuItem}
+              onPress={handleDeleteReview}
+            >
+              <Flag size={20} color={theme.error} />
+              <Text style={[styles.moreMenuItemText, { color: theme.error }]}>
+                Delete Review
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </SafeAreaView>
   );
 }

@@ -1,6 +1,6 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
-import { Shirt, X } from 'lucide-react-native';
+import { View } from 'react-native';
+import { PackageX } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 
 export default function ProductSlashIcon({ size = 40 }: { size?: number }) {
@@ -8,9 +8,7 @@ export default function ProductSlashIcon({ size = 40 }: { size?: number }) {
 
   return (
     <View style={{ width: size, height: size, position: 'relative' }}>
-      <Shirt size={size + 10} color={theme.text} style={{position: 'absolute', top: -5, left: -5}} />
-      <X size={size} color={theme.card} strokeWidth={5} style={StyleSheet.absoluteFill} />
-      <X size={size} color={theme.text} style={StyleSheet.absoluteFill} />
+      <PackageX size={size} color={theme.text} />
     </View>
   );
 }

@@ -956,7 +956,7 @@ export default function ExploreScreen() {
           styles.followButton,
           user?.following.includes(item._id) && styles.followingButton,
         ]}
-        onPress={() => followUser(item._id)}
+        onPress={() => followUser(item._id, 'shop')}
       >
         <Text
           style={[
@@ -996,7 +996,7 @@ export default function ExploreScreen() {
           styles.followButton,
           user?.following.includes(item._id) && styles.followingButton,
         ]}
-        onPress={() => followUser(item._id)}
+        onPress={() => followUser(item._id, 'user')}
       >
         <Text
           style={[

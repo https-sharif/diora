@@ -1,4 +1,6 @@
 import Review from '../models/Review.js';
+import Product from '../models/Product.js';
+import Shop from '../models/Shop.js';
 
 export const createReview = async (req, res) => {
   console.log('Create review route/controller hit');
@@ -29,6 +31,28 @@ export const createReview = async (req, res) => {
       comment,
     });
 
+    if (targetType === 'product') {
+      const product = await Product.findById(targetId);
+      if (!product) {
+        return res
+          .status(404)
+          .json({ status: false, message: 'Product not found' });
+      }
+      product.rating += rating;
+      product.ratingCount += 1;
+      await product.save();
+    } else {
+      const shop = await Shop.findById(targetId);
+      if (!shop) {
+        return res
+          .status(404)
+          .json({ status: false, message: 'Shop not found' });
+      }
+      shop.rating += rating;
+      shop.ratingCount += 1;
+      await shop.save();
+    }
+
     await review.save();
     await review.populate('user', 'username avatar');
 
@@ -55,12 +79,145 @@ export const getReviewsByShopId = async (req, res) => {
       .sort({ createdAt: -1 });
 
     if (!reviews || reviews.length === 0) {
-      return res
-        .status(204)
-        .json({ status: false, message: 'No reviews found for this shop' });
+      return res.status(200).json({
+        status: true,
+        message: 'No reviews found for this shop',
+        reviews: [],
+      });
     }
 
     res.json({ status: true, reviews });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ status: false, message: 'Something went wrong' });
+  }
+};
+
+export const reviewed = async (req, res) => {
+  console.log('Check if user has reviewed shop route/controller hit');
+  try {
+    const { userId, targetType, targetId } = req.params;
+
+    if (!userId || !targetId) {
+      return res
+        .status(400)
+        .json({ status: false, message: 'User ID and Target ID are required' });
+    }
+
+    const review = await Review.findOne({
+      user: userId,
+      targetId: targetId,
+      targetType: targetType,
+    });
+
+    if (review) {
+      return res.status(200).json({ status: true, reviewed: true });
+    } else {
+      return res.status(200).json({ status: true, reviewed: false });
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ status: false, message: 'Something went wrong' });
+  }
+};
+
+export const deleteReview = async (req, res) => {
+  console.log('Delete review route/controller hit');
+  try {
+    const { targetType, id } = req.params;
+    const userId = req.user.id;
+
+    const review = await Review.findById(id);
+    if (!review) {
+      return res
+        .status(404)
+        .json({ status: false, message: 'Review not found' });
+    }
+
+    if (review.user.toString() !== userId) {
+      return res
+        .status(403)
+        .json({
+          status: false,
+          message: 'Not authorized to delete this review',
+        });
+    }
+    
+    if (targetType === 'product') {
+        const product = await Product.findById(review.targetId);
+        if (product) {
+            product.rating -= review.rating;
+            product.ratingCount -= 1;
+            await product.save();
+        }
+    } else {
+        const shop = await Shop.findById(review.targetId);
+        if (shop) {
+            shop.rating -= review.rating;
+            shop.ratingCount -= 1;
+            await shop.save();
+        }
+    }
+
+    await Review.findByIdAndDelete(id);
+
+    res.json({ status: true, message: 'Review deleted successfully' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ status: false, message: 'Something went wrong' });
+  }
+};
+
+export const updateReview = async (req, res) => {
+  console.log('Update review route/controller hit');
+  try {
+    const { targetType, id } = req.params;
+    const userId = req.user.id;
+    const { rating, comment } = req.body;
+
+    const review = await Review.findById(id);
+    if (!review) {
+      return res
+        .status(404)
+        .json({ status: false, message: 'Review not found' });
+    }
+    if (review.user.toString() !== userId) {
+      return res
+        .status(403)
+        .json({
+          status: false,
+          message: 'Not authorized to update this review',
+        });
+    }
+
+    if (targetType === 'product') {
+      const product = await Product.findById(review.targetId);
+      if (!product) {
+        return res
+          .status(404)
+          .json({ status: false, message: 'Product not found' });
+      }
+      product.rating -= review.rating;
+      product.rating += rating;
+      await product.save();
+    } else {
+      const shop = await Shop.findById(review.targetId);
+      if (!shop) {
+        return res
+          .status(404)
+          .json({ status: false, message: 'Shop not found' });
+      }
+      shop.rating -= review.rating;
+      shop.rating += rating;
+      await shop.save();
+    }
+
+    review.rating = rating;
+    review.comment = comment;
+    await review.save();
+    await review.populate('user', 'username avatar');
+
+    res.json({ status: true, message: 'Review updated successfully', review });
   } catch (err) {
     console.error(err);
     res.status(500).json({ status: false, message: 'Something went wrong' });

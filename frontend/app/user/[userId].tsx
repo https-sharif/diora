@@ -26,8 +26,6 @@ import {
 } from 'lucide-react-native';
 import { useAuth } from '@/hooks/useAuth';
 import { useNotification } from '@/hooks/useNotification';
-import { mockUsers } from '@/mock/User';
-import { mockPosts } from '@/mock/Post';
 import { User } from '@/types/User';
 import { Post } from '@/types/Post';
 import { Theme } from '@/types/Theme';
@@ -260,6 +258,7 @@ const createStyles = (theme: Theme) => {
     postImage: {
       width: '100%',
       height: '100%',
+      backgroundColor: theme.card,
     },
     emptyState: {
       flex: 1,
@@ -403,7 +402,7 @@ export default function UserProfileScreen() {
   const handleFollow = () => {
     if (!userProfile) return;
 
-    followUser(userProfile._id);
+    followUser(userProfile._id, 'user');
     setIsFollowing(!isFollowing);
   };
 

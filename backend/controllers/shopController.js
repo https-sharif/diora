@@ -1,4 +1,5 @@
 import Shop from '../models/Shop.js';
+import User from '../models/User.js';
 
 export const getAllShops = async (req, res) => {
   console.log('Get all shops route/controller hit');
@@ -246,6 +247,44 @@ export const getTrendingShops = async (req, res) => {
     }
 
     res.json({ status: true, trendingShops });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ status: false, message: 'Something went wrong' });
+  }
+};
+
+export const followShop = async (req, res) => {
+  console.log('Follow shop route/controller hit');
+  try {
+    const shopId = req.params.shopId;
+    const userId = req.user.id;
+
+    if(shopId === userId) {
+      return res.status(400).json({ status: false, message: 'Cannot follow your own shop' });
+    }
+
+    const shop = await Shop.findById(shopId);
+    const user = await User.findById(userId);
+
+    if (!shop || !user) {
+      return res.status(404).json({ status: false, message: 'Shop or user not found' });
+    }
+
+    const isFollowing = user.following.includes(shopId);
+
+    if(isFollowing) {
+      user.following = user.following.pull(shopId);
+      shop.followers -= 1;
+    }
+    else {
+      user.following.push(shopId);
+      shop.followers += 1;
+    }
+
+    await user.save();
+    await shop.save();
+
+    res.json({ status: true, message: `Successfully ${isFollowing ? 'unfollowed' : 'followed'} the shop`, following: user.following });
   } catch (err) {
     console.error(err);
     res.status(500).json({ status: false, message: 'Something went wrong' });
