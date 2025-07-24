@@ -12,14 +12,17 @@ import {
   Linking,
   Animated,
   PanResponder,
-  Dimensions
+  Dimensions,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
-import { 
-  ArrowLeft, 
-  MessageCircle, 
-  Share, 
+import {
+  ArrowLeft,
+  MessageCircle,
+  Share,
   MoreHorizontal,
   Star,
   MapPin,
@@ -31,14 +34,12 @@ import {
   Flag,
   UserPlus,
   UserMinus,
-  Bookmark
+  Bookmark,
+  Send,
 } from 'lucide-react-native';
 import { useShopping } from '@/hooks/useShopping';
 import { useAuth } from '@/hooks/useAuth';
-import { mockProducts } from '@/mock/Product';
 import { mockReviews } from '@/mock/Review';
-import { mockShops } from '@/mock/Shop';
-import { mockUsers } from '@/mock/User';
 import { User } from '@/types/User';
 import { ShopProfile } from '@/types/ShopProfile';
 import { Product } from '@/types/Product';
@@ -49,13 +50,14 @@ import Color from 'color';
 import { BlurView } from 'expo-blur';
 import axios from 'axios';
 import { API_URL } from '@/constants/api';
+import { format } from 'timeago.js';
 
 const { width, height } = Dimensions.get('window');
 
 const createStyles = (theme: Theme) => {
   const outOfStockOverlay = Color(theme.text).alpha(0.5).toString();
   const bookmarkInactiveColor = Color(theme.text).alpha(0.5).toString();
-  
+
   return StyleSheet.create({
     container: {
       flex: 1,
@@ -170,6 +172,7 @@ const createStyles = (theme: Theme) => {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 4,
+      padding: 8,
     },
     shopInfo: {
       marginBottom: 16,
@@ -446,9 +449,32 @@ const createStyles = (theme: Theme) => {
       fontFamily: 'Inter-Medium',
       color: theme.textSecondary,
     },
-    reviewsContainer: {
+    reviewsBox: {
+      padding: 16,
       backgroundColor: theme.background,
-      paddingBottom: 84,
+      borderTopWidth: 1,
+      borderTopColor: theme.border,
+    },
+    reviewHeading: {
+      fontSize: 16,
+      fontFamily: 'Inter-Bold',
+      color: theme.text,
+      padding: 8,
+    },
+    reviewInputContainer: {
+      flexDirection: 'row',
+      padding: 8,
+      backgroundColor: theme.background,
+    },
+    reviewInput: {
+      flex: 1,
+      padding: 12,
+      borderWidth: 1,
+      borderColor: theme.textSecondary,
+      borderRadius: 8,
+      backgroundColor: theme.card,
+      marginBottom: 16,
+      color: theme.text,
     },
     reviewItem: {
       padding: 16,
@@ -491,9 +517,7 @@ const createStyles = (theme: Theme) => {
       lineHeight: 20,
       marginBottom: 8,
     },
-    reviewImages: {
-      marginTop: 8,
-    },
+    reviewImages: {},
     reviewImage: {
       width: 80,
       height: 80,
@@ -541,7 +565,7 @@ const createStyles = (theme: Theme) => {
     enlargedContainer: {
       flex: 1,
       backgroundColor: 'rgba(255, 255, 255, 0.05)',
-  
+
       justifyContent: 'center',
       alignItems: 'center',
     },
@@ -565,12 +589,12 @@ const createStyles = (theme: Theme) => {
       resizeMode: 'contain',
     },
   });
-}
+};
 
 export default function ShopProfileScreen() {
   const { shopId } = useLocalSearchParams<{ shopId: string }>();
   const { addToWishlist, isInWishlist } = useShopping();
-  
+
   const [shopProfile, setShopProfile] = useState<ShopProfile | null>(null);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [selectedTab, setSelectedTab] = useState<'products' | 'reviews'>('products');
@@ -583,7 +607,8 @@ export default function ShopProfileScreen() {
   const [enlargedPost, setEnlargedPost] = useState<string | null>(null);
   const [scaleAnim] = useState(new Animated.Value(1));
   const [opacityAnim] = useState(new Animated.Value(0));
-
+  const [newReview, setNewReview] = useState('');
+  const [rating, setRating] = useState(0);
 
   const panResponder = PanResponder.create({
     onMoveShouldSetPanResponder: (evt, gestureState) => {
@@ -613,7 +638,7 @@ export default function ShopProfileScreen() {
     },
   });
 
-  const handleReviewImage = (image : string) => {
+  const handleReviewImage = (image: string) => {
     setEnlargedPost(image);
     Animated.parallel([
       Animated.spring(scaleAnim, {
@@ -659,30 +684,49 @@ export default function ShopProfileScreen() {
             Authorization: `Bearer ${token}`,
           },
         });
-        
-        if(response.data.status === false) {
+
+        if (response.data.status === false) {
           setShopProfile(null);
           return;
         }
         const shop = response.data.shop;
-        
+
         setShopProfile(shop);
-        console.log(shop.productIds);
-        setReviews(mockReviews.filter(review => review.targetType === 'shop' && review.targetId === shop._id));
-        
+
         if (user) {
           setIsFollowing(user.following.includes(shop._id));
         }
-
       } catch (error) {
         console.error('Error fetching shop profile:', error);
-      }
-      finally {
+      } finally {
         setLoading(false);
       }
     };
 
+    const fetchReviews = async () => {
+      try {
+        const response = await axios.get(
+          `${API_URL}/api/review/shop/${shopId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (response.data.status === false) {
+          setReviews([]);
+          return;
+        }
+
+        setReviews(response.data.reviews);
+      } catch (error) {
+        console.error('Error fetching reviews:', error);
+      }
+    };
+
     fetchShopProfile();
+    fetchReviews();
   }, [shopId]);
 
   const toggleFollow = () => {
@@ -691,6 +735,44 @@ export default function ShopProfileScreen() {
     setIsFollowing(!isFollowing);
   };
 
+  const handleSubmitReview = async () => {
+    if (!shopProfile || !user) return;
+    if (rating === 0) return;
+
+    try {
+      const response = await axios.post(
+        `${API_URL}/api/review`,
+        {
+          targetId: shopProfile._id,
+          targetType: 'shop',
+          comment: newReview.trim(),
+          rating,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.data.status === false) {
+        Alert.alert('Error', response.data.message);
+        return;
+      }
+
+      const review = response.data.review;
+
+      setReviews([...reviews, review]);
+      setNewReview('');
+      setRating(0);
+
+      Alert.alert('Review Submitted', 'Thank you for your feedback!');
+    } catch (error) {
+      console.error('Error submitting review:', error);
+      Alert.alert('Error', 'Failed to submit review. Please try again later.');
+      return;
+    }
+  };
 
   const handleContact = () => {
     if (!shopProfile) return;
@@ -702,17 +784,20 @@ export default function ShopProfileScreen() {
   };
 
   const handleReport = () => {
-    Alert.alert(
-      'Report Shop',
-      'Are you sure you want to report this shop?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Report', style: 'destructive', onPress: () => {
-          Alert.alert('Reported', 'Shop has been reported. Thank you for keeping our community safe.');
+    Alert.alert('Report Shop', 'Are you sure you want to report this shop?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Report',
+        style: 'destructive',
+        onPress: () => {
+          Alert.alert(
+            'Reported',
+            'Shop has been reported. Thank you for keeping our community safe.'
+          );
           setShowMoreMenu(false);
-        }},
-      ]
-    );
+        },
+      },
+    ]);
   };
 
   const handleProductPress = (productId: string) => {
@@ -720,7 +805,7 @@ export default function ShopProfileScreen() {
   };
 
   const renderProduct = ({ item }: { item: Product }) => (
-    <TouchableOpacity 
+    <TouchableOpacity
       style={styles.productItem}
       onPress={() => handleProductPress(item._id)}
     >
@@ -750,9 +835,11 @@ export default function ShopProfileScreen() {
           fill={isInWishlist(item._id) ? theme.background : 'transparent'}
         />
       </TouchableOpacity>
-      
+
       <View style={styles.productInfo}>
-        <Text style={styles.productName} numberOfLines={2}>{item.name}</Text>
+        <Text style={styles.productName} numberOfLines={2}>
+          {item.name}
+        </Text>
         <View style={styles.priceContainer}>
           {item.discount ? (
             <>
@@ -775,15 +862,21 @@ export default function ShopProfileScreen() {
   );
 
   const renderReview = ({ item }: { item: Review }) => {
-    const user = mockUsers.find(user => user._id === item.userId) as User;
-    if (!user) return null;
-
     return (
       <View style={styles.reviewItem}>
         <View style={styles.reviewHeader}>
-          <Image source={{ uri: user.avatar }} style={styles.reviewAvatar} />
+          <TouchableOpacity
+            onPress={() => router.push(`/user/${item.user._id}`)}
+          >
+            <Image
+              source={{ uri: item.user.avatar }}
+              style={styles.reviewAvatar}
+            />
+          </TouchableOpacity> 
           <View style={styles.reviewInfo}>
-            <Text style={styles.reviewUser}>{user.username}</Text>
+            <TouchableOpacity onPress={() => router.push(`/user/${item.user._id}`)}>
+              <Text style={styles.reviewUser}>{item.user.username}</Text>
+            </TouchableOpacity>
             <View style={styles.reviewRating}>
               {[...Array(5)].map((_, i) => (
                 <Star
@@ -793,16 +886,31 @@ export default function ShopProfileScreen() {
                   fill={i < item.rating ? '#FFD700' : 'transparent'}
                 />
               ))}
-              <Text style={styles.reviewDate}>{item.createdAt}</Text>
+              <Text style={styles.reviewDate}>
+                {format(new Date(item.createdAt))}
+              </Text>
             </View>
           </View>
         </View>
-        <Text style={styles.reviewComment}>{item.comment}</Text>
+        {item.comment && (
+          <Text style={styles.reviewComment}>{item.comment}</Text>
+        )}
         {item.images && (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.reviewImages}>
-            {item.images.map((image : string , index : number) => (
-              <TouchableOpacity key={index} onPress={() => handleReviewImage(image)}>
-                <Image key={index} source={{ uri: image }} style={styles.reviewImage} />
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.reviewImages}
+          >
+            {item.images.map((image: string, index: number) => (
+              <TouchableOpacity
+                key={index}
+                onPress={() => handleReviewImage(image)}
+              >
+                <Image
+                  key={index}
+                  source={{ uri: image }}
+                  style={styles.reviewImage}
+                />
               </TouchableOpacity>
             ))}
           </ScrollView>
@@ -825,7 +933,10 @@ export default function ShopProfileScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity style={styles.headerButton} onPress={() => router.back()}>
+          <TouchableOpacity
+            style={styles.headerButton}
+            onPress={() => router.back()}
+          >
             <ArrowLeft size={24} color={theme.text} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Shop</Text>
@@ -833,7 +944,10 @@ export default function ShopProfileScreen() {
         </View>
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>Shop not found</Text>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+          >
             <Text style={styles.backButtonText}>Go Back</Text>
           </TouchableOpacity>
         </View>
@@ -844,13 +958,16 @@ export default function ShopProfileScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.headerButton} onPress={() => router.back()}>
+        <TouchableOpacity
+          style={styles.headerButton}
+          onPress={() => router.back()}
+        >
           <ArrowLeft size={24} color={theme.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{shopProfile.username}</Text>
         <View style={styles.headerActions}>
-          <TouchableOpacity 
-            style={styles.headerButton} 
+          <TouchableOpacity
+            style={styles.headerButton}
             onPress={() => setShowMoreMenu(true)}
           >
             <MoreHorizontal size={24} color={theme.text} />
@@ -858,163 +975,244 @@ export default function ShopProfileScreen() {
         </View>
       </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Cover Image */}
-        <Image source={{ uri: shopProfile.coverImageUrl }} style={styles.coverImage} />
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+      >
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          {/* Cover Image */}
+          <Image
+            source={{ uri: shopProfile.coverImageUrl }}
+            style={styles.coverImage}
+          />
 
-        {/* Shop Info */}
-        <View style={styles.shopSection}>
-          <View style={styles.shopHeader}>
-            <Image source={{ uri: shopProfile.logoUrl }} style={styles.shopAvatar} />
-            <View style={styles.shopStats}>
-              <View style={styles.statItem}>
-                <Text style={styles.statNumber}>{shopProfile.productIds.length}</Text>
-                <Text style={styles.statLabel}>Products</Text>
-              </View>
-              <View style={styles.statItem}>
-                <Text style={styles.statNumber}>{shopProfile.followers}</Text>
-                <Text style={styles.statLabel}>Followers</Text>
-              </View>
-              <View style={styles.statItem}>
-                <View style={styles.ratingContainer}>
-                  <Star size={16} color="#FFD700" fill="#FFD700" />
-                  <Text style={styles.statNumber}>{shopProfile.rating}</Text>
+          {/* Shop Info */}
+          <View style={styles.shopSection}>
+            <View style={styles.shopHeader}>
+              <Image
+                source={{ uri: shopProfile.logoUrl }}
+                style={styles.shopAvatar}
+              />
+              <View style={styles.shopStats}>
+                <View style={styles.statItem}>
+                  <Text style={styles.statNumber}>
+                    {shopProfile.productIds.length}
+                  </Text>
+                  <Text style={styles.statLabel}>Products</Text>
                 </View>
-                <Text style={styles.statLabel}>{reviews.length} reviews</Text>
+                <View style={styles.statItem}>
+                  <Text style={styles.statNumber}>{shopProfile.followers}</Text>
+                  <Text style={styles.statLabel}>Followers</Text>
+                </View>
+                <View style={styles.statItem}>
+                  <View style={styles.ratingContainer}>
+                    <Star size={16} color="#FFD700" fill="#FFD700" />
+                    <Text style={styles.statNumber}>{shopProfile.rating}</Text>
+                  </View>
+                  <Text style={styles.statLabel}>{reviews.length} reviews</Text>
+                </View>
               </View>
             </View>
-          </View>
 
-          <View style={styles.shopInfo}>
-            <View style={styles.nameContainer}>
-              <Text style={styles.shopName}>{shopProfile.name}</Text>
-              {shopProfile.isVerified && (
-                <View style={styles.verifiedBadge}>
-                  <Text style={styles.verifiedText}>✓</Text>
-                </View>
-              )}
-            </View>
-            <Text style={styles.shopDescription}>{shopProfile.description}</Text>
-            
-            {/* Contact Info */}
-            <View style={styles.contactInfo}>
-              <View style={styles.contactItem}>
-                <MapPin size={16} color={theme.textSecondary} />
-                <Text style={styles.contactText}>{shopProfile.location}</Text>
+            <View style={styles.shopInfo}>
+              <View style={styles.nameContainer}>
+                <Text style={styles.shopName}>{shopProfile.name}</Text>
+                {shopProfile.isVerified && (
+                  <View style={styles.verifiedBadge}>
+                    <Text style={styles.verifiedText}>✓</Text>
+                  </View>
+                )}
               </View>
-              {shopProfile.contactPhone && (
+              <Text style={styles.shopDescription}>
+                {shopProfile.description}
+              </Text>
+
+              {/* Contact Info */}
+              <View style={styles.contactInfo}>
                 <View style={styles.contactItem}>
-                  <Phone size={16} color={theme.textSecondary} />
-                  <Text style={styles.contactText}>{shopProfile.contactPhone}</Text>
+                  <MapPin size={16} color={theme.textSecondary} />
+                  <Text style={styles.contactText}>{shopProfile.location}</Text>
                 </View>
-              )}
-              {shopProfile.contactEmail && (
-                <View style={styles.contactItem}>
-                  <Mail size={16} color={theme.textSecondary} />
-                  <Text style={styles.contactText}>{shopProfile.contactEmail}</Text>
-                </View>
-              )}
-              {shopProfile.website && (
-                <TouchableOpacity style={styles.contactItem} onPress={() => Linking.openURL(shopProfile.website!)}>
-                  <Globe size={16} color="#007AFF" />
-                  <Text style={[styles.contactText, styles.websiteText]}>{shopProfile.website}</Text>
-                </TouchableOpacity>
-              )}
+                {shopProfile.contactPhone && (
+                  <View style={styles.contactItem}>
+                    <Phone size={16} color={theme.textSecondary} />
+                    <Text style={styles.contactText}>
+                      {shopProfile.contactPhone}
+                    </Text>
+                  </View>
+                )}
+                {shopProfile.contactEmail && (
+                  <View style={styles.contactItem}>
+                    <Mail size={16} color={theme.textSecondary} />
+                    <Text style={styles.contactText}>
+                      {shopProfile.contactEmail}
+                    </Text>
+                  </View>
+                )}
+                {shopProfile.website && (
+                  <TouchableOpacity
+                    style={styles.contactItem}
+                    onPress={() => Linking.openURL(shopProfile.website!)}
+                  >
+                    <Globe size={16} color="#007AFF" />
+                    <Text style={[styles.contactText, styles.websiteText]}>
+                      {shopProfile.website}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+
+              <Text style={styles.establishedText}>
+                Established {shopProfile.createdAt}
+              </Text>
             </View>
 
-            <Text style={styles.establishedText}>Established {shopProfile.createdAt}</Text>
-          </View>
+            {/* Categories */}
+            <View style={styles.categories}>
+              <Text style={styles.categoriesTitle}>Categories</Text>
+              <View style={styles.categoryTags}>
+                {shopProfile.categories.map((category, index) => (
+                  <View key={index} style={styles.categoryTag}>
+                    <Text style={styles.categoryTagText}>{category}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
 
-          {/* Categories */}
-          <View style={styles.categories}>
-            <Text style={styles.categoriesTitle}>Categories</Text>
-            <View style={styles.categoryTags}>
-              {shopProfile.categories.map((category, index) => (
-                <View key={index} style={styles.categoryTag}>
-                  <Text style={styles.categoryTagText}>{category}</Text>
-                </View>
-              ))}
+            {/* Action Buttons */}
+            <View style={styles.actionButtons}>
+              <TouchableOpacity
+                style={[
+                  styles.followButton,
+                  isFollowing && styles.followingButton,
+                ]}
+                onPress={toggleFollow}
+              >
+                {isFollowing ? (
+                  <UserMinus size={16} color={theme.text} />
+                ) : (
+                  <UserPlus size={16} color={theme.background} />
+                )}
+                <Text
+                  style={[
+                    styles.followButtonText,
+                    isFollowing && styles.followingButtonText,
+                  ]}
+                >
+                  {isFollowing ? 'Following' : 'Follow'}
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.contactButton}
+                onPress={handleContact}
+              >
+                <MessageCircle size={16} color="#000" />
+                <Text style={styles.contactButtonText}>Contact</Text>
+              </TouchableOpacity>
             </View>
           </View>
 
-          {/* Action Buttons */}
-          <View style={styles.actionButtons}>
-            <TouchableOpacity 
-              style={[styles.followButton, isFollowing && styles.followingButton]}
-              onPress={toggleFollow}
+          {/* Tabs */}
+          <View style={styles.tabsSection}>
+            <TouchableOpacity
+              style={[
+                styles.tab,
+                selectedTab === 'products' && styles.activeTab,
+              ]}
+              onPress={() => setSelectedTab('products')}
             >
-              {isFollowing ? (
-                <UserMinus size={16} color={theme.text} />
-              ) : (
-                <UserPlus size={16} color={theme.background} />
-              )}
-              <Text style={[
-                styles.followButtonText, 
-                isFollowing && styles.followingButtonText
-              ]}>
-                {isFollowing ? 'Following' : 'Follow'}
+              <ShoppingBag
+                size={20}
+                color={selectedTab === 'products' ? '#000' : '#666'}
+              />
+              <Text
+                style={[
+                  styles.tabText,
+                  selectedTab === 'products' && styles.activeTabText,
+                ]}
+              >
+                Products ({shopProfile.productIds.length})
               </Text>
             </TouchableOpacity>
-            
-            <TouchableOpacity style={styles.contactButton} onPress={handleContact}>
-              <MessageCircle size={16} color="#000" />
-              <Text style={styles.contactButtonText}>Contact</Text>
+            <TouchableOpacity
+              style={[
+                styles.tab,
+                selectedTab === 'reviews' && styles.activeTab,
+              ]}
+              onPress={() => setSelectedTab('reviews')}
+            >
+              <Star
+                size={20}
+                color={selectedTab === 'reviews' ? '#000' : '#666'}
+              />
+              <Text
+                style={[
+                  styles.tabText,
+                  selectedTab === 'reviews' && styles.activeTabText,
+                ]}
+              >
+                Reviews ({reviews.length})
+              </Text>
             </TouchableOpacity>
           </View>
-        </View>
 
-        {/* Tabs */}
-        <View style={styles.tabsSection}>
-          <TouchableOpacity 
-            style={[styles.tab, selectedTab === 'products' && styles.activeTab]}
-            onPress={() => setSelectedTab('products')}
-          >
-            <ShoppingBag size={20} color={selectedTab === 'products' ? '#000' : '#666'} />
-            <Text style={[
-              styles.tabText, 
-              selectedTab === 'products' && styles.activeTabText
-            ]}>
-              Products ({shopProfile.productIds.length})
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={[styles.tab, selectedTab === 'reviews' && styles.activeTab]}
-            onPress={() => setSelectedTab('reviews')}
-          >
-            <Star size={20} color={selectedTab === 'reviews' ? '#000' : '#666'} />
-            <Text style={[
-              styles.tabText, 
-              selectedTab === 'reviews' && styles.activeTabText
-            ]}>
-              Reviews ({reviews.length})
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Content */}
-        {selectedTab === 'products' ? (
-          <FlatList
-            data={shopProfile.productIds}
-            renderItem={({ item }) => renderProduct({ item })}
-            keyExtractor={(item) => item._id}
-            numColumns={2}
-            scrollEnabled={false}
-            columnWrapperStyle={styles.productsRow}
-            contentContainerStyle={styles.productsGrid}
-          />
-        ) : (
-          <View style={styles.reviewsContainer}>
+          {/* Content */}
+          {selectedTab === 'products' ? (
             <FlatList
-              data={reviews}
-              renderItem={renderReview}
-              keyExtractor={(item) => item.id}
+              data={shopProfile.productIds}
+              renderItem={({ item }) => renderProduct({ item })}
+              keyExtractor={(item) => item._id}
+              numColumns={2}
               scrollEnabled={false}
+              columnWrapperStyle={styles.productsRow}
+              contentContainerStyle={styles.productsGrid}
             />
-          </View>
-        )}
+          ) : (
+            <View style={styles.reviewsBox}>
+              <Text style={styles.reviewHeading}>Leave a review</Text>
+              <View style={styles.ratingContainer}>
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <TouchableOpacity key={star} onPress={() => setRating(star)}>
+                    <Star
+                      size={24}
+                      color={star <= rating ? '#FFD700' : theme.textSecondary}
+                      fill={star <= rating ? '#FFD700' : 'none'}
+                    />
+                  </TouchableOpacity>
+                ))}
+              </View>
 
-        <View style={styles.bottomPadding} />
-      </ScrollView>
+              <View style={styles.reviewInputContainer}>
+                <TextInput
+                  placeholder="Write a review..."
+                  value={newReview}
+                  onChangeText={setNewReview}
+                  style={styles.reviewInput}
+                  placeholderTextColor={theme.textSecondary}
+                  multiline={true}
+                  numberOfLines={3}
+                />
+                <TouchableOpacity
+                  onPress={handleSubmitReview}
+                  style={styles.headerButton}
+                >
+                  <Send size={24} color={theme.text} />
+                </TouchableOpacity>
+              </View>
+              <FlatList
+                data={reviews}
+                renderItem={renderReview}
+                keyExtractor={(item) => item._id}
+                scrollEnabled={false}
+              />
+            </View>
+          )}
+
+          <View style={styles.bottomPadding} />
+        </ScrollView>
+      </KeyboardAvoidingView>
 
       {/* More Menu Modal */}
       <Modal
@@ -1023,64 +1221,73 @@ export default function ShopProfileScreen() {
         animationType="slide"
         onRequestClose={() => setShowMoreMenu(false)}
       >
-        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setShowMoreMenu(false)}>
-            <View style={styles.moreMenu}>
-              <View style={styles.moreMenuHeader}>
-                <Text style={styles.moreMenuTitle}>More Options</Text>
-                <TouchableOpacity onPress={() => setShowMoreMenu(false)}>
-                  <X size={24} color={theme.text} />
-                </TouchableOpacity>
-              </View>
-              
-              <TouchableOpacity style={styles.moreMenuItem} onPress={handleShare}>
-                <Share size={20} color={theme.text} />
-                <Text style={styles.moreMenuItemText}>Share Shop</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.moreMenuItem} onPress={handleReport}>
-                <Flag size={20} color={theme.error} />
-                <Text style={[styles.moreMenuItemText, { color: theme.error }]}>Report Shop</Text>
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowMoreMenu(false)}
+        >
+          <View style={styles.moreMenu}>
+            <View style={styles.moreMenuHeader}>
+              <Text style={styles.moreMenuTitle}>More Options</Text>
+              <TouchableOpacity onPress={() => setShowMoreMenu(false)}>
+                <X size={24} color={theme.text} />
               </TouchableOpacity>
             </View>
+
+            <TouchableOpacity style={styles.moreMenuItem} onPress={handleShare}>
+              <Share size={20} color={theme.text} />
+              <Text style={styles.moreMenuItemText}>Share Shop</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.moreMenuItem}
+              onPress={handleReport}
+            >
+              <Flag size={20} color={theme.error} />
+              <Text style={[styles.moreMenuItemText, { color: theme.error }]}>
+                Report Shop
+              </Text>
+            </TouchableOpacity>
+          </View>
         </TouchableOpacity>
       </Modal>
 
       {enlargedPost && (
-          <Modal
-            visible={!!enlargedPost}
-            transparent
-            animationType="none"
-            onRequestClose={handleCloseEnlarged}
+        <Modal
+          visible={!!enlargedPost}
+          transparent
+          animationType="none"
+          onRequestClose={handleCloseEnlarged}
+        >
+          <Animated.View
+            style={[styles.enlargedContainer, { opacity: opacityAnim }]}
+            {...panResponder.panHandlers}
           >
-            <Animated.View 
+            <BlurView
+              intensity={10}
+              tint={theme.mode === 'dark' ? 'dark' : 'light'}
+              style={StyleSheet.absoluteFill}
+            />
+            <TouchableOpacity
+              style={styles.enlargedBackdrop}
+              onPress={handleCloseEnlarged}
+              activeOpacity={1}
+            />
+
+            <Animated.View
               style={[
-                styles.enlargedContainer,
-                { opacity: opacityAnim }
+                styles.enlargedContent,
+                { transform: [{ scale: scaleAnim }] },
               ]}
-              {...panResponder.panHandlers}
             >
-              <BlurView
-                intensity={10}
-                tint={theme.mode === 'dark' ? 'dark' : 'light'}
-                style={StyleSheet.absoluteFill}
+              <Image
+                source={{ uri: enlargedPost }}
+                style={styles.enlargedImage}
               />
-              <TouchableOpacity 
-                style={styles.enlargedBackdrop}
-                onPress={handleCloseEnlarged}
-                activeOpacity={1}
-              />
-              
-              <Animated.View 
-                style={[
-                  styles.enlargedContent,
-                  { transform: [{ scale: scaleAnim }] }
-                ]}
-              >
-                <Image source={{ uri: enlargedPost }} style={styles.enlargedImage} />
-              </Animated.View>
             </Animated.View>
-          </Modal>
-        )}
+          </Animated.View>
+        </Modal>
+      )}
     </SafeAreaView>
   );
 }
