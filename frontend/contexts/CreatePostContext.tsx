@@ -2,13 +2,18 @@ import React, { createContext, useContext, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { API_URL } from '@/constants/api';
 import { User } from '@/types/User';
+import axios from 'axios';
 
 type ContentType = 'post' | 'product';
 
 interface FormData {
-  title: string;
+  name: string;
   description: string;
   price: string;
+  sizes: string[];
+  variants: string[];
+  stock?: number;
+  discount?: number;
   category: string[];
 }
 
@@ -40,10 +45,14 @@ export const CreatePostProvider = ({ children }: { children: React.ReactNode }) 
   const [imageUri, setImageUri] = useState<string | null>(null);
   const { token, user, setUser } = useAuth();
   const [formData, setFormData] = useState<FormData>({
-    title: '',
+    name: '',
     description: '',
     price: '',
     category: [],
+    sizes: [],
+    variants: [],
+    stock: undefined,
+    discount: undefined,
   });
 
   const createPost = async () => {
@@ -67,18 +76,15 @@ export const CreatePostProvider = ({ children }: { children: React.ReactNode }) 
       form.append('caption', formData.description);
       
 
-      const res = await fetch(`${API_URL}/api/post/create`, {
-        method: 'POST',
+      const res = await axios.post(`${API_URL}/api/post/create`, form, {
         headers: {
-          'Content-Type': 'multipart/form-data',
           Authorization: `Bearer ${token}`,
         },
-        body: form,
       });
 
-      const data = await res.json();
+      const data = res.data;
 
-      if (!res.ok) throw new Error(data.message || 'Failed to create post');
+      if (!data.status) throw new Error(data.message || 'Failed to create post');
       user.posts += 1;
       setUser(user as User);
     } catch (error) {
@@ -89,30 +95,58 @@ export const CreatePostProvider = ({ children }: { children: React.ReactNode }) 
 
   
   const createProduct = async () => {
-    // Validate product data
     if (
       images.length === 0 ||
-      !formData.title.trim() ||
+      !formData.name.trim() ||
       !formData.description.trim() ||
       !formData.price.trim() ||
       formData.category.length === 0
-    ) {
-      throw new Error('Product requires all fields and at least one category');
-    }
+    ) throw new Error('Product requires all fields and at least one category');
+    if(!user) throw new Error('User not authenticated!');
+    if(user.type !== 'shop') throw new Error('Only shop users can create products');
 
-    const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
-    await delay(1000); 
-    console.log('Product created');
-    // Call your API or logic to create product here
-    // Example dummy:
-    // return {
-    //   type: 'product',
-    //   images,
-    //   title: formData.title,
-    //   description: formData.description,
-    //   price: formData.price,
-    //   category: formData.category,
-    // };
+
+    try {
+      const form = new FormData();
+
+      images.forEach((uri, index) => {
+        const filename = uri.split('/').pop() || `image_${index}.jpg`;
+        const match = /\.(\w+)$/.exec(filename);
+        const type = match ? `image/${match[1]}` : 'image/jpeg';
+
+        form.append('image', {
+          uri,
+          name: filename,
+          type,
+        } as any);
+      });
+
+      form.append('name', formData.name);
+      form.append('description', formData.description);
+      form.append('price', formData.price);
+      form.append('category', JSON.stringify(formData.category));
+      form.append('sizes', JSON.stringify(formData.sizes));
+      form.append('variants', JSON.stringify(formData.variants));
+      form.append('stock', formData.stock?.toString() || '0');
+      form.append('discount', formData.discount?.toString() || '0');
+
+
+      const res = await axios.post(`${API_URL}/api/product`, form, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = res.data
+      if(!data.status) throw new Error(data.message || 'Failed to create product');
+
+      user.shop?.productIds.push(data.product._id)
+      setUser(user as User);
+    }
+    catch (error) {
+      console.error('Product creation failed', error);
+      throw error;
+    }
   };
   
 
@@ -120,10 +154,14 @@ export const CreatePostProvider = ({ children }: { children: React.ReactNode }) 
     setContentType('post');
     setImages([]);
     setFormData({
-      title: '',
+      name: '',
       description: '',
       price: '',
       category: [],
+      sizes: [],
+      variants: [],
+      stock: undefined,
+      discount: undefined,
     });
     setImageUri(null);
   };

@@ -372,10 +372,7 @@ export default function PostDetailScreen() {
       setComments(commentsResponse.data.comments);
 
       setIsLoading(false);
-
-      setIsStarred(
-        (post.stars > 0 && user?.likedPosts?.includes(post._id)) || false
-      );
+      setIsStarred(user?.likedPosts?.includes(post._id) || false);
     };
 
     fetchPostAndComment();

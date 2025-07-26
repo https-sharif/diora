@@ -8,4 +8,5 @@ export interface Review {
   createdAt: string;
   updatedAt: string;
   images?: string[];
+  imagesIds?: string[];
 }

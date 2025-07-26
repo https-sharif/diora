@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -9,18 +9,15 @@ import {
   FlatList,
   Alert,
   Dimensions,
-  ActivityIndicator,
+  TextInput
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ArrowLeft, Share, Star, ShoppingCart, Store, Plus, Minus, Bookmark } from 'lucide-react-native';
 import { useShopping } from '@/hooks/useShopping';
 import { useAuth } from '@/hooks/useAuth';
-import { mockProducts } from '@/mock/Product';
-import { mockReviews } from '@/mock/Review';
+import { User } from '@/types/User';
 import { mockUsers } from '@/mock/User';
-import { mockShops } from '@/mock/Shop';
-import { ShopProfile } from '@/types/ShopProfile';
 import { Product } from '@/types/Product';
 import { Review } from '@/types/Review';
 import { Theme } from '@/types/Theme';
@@ -28,6 +25,9 @@ import { useTheme } from '@/contexts/ThemeContext';
 import ProductSlashIcon from '@/icon/ProductSlashIcon'
 import axios from 'axios';
 import { API_URL } from '@/constants/api';
+import RatingStars from '@/components/RatingStar';
+import ReviewInput from '@/components/ReviewInput';
+import * as ImagePicker from 'expo-image-picker';
 
 const { width } = Dimensions.get('window')
 
@@ -161,6 +161,21 @@ const createStyles = (theme: Theme) => {
       fontFamily: 'Inter-Bold',
       color: theme.text,
       marginBottom: 16,
+    },
+    reviewHeading: {
+      fontSize: 16,
+      fontFamily: 'Inter-Bold',
+      color: theme.text,
+      padding: 8,
+    },
+    addImageBtn: {
+      backgroundColor: theme.accent,
+      paddingVertical: 10,
+      paddingHorizontal: 16,
+      borderRadius: 8,
+      alignItems: 'center',
+      justifyContent: 'center',
+      alignSelf: 'flex-start',
     },
     storeInfo: {
       flexDirection: 'row',
@@ -389,18 +404,26 @@ const createStyles = (theme: Theme) => {
 
 export default function ProductDetailScreen() {
   const { productId } = useLocalSearchParams<{ productId: string }>();
-  const { addToCart, addToWishlist, removeFromWishlist, isInWishlist } = useShopping();
+  const { addToCart, addToWishlist, isInWishlist } = useShopping();
   const { theme } = useTheme();
   const styles = createStyles(theme);
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [selectedSize, setSelectedSize] = useState('');
   const [selectedColor, setSelectedColor] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
-  const [store, setStore] = useState<ShopProfile | null>(null);
+  const [shopProfile, setShopProfile] = useState<User | null>(null);
   const [product, setProduct] = useState<Product | null>(null);
+  const [rating, setRating] = useState(0);
+  const reviewInputRef = useRef<TextInput>(null);
+  const [newReview, setNewReview] = useState('');
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [selectedReview, setSelectedReview] = useState<Review | null>(null);
+  const [hasReviewed, setHasReviewed] = useState(false);
+  const [editingReview, setEditingReview] = useState(false);
+  const [reviewImages, setReviewImages] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -418,7 +441,7 @@ export default function ProductDetailScreen() {
         }
 
         setProduct(response.data.product);
-        setStore(response.data.product.shopId);
+        setShopProfile(response.data.product.shopId);
       } catch (error) {
         console.error('Error fetching product:', error);
       } finally {
@@ -426,7 +449,26 @@ export default function ProductDetailScreen() {
       }
     };
 
+    const fetchReviews = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/api/review/product/${productId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.data.status) {
+          setReviews(response.data.reviews);
+        } else {
+          Alert.alert('Error', response.data.message);
+        }
+      } catch (error) {
+        console.error('Error fetching reviews:', error);
+      }
+    };
+
     fetchProduct();
+    fetchReviews();
   }, [productId]);
 
   useEffect(() => {
@@ -478,6 +520,144 @@ export default function ProductDetailScreen() {
       <Image source={{ uri: item }} style={styles.thumbnailImage} />
     </TouchableOpacity>
   );
+
+  const cancelEditReview = () => {
+    if (!selectedReview) return;
+    setEditingReview(false);
+    setNewReview('');
+    setRating(0);
+    setReviews([selectedReview, ...reviews]);
+    setHasReviewed(true);
+    setSelectedReview(null);
+  };
+
+  const handleEditReview = () => {
+    if (!selectedReview) return;
+    setShowReviewModal(false);
+    setEditingReview(true);
+    setNewReview(selectedReview.comment || '');
+    setRating(selectedReview.rating);
+    setReviews(reviews.filter((review) => review._id !== selectedReview._id));
+    setHasReviewed(false);
+    reviewInputRef.current?.focus();
+  };
+
+  const handleDeleteReview = async () => {
+    if (!selectedReview || !user) return;
+    try {
+      const response = await axios.delete(
+        `${API_URL}/api/review/shop/${selectedReview._id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.data.status === false) {
+        Alert.alert('Error', response.data.message);
+        return;
+      }
+      setReviews(reviews.filter((review) => review._id !== selectedReview._id));
+      setSelectedReview(null);
+      setShowReviewModal(false);
+      setHasReviewed(false);
+
+      Alert.alert(
+        'Review Deleted',
+        'Your review has been deleted successfully.'
+      );
+    } catch (error) {
+      console.error('Error deleting review:', error);
+      Alert.alert('Error', 'Failed to delete review. Please try again later.');
+    }
+  };
+
+  const handleSubmitReview = async () => {
+    if (!shopProfile || !user) return;
+    if (rating === 0) return;
+
+    try {
+      const form = new FormData();
+
+      form.append('comment', newReview.trim());
+      form.append('rating', String(rating));
+      form.append('targetId', shopProfile._id);
+      form.append('targetType', 'shop');
+
+      reviewImages.forEach((uri, index) => {
+        const filename = uri.split('/').pop() || `review_${index}.jpg`;
+        const match = /\.(\w+)$/.exec(filename);
+        const type = match ? `image/${match[1]}` : 'image/jpeg';
+
+        form.append('images', {
+          uri,
+          name: filename,
+          type,
+        } as any);
+      });
+
+      let response;
+      if (editingReview && selectedReview) {
+        response = await axios.put(
+          `${API_URL}/api/review/shop/${selectedReview._id}`,
+          form,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'multipart/form-data',
+            },
+          }
+        );
+      } else {
+        response = await axios.post(`${API_URL}/api/review`, form, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+      }
+
+      if (response.data.status === false) {
+        Alert.alert('Error', response.data.message);
+        return;
+      }
+
+      const review = response.data.review;
+
+      setReviews([...reviews, review]);
+      setEditingReview(false);
+      setSelectedReview(null);
+      setNewReview('');
+      setRating(0);
+      setHasReviewed(true);
+      setReviewImages([]); // reset images too
+    } catch (error) {
+      console.error('Error submitting review:', error);
+      Alert.alert('Error', 'Failed to submit review. Try again.');
+    }
+  };
+
+
+  const pickReviewImages = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      alert('Permission denied!');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsMultipleSelection: true,
+      quality: 0.8,
+      selectionLimit: 3,
+    });
+
+    if (!result.canceled) {
+      const selected = result.assets.map((asset) => asset.uri);
+      setReviewImages([...reviewImages, ...selected]);
+    }
+  };
 
   const renderReview = ({ item }: { item: Review }) => {
     const user = mockUsers.find(user => user._id === item.user._id);
@@ -553,7 +733,7 @@ export default function ProductDetailScreen() {
 
         {/* Product Info */}
         <View style={styles.productInfo}>
-          <Text style={styles.productBrand}>{product.shopId.name}</Text>
+          <Text style={styles.productBrand}>{product.shopId.fullName}</Text>
           <Text style={styles.productName}>{product.name}</Text>
           <View style={styles.priceContainer}>
             <Text style={styles.productPrice}>${(product.discount && product.discount > 0 ? (product.price * (1 - product.discount / 100)).toFixed(2) : product.price)}</Text>
@@ -582,18 +762,18 @@ export default function ProductDetailScreen() {
         <View style={styles.storeSection}>
           <Text style={styles.sectionTitle}>Store</Text>
           <View style={styles.storeInfo}>
-            <Image source={{ uri: store?.logoUrl }} style={styles.storeAvatar} />
+            <Image source={{ uri: shopProfile?.avatar }} style={styles.storeAvatar} />
             <View style={styles.storeDetails}>
-              <Text style={styles.storeName}>{store?.name}</Text>
+              <Text style={styles.storeName}>{shopProfile?.fullName}</Text>
               <View style={styles.storeStats}>
                 <View style={styles.storeRating}>
                   <Star size={14} color="#FFD700" fill="#FFD700" />
-                  <Text style={styles.storeRatingText}>{store?.rating}</Text>
+                  <Text style={styles.storeRatingText}>{(shopProfile?.shop?.rating && shopProfile?.shop?.ratingCount > 0 ? shopProfile.shop.rating / shopProfile.shop.ratingCount : 0.0).toFixed(1)}</Text>
                 </View>
-                <Text style={styles.storeFollowers}>{store?.followers} followers</Text>
+                <Text style={styles.storeFollowers}>{shopProfile?.followers.length} followers</Text>
               </View>
             </View>
-            <TouchableOpacity style={styles.visitStoreButton} onPress={() => router.push(`/shop/${store?._id}`)}>
+            <TouchableOpacity style={styles.visitStoreButton} onPress={() => router.push(`/shop/${shopProfile?._id}`)}>
               <Store size={16} color="#000" />
               <Text style={styles.visitStoreText}>Visit</Text>
             </TouchableOpacity>
@@ -673,6 +853,33 @@ export default function ProductDetailScreen() {
         {/* Reviews */}
         <View style={styles.reviewsSection}>
           <Text style={styles.sectionTitle}>Reviews ({reviews.length})</Text>
+            
+            <Text style={styles.reviewHeading}>Leave a review</Text>
+            <RatingStars rating={rating} onPress={setRating} />
+            <ReviewInput
+              reviewInputRef={reviewInputRef}
+              value={newReview}
+              onChangeText={setNewReview}
+              onSend={handleSubmitReview}
+              onCancel={cancelEditReview}
+              isEditing={!!editingReview}
+            />
+            <View style={{ marginTop: 8 }}>
+              <TouchableOpacity onPress={pickReviewImages} style={styles.addImageBtn}>
+                <Text style={{ color: '#000' }}>+ Add Images</Text>
+              </TouchableOpacity>
+
+              <ScrollView horizontal style={{ marginTop: 8 }}>
+                {reviewImages.map((uri, i) => (
+                  <Image
+                    key={i}
+                    source={{ uri }}
+                    style={{ width: 80, height: 80, marginRight: 8, borderRadius: 8 }}
+                  />
+                ))}
+              </ScrollView>
+            </View>
+
           <FlatList
             data={reviews}
             renderItem={renderReview}

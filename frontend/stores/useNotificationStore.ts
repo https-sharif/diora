@@ -104,7 +104,7 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
     const token = useAuthStore.getState().token;
     const toUserId = data.userId;
 
-    if (!user || !token) return;
+    if (!user || !token || user._id === toUserId) return;
 
     try {
       const settingsRes = await axios.get(

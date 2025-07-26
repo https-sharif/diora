@@ -33,13 +33,9 @@ import { useShopping } from '@/hooks/useShopping';
 import { useTheme } from '@/contexts/ThemeContext';
 import Color from 'color';
 import { User } from '@/types/User';
-import { ShopProfile } from '@/types/ShopProfile';
 import { Product } from '@/types/Product';
 import { Post } from '@/types/Post';
 import { Theme } from '@/types/Theme';
-import { mockUsers } from '@/mock/User';
-import { mockShops } from '@/mock/Shop';
-import { mockProducts } from '@/mock/Product';
 import { useAuth } from '@/hooks/useAuth';
 import axios from 'axios';
 import { API_URL } from '@/constants/api';
@@ -585,7 +581,7 @@ export default function ExploreScreen() {
 
   const [exploreData, setExploreData] = useState({
     trendingUsers: [] as User[],
-    trendingShops: mockShops.slice(0, 4) as ShopProfile[],
+    trendingShops: [] as User[],
     trendingProducts: [] as Product[],
     trendingPosts: [] as Post[],
   });
@@ -634,6 +630,8 @@ export default function ExploreScreen() {
         const response = await axios.get(`${API_URL}/api/shop/trending`, {
           headers: { Authorization: `Bearer ${token}` },
         });
+
+        console.log('Trending shops response:', response.data);
 
         if (response.data.status) {
           setExploreData((prevState) => ({
@@ -736,7 +734,7 @@ export default function ExploreScreen() {
       filteredProducts = filteredProducts.filter(
         (product) =>
           product.name.toLowerCase().includes(query) ||
-          product.shopId.name.toLowerCase().includes(query)
+          product.shopId.fullName.toLowerCase().includes(query)
       );
       filteredPosts = filteredPosts.filter((post) =>
         post.caption?.toLowerCase().includes(query)
@@ -838,7 +836,7 @@ export default function ExploreScreen() {
       });
 
       filteredShops = filteredShops.filter((user) => {
-        const followersCount = user.followers;
+        const followersCount = user.followers.length;
         const minimum = parseFloat(followersRange[0]);
         const maximum = followersRange[1]
           ? parseFloat(followersRange[1])
@@ -932,43 +930,49 @@ export default function ExploreScreen() {
     },
   });
 
-  const renderShopCard = ({ item }: { item: ShopProfile }) => (
-    <TouchableOpacity
-      style={styles.userCard}
-      onPress={() => router.push(`/shop/${item._id}`)}
-    >
-      <Image source={{ uri: item.logoUrl }} style={styles.userAvatar} />
-      <View style={styles.userInfo}>
-        <View style={styles.userNameRow}>
-          <Text style={styles.userName}>{item.username}</Text>
-          {item.isVerified && (
-            <View style={styles.verifiedBadgeContainer}>
-              <Check size={10} color="white" />
-            </View>
-          )}
-          <Store size={14} color="#FFD700" />
-        </View>
-        <Text style={styles.userLocation}>📍 {item.location}</Text>
-        <Text style={styles.userFollowers}>{item.followers} followers</Text>
-      </View>
+  const renderShopCard = ({ item }: { item: User }) => {
+    if (!item.shop) {
+      return null;
+    }
+
+    return (
       <TouchableOpacity
-        style={[
-          styles.followButton,
-          user?.following.includes(item._id) && styles.followingButton,
-        ]}
-        onPress={() => followUser(item._id, 'shop')}
+        style={styles.userCard}
+        onPress={() => router.push(`/shop/${item._id}`)}
       >
-        <Text
+        <Image source={{ uri: item.avatar }} style={styles.userAvatar} />
+        <View style={styles.userInfo}>
+          <View style={styles.userNameRow}>
+            <Text style={styles.userName}>{item.username}</Text>
+            {item.isVerified && (
+              <View style={styles.verifiedBadgeContainer}>
+                <Check size={10} color="white" />
+              </View>
+            )}
+            <Store size={14} color="#FFD700" />
+          </View>
+          <Text style={styles.userLocation}>📍 {item.shop.location}</Text>
+          <Text style={styles.userFollowers}>{item.followers} followers</Text>
+        </View>
+        <TouchableOpacity
           style={[
-            styles.followButtonText,
-            user?.following.includes(item._id) && styles.followingButtonText,
+            styles.followButton,
+            user?.following.includes(item._id) && styles.followingButton,
           ]}
+          onPress={() => followUser(item._id, 'shop')}
         >
-          {user?.following.includes(item._id) ? 'Following' : 'Follow'}
-        </Text>
+          <Text
+            style={[
+              styles.followButtonText,
+              user?.following.includes(item._id) && styles.followingButtonText,
+            ]}
+          >
+            {user?.following.includes(item._id) ? 'Following' : 'Follow'}
+          </Text>
+        </TouchableOpacity>
       </TouchableOpacity>
-    </TouchableOpacity>
-  );
+    );
+  };
 
   const renderUserCard = ({ item }: { item: User }) => (
     <TouchableOpacity
@@ -1017,11 +1021,11 @@ export default function ExploreScreen() {
     >
       <View style={styles.productImageContainer}>
         <Image source={{ uri: item.imageUrl[0] }} style={styles.productImage} />
-        {item.discount && (
+        {item.discount ? (
           <View style={styles.discountBadge}>
             <Text style={styles.discountText}>-{item.discount}%</Text>
           </View>
-        )}
+        ) : null}
         {!item.stock && (
           <View style={styles.outOfStockOverlay}>
             <Text style={styles.outOfStockText}>Out of Stock</Text>
@@ -1045,7 +1049,7 @@ export default function ExploreScreen() {
 
       <View style={styles.productInfo}>
         <View style={styles.shopInfo}>
-          {/* <Text style={styles.shopName}>{item.brand}</Text> */}
+          <Text style={styles.shopName}>{item.shopId.fullName}</Text>
         </View>
         <Text style={styles.productName} numberOfLines={2}>
           {item.name}
@@ -1161,7 +1165,9 @@ export default function ExploreScreen() {
               style={styles.enlargedUserAvatar}
             />
             <View>
-              <Text style={styles.enlargedUsername}>{enlargedPost.user.username}</Text>
+              <Text style={styles.enlargedUsername}>
+                {enlargedPost.user.username}
+              </Text>
               <Text style={styles.enlargedTimestamp}>
                 {enlargedPost.createdAt}
               </Text>
@@ -1263,7 +1269,7 @@ export default function ExploreScreen() {
           )}
 
           {/* Trending Shops */}
-          {filteredShops.length > 0 && (
+          {exploreData.trendingShops.length > 0 && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Trending Shops</Text>
               {loading.trendingShops ? (

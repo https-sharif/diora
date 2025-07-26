@@ -1,7 +1,7 @@
 import { Product } from "./Product";
 
 export interface ShopProfile {
-  _id: string;
+
   userId: string;
   name: string;
   username: string;

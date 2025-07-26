@@ -4,7 +4,7 @@ import { useCreatePost } from '@/contexts/CreatePostContext';
 import CategorySelector from '@/components/CategorySelector';
 import { Theme } from '@/types/Theme';
 import { useTheme } from '@/contexts/ThemeContext';
-import { Check, Plus } from 'lucide-react-native';
+import { Check, Plus, X } from 'lucide-react-native';
 import { router, useNavigation } from 'expo-router';
 
 const createStyles = (theme: Theme) => {
@@ -64,7 +64,26 @@ const createStyles = (theme: Theme) => {
       elevation: 2,
       color: theme.text,
     },
-
+    tag: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: theme.card,
+      borderRadius: 16,
+      paddingVertical: 6,
+      paddingHorizontal: 12,
+      marginRight: 8,
+      marginBottom: 8,
+    },
+    tagText: {
+      marginRight: 6,
+      color: theme.text,
+      fontSize: 14,
+    },
+    remove: {
+      color: theme.textSecondary,
+      fontSize: 16,
+      fontWeight: 'bold',
+    },
     buttonContainer: {
       padding: 20,
       backgroundColor: theme.background,
@@ -108,6 +127,9 @@ export default function CreateFormScreen() {
   const styles = createStyles(theme);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigation = useNavigation();
+  const [tempSize, setTempSize] = useState('');
+  const [tempVariant, setTempVariant] = useState('');
+
 
   const handleChange = (field: keyof typeof formData, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -121,13 +143,14 @@ export default function CreateFormScreen() {
       } else {
         await createPost();
       }
-    } catch (error) {
-      console.error('Error creating post:', error);
-    } finally {
-      setIsSubmitting(false);
       navigation.goBack();
       router.push('/(tabs)');
       reset();
+    } catch (error) {
+      console.error('Error creating post:', error);
+    } 
+    finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -153,8 +176,8 @@ export default function CreateFormScreen() {
                 <Text style={[styles.label, { color: theme.error }]}>*</Text>
               </View>
               <TextInput
-                value={formData.title}
-                onChangeText={(text) => handleChange('title', text)}
+                value={formData.name}
+                onChangeText={(text) => handleChange('name', text)}
                 placeholder="Add a product name"
                 placeholderTextColor={theme.textSecondary}
                 style={styles.input}
@@ -177,7 +200,9 @@ export default function CreateFormScreen() {
             />
           </View>
 
+          
           {isProduct && (
+            <>
             <View style={{ marginBottom: 16 }}>
               <View style={styles.labelContainer}>
                 <Text style={styles.label}>Price (BDT)</Text>
@@ -191,9 +216,7 @@ export default function CreateFormScreen() {
                 style={styles.input}
               />
             </View>
-          )}
 
-          {isProduct && (
             <View style={{ marginBottom: 16 }}>
               <View style={styles.labelContainer}>
                 <Text style={styles.label}>Category</Text>
@@ -204,7 +227,123 @@ export default function CreateFormScreen() {
                 onSelect={(updated) => handleChange('category', updated)}
               />
             </View>
+
+              <View style={{ marginBottom: 16 }}>
+                <View style={styles.labelContainer}>
+                  <Text style={styles.label}>Sizes</Text>
+                </View>
+                <View style={{ flexDirection: 'row', gap: 8 }}>
+                  <TextInput
+                    value={tempSize}
+                    onChangeText={setTempSize}
+                    placeholder="Enter a size e.g. M"
+                    style={[styles.input, { flex: 1 }]}
+                  />
+                  <TouchableOpacity
+                    onPress={() => {
+                      if (tempSize.trim()) {
+                        handleChange('sizes', [...formData.sizes, tempSize.trim()]);
+                        setTempSize('');
+                      }
+                    }}
+                    style={styles.submitButton}
+                  >
+                    <Text style={styles.submitButtonText}>Add</Text>
+                  </TouchableOpacity>
+                </View>
+
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 8 }}>
+                  {formData.sizes.map((size, index) => (
+                    <View key={index} style={styles.tag}>
+                      <Text style={styles.tagText}>{size}</Text>
+                      <TouchableOpacity
+                        onPress={() => {
+                          const updated = formData.sizes.filter((_, i) => i !== index);
+                          handleChange('sizes', updated);
+                        }}
+                      >
+                        <X color={theme.textSecondary} size={16} />
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                </View>
+              </View>
+
+              <View style={{ marginBottom: 16 }}>
+                <View style={styles.labelContainer}>
+                  <Text style={styles.label}>Variants</Text>
+                </View>
+                <View style={{ flexDirection: 'row', gap: 8 }}>
+                  <TextInput
+                    value={tempVariant}
+                    onChangeText={setTempVariant}
+                    placeholder="Enter a variant e.g. Black, Striped"
+                    style={[styles.input, { flex: 1 }]}
+                  />
+                  <TouchableOpacity
+                    onPress={() => {
+                      if (tempVariant.trim()) {
+                        handleChange('variants', [...formData.variants, tempVariant.trim()]);
+                        setTempVariant('');
+                      }
+                    }}
+                    style={styles.submitButton}
+                  >
+                    <Text style={styles.submitButtonText}>Add</Text>
+                  </TouchableOpacity>
+                </View>
+
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 8 }}>
+                  {formData.variants.map((variant, index) => (
+                    <View key={index} style={styles.tag}>
+                      <Text style={styles.tagText}>{variant}</Text>
+                      <TouchableOpacity
+                        onPress={() => {
+                          const updated = formData.variants.filter((_, i) => i !== index);
+                          handleChange('variants', updated);
+                        }}
+                      >
+                        <X color={theme.textSecondary} size={16} />
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                </View>
+              </View>
+
+              <View style={{ marginBottom: 16 }}>
+                <View style={styles.labelContainer}>
+                  <Text style={styles.label}>Discount (%)</Text>
+                </View>
+                <TextInput
+                  value={formData.discount !== undefined ? String(formData.discount) : ''}
+                  onChangeText={(text) => {
+                    const num = parseInt(text);
+                    handleChange('discount', isNaN(num) ? '' : num);
+                  }}
+                  placeholder="e.g. 10"
+                  keyboardType="numeric"
+                  style={styles.input}
+                />
+              </View>
+
+              <View style={{ marginBottom: 16 }}>
+                <View style={styles.labelContainer}>
+                  <Text style={styles.label}>Stock</Text>
+                </View>
+                <TextInput
+                  value={formData.stock !== undefined ? String(formData.stock) : ''}
+                  onChangeText={(text) => {
+                    const num = parseInt(text);
+                    handleChange('stock', isNaN(num) ? '' : num);
+                  }}
+                  placeholder="e.g. 50"
+                  keyboardType="numeric"
+                  style={styles.input}
+                />
+              </View>
+            </>
           )}
+
         </ScrollView>
         <View style={styles.buttonContainer}>
           <TouchableOpacity
