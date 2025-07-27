@@ -1031,7 +1031,7 @@ export default function ShopProfileScreen() {
       </View>
       <View style={styles.ratingRow}>
         <Star size={12} color="#FFD700" fill="#FFD700" />
-        <Text style={styles.ratingText}>{item.rating.toFixed(1)}</Text>
+        <Text style={styles.ratingText}>{(item.rating / (item.ratingCount || 1)).toFixed(1)}</Text>
       </View>
     </TouchableOpacity>
   );
@@ -1114,13 +1114,14 @@ export default function ShopProfileScreen() {
   );
 
   const renderTabContent = () => {
-    if (!shopProfile || shopProfile.type !== 'shop') return null;
+    if (!shopProfile || shopProfile.type !== 'shop' || !shopProfile.shop) return null;
 
     switch (selectedTab) {
       case 'products':
-        return shopProfile.shop!.productIds.length > 0 ? (
+        return shopProfile.shop.productIds.length > 0 ? (
           <FlatList
-            data={shopProfile.shop!.productIds}
+            key={'products'}
+            data={shopProfile.shop.productIds}
             renderItem={({ item }) => renderProduct({ item })}
             keyExtractor={(item) => item._id}
             numColumns={2}
@@ -1170,6 +1171,7 @@ export default function ShopProfileScreen() {
 
             {reviews.length > 0 ? (
               <FlatList
+                key={'reviews'}
                 data={reviews}
                 renderItem={renderReview}
                 keyExtractor={(item) => item._id}
@@ -1187,6 +1189,7 @@ export default function ShopProfileScreen() {
       case 'posts':
         return posts.length > 0 ? (
           <FlatList
+            key={'posts'}
             data={posts}
             renderItem={renderPost}
             keyExtractor={(item) => item._id}

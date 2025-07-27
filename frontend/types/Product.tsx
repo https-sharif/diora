@@ -12,6 +12,6 @@ export interface Product {
     variants: string[];
     stock: number;
     rating: number;
-    reviewCount: number;
+    ratingCount: number;
     discount?: number;
   }

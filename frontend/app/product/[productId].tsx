@@ -9,27 +9,33 @@ import {
   FlatList,
   Alert,
   Dimensions,
-  TextInput
+  TextInput,
+  Modal,
+  Pressable,
+  Animated,
+  PanResponder, 
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
-import { ArrowLeft, Share, Star, ShoppingCart, Store, Plus, Minus, Bookmark } from 'lucide-react-native';
+import { ArrowLeft, Share, Star, ShoppingCart, Store, Plus, Minus, Bookmark, X, Flag } from 'lucide-react-native';
 import { useShopping } from '@/hooks/useShopping';
 import { useAuth } from '@/hooks/useAuth';
 import { User } from '@/types/User';
-import { mockUsers } from '@/mock/User';
 import { Product } from '@/types/Product';
 import { Review } from '@/types/Review';
 import { Theme } from '@/types/Theme';
 import { useTheme } from '@/contexts/ThemeContext';
 import ProductSlashIcon from '@/icon/ProductSlashIcon'
 import axios from 'axios';
+import { BlurView } from 'expo-blur';
 import { API_URL } from '@/constants/api';
 import RatingStars from '@/components/RatingStar';
 import ReviewInput from '@/components/ReviewInput';
 import * as ImagePicker from 'expo-image-picker';
+import { format as timeago } from 'timeago.js';
+import LoadingView from '@/components/Loading';
 
-const { width } = Dimensions.get('window')
+const { width, height } = Dimensions.get('window')
 
 const createStyles = (theme: Theme) => {
   return StyleSheet.create({
@@ -399,6 +405,74 @@ const createStyles = (theme: Theme) => {
       fontSize: 16,
       fontFamily: 'Inter-SemiBold',
     },
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      justifyContent: 'flex-end',
+    },
+    moreMenu: {
+      backgroundColor: theme.card,
+      borderTopLeftRadius: 16,
+      borderTopRightRadius: 16,
+      paddingBottom: 34,
+    },
+    moreMenuHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: 20,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.border,
+    },
+    moreMenuTitle: {
+      fontSize: 18,
+      fontFamily: 'Inter-Bold',
+      color: theme.text,
+    },
+    moreMenuItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: 20,
+      gap: 16,
+    },
+    moreMenuItemText: {
+      fontSize: 16,
+      fontFamily: 'Inter-Medium',
+      color: theme.text,
+    },
+    reviewImages: {},
+    reviewImage: {
+      width: 80,
+      height: 80,
+      borderRadius: 8,
+      marginRight: 8,
+    },
+    enlargedContainer: {
+      flex: 1,
+      backgroundColor: 'rgba(255, 255, 255, 0.05)',
+
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    enlargedBackdrop: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+    },
+    enlargedContent: {
+      width: width * 0.9,
+      maxHeight: height * 0.8,
+      backgroundColor: 'rgba(55, 55, 55, 0.8)',
+      borderRadius: 20,
+      overflow: 'hidden',
+    },
+    enlargedImage: {
+      width: '100%',
+      height: width * 0.9,
+      resizeMode: 'contain',
+    },
   });
 }
 
@@ -424,6 +498,9 @@ export default function ProductDetailScreen() {
   const [hasReviewed, setHasReviewed] = useState(false);
   const [editingReview, setEditingReview] = useState(false);
   const [reviewImages, setReviewImages] = useState<string[]>([]);
+  const [enlargedPost, setEnlargedPost] = useState<string | null>(null);
+  const [scaleAnim] = useState(new Animated.Value(1));
+  const [opacityAnim] = useState(new Animated.Value(0));
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -467,9 +544,81 @@ export default function ProductDetailScreen() {
       }
     };
 
+    const fetchReviewedStatus = async () => {
+      if (!user) return;
+
+      try {
+        const response = await axios.get(
+          `${API_URL}/api/review/reviewed/${user._id}/product/${productId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (response.data.status === false) {
+          setHasReviewed(false);
+          return;
+        }
+
+        setHasReviewed(response.data.reviewed);
+      } catch (error) {
+        console.error('Error fetching reviewed status:', error);
+      }
+    };
+
     fetchProduct();
     fetchReviews();
+    fetchReviewedStatus();
   }, [productId]);
+
+  const panResponder = PanResponder.create({
+    onMoveShouldSetPanResponder: (evt, gestureState) => {
+      return Math.abs(gestureState.dy) > 20;
+    },
+    onPanResponderMove: (evt, gestureState) => {
+      const progress = Math.min(Math.abs(gestureState.dy) / 200, 1);
+      scaleAnim.setValue(1 - progress * 0.2);
+      opacityAnim.setValue(1 - progress);
+    },
+    onPanResponderRelease: (evt, gestureState) => {
+      if (Math.abs(gestureState.dy) > 100) {
+        handleCloseEnlarged();
+      } else {
+        Animated.parallel([
+          Animated.spring(scaleAnim, {
+            toValue: 1,
+            useNativeDriver: true,
+          }),
+          Animated.timing(opacityAnim, {
+            toValue: 1,
+            duration: 150,
+            useNativeDriver: true,
+          }),
+        ]).start();
+      }
+    },
+  });
+
+  const handleCloseEnlarged = () => {
+    Animated.parallel([
+      Animated.spring(scaleAnim, {
+        toValue: 0.8,
+        useNativeDriver: true,
+        tension: 50,
+        friction: 8,
+      }),
+      Animated.timing(opacityAnim, {
+        toValue: 0,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      setEnlargedPost(null);
+      scaleAnim.setValue(1);
+    });
+  };
 
   useEffect(() => {
     if (product && selectedImageIndex >= product.imageUrl.length) {
@@ -481,7 +630,7 @@ export default function ProductDetailScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Loading product...</Text>
+          <LoadingView />
         </View>
       </SafeAreaView>
     );
@@ -515,6 +664,23 @@ export default function ProductDetailScreen() {
     Alert.alert('Success', `${quantity} item(s) added to cart!`);
   };
 
+  const handleReviewImage = (image: string) => {
+      setEnlargedPost(image);
+      Animated.parallel([
+        Animated.spring(scaleAnim, {
+          toValue: 1,
+          useNativeDriver: true,
+          tension: 50,
+          friction: 8,
+        }),
+        Animated.timing(opacityAnim, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    };
+
   const renderImageItem = ({ item, index }: { item: string; index: number }) => (
     <TouchableOpacity onPress={() => setSelectedImageIndex(index)}>
       <Image source={{ uri: item }} style={styles.thumbnailImage} />
@@ -546,7 +712,7 @@ export default function ProductDetailScreen() {
     if (!selectedReview || !user) return;
     try {
       const response = await axios.delete(
-        `${API_URL}/api/review/shop/${selectedReview._id}`,
+        `${API_URL}/api/review/product/${selectedReview._id}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -582,8 +748,8 @@ export default function ProductDetailScreen() {
 
       form.append('comment', newReview.trim());
       form.append('rating', String(rating));
-      form.append('targetId', shopProfile._id);
-      form.append('targetType', 'shop');
+      form.append('targetId', product._id);
+      form.append('targetType', 'product');
 
       reviewImages.forEach((uri, index) => {
         const filename = uri.split('/').pop() || `review_${index}.jpg`;
@@ -600,7 +766,7 @@ export default function ProductDetailScreen() {
       let response;
       if (editingReview && selectedReview) {
         response = await axios.put(
-          `${API_URL}/api/review/shop/${selectedReview._id}`,
+          `${API_URL}/api/review/product/${selectedReview._id}`,
           form,
           {
             headers: {
@@ -631,7 +797,7 @@ export default function ProductDetailScreen() {
       setNewReview('');
       setRating(0);
       setHasReviewed(true);
-      setReviewImages([]); // reset images too
+      setReviewImages([]);
     } catch (error) {
       console.error('Error submitting review:', error);
       Alert.alert('Error', 'Failed to submit review. Try again.');
@@ -660,29 +826,70 @@ export default function ProductDetailScreen() {
   };
 
   const renderReview = ({ item }: { item: Review }) => {
-    const user = mockUsers.find(user => user._id === item.user._id);
     return (
-    <View style={styles.reviewItem}>
-      <View style={styles.reviewHeader}>
-        <Image source={{ uri: user?.avatar }} style={styles.reviewAvatar} />
-        <View style={styles.reviewInfo}>
-          <Text style={styles.reviewUser}>{user?.username}</Text>
-          <View style={styles.reviewRating}>
-            {[...Array(5)].map((_, i) => (
-              <Star
-                key={i}
-                size={14}
-                color={i < item.rating ? '#FFD700' : '#E0E0E0'}
-                fill={i < item.rating ? '#FFD700' : 'transparent'}
-              />
-            ))}
-            <Text style={styles.reviewDate}>{item.createdAt}</Text>
+      <Pressable
+        style={styles.reviewItem}
+        onLongPress={() => {
+          if (!user || user._id !== item.user._id) return;
+          setSelectedReview(item);
+          setShowReviewModal(true);
+        }}
+      >
+        <View style={styles.reviewHeader}>
+          <TouchableOpacity
+            onPress={() => router.push(`/user/${item.user._id}`)}
+          >
+            <Image
+              source={{ uri: item.user.avatar }}
+              style={styles.reviewAvatar}
+            />
+          </TouchableOpacity>
+          <View style={styles.reviewInfo}>
+            <TouchableOpacity
+              onPress={() => router.push(`/user/${item.user._id}`)}
+            >
+              <Text style={styles.reviewUser}>{item.user.username}</Text>
+            </TouchableOpacity>
+            <View style={styles.reviewRating}>
+              {[...Array(5)].map((_, i) => (
+                <Star
+                  key={i}
+                  size={14}
+                  color={i < item.rating ? '#FFD700' : theme.textSecondary}
+                  fill={i < item.rating ? '#FFD700' : 'transparent'}
+                />
+              ))}
+              <Text style={styles.reviewDate}>
+                {timeago(new Date(item.createdAt))}
+              </Text>
+            </View>
           </View>
         </View>
-      </View>
-      <Text style={styles.reviewComment}>{item.comment}</Text>
-    </View>
-  );
+        {item.comment && (
+          <Text style={styles.reviewComment}>{item.comment}</Text>
+        )}
+        {item.images && (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.reviewImages}
+          >
+            {item.images.map((image: string, index: number) => (
+              <TouchableOpacity
+                key={index}
+                onPress={() => handleReviewImage(image)}
+              >
+                <Image
+                  key={index}
+                  source={{ uri: image }}
+                  style={styles.reviewImage}
+                />
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        )}
+      </Pressable>
+    );
   };
 
   return (
@@ -751,7 +958,7 @@ export default function ProductDetailScreen() {
                   fill={i < Math.floor(product.rating) ? '#FFD700' : 'transparent'}
                 />
               ))}
-              <Text style={styles.ratingText}>{(product.rating / (product.reviewCount || 1)).toFixed(1)} ({product.reviewCount} reviews)</Text>
+              <Text style={styles.ratingText}>{(product.rating / (product.ratingCount || 1)).toFixed(1)} ({product.ratingCount} reviews)</Text>
             </View>
           </View>
 
@@ -853,33 +1060,35 @@ export default function ProductDetailScreen() {
         {/* Reviews */}
         <View style={styles.reviewsSection}>
           <Text style={styles.sectionTitle}>Reviews ({reviews.length})</Text>
-            
-            <Text style={styles.reviewHeading}>Leave a review</Text>
-            <RatingStars rating={rating} onPress={setRating} />
-            <ReviewInput
-              reviewInputRef={reviewInputRef}
-              value={newReview}
-              onChangeText={setNewReview}
-              onSend={handleSubmitReview}
-              onCancel={cancelEditReview}
-              isEditing={!!editingReview}
-            />
-            <View style={{ marginTop: 8 }}>
-              <TouchableOpacity onPress={pickReviewImages} style={styles.addImageBtn}>
-                <Text style={{ color: '#000' }}>+ Add Images</Text>
-              </TouchableOpacity>
+            {!hasReviewed && (
+              <>
+                <Text style={styles.reviewHeading}>Leave a review</Text>
+                <RatingStars rating={rating} onPress={setRating} />
+                <ReviewInput
+                  reviewInputRef={reviewInputRef}
+                  value={newReview}
+                  onChangeText={setNewReview}
+                  onSend={handleSubmitReview}
+                  onCancel={cancelEditReview}
+                  isEditing={!!editingReview}
+                />
+                <View style={{ marginTop: 8 }}>
+                  <TouchableOpacity onPress={pickReviewImages} style={styles.addImageBtn}>
+                    <Text style={{ color: '#000' }}>+ Add Images</Text>
+                  </TouchableOpacity>
 
-              <ScrollView horizontal style={{ marginTop: 8 }}>
-                {reviewImages.map((uri, i) => (
-                  <Image
-                    key={i}
-                    source={{ uri }}
-                    style={{ width: 80, height: 80, marginRight: 8, borderRadius: 8 }}
-                  />
-                ))}
-              </ScrollView>
-            </View>
-
+                  <ScrollView horizontal style={{ marginTop: 8 }}>
+                    {reviewImages.map((uri, i) => (
+                      <Image
+                        key={i}
+                        source={{ uri }}
+                        style={{ width: 80, height: 80, marginRight: 8, borderRadius: 8 }}
+                      />
+                    ))}
+                  </ScrollView>
+                </View>
+              </>
+          )}
           <FlatList
             data={reviews}
             renderItem={renderReview}
@@ -898,6 +1107,83 @@ export default function ProductDetailScreen() {
           <Text style={[styles.addToCartText, !product.stock && styles.addToCartButtonDisabledText]}>{!product.stock ? 'Out of Stock' : 'Add to Cart'}</Text>
         </TouchableOpacity>
       </View>
+
+      {enlargedPost && (
+        <Modal
+          visible={!!enlargedPost}
+          transparent
+          animationType="none"
+          onRequestClose={handleCloseEnlarged}
+        >
+          <Animated.View
+            style={[styles.enlargedContainer, { opacity: opacityAnim }]}
+            {...panResponder.panHandlers}
+          >
+            <BlurView
+              intensity={10}
+              tint={theme.mode === 'dark' ? 'dark' : 'light'}
+              style={StyleSheet.absoluteFill}
+            />
+            <TouchableOpacity
+              style={styles.enlargedBackdrop}
+              onPress={handleCloseEnlarged}
+              activeOpacity={1}
+            />
+
+            <Animated.View
+              style={[
+                styles.enlargedContent,
+                { transform: [{ scale: scaleAnim }] },
+              ]}
+            >
+              <Image
+                source={{ uri: enlargedPost }}
+                style={styles.enlargedImage}
+              />
+            </Animated.View>
+          </Animated.View>
+        </Modal>
+      )}
+
+      <Modal
+        visible={showReviewModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowReviewModal(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowReviewModal(false)}
+        >
+          <View style={styles.moreMenu}>
+            <View style={styles.moreMenuHeader}>
+              <Text style={styles.moreMenuTitle}>Manage Review</Text>
+              <TouchableOpacity onPress={() => setShowReviewModal(false)}>
+                <X size={24} color={theme.text} />
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity
+              style={styles.moreMenuItem}
+              onPress={handleEditReview}
+            >
+              <Share size={20} color={theme.text} />
+              <Text style={styles.moreMenuItemText}>Edit Review</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.moreMenuItem}
+              onPress={handleDeleteReview}
+            >
+              <Flag size={20} color={theme.error} />
+              <Text style={[styles.moreMenuItemText, { color: theme.error }]}>
+                Delete Review
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </SafeAreaView>
   );
 }

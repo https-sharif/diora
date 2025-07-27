@@ -391,6 +391,8 @@ export default function UserProfileScreen() {
       }
     };
 
+    setLoading(true);
+
     fetchUserProfile();
     fetchPosts();
     fetchLikedPosts();

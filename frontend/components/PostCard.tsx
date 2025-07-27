@@ -243,6 +243,7 @@ export default function PostCard({ post }: { post: Post }) {
       });
       
       if (response.data.status) {
+        console.log('Fetched comments:', response.data.comments);
         setComments(response.data.comments);
       }
     };
@@ -327,66 +328,82 @@ export default function PostCard({ post }: { post: Post }) {
     }
   };
 
-  const renderComment = (comment: Comment, isReply = false) => (
-    <View
-      key={comment._id}
-      style={[styles.commentItem, isReply && styles.replyItem]}
-    >
-      <TouchableOpacity
-        onPress={() => {
-          router.push(`/user/${comment.user._id}`);
-          setShowComments(false);
-        }}
+  const renderComment = (comment: Comment, isReply = false) => {
+    if (!comment.user) return null;
+
+    return (
+      <View
+        key={comment._id}
+        style={[styles.commentItem, isReply && styles.replyItem]}
       >
-        <Image
-          source={{ uri: comment.user.avatar }}
-          style={styles.commentAvatar}
-        />
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.commentContent} activeOpacity={1}>
-        <View style={styles.commentHeader}>
-          <TouchableOpacity
-            onPress={() => {
-              router.push(`/user/${comment.user._id}`);
-              setShowComments(false);
-            }}
-          >
-            <Text style={styles.commentUser}>{comment.user.username}</Text>
-          </TouchableOpacity>
-          <Text style={styles.commentTime}>
-            {format(new Date(comment.createdAt))}
-          </Text>
-        </View>
-        <Text style={styles.commentText}>{comment.text}</Text>
-        <View style={styles.commentActions}>
-          {!isReply && (
+        <TouchableOpacity
+          onPress={() => {
+            router.push(`/user/${comment.user._id}`);
+            setShowComments(false);
+          }}
+        >
+          <Image
+            source={{ uri: comment.user.avatar }}
+            style={styles.commentAvatar}
+          />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.commentContent} activeOpacity={1}>
+          <View style={styles.commentHeader}>
             <TouchableOpacity
-              style={styles.commentAction}
-              onPress={() => setReplyingTo(comment._id)}
+              onPress={() => {
+                router.push(`/user/${comment.user._id}`);
+                setShowComments(false);
+              }}
             >
-              <Text style={styles.commentActionText}>Reply</Text>
+              <Text style={styles.commentUser}>{comment.user.username}</Text>
             </TouchableOpacity>
-          )}
-        </View>
-        {comment.replies?.map((item) => {
-          return renderComment(item, true);
-        })}
-      </TouchableOpacity>
-    </View>
-  );
+            <Text style={styles.commentTime}>
+              {format(new Date(comment.createdAt))}
+            </Text>
+          </View>
+          <Text style={styles.commentText}>{comment.text}</Text>
+          <View style={styles.commentActions}>
+            {!isReply && (
+              <TouchableOpacity
+                style={styles.commentAction}
+                onPress={() => setReplyingTo(comment._id)}
+              >
+                <Text style={styles.commentActionText}>Reply</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+          {comment.replies?.map((item) => {
+            return renderComment(item, true);
+          })}
+        </TouchableOpacity>
+      </View>
+    );
+  };
 
   return (
     <>
       <View style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity
-            onPress={() => router.push(`/user/${post.user._id}`)}
+            onPress={() => {
+              if(post.user.type === 'shop') {
+                router.push(`/shop/${post.user._id}`);
+                return;
+              }
+              router.push(`/user/${post.user._id}`);
+            }}
           >
             <Image source={{ uri: post.user.avatar! }} style={styles.avatar} />
           </TouchableOpacity>
           <View style={styles.userInfo}>
             <TouchableOpacity
-              onPress={() => router.push(`/user/${post.user._id}`)}
+              onPress={() => {
+                if(post.user.type === 'shop') {
+                  router.push(`/shop/${post.user._id}`);
+                  return;
+                }
+                router.push(`/user/${post.user._id}`);
+              }}
             >
               <Text style={styles.username}>{post.user.username}</Text>
             </TouchableOpacity>
@@ -451,7 +468,6 @@ export default function PostCard({ post }: { post: Post }) {
         transparent
         onRequestClose={() => setShowComments(false)}
       >
-        {/* Outer overlay to close modal on tap outside */}
         <TouchableWithoutFeedback onPress={() => setShowComments(false)}>
           <View
             style={{
@@ -460,7 +476,6 @@ export default function PostCard({ post }: { post: Post }) {
               backgroundColor: 'rgba(0, 0, 0, 0.5)',
             }}
           >
-            {/* Inner TouchableWithoutFeedback to block closing modal when tapping inside */}
             <TouchableWithoutFeedback onPress={() => {}}>
               <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
