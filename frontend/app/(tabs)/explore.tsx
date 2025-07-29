@@ -866,8 +866,8 @@ export default function ExploreScreen() {
             )}
             <Store size={14} color="#FFD700" />
           </View>
-          <Text style={styles.userLocation}>📍 {item.shop.location}</Text>
-          <Text style={styles.userFollowers}>{item.followers} followers</Text>
+          {item.shop.location && <Text style={styles.userLocation}>📍 {item.shop.location}</Text>}
+          <Text style={styles.userFollowers}>{item.followers.length} followers</Text>
         </View>
         <TouchableOpacity
           style={[

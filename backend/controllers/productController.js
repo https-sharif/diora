@@ -15,7 +15,7 @@ export const getProductById = async (req, res) => {
   console.log('Get product by ID route/controller hit');
   try {
     const productId = req.params.productId;
-    const product = await Product.findById(productId).populate('shopId', 'fullName avatar followers');
+    const product = await Product.findById(productId).populate('shopId', 'fullName avatar followers shop.rating shop.ratingCount');
 
     if (!product) {
       return res

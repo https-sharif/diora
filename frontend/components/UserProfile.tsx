@@ -9,7 +9,7 @@ import {
   FlatList,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Settings, Grid2x2 as Grid, Star, LogOut } from 'lucide-react-native';
+import { Settings, Grid2x2 as Grid, Star, LogOut, Check } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -67,6 +67,19 @@ const createStyles = (theme: Theme) =>
     profileInfo: {
       flex: 1,
       marginLeft: 16,
+    },
+    userNameRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+    },
+    verifiedBadgeContainer: {
+      width: 16,
+      height: 16,
+      borderRadius: 8,
+      backgroundColor: '#007AFF',
+      justifyContent: 'center',
+      alignItems: 'center',
     },
     fullName: {
       fontSize: 20,
@@ -242,7 +255,14 @@ export default function UserProfile() {
         <View style={styles.profileSection}>
           <Image source={{ uri: user.avatar }} style={styles.profileImage} />
           <View style={styles.profileInfo}>
-            <Text style={styles.fullName}>{user.fullName}</Text>
+             <View style={styles.userNameRow}>
+              <Text style={styles.fullName}>{user.fullName}</Text>
+              {user.isVerified && (
+                <View style={styles.verifiedBadgeContainer}>
+                  <Check size={10} color="white" />
+                </View>
+              )}
+             </View>
             <Text style={styles.username}>@{user.username}</Text>
             <Text style={styles.bio}>{user.bio}</Text>
           </View>

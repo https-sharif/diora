@@ -255,8 +255,9 @@ export const getTrendingShops = async (req, res) => {
 export const followShop = async (req, res) => {
   console.log('Follow shop route/controller hit');
   try {
-    const shopId = req.params.shopId;
     const userId = req.user.id;
+    const shopId = req.params.shopId;
+    console.log(`User ID: ${userId}, Shop ID: ${shopId}`);
 
     if(shopId === userId) {
       return res.status(400).json({ status: false, message: 'Cannot follow your own shop' });
@@ -272,12 +273,12 @@ export const followShop = async (req, res) => {
     const isFollowing = user.following.includes(shopId);
 
     if(isFollowing) {
-      user.following = user.following.pull(shopId);
-      shop.followers -= 1;
+      user.following.pull(shopId);
+      shop.followers.pull(userId);
     }
     else {
       user.following.push(shopId);
-      shop.followers += 1;
+      shop.followers.push(userId);
     }
 
     await user.save();

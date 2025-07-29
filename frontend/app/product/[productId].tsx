@@ -517,6 +517,8 @@ export default function ProductDetailScreen() {
           return;
         }
 
+        console.log('Product fetched successfully:', response.data.product);
+
         setProduct(response.data.product);
         setShopProfile(response.data.product.shopId);
       } catch (error) {
@@ -975,7 +977,13 @@ export default function ProductDetailScreen() {
               <View style={styles.storeStats}>
                 <View style={styles.storeRating}>
                   <Star size={14} color="#FFD700" fill="#FFD700" />
-                  <Text style={styles.storeRatingText}>{(shopProfile?.shop?.rating && shopProfile?.shop?.ratingCount > 0 ? shopProfile.shop.rating / shopProfile.shop.ratingCount : 0.0).toFixed(1)}</Text>
+                  <Text style={styles.storeRatingText}>
+                    {(shopProfile?.shop?.ratingCount ?? 0) > 0
+                      ? ((shopProfile?.shop?.rating ?? 0) / (shopProfile?.shop?.ratingCount ?? 1)).toFixed(1)
+                      : '0.0'}
+                  </Text>
+
+
                 </View>
                 <Text style={styles.storeFollowers}>{shopProfile?.followers.length} followers</Text>
               </View>

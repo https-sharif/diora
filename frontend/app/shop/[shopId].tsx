@@ -1291,7 +1291,7 @@ export default function ShopProfileScreen() {
                   <Text style={styles.statLabel}>Products</Text>
                 </View>
                 <View style={styles.statItem}>
-                  <Text style={styles.statNumber}>{shopProfile.followers}</Text>
+                  <Text style={styles.statNumber}>{shopProfile.followers.length}</Text>
                   <Text style={styles.statLabel}>Followers</Text>
                 </View>
                 <View style={styles.statItem}>
