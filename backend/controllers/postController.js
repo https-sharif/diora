@@ -25,6 +25,7 @@ export const likePost = async (req, res) => {
       user.likedPosts.push(postId);
       post.stars += 1;
 
+      if(post.user._id.toString() !== userId) {
         const notification = new Notification({
           type: 'like',
           userId: post.user._id,
@@ -42,6 +43,7 @@ export const likePost = async (req, res) => {
         if (targetSocketId) {
           io.to(targetSocketId).emit('notification', notification);
         }
+      }
     }
 
     await user.save();
@@ -63,7 +65,7 @@ export const getAllPost = async (req, res) => {
   try {
     const posts = await Post.find()
       .sort({ createdAt: -1 })
-      .populate('user', 'username avatar');
+      .populate('user', 'username avatar type');
 
     if (!posts || posts.length === 0) {
       return res.status(404).json({ status: false, message: 'No posts found' });
@@ -90,10 +92,13 @@ export const createPost = async (req, res) => {
     }
 
     const imageUrl = req.file.path;
+    const imageId = req.file.filename;
+
     const newPost = new Post({
       user: req.user.id,
       imageUrl,
       caption: req.body.caption,
+      imageId,
     });
     await newPost.save();
     user.posts += 1;
@@ -166,18 +171,23 @@ export const getPost = async (req, res) => {
   }
 };
 
+import mongoose from 'mongoose';
+
 export const getTrendingPosts = async (req, res) => {
   try {
     console.log('Get trending posts route/controller hit');
-    const trendingPosts = await Post.find()
-      .sort({ stars: -1, createdAt: -1 })
-      .limit(9)
-      .populate('user', 'username avatar');
+
+    const trendingPosts = await Post.aggregate([
+      { $sample: { size: 9 } }
+    ]);
+
+    await Post.populate(trendingPosts, {
+      path: 'user',
+      select: 'username avatar',
+    });
 
     if (!trendingPosts || trendingPosts.length === 0) {
-      return res
-        .status(404)
-        .json({ status: false, message: 'No trending posts found' });
+      return res.status(404).json({ status: false, message: 'No trending posts found' });
     }
 
     res.json({ status: true, trendingPosts });
@@ -186,3 +196,4 @@ export const getTrendingPosts = async (req, res) => {
     res.status(500).json({ status: false, message: 'Something went wrong' });
   }
 };
+

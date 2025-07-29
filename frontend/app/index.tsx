@@ -26,6 +26,7 @@ export default function Index() {
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
+   
     Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 500,

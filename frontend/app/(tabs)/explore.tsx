@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -14,6 +14,7 @@ import {
   PanResponder,
   TouchableWithoutFeedback,
   Keyboard,
+  RefreshControl,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -33,17 +34,14 @@ import { useShopping } from '@/hooks/useShopping';
 import { useTheme } from '@/contexts/ThemeContext';
 import Color from 'color';
 import { User } from '@/types/User';
-import { ShopProfile } from '@/types/ShopProfile';
 import { Product } from '@/types/Product';
 import { Post } from '@/types/Post';
 import { Theme } from '@/types/Theme';
-import { mockUsers } from '@/mock/User';
-import { mockShops } from '@/mock/Shop';
-import { mockProducts } from '@/mock/Product';
 import { useAuth } from '@/hooks/useAuth';
 import axios from 'axios';
 import { API_URL } from '@/constants/api';
 import LoadingView from '@/components/Loading';
+import debounce from 'lodash.debounce';
 
 const { width, height } = Dimensions.get('window');
 
@@ -52,15 +50,15 @@ const filterOptions = {
   priceRange: ['All', '$0-$50', '$50-$100', '$100-$200', '$200+'],
   rating: ['All', '4+ Stars', '4.5+ Stars', '4.8+ Stars'],
   availability: ['All', 'In Stock', 'On Sale', 'New Arrivals'],
-  style: [
+  categories: [
     'All',
-    'Vintage',
-    'Modern',
-    'Casual',
-    'Formal',
-    'Streetwear',
-    'Boho',
-    'Minimalist',
+    'Men',
+    'Women',
+    'Unisex',
+    'Tops',
+    'Bottoms',
+    'Footwear',
+    'Accessories',
   ],
   verification: ['All', 'Verified Only', 'Unverified'],
   followers: ['All', '0-1K', '1K-10K', '10K-50K', '50K+'],
@@ -573,21 +571,42 @@ const createStyles = (theme: Theme) => {
   });
 };
 
+const initialFilter = {
+  contentType: 'All',
+  priceRange: 'All',
+  rating: 'All',
+  availability: 'All',
+  categories: 'All',
+  location: 'All',
+  verification: 'All',
+  followers: 'All',
+  likes: 'All',
+};
+
 export default function ExploreScreen() {
   const { addToWishlist, isInWishlist } = useShopping();
+  const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilter, setShowFilter] = useState(false);
   const [enlargedPost, setEnlargedPost] = useState<Post | null>(null);
   const [scaleAnim] = useState(new Animated.Value(1));
   const [opacityAnim] = useState(new Animated.Value(0));
+  const [searching, setSearching] = useState(false);
   const { user, followUser, likePost, token } = useAuth();
   const { theme } = useTheme();
 
   const [exploreData, setExploreData] = useState({
     trendingUsers: [] as User[],
-    trendingShops: mockShops.slice(0, 4) as ShopProfile[],
+    trendingShops: [] as User[],
     trendingProducts: [] as Product[],
     trendingPosts: [] as Post[],
+  });
+
+  const [searchResults, setSearchResults] = useState({
+    users: [] as User[],
+    shops: [] as User[],
+    products: [] as Product[],
+    posts: [] as Post[],
   });
 
   const [loading, setLoading] = useState({
@@ -597,11 +616,14 @@ export default function ExploreScreen() {
     trendingPosts: false,
   });
 
+  const [filters, setFilters] = useState(initialFilter);
+
   const styles = createStyles(theme);
   const isLiked = user?.likedPosts?.includes(enlargedPost?._id || '');
 
-  useEffect(() => {
+  const onRefresh = async () => {
     if (!user) return;
+    setRefreshing(true);
 
     const fetchTrendingUser = async () => {
       setLoading((prevState) => ({ ...prevState, trendingUsers: true }));
@@ -703,170 +725,61 @@ export default function ExploreScreen() {
     fetchTrendingShops();
     fetchTrendingProducts();
     fetchTrendingPosts();
-  }, []);
-
-  const [filters, setFilters] = useState({
-    contentType: 'All',
-    priceRange: 'All',
-    rating: 'All',
-    availability: 'All',
-    style: 'All',
-    location: 'All',
-    verification: 'All',
-    followers: 'All',
-    likes: 'All',
-  });
-
-  const applyFilters = () => {
-    let filteredUsers = exploreData.trendingUsers;
-    let filteredShops = exploreData.trendingShops;
-    let filteredProducts = exploreData.trendingProducts;
-    let filteredPosts = exploreData.trendingPosts;
-
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      filteredUsers = filteredUsers.filter(
-        (user) =>
-          user.username.toLowerCase().includes(query) ||
-          user.fullName.toLowerCase().includes(query)
-      );
-      filteredShops = filteredShops.filter((user) =>
-        user.username.toLowerCase().includes(query)
-      );
-      filteredProducts = filteredProducts.filter(
-        (product) =>
-          product.name.toLowerCase().includes(query) ||
-          product.shopId.name.toLowerCase().includes(query)
-      );
-      filteredPosts = filteredPosts.filter((post) =>
-        post.caption?.toLowerCase().includes(query)
-      );
-    }
-
-    // Apply advanced filters
-    if (filters.contentType !== 'All') {
-      if (filters.contentType === 'Users') {
-        filteredProducts = [];
-        filteredPosts = [];
-        filteredShops = [];
-      } else if (filters.contentType === 'Shops') {
-        filteredUsers = [];
-        filteredProducts = [];
-        filteredPosts = [];
-      } else if (filters.contentType === 'Products') {
-        filteredUsers = [];
-        filteredPosts = [];
-        filteredShops = [];
-      } else if (filters.contentType === 'Posts') {
-        filteredUsers = [];
-        filteredShops = [];
-        filteredProducts = [];
-      }
-    }
-
-    // Price range filter for products
-    if (filters.priceRange !== 'All' && filteredProducts.length > 0) {
-      filteredProducts = filteredProducts.filter((product) => {
-        const price = product.price;
-        switch (filters.priceRange) {
-          case '$0-$50':
-            return price <= 50;
-          case '$50-$100':
-            return price > 50 && price <= 100;
-          case '$100-$200':
-            return price > 100 && price <= 200;
-          case '$200+':
-            return price > 200;
-          default:
-            return true;
-        }
-      });
-    }
-
-    // Rating filter
-    if (filters.rating !== 'All') {
-      const minRating = parseFloat(filters.rating.split('+')[0]);
-      filteredProducts = filteredProducts.filter(
-        (product) => product.rating >= minRating
-      );
-    }
-
-    // Availability filter
-    if (filters.availability !== 'All') {
-      filteredProducts = filteredProducts.filter((product) => {
-        switch (filters.availability) {
-          case 'In Stock':
-            return product.stock > 0;
-          case 'On Sale':
-            if (!product.discount) return false;
-            return product.discount > 0;
-          case 'New Arrivals':
-            return true;
-          default:
-            return true;
-        }
-      });
-    }
-
-    if (filters.style !== 'All') {
-      const style = filters.style.toLowerCase();
-      filteredProducts = filteredProducts.filter((product) =>
-        product.name.toLowerCase().includes(style)
-      );
-      filteredPosts = filteredPosts.filter((post) =>
-        post.caption?.toLowerCase().includes(style)
-      );
-    }
-
-    if (filters.verification !== 'All') {
-      if (filters.verification === 'Verified Only') {
-        filteredUsers = filteredUsers.filter((user) => user.isVerified);
-      } else {
-        filteredUsers = filteredUsers.filter((user) => !user.isVerified);
-      }
-    }
-
-    if (filters.followers !== 'All') {
-      const followersRange = filters.followers.split('-');
-      filteredUsers = filteredUsers.filter((user) => {
-        const followersCount = user.followers.length;
-        const minimum = parseFloat(followersRange[0]);
-        const maximum = followersRange[1]
-          ? parseFloat(followersRange[1])
-          : Infinity;
-        return followersCount >= minimum && followersCount < maximum;
-      });
-
-      filteredShops = filteredShops.filter((user) => {
-        const followersCount = user.followers;
-        const minimum = parseFloat(followersRange[0]);
-        const maximum = followersRange[1]
-          ? parseFloat(followersRange[1])
-          : Infinity;
-        return followersCount >= minimum && followersCount < maximum;
-      });
-    }
-
-    if (filters.likes !== 'All') {
-      const likesRange = filters.likes.split('-');
-      filteredPosts = filteredPosts.filter((post) => {
-        const likesCount = post.stars;
-        if (likesRange.length === 1) {
-          return likesCount >= parseFloat(likesRange[0]);
-        } else {
-          return (
-            likesCount >= parseFloat(likesRange[0]) &&
-            likesCount < parseFloat(likesRange[1])
-          );
-        }
-      });
-    }
-
-    return { filteredUsers, filteredProducts, filteredPosts, filteredShops };
+    setRefreshing(false);
   };
 
-  const { filteredUsers, filteredProducts, filteredPosts, filteredShops } =
-    applyFilters();
+  useEffect(() => {
+    onRefresh();
+  }, []);
+
+  const fetchSearchResults = async (query: string, filterSnapshot: any) => {
+    try {
+      const response = await axios.get(`${API_URL}/api/search`, {
+        params: {
+          query,
+          ...filterSnapshot,
+        },
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (response.data.status) {
+        setSearchResults({
+          users: response.data.users,
+          shops: response.data.shops,
+          products: response.data.products,
+          posts: response.data.posts,
+        });
+      }
+    } catch (err: any) {
+      console.error(
+        'Error fetching search results: ',
+        err.response?.data || err.message
+      );
+    }
+  };
+
+  const debouncedSearch = useCallback(
+    debounce((query, filterSnapshot) => {
+      if (!query) {
+        return;
+      }
+
+      fetchSearchResults(query, filterSnapshot);
+    }, 500),
+    []
+  );
+
+  useEffect(() => {
+    debouncedSearch(searchQuery, filters);
+  }, [searchQuery, debouncedSearch]);
+
+  useEffect(() => {
+    const isEmptyQuery = searchQuery.trim() === '';
+    const isDefaultFilters =
+      JSON.stringify(filters) === JSON.stringify(initialFilter);
+
+    setSearching(!(isEmptyQuery && isDefaultFilters));
+  }, [searchQuery, filters]);
 
   const handleLongPress = (post: Post) => {
     setEnlargedPost(post);
@@ -932,43 +845,49 @@ export default function ExploreScreen() {
     },
   });
 
-  const renderShopCard = ({ item }: { item: ShopProfile }) => (
-    <TouchableOpacity
-      style={styles.userCard}
-      onPress={() => router.push(`/shop/${item._id}`)}
-    >
-      <Image source={{ uri: item.logoUrl }} style={styles.userAvatar} />
-      <View style={styles.userInfo}>
-        <View style={styles.userNameRow}>
-          <Text style={styles.userName}>{item.username}</Text>
-          {item.isVerified && (
-            <View style={styles.verifiedBadgeContainer}>
-              <Check size={10} color="white" />
-            </View>
-          )}
-          <Store size={14} color="#FFD700" />
-        </View>
-        <Text style={styles.userLocation}>📍 {item.location}</Text>
-        <Text style={styles.userFollowers}>{item.followers} followers</Text>
-      </View>
+  const renderShopCard = ({ item }: { item: User }) => {
+    if (!item.shop) {
+      return null;
+    }
+
+    return (
       <TouchableOpacity
-        style={[
-          styles.followButton,
-          user?.following.includes(item._id) && styles.followingButton,
-        ]}
-        onPress={() => followUser(item._id, 'shop')}
+        style={styles.userCard}
+        onPress={() => router.push(`/shop/${item._id}`)}
       >
-        <Text
+        <Image source={{ uri: item.avatar }} style={styles.userAvatar} />
+        <View style={styles.userInfo}>
+          <View style={styles.userNameRow}>
+            <Text style={styles.userName}>{item.username}</Text>
+            {item.isVerified && (
+              <View style={styles.verifiedBadgeContainer}>
+                <Check size={10} color="white" />
+              </View>
+            )}
+            <Store size={14} color="#FFD700" />
+          </View>
+          <Text style={styles.userLocation}>📍 {item.shop.location}</Text>
+          <Text style={styles.userFollowers}>{item.followers} followers</Text>
+        </View>
+        <TouchableOpacity
           style={[
-            styles.followButtonText,
-            user?.following.includes(item._id) && styles.followingButtonText,
+            styles.followButton,
+            user?.following.includes(item._id) && styles.followingButton,
           ]}
+          onPress={() => followUser(item._id, 'shop')}
         >
-          {user?.following.includes(item._id) ? 'Following' : 'Follow'}
-        </Text>
+          <Text
+            style={[
+              styles.followButtonText,
+              user?.following.includes(item._id) && styles.followingButtonText,
+            ]}
+          >
+            {user?.following.includes(item._id) ? 'Following' : 'Follow'}
+          </Text>
+        </TouchableOpacity>
       </TouchableOpacity>
-    </TouchableOpacity>
-  );
+    );
+  };
 
   const renderUserCard = ({ item }: { item: User }) => (
     <TouchableOpacity
@@ -1017,11 +936,11 @@ export default function ExploreScreen() {
     >
       <View style={styles.productImageContainer}>
         <Image source={{ uri: item.imageUrl[0] }} style={styles.productImage} />
-        {item.discount && (
+        {item.discount ? (
           <View style={styles.discountBadge}>
             <Text style={styles.discountText}>-{item.discount}%</Text>
           </View>
-        )}
+        ) : null}
         {!item.stock && (
           <View style={styles.outOfStockOverlay}>
             <Text style={styles.outOfStockText}>Out of Stock</Text>
@@ -1045,7 +964,7 @@ export default function ExploreScreen() {
 
       <View style={styles.productInfo}>
         <View style={styles.shopInfo}>
-          {/* <Text style={styles.shopName}>{item.brand}</Text> */}
+          <Text style={styles.shopName}>{item.shopId.fullName}</Text>
         </View>
         <Text style={styles.productName} numberOfLines={2}>
           {item.name}
@@ -1082,41 +1001,10 @@ export default function ExploreScreen() {
   );
 
   const renderFilterOption = (
-    title:
-      | string
-      | number
-      | bigint
-      | boolean
-      | React.ReactElement<unknown, string | React.JSXElementConstructor<any>>
-      | Iterable<React.ReactNode>
-      | Promise<
-          | string
-          | number
-          | bigint
-          | boolean
-          | React.ReactPortal
-          | React.ReactElement<
-              unknown,
-              string | React.JSXElementConstructor<any>
-            >
-          | Iterable<React.ReactNode>
-          | null
-          | undefined
-        >
-      | null
-      | undefined,
-    options: any[],
+    title: string,
+    options: string[],
     selectedValue: string,
-    onSelect: {
-      (value: any): void;
-      (value: any): void;
-      (value: any): void;
-      (value: any): void;
-      (value: any): void;
-      (value: any): void;
-      (value: any): void;
-      (arg0: any): void;
-    }
+    onSelect: (value: string) => void
   ) => (
     <View style={styles.filterSection}>
       <Text style={styles.filterTitle}>{title}</Text>
@@ -1161,7 +1049,9 @@ export default function ExploreScreen() {
               style={styles.enlargedUserAvatar}
             />
             <View>
-              <Text style={styles.enlargedUsername}>{enlargedPost.user.username}</Text>
+              <Text style={styles.enlargedUsername}>
+                {enlargedPost.user.username}
+              </Text>
               <Text style={styles.enlargedTimestamp}>
                 {enlargedPost.createdAt}
               </Text>
@@ -1244,16 +1134,26 @@ export default function ExploreScreen() {
           style={styles.content}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ flexGrow: 1 }}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
         >
           {/* Trending Users */}
-          {exploreData.trendingUsers.length > 0 && (
+          {(searching ? searchResults.users : exploreData.trendingUsers)
+            .length > 0 && (
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Trending Creators</Text>
+              <Text style={styles.sectionTitle}>
+                {searching ? 'Creators Found' : 'Trending Creators'}
+              </Text>
               {loading.trendingUsers ? (
                 <LoadingView />
               ) : (
                 <FlatList
-                  data={exploreData.trendingUsers}
+                  data={
+                    searchQuery
+                      ? searchResults.users
+                      : exploreData.trendingUsers
+                  }
                   renderItem={renderUserCard}
                   keyExtractor={(item) => item._id}
                   scrollEnabled={false}
@@ -1263,14 +1163,21 @@ export default function ExploreScreen() {
           )}
 
           {/* Trending Shops */}
-          {filteredShops.length > 0 && (
+          {(searching ? searchResults.shops : exploreData.trendingShops)
+            .length > 0 && (
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Trending Shops</Text>
+              <Text style={styles.sectionTitle}>
+                {searching ? 'Shops Found' : 'Trending Shops'}
+              </Text>
               {loading.trendingShops ? (
                 <LoadingView />
               ) : (
                 <FlatList
-                  data={filteredShops}
+                  data={
+                    searchQuery
+                      ? searchResults.shops
+                      : exploreData.trendingShops
+                  }
                   renderItem={renderShopCard}
                   keyExtractor={(item) => item._id}
                   scrollEnabled={false}
@@ -1279,14 +1186,21 @@ export default function ExploreScreen() {
             </View>
           )}
 
-          {exploreData.trendingProducts.length > 0 && (
+          {(searching ? searchResults.products : exploreData.trendingProducts)
+            .length > 0 && (
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Featured Products</Text>
+              <Text style={styles.sectionTitle}>
+                {searching ? 'Products Found' : 'Featured Products'}
+              </Text>
               {loading.trendingProducts ? (
                 <LoadingView />
               ) : (
                 <FlatList
-                  data={exploreData.trendingProducts}
+                  data={
+                    searchQuery
+                      ? searchResults.products
+                      : exploreData.trendingProducts
+                  }
                   renderItem={renderProductCard}
                   keyExtractor={(item) => item._id}
                   numColumns={2}
@@ -1298,14 +1212,21 @@ export default function ExploreScreen() {
           )}
 
           {/* Discover Posts */}
-          {exploreData.trendingPosts.length > 0 && (
+          {(searching ? searchResults.posts : exploreData.trendingPosts)
+            .length > 0 && (
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Discover</Text>
+              <Text style={styles.sectionTitle}>
+                {searching ? 'Posts Found' : 'Discover'}
+              </Text>
               {loading.trendingPosts ? (
                 <LoadingView />
               ) : (
                 <FlatList
-                  data={exploreData.trendingPosts}
+                  data={
+                    searchQuery
+                      ? searchResults.posts
+                      : exploreData.trendingPosts
+                  }
                   renderItem={renderGridItem}
                   keyExtractor={(item) => item._id}
                   numColumns={3}
@@ -1317,20 +1238,25 @@ export default function ExploreScreen() {
           )}
 
           {/* No Results */}
-          {exploreData.trendingUsers.length === 0 &&
-            filteredShops.length === 0 &&
-            filteredProducts.length === 0 &&
-            filteredPosts.length === 0 && (
-              <View style={styles.noResults}>
-                <View style={styles.noResultsIconContainer}>
-                  <SearchX size={48} color={theme.text} />
+          {searching
+            ? searchResults.users.length === 0 &&
+              searchResults.posts.length === 0 &&
+              searchResults.products.length === 0 &&
+              searchResults.shops.length === 0
+            : exploreData.trendingUsers.length === 0 &&
+              exploreData.trendingPosts.length === 0 &&
+              exploreData.trendingProducts.length === 0 &&
+              exploreData.trendingShops.length === 0 && (
+                <View style={styles.noResults}>
+                  <View style={styles.noResultsIconContainer}>
+                    <SearchX size={48} color={theme.text} />
+                  </View>
+                  <Text style={styles.noResultsText}>No results found</Text>
+                  <Text style={styles.noResultsSubtext}>
+                    Try adjusting your search or filters
+                  </Text>
                 </View>
-                <Text style={styles.noResultsText}>No results found</Text>
-                <Text style={styles.noResultsSubtext}>
-                  Try adjusting your search or filters
-                </Text>
-              </View>
-            )}
+              )}
 
           <View style={styles.bottomPadding} />
         </ScrollView>
@@ -1421,9 +1347,9 @@ export default function ExploreScreen() {
                       {(filters.contentType == 'All' ||
                         filters.contentType == 'Products') &&
                         renderFilterOption(
-                          'Style',
-                          filterOptions.style,
-                          filters.style,
+                          'Categories',
+                          filterOptions.categories,
+                          filters.categories,
                           (value) =>
                             setFilters((prev) => ({ ...prev, style: value }))
                         )}
@@ -1471,24 +1397,17 @@ export default function ExploreScreen() {
                       <TouchableOpacity
                         style={styles.clearFiltersButton}
                         onPress={() =>
-                          setFilters({
-                            contentType: 'All',
-                            priceRange: 'All',
-                            rating: 'All',
-                            availability: 'All',
-                            style: 'All',
-                            location: 'All',
-                            verification: 'All',
-                            followers: 'All',
-                            likes: 'All',
-                          })
+                          setFilters(initialFilter)
                         }
                       >
                         <Text style={styles.clearFiltersText}>Clear All</Text>
                       </TouchableOpacity>
                       <TouchableOpacity
                         style={styles.applyFiltersButton}
-                        onPress={() => setShowFilter(false)}
+                        onPress={() => {
+                          setShowFilter(false);
+                          fetchSearchResults(searchQuery, filters);
+                        }}
                       >
                         <Text style={styles.applyFiltersText}>
                           Apply Filters

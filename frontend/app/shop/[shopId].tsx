@@ -36,15 +36,14 @@ import {
   UserPlus,
   UserMinus,
   Bookmark,
-  Send,
   ImageIcon,
 } from 'lucide-react-native';
 import ImageSlashIcon from '@/icon/ImageSlashIcon';
 import { useShopping } from '@/hooks/useShopping';
 import { useAuth } from '@/hooks/useAuth';
-import { ShopProfile } from '@/types/ShopProfile';
 import { Product } from '@/types/Product';
 import { Review } from '@/types/Review';
+import { User } from '@/types/User';
 import { Post } from '@/types/Post';
 import { Theme } from '@/types/Theme';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -52,11 +51,14 @@ import Color from 'color';
 import { BlurView } from 'expo-blur';
 import axios from 'axios';
 import { API_URL } from '@/constants/api';
-import { cancel, format } from 'timeago.js';
+import { format as timeago } from 'timeago.js';
+import { format } from 'date-fns';
 import { EmptyState } from '@/components/EmptyState';
 import ProductSlashIcon from '@/icon/ProductSlashIcon';
 import StarSlashIcon from '@/icon/StarSlashIcon';
-import { set } from 'zod';
+import RatingStars from '@/components/RatingStar';
+import ReviewInput from '@/components/ReviewInput';
+import * as ImagePicker from 'expo-image-picker';
 
 const { width, height } = Dimensions.get('window');
 const isSmallScreen = width < 360;
@@ -485,20 +487,14 @@ const createStyles = (theme: Theme) => {
       color: theme.text,
       padding: 8,
     },
-    reviewInputContainer: {
-      flexDirection: 'row',
-      padding: 8,
-      backgroundColor: theme.background,
-    },
-    reviewInput: {
-      flex: 1,
-      padding: 12,
-      borderWidth: 1,
-      borderColor: theme.textSecondary,
+    addImageBtn: {
+      backgroundColor: theme.accent,
+      paddingVertical: 10,
+      paddingHorizontal: 16,
       borderRadius: 8,
-      backgroundColor: theme.card,
-      marginBottom: 16,
-      color: theme.text,
+      alignItems: 'center',
+      justifyContent: 'center',
+      alignSelf: 'flex-start',
     },
     reviewItem: {
       padding: 16,
@@ -619,7 +615,7 @@ export default function ShopProfileScreen() {
   const { shopId } = useLocalSearchParams<{ shopId: string }>();
   const { addToWishlist, isInWishlist } = useShopping();
 
-  const [shopProfile, setShopProfile] = useState<ShopProfile | null>(null);
+  const [shopProfile, setShopProfile] = useState<User | null>(null);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [selectedTab, setSelectedTab] = useState<'posts' | 'products' | 'reviews'>('posts');
   const [loading, setLoading] = useState(true);
@@ -639,13 +635,15 @@ export default function ShopProfileScreen() {
   const [selectedReview, setSelectedReview] = useState<Review | null>(null);
   const [editingReview, setEditingReview] = useState(false);
   const reviewInputRef = useRef<TextInput>(null);
+  const [reviewImages, setReviewImages] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchShopProfile = async () => {
       try {
         setLoading(true);
 
-        const response = await axios.get(`${API_URL}/api/shop/${shopId}`, {
+        console.log('Fetching shop profile for:', shopId);
+        const response = await axios.get(`${API_URL}/api/user/${shopId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -655,7 +653,7 @@ export default function ShopProfileScreen() {
           setShopProfile(null);
           return;
         }
-        const shop = response.data.shop;
+        const shop = response.data.user;
 
         setShopProfile(shop);
 
@@ -693,7 +691,7 @@ export default function ShopProfileScreen() {
 
     const fetchPosts = async () => {
       try {
-        const response = await axios.get(`${API_URL}/api/post/shop/${shopId}`, {
+        const response = await axios.get(`${API_URL}/api/post/user/${shopId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -866,35 +864,44 @@ export default function ShopProfileScreen() {
     if (rating === 0) return;
 
     try {
+      const form = new FormData();
+
+      form.append('comment', newReview.trim());
+      form.append('rating', String(rating));
+      form.append('targetId', shopProfile._id);
+      form.append('targetType', 'shop');
+
+      reviewImages.forEach((uri, index) => {
+        const filename = uri.split('/').pop() || `review_${index}.jpg`;
+        const match = /\.(\w+)$/.exec(filename);
+        const type = match ? `image/${match[1]}` : 'image/jpeg';
+
+        form.append('images', {
+          uri,
+          name: filename,
+          type,
+        } as any);
+      });
+
       let response;
-      if (editingReview) {
+      if (editingReview && selectedReview) {
         response = await axios.put(
-          `${API_URL}/api/review/shop/${selectedReview?._id}`,
-          {
-            comment: newReview.trim(),
-            rating,
-          },
+          `${API_URL}/api/review/shop/${selectedReview._id}`,
+          form,
           {
             headers: {
               Authorization: `Bearer ${token}`,
+              'Content-Type': 'multipart/form-data',
             },
           }
         );
       } else {
-        response = await axios.post(
-          `${API_URL}/api/review`,
-          {
-            targetId: shopProfile._id,
-            targetType: 'shop',
-            comment: newReview.trim(),
-            rating,
+        response = await axios.post(`${API_URL}/api/review`, form, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data',
           },
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+        });
       }
 
       if (response.data.status === false) {
@@ -911,19 +918,41 @@ export default function ShopProfileScreen() {
       setNewReview('');
       setRating(0);
       setHasReviewed(true);
+      setReviewImages([]);
     } catch (error) {
       console.error('Error submitting review:', error);
+      Alert.alert('Error', 'Failed to submit review. Try again.');
+    }
+  };
+
+
+  const pickReviewImages = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      alert('Permission denied!');
       return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsMultipleSelection: true,
+      quality: 0.8,
+      selectionLimit: 3,
+    });
+
+    if (!result.canceled) {
+      const selected = result.assets.map((asset) => asset.uri);
+      setReviewImages([...reviewImages, ...selected]);
     }
   };
 
   const handleContact = () => {
     if (!shopProfile) return;
-    router.push(`/message/${shopProfile.userId}`);
+    router.push(`/message/${shopProfile._id}`);
   };
 
   const handleShare = () => {
-    Alert.alert('Share Shop', `Share ${shopProfile?.name}'s shop`);
+    Alert.alert('Share Shop', `Share ${shopProfile?.fullName}'s shop`);
   };
 
   const handleReport = () => {
@@ -1003,7 +1032,7 @@ export default function ShopProfileScreen() {
       </View>
       <View style={styles.ratingRow}>
         <Star size={12} color="#FFD700" fill="#FFD700" />
-        <Text style={styles.ratingText}>{item.rating.toFixed(1)}</Text>
+        <Text style={styles.ratingText}>{(item.rating / (item.ratingCount || 1)).toFixed(1)}</Text>
       </View>
     </TouchableOpacity>
   );
@@ -1043,7 +1072,7 @@ export default function ShopProfileScreen() {
                 />
               ))}
               <Text style={styles.reviewDate}>
-                {format(new Date(item.updatedAt))}
+                {timeago(new Date(item.createdAt))}
               </Text>
             </View>
           </View>
@@ -1086,13 +1115,14 @@ export default function ShopProfileScreen() {
   );
 
   const renderTabContent = () => {
-    if (!shopProfile) return null;
+    if (!shopProfile || shopProfile.type !== 'shop' || !shopProfile.shop) return null;
 
     switch (selectedTab) {
       case 'products':
-        return shopProfile.productIds.length > 0 ? (
+        return shopProfile.shop.productIds.length > 0 ? (
           <FlatList
-            data={shopProfile.productIds}
+            key={'products'}
+            data={shopProfile.shop.productIds}
             renderItem={({ item }) => renderProduct({ item })}
             keyExtractor={(item) => item._id}
             numColumns={2}
@@ -1113,54 +1143,36 @@ export default function ShopProfileScreen() {
             {!hasReviewed && (
               <>
                 <Text style={styles.reviewHeading}>Leave a review</Text>
-                <View style={styles.ratingContainer}>
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <TouchableOpacity
-                      key={star}
-                      onPress={() => setRating(star)}
-                    >
-                      <Star
-                        size={24}
-                        color={star <= rating ? '#FFD700' : theme.textSecondary}
-                        fill={star <= rating ? '#FFD700' : 'none'}
-                      />
-                    </TouchableOpacity>
-                  ))}
-                </View>
+                <RatingStars rating={rating} onPress={setRating} />
+                <ReviewInput
+                  reviewInputRef={reviewInputRef}
+                  value={newReview}
+                  onChangeText={setNewReview}
+                  onSend={handleSubmitReview}
+                  onCancel={cancelEditReview}
+                  isEditing={!!editingReview}
+                />
+                <View style={{ marginTop: 8 }}>
+                  <TouchableOpacity onPress={pickReviewImages} style={styles.addImageBtn}>
+                    <Text style={{ color: '#000' }}>+ Add Images</Text>
+                  </TouchableOpacity>
 
-                <View style={styles.reviewInputContainer}>
-                  <TextInput
-                    ref={reviewInputRef}
-                    placeholder="Write a review..."
-                    value={newReview}
-                    onChangeText={setNewReview}
-                    style={styles.reviewInput}
-                    placeholderTextColor={theme.textSecondary}
-                    multiline={true}
-                    numberOfLines={3}
-                  />
-                  <>
-                    <TouchableOpacity
-                      onPress={handleSubmitReview}
-                      style={styles.headerButton}
-                    >
-                      <Send size={24} color={theme.text} />
-                    </TouchableOpacity>
-                    {editingReview && (
-                      <TouchableOpacity
-                        onPress={cancelEditReview}
-                        style={styles.headerButton}
-                      >
-                        <X size={24} color={theme.error} />
-                      </TouchableOpacity>
-                    )}
-                  </>
+                  <ScrollView horizontal style={{ marginTop: 8 }}>
+                    {reviewImages.map((uri, i) => (
+                      <Image
+                        key={i}
+                        source={{ uri }}
+                        style={{ width: 80, height: 80, marginRight: 8, borderRadius: 8 }}
+                      />
+                    ))}
+                  </ScrollView>
                 </View>
               </>
             )}
 
             {reviews.length > 0 ? (
               <FlatList
+                key={'reviews'}
                 data={reviews}
                 renderItem={renderReview}
                 keyExtractor={(item) => item._id}
@@ -1178,6 +1190,7 @@ export default function ShopProfileScreen() {
       case 'posts':
         return posts.length > 0 ? (
           <FlatList
+            key={'posts'}
             data={posts}
             renderItem={renderPost}
             keyExtractor={(item) => item._id}
@@ -1205,7 +1218,7 @@ export default function ShopProfileScreen() {
     );
   }
 
-  if (!shopProfile) {
+  if (!shopProfile || !shopProfile.shop) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
@@ -1259,7 +1272,7 @@ export default function ShopProfileScreen() {
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           {/* Cover Image */}
           <Image
-            source={{ uri: shopProfile.coverImageUrl }}
+            source={{ uri: shopProfile.shop.coverImageUrl }}
             style={styles.coverImage}
           />
 
@@ -1267,13 +1280,13 @@ export default function ShopProfileScreen() {
           <View style={styles.shopSection}>
             <View style={styles.shopHeader}>
               <Image
-                source={{ uri: shopProfile.logoUrl }}
+                source={{ uri: shopProfile.avatar }}
                 style={styles.shopAvatar}
               />
               <View style={styles.shopStats}>
                 <View style={styles.statItem}>
                   <Text style={styles.statNumber}>
-                    {shopProfile.productIds.length}
+                    {shopProfile.shop.productIds.length}
                   </Text>
                   <Text style={styles.statLabel}>Products</Text>
                 </View>
@@ -1285,8 +1298,8 @@ export default function ShopProfileScreen() {
                   <View style={styles.ratingContainer}>
                     <Star size={16} color="#FFD700" fill="#FFD700" />
                     <Text style={styles.statNumber}>
-                      {(shopProfile.ratingCount > 0
-                        ? shopProfile.rating / shopProfile.ratingCount
+                      {(shopProfile.shop.ratingCount > 0
+                        ? shopProfile.shop.rating / shopProfile.shop.ratingCount
                         : 0.0
                       ).toFixed(1)}
                     </Text>
@@ -1298,7 +1311,7 @@ export default function ShopProfileScreen() {
 
             <View style={styles.shopInfo}>
               <View style={styles.nameContainer}>
-                <Text style={styles.shopName}>{shopProfile.name}</Text>
+                <Text style={styles.shopName}>{shopProfile.fullName}</Text>
                 {shopProfile.isVerified && (
                   <View style={styles.verifiedBadge}>
                     <Text style={styles.verifiedText}>✓</Text>
@@ -1306,46 +1319,53 @@ export default function ShopProfileScreen() {
                 )}
               </View>
               <Text style={styles.shopDescription}>
-                {shopProfile.description}
+                {shopProfile.bio}
               </Text>
 
               {/* Contact Info */}
               <View style={styles.contactInfo}>
                 <View style={styles.contactItem}>
                   <MapPin size={16} color={theme.textSecondary} />
-                  <Text style={styles.contactText}>{shopProfile.location}</Text>
+                  <Text style={styles.contactText}>{shopProfile.shop.location}</Text>
                 </View>
-                {shopProfile.contactPhone && (
+                {shopProfile.shop.contactPhone && (
                   <View style={styles.contactItem}>
                     <Phone size={16} color={theme.textSecondary} />
                     <Text style={styles.contactText}>
-                      {shopProfile.contactPhone}
+                      {shopProfile.shop.contactPhone}
                     </Text>
                   </View>
                 )}
-                {shopProfile.contactEmail && (
+                {shopProfile.shop.contactEmail && (
                   <View style={styles.contactItem}>
                     <Mail size={16} color={theme.textSecondary} />
                     <Text style={styles.contactText}>
-                      {shopProfile.contactEmail}
+                      {shopProfile.shop.contactEmail}
                     </Text>
                   </View>
                 )}
-                {shopProfile.website && (
+                {shopProfile.shop.website && (
                   <TouchableOpacity
                     style={styles.contactItem}
-                    onPress={() => Linking.openURL(shopProfile.website!)}
+                    onPress={() => {
+                      const url = shopProfile?.shop?.website;
+                      if (url?.trim()) {
+                        Linking.openURL(url);
+                      } else {
+                        Alert.alert('Invalid URL', 'This shop does not have a valid website.');
+                      }
+                    }}
                   >
                     <Globe size={16} color="#007AFF" />
                     <Text style={[styles.contactText, styles.websiteText]}>
-                      {shopProfile.website}
+                      {shopProfile.shop.website}
                     </Text>
                   </TouchableOpacity>
                 )}
               </View>
 
               <Text style={styles.establishedText}>
-                Established {shopProfile.createdAt}
+                Established {format(new Date(shopProfile.createdAt ?? ''), 'MMMM yyyy')}
               </Text>
             </View>
 
@@ -1353,7 +1373,7 @@ export default function ShopProfileScreen() {
             <View style={styles.categories}>
               <Text style={styles.categoriesTitle}>Categories</Text>
               <View style={styles.categoryTags}>
-                {shopProfile.categories.map((category, index) => (
+                {shopProfile.shop.categories.map((category, index) => (
                   <View key={index} style={styles.categoryTag}>
                     <Text style={styles.categoryTagText}>{category}</Text>
                   </View>
@@ -1441,7 +1461,7 @@ export default function ShopProfileScreen() {
                     selectedTab === 'products' && styles.activeTabText,
                   ]}
                 >
-                  Products ({shopProfile.productIds.length})
+                  Products ({shopProfile.shop.productIds.length})
                 </Text>
               )}
             </TouchableOpacity>

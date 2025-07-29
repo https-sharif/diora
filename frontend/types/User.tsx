@@ -1,3 +1,5 @@
+import { Product } from "./Product";
+
 export interface User {
   _id: string;
   email: string;
@@ -12,6 +14,23 @@ export interface User {
   posts: number;
   likedPosts: string[];
   type: 'user' | 'shop' | 'admin';
+  shop?: {
+    coverImageUrl?: string;
+    location?: string;
+    contactEmail?: string;
+    contactPhone?: string;
+    website?: string;
+    socialLinks?: {
+      instagram?: string;
+      facebook?: string;
+      twitter?: string;
+      tiktok?: string;
+    };
+    categories: string[];
+    productIds: Product[];
+    rating: number;
+    ratingCount: number;
+  };
   avatarId?: string;
   settings: {
     theme: 'light' | 'dark';

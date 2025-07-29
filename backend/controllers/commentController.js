@@ -1,5 +1,6 @@
 import Comment from '../models/Comment.js';
 import Post from '../models/Post.js';
+import User from '../models/User.js';
 import Notification from '../models/Notification.js';
 import { getIO, onlineUsers } from '../sockets/socketSetup.js';
 
@@ -68,11 +69,12 @@ export const createReply = async (req, res) => {
   console.log('Replying to comment ID:', req.params.commentId);
   console.log('Request body:', req.body);
   const commentId = req.params.commentId;
-  const { userId, text, targetId } = req.body;
+  const { userId, text, postId } = req.body;
 
   try {
     const parentComment = await Comment.findById(commentId);
-    const post = await Post.findById(targetId);
+    const post = await Post.findById(postId);
+    const user = await User.findById(userId);
 
     if (!parentComment) {
       return res
@@ -83,7 +85,6 @@ export const createReply = async (req, res) => {
     if (!post) {
       return res.status(404).json({ status: false, message: 'Post not found' });
     }
-    console.log('Post comment found:', post);
 
     post.comments += 1;
     await post.save();
@@ -94,6 +95,26 @@ export const createReply = async (req, res) => {
 
     parentComment.replies.push(newReply._id);
     await parentComment.save();
+
+    if (userId !== parentComment.user.toString()) {
+      const notification = new Notification({
+        type: 'comment',
+        userId: parentComment.user,
+        fromUserId: userId,
+        title: 'New Reply',
+        postId : postId,
+        message: `${user.username} replied to your comment`,
+        actionUrl: `/post/${postId}`,
+      });
+
+      await notification.save();
+
+      const io = getIO();
+      const targetSocketId = onlineUsers.get(parentComment.user.toString());
+      if (targetSocketId) {
+        io.to(targetSocketId).emit('notification', notification);
+      }
+    }
 
     return res.status(201).json({ status: true, comment: newReply });
   } catch (error) {
@@ -113,7 +134,10 @@ export const getComments = async (req, res) => {
       .sort({ createdAt: -1 })
       .populate({
         path: 'replies',
-        populate: { path: 'user', select: 'username avatar' },
+        populate: {
+          path: 'user',
+          select: 'username avatar',
+        },
       });
 
     if (!comments || comments.length === 0) {

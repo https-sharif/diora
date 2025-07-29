@@ -10,6 +10,7 @@ const createStyles = (theme: Theme) => {
       flexDirection: 'row',
       flexWrap: 'wrap',
       gap: 8,
+      marginTop: 6,
       backgroundColor: theme.card,
       borderRadius: 12,
       borderWidth: 1,

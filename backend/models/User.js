@@ -15,6 +15,24 @@ const userSchema = new mongoose.Schema({
   posts: { type: Number, default: 0 },
   likedPosts: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Post' }],
   type: { type: String, enum: ['user', 'shop', 'admin'], default: 'user' },
+  shop: {
+    coverImageUrl: { type: String, default: null },
+    coverImageId: { type: String, default: null },
+    location: { type: String, default: '' },
+    contactEmail: { type: String, default: '' },
+    contactPhone: { type: String, default: '' },
+    website: { type: String, default: '' },
+    socialLinks: {
+      facebook: { type: String, default: '' },
+      instagram: { type: String, default: '' },
+      twitter: { type: String, default: '' },
+      tiktok: { type: String, default: '' },
+    },
+    categories: [{ type: String }],
+    productIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }],
+    rating: { type: Number, default: 0 },
+    ratingCount: { type: Number, default: 0 },
+  },
   settings: {
     theme: { type: String, enum: ['light', 'dark'], default: 'light' },
     notifications: {
@@ -27,7 +45,6 @@ const userSchema = new mongoose.Schema({
       system: { type: Boolean, default: true },
       warning: { type: Boolean, default: true },
       reportUpdate: { type: Boolean, default: true },
-
       emailFrequency: { type: String, enum: ['instant', 'daily', 'weekly'], default: 'instant' },
     },
   },

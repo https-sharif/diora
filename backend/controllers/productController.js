@@ -15,7 +15,7 @@ export const getProductById = async (req, res) => {
   console.log('Get product by ID route/controller hit');
   try {
     const productId = req.params.productId;
-    const product = await Product.findById(productId).populate('shopId', 'name');
+    const product = await Product.findById(productId).populate('shopId', 'fullName avatar followers');
 
     if (!product) {
       return res
@@ -34,29 +34,28 @@ export const createProduct = async (req, res) => {
   console.log('Create product route/controller hit');
   try {
     const {
-      shopId,
       name,
       price,
-      imageUrl,
       category,
       description,
       sizes,
       variants,
       stock,
-      rating,
-      reviewCount,
       discount,
     } = req.body;
+
+    const shopId = req.user.id;
+    const imageUrls = req.files.map(file => file.path);
 
     const newProduct = new Product({
       shopId,
       name,
       price,
-      imageUrl,
-      category,
+      imageUrl: imageUrls,
+      category : JSON.parse(category || '[]'),
       description,
-      sizes,
-      variants,
+      sizes : JSON.parse(sizes || '[]'),
+      variants : JSON.parse(variants || '[]'),
       stock,
       rating: 0,
       reviewCount: 0,
@@ -117,10 +116,11 @@ export const deleteProduct = async (req, res) => {
 export const getTrendingProducts = async (req, res) => {
   console.log('Get trending products route/controller hit');
   try {
-    const trendingProducts = await Product.find()
-      .sort({ rating: -1, reviewCount: -1 })
-      .limit(6)
-      .populate('shopId', 'name');
+    const trendingProducts = await Product.aggregate([
+      { $sample: { size: 6 } }
+    ]);
+
+    await Product.populate(trendingProducts, { path: 'shopId', select: 'fullName' });
 
     if (!trendingProducts || trendingProducts.length === 0) {
       return res
