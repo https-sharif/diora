@@ -1,6 +1,7 @@
 import Review from '../models/Review.js';
 import Product from '../models/Product.js';
-import Shop from '../models/Shop.js';
+import User from '../models/User.js';
+import { deleteImage } from '../utils/cloudinary.js';
 
 export const createReview = async (req, res) => {
   console.log('Create review route/controller hit');
@@ -31,6 +32,11 @@ export const createReview = async (req, res) => {
       comment,
     });
 
+    if (req.files && req.files.length > 0) {
+      review.images = req.files.map((file) => file.path);
+      review.imagesIds = req.files.map((file) => file.filename);
+    }
+
     if (targetType === 'product') {
       const product = await Product.findById(targetId);
       if (!product) {
@@ -38,18 +44,18 @@ export const createReview = async (req, res) => {
           .status(404)
           .json({ status: false, message: 'Product not found' });
       }
-      product.rating += rating;
+      product.rating += Number(rating);
       product.ratingCount += 1;
       await product.save();
     } else {
-      const shop = await Shop.findById(targetId);
+      const shop = await User.findById(targetId);
       if (!shop) {
         return res
           .status(404)
           .json({ status: false, message: 'Shop not found' });
       }
-      shop.rating += rating;
-      shop.ratingCount += 1;
+      shop.shop.rating += Number(rating);
+      shop.shop.ratingCount += 1;
       await shop.save();
     }
 
@@ -142,6 +148,16 @@ export const deleteReview = async (req, res) => {
           message: 'Not authorized to delete this review',
         });
     }
+
+    if (review.imagesIds && review.imagesIds.length > 0) {
+      for (const publicId of review.imagesIds) {
+        try {
+          await deleteImage(publicId);
+        } catch (err) {
+          console.error(`Failed to delete Cloudinary image ${publicId}`, err);
+        }
+      }
+    }
     
     if (targetType === 'product') {
         const product = await Product.findById(review.targetId);
@@ -151,7 +167,7 @@ export const deleteReview = async (req, res) => {
             await product.save();
         }
     } else {
-        const shop = await Shop.findById(review.targetId);
+        const shop = await User.findById(review.targetId);
         if (shop) {
             shop.rating -= review.rating;
             shop.ratingCount -= 1;
@@ -177,47 +193,83 @@ export const updateReview = async (req, res) => {
 
     const review = await Review.findById(id);
     if (!review) {
-      return res
-        .status(404)
-        .json({ status: false, message: 'Review not found' });
+      return res.status(404).json({ status: false, message: 'Review not found' });
     }
+
     if (review.user.toString() !== userId) {
-      return res
-        .status(403)
-        .json({
-          status: false,
-          message: 'Not authorized to update this review',
-        });
+      return res.status(403).json({
+        status: false,
+        message: 'Not authorized to update this review',
+      });
     }
 
     if (targetType === 'product') {
       const product = await Product.findById(review.targetId);
       if (!product) {
-        return res
-          .status(404)
-          .json({ status: false, message: 'Product not found' });
+        return res.status(404).json({ status: false, message: 'Product not found' });
       }
       product.rating -= review.rating;
-      product.rating += rating;
+      product.rating += Number(rating);
       await product.save();
     } else {
-      const shop = await Shop.findById(review.targetId);
+      const shop = await User.findById(review.targetId);
       if (!shop) {
-        return res
-          .status(404)
-          .json({ status: false, message: 'Shop not found' });
+        return res.status(404).json({ status: false, message: 'Shop not found' });
       }
       shop.rating -= review.rating;
-      shop.rating += rating;
+      shop.rating += Number(rating);
       await shop.save();
     }
 
     review.rating = rating;
     review.comment = comment;
+
+    if (req.files && req.files.length > 0) {
+      if (review.imagesIds && review.imagesIds.length > 0) {
+        for (const publicId of review.imagesIds) {
+          await deleteImage(publicId);
+        }
+      }
+      review.images = req.files.map(file => file.path);
+      review.imagesIds = req.files.map(file => file.filename);
+    }
+
+
     await review.save();
     await review.populate('user', 'username avatar');
 
     res.json({ status: true, message: 'Review updated successfully', review });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ status: false, message: 'Something went wrong' });
+  }
+};
+
+
+export const getReviewsByProductId = async (req, res) => {
+  console.log('Get reviews by product ID route/controller hit');
+  try {
+    const { productId } = req.params;
+
+    if (!productId) {
+      return res
+        .status(400)
+        .json({ status: false, message: 'Product ID is required' });
+    }
+
+    const reviews = await Review.find({ targetId: productId, targetType: 'product' })
+      .populate('user', 'username avatar')
+      .sort({ createdAt: -1 });
+
+    if (!reviews || reviews.length === 0) {
+      return res.status(200).json({
+        status: true,
+        message: 'No reviews found for this product',
+        reviews: [],
+      });
+    }
+
+    res.json({ status: true, reviews });
   } catch (err) {
     console.error(err);
     res.status(500).json({ status: false, message: 'Something went wrong' });

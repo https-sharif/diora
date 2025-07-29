@@ -8,6 +8,7 @@ const reviewSchema = new mongoose.Schema({
   comment: { type: String },
   createdAt: { type: Date, default: Date.now },
   images: [{ type: String }],
+  imagesIds: [{ type: String }],
 });
 
 const Review = mongoose.model('Review', reviewSchema);

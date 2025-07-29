@@ -1,10 +1,10 @@
-import Shop from '../models/Shop.js';
 import User from '../models/User.js';
+import mongoose from 'mongoose';
 
 export const getAllShops = async (req, res) => {
   console.log('Get all shops route/controller hit');
   try {
-    const shops = await Shop.find().populate('userId', 'username avatar');
+    const shops = await User.find({ type: 'shop' }).populate('userId', 'username avatar');
 
     res.json({ status: true, shops });
   } catch (err) {
@@ -17,8 +17,7 @@ export const getShopById = async (req, res) => {
   console.log('Get shop by ID route/controller hit');
   try {
     const shopId = req.params.shopId;
-    const shop = await Shop.findById(shopId)
-      .populate('userId', 'username avatar')
+    const shop = await User.findById(shopId)
       .populate({
         path: 'productIds',
         select: 'name price imageUrl discount stock category rating',
@@ -62,7 +61,6 @@ export const createShop = async (req, res) => {
       categories,
     } = req.body;
 
-    // Check if required fields are provided
     if (!name || !username) {
       return res.status(400).json({
         status: false,
@@ -70,7 +68,6 @@ export const createShop = async (req, res) => {
       });
     }
 
-    // Check if shop already exists for this user
     const existingShop = await Shop.findOne({ userId: req.user.id });
     if (existingShop) {
       return res.status(400).json({
@@ -235,15 +232,17 @@ export const deleteShop = async (req, res) => {
 export const getTrendingShops = async (req, res) => {
   console.log('Get trending shops route/controller hit');
   try {
-    const trendingShops = await Shop.find()
-      .sort({ rating: -1, followers: -1 })
-      .limit(5)
-      .populate('userId', 'username avatar');
+    const currentUserId = req.user.id;
+    const trendingShops = await User.aggregate([
+      { $match: { _id: { $ne: new mongoose.Types.ObjectId(currentUserId) }, type: 'shop' } },
+      { $sample: { size: 4 } }
+    ]);
+
 
     if (!trendingShops || trendingShops.length === 0) {
       return res
-        .status(404)
-        .json({ status: false, message: 'No trending shops found' });
+        .status(200)
+        .json({ status: true, message: 'No trending shops found', trendingShops: [] });
     }
 
     res.json({ status: true, trendingShops });
@@ -263,7 +262,7 @@ export const followShop = async (req, res) => {
       return res.status(400).json({ status: false, message: 'Cannot follow your own shop' });
     }
 
-    const shop = await Shop.findById(shopId);
+    const shop = await User.findById(shopId);
     const user = await User.findById(userId);
 
     if (!shop || !user) {

@@ -80,8 +80,8 @@ export const getNotifications = async (req, res) => {
 
     if (!notifications || notifications.length === 0) {
       return res
-        .status(404)
-        .json({ status: false, message: 'No notifications found' });
+        .status(200)
+        .json({ status: true, message: 'No notifications found', notifications: [] });
     }
     console.log(
       `Found ${notifications.length} notifications for user ${userId}`

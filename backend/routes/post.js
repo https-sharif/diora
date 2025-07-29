@@ -12,7 +12,6 @@ router.get('/trending', getTrendingPosts);
 router.get('/', getAllPost);
 router.get('/user/:userId/liked', getLikedPosts);
 router.get('/user/:userId', getUserPosts);
-router.get('/shop/:shopId', getUserPosts);
 router.get('/:postId', getPost);
 
 export default router;

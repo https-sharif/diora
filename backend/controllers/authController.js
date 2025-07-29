@@ -44,6 +44,7 @@ export const signup = async (req, res) => {
       avatar: '',
       avatarId: '',
       bio: '',
+      shop: null,
       settings: {
         theme: 'light',
         notifications: {

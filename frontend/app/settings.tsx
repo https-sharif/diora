@@ -25,6 +25,8 @@ import {
   Camera,
   X,
   TriangleAlert as AlertTriangle,
+  ImageIcon,
+  ImageOff,
 } from 'lucide-react-native';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -41,351 +43,351 @@ interface SocialAccount {
   icon: string;
 }
 
-const createTheme = (theme: any) => StyleSheet.create({
-  container: {
-    flex: 1,
-    paddingTop: -100,
-    paddingBottom: -100,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    marginBottom: 16,
-  },
-  headerButton: {
-    padding: 8,
-    width: 40,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontFamily: 'Inter-Bold',
-  },
-  content: {
-    flex: 1,
-  },
-  section: {
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontFamily: 'Inter-Bold',
-    marginBottom: 12,
-    paddingHorizontal: 16,
-  },
-  sectionContent: {
-    borderRadius: 12,
-    marginHorizontal: 16,
-    overflow: 'hidden',
-  },
-  settingItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 16,
-    borderBottomWidth: 1,
-  },
-  settingLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  settingRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-  },
-  settingIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  settingText: {
-    flex: 1,
-  },
-  settingTitle: {
-    fontSize: 16,
-    fontFamily: 'Inter-SemiBold',
-  },
-  settingSubtitle: {
-    fontSize: 14,
-    fontFamily: 'Inter-Regular',
-    marginTop: 2,
-  },
-  profileImageSection: {
-    alignItems: 'center',
-    padding: 20,
-  },
-  profileImageLarge: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-  },
-  cameraOverlay: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    backgroundColor: theme.background,
-    borderRadius: 15,
-    width: 30,
-    height: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  inputGroup: {
-    padding: 16
-  },
-  inputLabel: {
-    fontSize: 16,
-    fontFamily: 'Inter-SemiBold',
-    marginBottom: 8,
-  },
-  textInput: {
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    fontFamily: 'Inter-Regular',
-    marginBottom: 8,
-  },
-  textArea: {
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    fontFamily: 'Inter-Regular',
-    marginBottom: 8,
-    minHeight: 100,
-    textAlignVertical: 'top',
-  },
-  characterCount: {
-    position: 'absolute',
-    right: 16,
-    bottom: 8,
-    fontSize: 12,
-    fontFamily: 'Inter-Regular',
-    textAlign: 'right',
-  },
-  stylePreferences: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  styleChip: {
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-  },
-  styleChipSelected: {
-    backgroundColor: theme.accentSecondary,
-    borderColor: theme.border,
-  },
-  styleChipText: {
-    fontSize: 14,
-    fontFamily: 'Inter-Medium',
-    alignContent: 'center',
-    justifyContent: 'center',
-    textAlign: 'center'
-  },
-  styleChipTextSelected: {
-    color: "#fff",
-  },
-  saveButton: {
-    backgroundColor: theme.accentSecondary,
-    borderRadius: 8,
-    paddingVertical: 12,
-    alignItems: 'center',
-    margin: 16,
-  },
-  saveButtonText: {
-    color: '#000',
-    fontSize: 16,
-    fontFamily: 'Inter-SemiBold',
-  },
-  passwordInput: {
-    position: 'relative',
-    marginBottom: 8,
-  },
-  eyeIcon: {
-    position: 'absolute',
-    right: 12,
-    top: 12,
-  },
-  changePasswordButton: {
-    backgroundColor: theme.accentSecondary,
-    borderRadius: 8,
-    paddingVertical: 12,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  changePasswordButtonText: {
-    color: '#000',
-    fontSize: 16,
-    fontFamily: 'Inter-SemiBold',
-  },
-  updateEmailButton: {
-    backgroundColor: theme.accentSecondary,
-    borderRadius: 8,
-    paddingVertical: 12,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  updateEmailButtonText: {
-    color: '#000',
-    fontSize: 16,
-    fontFamily: 'Inter-SemiBold',
-  },
-  frequencyOptions: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  frequencyOption: {
-    flex: 1,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    alignItems: 'center',
-  },
-  frequencyOptionSelected: {
-    backgroundColor: theme.accentSecondary,
-    borderColor: theme.border,
-  },
-  frequencyOptionText: {
-    fontSize: 14,
-    fontFamily: 'Inter-Medium',
-  },
-  frequencyOptionTextSelected: {
-    color: theme.text,
-  },
-  socialIcon: {
-    fontSize: 20,
-  },
-  connectButton: {
-    backgroundColor: '#007AFF',
-    borderRadius: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-  disconnectButton: {
-    backgroundColor: '#FF3B30',
-  },
-  connectButtonText: {
-    color: '#fff',
-    fontSize: 12,
-    fontFamily: 'Inter-SemiBold',
-  },
-  disconnectButtonText: {
-    color: '#fff',
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContent: {
-    borderRadius: 16,
-    padding: 24,
-    margin: 20,
-    maxWidth: 400,
-    width: '90%',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-    gap: 12,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontFamily: 'Inter-Bold',
-  },
-  modalText: {
-    fontSize: 16,
-    fontFamily: 'Inter-Regular',
-    lineHeight: 24,
-    marginBottom: 24,
-  },
-  modalButtons: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  modalButton: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  cancelButton: {
-    borderWidth: 1,
-  },
-  cancelButtonText: {
-    fontSize: 16,
-    fontFamily: 'Inter-SemiBold',
-  },
-  deleteButton: {
-    backgroundColor: '#FF3B30',
-  },
-  deleteButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontFamily: 'Inter-SemiBold',
-  },
-  deactivateButton: {
-    backgroundColor: '#FF9500',
-  },
-  deactivateButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontFamily: 'Inter-SemiBold',
-  },
-  imagePickerModal: {
-    position: 'absolute',
-    borderTopColor: '#e9ecef',
-    borderTopWidth: 1,
-    bottom: 0,
-    left: 0,
-    right: 0,
-    borderRadius: 16,
-  },
-  imagePickerHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e9ecef',
-  },
-  imagePickerTitle: {
-    fontSize: 18,
-    fontFamily: 'Inter-Bold',
-  },
-  imagePickerOptions: {
-    padding: 20,
-  },
-  imagePickerOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 16,
-    gap: 16,
-  },
-  imagePickerOptionText: {
-    fontSize: 16,
-    fontFamily: 'Inter-Medium',
-  },
-  bottomPadding: {
-    height: 84,
-  },
-});
-
+const createTheme = (theme: any) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      paddingTop: -100,
+      paddingBottom: -100,
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      borderBottomWidth: 1,
+      marginBottom: 16,
+    },
+    headerButton: {
+      padding: 8,
+      width: 40,
+    },
+    headerTitle: {
+      fontSize: 20,
+      fontFamily: 'Inter-Bold',
+    },
+    content: {
+      flex: 1,
+    },
+    section: {
+      marginBottom: 24,
+    },
+    sectionTitle: {
+      fontSize: 18,
+      fontFamily: 'Inter-Bold',
+      marginBottom: 12,
+      paddingHorizontal: 16,
+    },
+    sectionContent: {
+      borderRadius: 12,
+      marginHorizontal: 16,
+      overflow: 'hidden',
+    },
+    settingItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: 16,
+      borderBottomWidth: 1,
+    },
+    settingLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      flex: 1,
+    },
+    settingRight: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'flex-end',
+    },
+    settingIcon: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: 12,
+    },
+    settingText: {
+      flex: 1,
+    },
+    settingTitle: {
+      fontSize: 16,
+      fontFamily: 'Inter-SemiBold',
+    },
+    settingSubtitle: {
+      fontSize: 14,
+      fontFamily: 'Inter-Regular',
+      marginTop: 2,
+    },
+    profileImageSection: {
+      alignItems: 'center',
+      padding: 20,
+    },
+    profileImageLarge: {
+      width: 100,
+      height: 100,
+      borderRadius: 50,
+    },
+    cameraOverlay: {
+      position: 'absolute',
+      bottom: 0,
+      right: 0,
+      backgroundColor: theme.background,
+      borderRadius: 15,
+      width: 30,
+      height: 30,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    inputGroup: {
+      padding: 16,
+    },
+    inputLabel: {
+      fontSize: 16,
+      fontFamily: 'Inter-SemiBold',
+      marginBottom: 8,
+    },
+    textInput: {
+      borderWidth: 1,
+      borderRadius: 8,
+      padding: 12,
+      fontSize: 16,
+      fontFamily: 'Inter-Regular',
+      marginBottom: 8,
+    },
+    textArea: {
+      borderWidth: 1,
+      borderRadius: 8,
+      padding: 12,
+      fontSize: 16,
+      fontFamily: 'Inter-Regular',
+      marginBottom: 8,
+      minHeight: 100,
+      textAlignVertical: 'top',
+    },
+    characterCount: {
+      position: 'absolute',
+      right: 16,
+      bottom: 8,
+      fontSize: 12,
+      fontFamily: 'Inter-Regular',
+      textAlign: 'right',
+    },
+    stylePreferences: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 8,
+    },
+    styleChip: {
+      paddingHorizontal: 10,
+      paddingVertical: 8,
+      borderRadius: 20,
+      borderWidth: 1,
+    },
+    styleChipSelected: {
+      backgroundColor: theme.accentSecondary,
+      borderColor: theme.border,
+    },
+    styleChipText: {
+      fontSize: 14,
+      fontFamily: 'Inter-Medium',
+      alignContent: 'center',
+      justifyContent: 'center',
+      textAlign: 'center',
+    },
+    styleChipTextSelected: {
+      color: '#fff',
+    },
+    saveButton: {
+      backgroundColor: theme.accentSecondary,
+      borderRadius: 8,
+      paddingVertical: 12,
+      alignItems: 'center',
+      margin: 16,
+    },
+    saveButtonText: {
+      color: '#000',
+      fontSize: 16,
+      fontFamily: 'Inter-SemiBold',
+    },
+    passwordInput: {
+      position: 'relative',
+      marginBottom: 8,
+    },
+    eyeIcon: {
+      position: 'absolute',
+      right: 12,
+      top: 12,
+    },
+    changePasswordButton: {
+      backgroundColor: theme.accentSecondary,
+      borderRadius: 8,
+      paddingVertical: 12,
+      alignItems: 'center',
+      marginTop: 8,
+    },
+    changePasswordButtonText: {
+      color: '#000',
+      fontSize: 16,
+      fontFamily: 'Inter-SemiBold',
+    },
+    updateEmailButton: {
+      backgroundColor: theme.accentSecondary,
+      borderRadius: 8,
+      paddingVertical: 12,
+      alignItems: 'center',
+      marginTop: 8,
+    },
+    updateEmailButtonText: {
+      color: '#000',
+      fontSize: 16,
+      fontFamily: 'Inter-SemiBold',
+    },
+    frequencyOptions: {
+      flexDirection: 'row',
+      gap: 8,
+    },
+    frequencyOption: {
+      flex: 1,
+      paddingVertical: 8,
+      paddingHorizontal: 12,
+      borderRadius: 8,
+      borderWidth: 1,
+      alignItems: 'center',
+    },
+    frequencyOptionSelected: {
+      backgroundColor: theme.accentSecondary,
+      borderColor: theme.border,
+    },
+    frequencyOptionText: {
+      fontSize: 14,
+      fontFamily: 'Inter-Medium',
+    },
+    frequencyOptionTextSelected: {
+      color: theme.text,
+    },
+    socialIcon: {
+      fontSize: 20,
+    },
+    connectButton: {
+      backgroundColor: '#007AFF',
+      borderRadius: 16,
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+    },
+    disconnectButton: {
+      backgroundColor: '#FF3B30',
+    },
+    connectButtonText: {
+      color: '#fff',
+      fontSize: 12,
+      fontFamily: 'Inter-SemiBold',
+    },
+    disconnectButtonText: {
+      color: '#fff',
+    },
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.3)',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    modalContent: {
+      borderRadius: 16,
+      padding: 24,
+      margin: 20,
+      maxWidth: 400,
+      width: '90%',
+    },
+    modalHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 16,
+      gap: 12,
+    },
+    modalTitle: {
+      fontSize: 18,
+      fontFamily: 'Inter-Bold',
+    },
+    modalText: {
+      fontSize: 16,
+      fontFamily: 'Inter-Regular',
+      lineHeight: 24,
+      marginBottom: 24,
+    },
+    modalButtons: {
+      flexDirection: 'row',
+      gap: 12,
+    },
+    modalButton: {
+      flex: 1,
+      paddingVertical: 12,
+      borderRadius: 8,
+      alignItems: 'center',
+    },
+    cancelButton: {
+      borderWidth: 1,
+    },
+    cancelButtonText: {
+      fontSize: 16,
+      fontFamily: 'Inter-SemiBold',
+    },
+    deleteButton: {
+      backgroundColor: '#FF3B30',
+    },
+    deleteButtonText: {
+      color: '#fff',
+      fontSize: 16,
+      fontFamily: 'Inter-SemiBold',
+    },
+    deactivateButton: {
+      backgroundColor: '#FF9500',
+    },
+    deactivateButtonText: {
+      color: '#fff',
+      fontSize: 16,
+      fontFamily: 'Inter-SemiBold',
+    },
+    imagePickerModal: {
+      position: 'absolute',
+      borderTopColor: '#e9ecef',
+      borderTopWidth: 1,
+      bottom: 0,
+      left: 0,
+      right: 0,
+      borderRadius: 16,
+    },
+    imagePickerHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: 20,
+      borderBottomWidth: 1,
+      borderBottomColor: '#e9ecef',
+    },
+    imagePickerTitle: {
+      fontSize: 18,
+      fontFamily: 'Inter-Bold',
+    },
+    imagePickerOptions: {
+      padding: 20,
+    },
+    imagePickerOption: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 16,
+      gap: 16,
+    },
+    imagePickerOptionText: {
+      fontSize: 16,
+      fontFamily: 'Inter-Medium',
+    },
+    bottomPadding: {
+      height: 84,
+    },
+  });
 
 export default function SettingsScreen() {
   const { user, logout, setUser, token } = useAuth();
@@ -394,13 +396,11 @@ export default function SettingsScreen() {
 
   const styles = createTheme(theme);
 
-  // Profile Editor State
   const [fullName, setFullName] = useState(user?.fullName || '');
   const [username, setUsername] = useState(user?.username || '');
   const [bio, setBio] = useState(user?.bio || '');
   const [profileImage, setProfileImage] = useState(user?.avatar || '');
 
-  // Security State
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -408,7 +408,6 @@ export default function SettingsScreen() {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
 
-  // Social Accounts
   const [socialAccounts, setSocialAccounts] = useState<SocialAccount[]>([
     { id: '1', name: 'Google', connected: false, icon: '🔍' },
     { id: '2', name: 'Facebook', connected: false, icon: '📘' },
@@ -416,7 +415,6 @@ export default function SettingsScreen() {
     { id: '4', name: 'Instagram', connected: true, icon: '📷' },
   ]);
 
-  // Modals
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showDeactivateConfirm, setShowDeactivateConfirm] = useState(false);
   const [showImagePicker, setShowImagePicker] = useState(false);
@@ -435,6 +433,7 @@ export default function SettingsScreen() {
     if (!result.canceled) {
       const imageUri = result.assets[0].uri;
       setProfileImage(imageUri);
+      setShowImagePicker(false);
     }
   };
 
@@ -448,6 +447,7 @@ export default function SettingsScreen() {
     if (!result.canceled) {
       const imageUri = result.assets[0].uri;
       setProfileImage(imageUri);
+      setShowImagePicker(false);
     }
   };
 
@@ -471,11 +471,6 @@ export default function SettingsScreen() {
       return;
     }
 
-    if (!profileImage) {
-      showToast('error', 'Please select a profile image');
-      return;
-    }
-
     const formData = new FormData();
 
     if (profileImage) {
@@ -489,20 +484,18 @@ export default function SettingsScreen() {
     formData.append('fullName', fullName);
     formData.append('username', username);
     formData.append('bio', bio);
-    console.log('Updating profile with data:', {
-      fullName,
-      username,
-      bio,
-      profileImage,
-    }, token);
 
-    const response = await axios.put(`${API_URL}/api/user/update`, formData, {
+    const response = await axios.put(`${API_URL}/api/user/update/profile`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
         Authorization: `Bearer ${token}`,
       },
     });
 
+    if(!response.data.status) {
+      showToast('error', response.data.message || 'Failed to update profile');
+      return;
+    }
 
     console.log('Profile updated:', response.data.user);
 
@@ -511,7 +504,7 @@ export default function SettingsScreen() {
     showToast('success', 'Profile updated successfully');
   };
 
-  const handleChangePassword = () => {
+  const handleChangePassword = async () => {
     if (!currentPassword || !newPassword || !confirmPassword) {
       showToast('error', 'Please fill in all password fields');
       return;
@@ -524,17 +517,43 @@ export default function SettingsScreen() {
       showToast('error', 'New passwords do not match');
       return;
     }
+
+    const response = await axios.put(`${API_URL}/api/user/update/security`, {
+      currentPassword,
+      newPassword,
+    }, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (!response.data.status) {
+      showToast('error', response.data.message || 'Failed to change password');
+      return;
+    }
+    setUser(response.data.user);
+
     showToast('success', 'Password changed successfully');
     setCurrentPassword('');
     setNewPassword('');
     setConfirmPassword('');
   };
 
-  const handleUpdateEmail = () => {
+  const handleUpdateEmail = async () => {
     if (!newEmail.includes('@')) {
       showToast('error', 'Please enter a valid email address');
       return;
     }
+
+    const response = await axios.put(`${API_URL}/api/user/update/email`, { email: newEmail }, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if(!response.data.status) {
+      showToast('error', 'Failed to update email');
+      return;
+    }
+
+    setUser(response.data.user);
+
     showToast(
       'alert',
       'A verification email has been sent to your new email address'
@@ -572,7 +591,10 @@ export default function SettingsScreen() {
   const handleDownloadData = () => {
     setDownloadLoading(true);
     setTimeout(() => {
-      showToast('neutral', 'Your data export will be ready in 24-48 hours. You will receive an email when it\'s ready for download.');
+      showToast(
+        'neutral',
+        "Your data export will be ready in 24-48 hours. You will receive an email when it's ready for download."
+      );
       setDownloadLoading(false);
     }, 2000);
   };
@@ -634,7 +656,10 @@ export default function SettingsScreen() {
       <View
         style={[
           styles.header,
-          { backgroundColor: theme.background, borderBottomColor: theme.border },
+          {
+            backgroundColor: theme.background,
+            borderBottomColor: theme.border,
+          },
         ]}
       >
         <TouchableOpacity
@@ -657,7 +682,7 @@ export default function SettingsScreen() {
             <View style={styles.profileImageSection}>
               <TouchableOpacity onPress={() => setShowImagePicker(true)}>
                 <Image
-                  source={{ uri: profileImage }}
+                  source={{ uri: profileImage || 'https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png' }}
                   style={styles.profileImageLarge}
                 />
                 <View style={styles.cameraOverlay}>
@@ -897,7 +922,9 @@ export default function SettingsScreen() {
                   })
                 }
                 trackColor={{ false: theme.border, true: '#4CAF50' }}
-                thumbColor={user?.settings.notifications.likes ? '#fff' : '#f4f3f4'}
+                thumbColor={
+                  user?.settings.notifications.likes ? '#fff' : '#f4f3f4'
+                }
               />
             )}
 
@@ -920,7 +947,9 @@ export default function SettingsScreen() {
                   })
                 }
                 trackColor={{ false: theme.border, true: '#4CAF50' }}
-                thumbColor={user?.settings.notifications.comments ? '#fff' : '#f4f3f4'}
+                thumbColor={
+                  user?.settings.notifications.comments ? '#fff' : '#f4f3f4'
+                }
               />
             )}
 
@@ -940,10 +969,12 @@ export default function SettingsScreen() {
                         promotion: value,
                       },
                     },
-                  })  
+                  })
                 }
                 trackColor={{ false: theme.border, true: '#4CAF50' }}
-                thumbColor={user?.settings.notifications.promotion ? '#fff' : '#f4f3f4'}
+                thumbColor={
+                  user?.settings.notifications.promotion ? '#fff' : '#f4f3f4'
+                }
               />
             )}
 
@@ -966,7 +997,9 @@ export default function SettingsScreen() {
                   })
                 }
                 trackColor={{ false: theme.border, true: '#4CAF50' }}
-                thumbColor={user?.settings.notifications.messages ? '#fff' : '#f4f3f4'}
+                thumbColor={
+                  user?.settings.notifications.messages ? '#fff' : '#f4f3f4'
+                }
               />
             )}
 
@@ -980,8 +1013,8 @@ export default function SettingsScreen() {
                     key={frequency}
                     style={[
                       styles.frequencyOption,
-                      user?.settings.notifications.emailFrequency === frequency &&
-                        styles.frequencyOptionSelected,
+                      user?.settings.notifications.emailFrequency ===
+                        frequency && styles.frequencyOptionSelected,
                       { borderColor: theme.border },
                     ]}
                     onPress={() =>
@@ -1000,11 +1033,12 @@ export default function SettingsScreen() {
                     <Text
                       style={[
                         styles.frequencyOptionText,
-                        user?.settings.notifications.emailFrequency === frequency &&
-                          styles.frequencyOptionTextSelected,
+                        user?.settings.notifications.emailFrequency ===
+                          frequency && styles.frequencyOptionTextSelected,
                         {
                           color:
-                            user?.settings.notifications.emailFrequency === frequency
+                            user?.settings.notifications.emailFrequency ===
+                            frequency
                               ? '#000'
                               : theme.text,
                         },
@@ -1113,16 +1147,20 @@ export default function SettingsScreen() {
         <TouchableWithoutFeedback onPress={() => setShowDeleteConfirm(false)}>
           <View style={styles.modalOverlay}>
             <TouchableWithoutFeedback onPress={() => {}}>
-              <View style={[styles.modalContent, { backgroundColor: theme.card }]}>
+              <View
+                style={[styles.modalContent, { backgroundColor: theme.card }]}
+              >
                 <View style={styles.modalHeader}>
                   <AlertTriangle size={24} color="#FF3B30" />
                   <Text style={[styles.modalTitle, { color: theme.text }]}>
                     Delete Account
                   </Text>
                 </View>
-                <Text style={[styles.modalText, { color: theme.textSecondary }]}>
-                  This action cannot be undone. All your data, posts, and account
-                  information will be permanently deleted.
+                <Text
+                  style={[styles.modalText, { color: theme.textSecondary }]}
+                >
+                  This action cannot be undone. All your data, posts, and
+                  account information will be permanently deleted.
                 </Text>
                 <View style={styles.modalButtons}>
                   <TouchableOpacity
@@ -1133,7 +1171,9 @@ export default function SettingsScreen() {
                     ]}
                     onPress={() => setShowDeleteConfirm(false)}
                   >
-                    <Text style={[styles.cancelButtonText, { color: theme.text }]}>
+                    <Text
+                      style={[styles.cancelButtonText, { color: theme.text }]}
+                    >
                       Cancel
                     </Text>
                   </TouchableOpacity>
@@ -1150,7 +1190,6 @@ export default function SettingsScreen() {
         </TouchableWithoutFeedback>
       </Modal>
 
-
       {/* Deactivate Account Confirmation Modal */}
       <Modal
         visible={showDeactivateConfirm}
@@ -1158,19 +1197,25 @@ export default function SettingsScreen() {
         animationType="fade"
         onRequestClose={() => setShowDeactivateConfirm(false)}
       >
-        <TouchableWithoutFeedback onPress={() => setShowDeactivateConfirm(false)}>
+        <TouchableWithoutFeedback
+          onPress={() => setShowDeactivateConfirm(false)}
+        >
           <View style={styles.modalOverlay}>
             <TouchableWithoutFeedback onPress={() => {}}>
-              <View style={[styles.modalContent, { backgroundColor: theme.card }]}>
+              <View
+                style={[styles.modalContent, { backgroundColor: theme.card }]}
+              >
                 <View style={styles.modalHeader}>
                   <AlertTriangle size={24} color="#FF9500" />
                   <Text style={[styles.modalTitle, { color: theme.text }]}>
                     Deactivate Account
                   </Text>
                 </View>
-                <Text style={[styles.modalText, { color: theme.textSecondary }]}>
-                  Your account will be temporarily disabled. You can reactivate it
-                  anytime by logging in again.
+                <Text
+                  style={[styles.modalText, { color: theme.textSecondary }]}
+                >
+                  Your account will be temporarily disabled. You can reactivate
+                  it anytime by logging in again.
                 </Text>
                 <View style={styles.modalButtons}>
                   <TouchableOpacity
@@ -1181,7 +1226,9 @@ export default function SettingsScreen() {
                     ]}
                     onPress={() => setShowDeactivateConfirm(false)}
                   >
-                    <Text style={[styles.cancelButtonText, { color: theme.text }]}>
+                    <Text
+                      style={[styles.cancelButtonText, { color: theme.text }]}
+                    >
                       Cancel
                     </Text>
                   </TouchableOpacity>
@@ -1208,10 +1255,17 @@ export default function SettingsScreen() {
         <TouchableWithoutFeedback onPress={() => setShowImagePicker(false)}>
           <View style={styles.modalOverlay}>
             <TouchableWithoutFeedback onPress={() => {}}>
-              <View style={[styles.imagePickerModal, { backgroundColor: theme.card }]}>
+              <View
+                style={[
+                  styles.imagePickerModal,
+                  { backgroundColor: theme.card },
+                ]}
+              >
                 {/* Your modal content */}
                 <View style={styles.imagePickerHeader}>
-                  <Text style={[styles.imagePickerTitle, { color: theme.text }]}>
+                  <Text
+                    style={[styles.imagePickerTitle, { color: theme.text }]}
+                  >
                     Change Profile Picture
                   </Text>
                   <TouchableOpacity onPress={() => setShowImagePicker(false)}>
@@ -1219,16 +1273,49 @@ export default function SettingsScreen() {
                   </TouchableOpacity>
                 </View>
                 <View style={styles.imagePickerOptions}>
-                  <TouchableOpacity style={styles.imagePickerOption} onPress={openCamera}>
+                  <TouchableOpacity
+                    style={styles.imagePickerOption}
+                    onPress={openCamera}
+                  >
                     <Camera size={24} color={theme.text} />
-                    <Text style={[styles.imagePickerOptionText, { color: theme.text }]}>
+                    <Text
+                      style={[
+                        styles.imagePickerOptionText,
+                        { color: theme.text },
+                      ]}
+                    >
                       Take Photo
                     </Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={styles.imagePickerOption} onPress={openGallery}>
-                    <Download size={24} color={theme.text} />
-                    <Text style={[styles.imagePickerOptionText, { color: theme.text }]}>
+                  <TouchableOpacity
+                    style={styles.imagePickerOption}
+                    onPress={openGallery}
+                  >
+                    <ImageIcon size={24} color={theme.text} />
+                    <Text
+                      style={[
+                        styles.imagePickerOptionText,
+                        { color: theme.text },
+                      ]}
+                    >
                       Choose from Gallery
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.imagePickerOption}
+                    onPress={() => {
+                      setProfileImage('');
+                      setShowImagePicker(false);
+                    }}
+                  >
+                    <ImageOff size={24} color={theme.error} />
+                    <Text
+                      style={[
+                        styles.imagePickerOptionText,
+                        { color: theme.error },
+                      ]}
+                    >
+                      Remove Photo
                     </Text>
                   </TouchableOpacity>
                 </View>

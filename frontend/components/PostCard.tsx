@@ -106,6 +106,7 @@ const createStyles = (theme: Theme) => {
       width: 32,
       height: 32,
       borderRadius: 16,
+      backgroundColor: theme.card,
     },
     commentContent: {
       flex: 1,
