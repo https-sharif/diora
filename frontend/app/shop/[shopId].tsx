@@ -911,13 +911,14 @@ export default function ShopProfileScreen() {
 
       const review = response.data.review;
 
+      
       setReviews([...reviews, review]);
       setEditingReview(false);
       setSelectedReview(null);
       setNewReview('');
       setRating(0);
       setHasReviewed(true);
-      setReviewImages([]); // reset images too
+      setReviewImages([]);
     } catch (error) {
       console.error('Error submitting review:', error);
       Alert.alert('Error', 'Failed to submit review. Try again.');

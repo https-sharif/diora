@@ -36,7 +36,6 @@ export const createReview = async (req, res) => {
       review.images = req.files.map((file) => file.path);
       review.imagesIds = req.files.map((file) => file.filename);
     }
-
     if (targetType === 'product') {
       const product = await Product.findById(targetId);
       if (!product) {
@@ -44,6 +43,7 @@ export const createReview = async (req, res) => {
           .status(404)
           .json({ status: false, message: 'Product not found' });
       }
+      
       product.rating += Number(rating);
       product.ratingCount += 1;
       await product.save();
@@ -56,6 +56,7 @@ export const createReview = async (req, res) => {
       }
       shop.shop.rating += Number(rating);
       shop.shop.ratingCount += 1;
+
       await shop.save();
     }
 
@@ -233,8 +234,7 @@ export const updateReview = async (req, res) => {
       review.images = req.files.map(file => file.path);
       review.imagesIds = req.files.map(file => file.filename);
     }
-
-
+    
     await review.save();
     await review.populate('user', 'username avatar');
 
@@ -244,7 +244,6 @@ export const updateReview = async (req, res) => {
     res.status(500).json({ status: false, message: 'Something went wrong' });
   }
 };
-
 
 export const getReviewsByProductId = async (req, res) => {
   console.log('Get reviews by product ID route/controller hit');
