@@ -45,26 +45,6 @@ import debounce from 'lodash.debounce';
 
 const { width, height } = Dimensions.get('window');
 
-const filterOptions = {
-  contentType: ['All', 'Users', 'Shops', 'Products', 'Posts'],
-  priceRange: ['All', '$0-$50', '$50-$100', '$100-$200', '$200+'],
-  rating: ['All', '4+ Stars', '4.5+ Stars', '4.8+ Stars'],
-  availability: ['All', 'In Stock', 'On Sale', 'New Arrivals'],
-  categories: [
-    'All',
-    'Men',
-    'Women',
-    'Unisex',
-    'Tops',
-    'Bottoms',
-    'Footwear',
-    'Accessories',
-  ],
-  verification: ['All', 'Verified Only', 'Unverified'],
-  followers: ['All', '0-1K', '1K-10K', '10K-50K', '50K+'],
-  likes: ['All', '0-100', '100-500', '500-1000', '1000+'],
-};
-
 const createStyles = (theme: Theme) => {
   const outOfStockOverlay = Color(theme.text).alpha(0.5).toString();
   const bookmarkInactiveColor = Color(theme.text).alpha(0.5).toString();
@@ -571,13 +551,32 @@ const createStyles = (theme: Theme) => {
   });
 };
 
+const filterOptions = {
+  contentType: ['All', 'Users', 'Shops', 'Products', 'Posts'],
+  priceRange: ['All', '$0-$50', '$50-$100', '$100-$200', '$200+'],
+  rating: ['All', '4+ Stars', '4.5+ Stars', '4.8+ Stars'],
+  availability: ['All', 'In Stock', 'On Sale', 'New Arrivals'],
+  categories: [
+    'All',
+    'Men',
+    'Women',
+    'Unisex',
+    'Tops',
+    'Bottoms',
+    'Footwear',
+    'Accessories',
+  ],
+  verification: ['All', 'Verified Only', 'Unverified'],
+  followers: ['All', '0-1K', '1K-10K', '10K-50K', '50K+'],
+  likes: ['All', '0-100', '100-500', '500-1000', '1000+'],
+};
+
 const initialFilter = {
   contentType: 'All',
   priceRange: 'All',
   rating: 'All',
   availability: 'All',
   categories: 'All',
-  location: 'All',
   verification: 'All',
   followers: 'All',
   likes: 'All',
