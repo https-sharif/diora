@@ -1,128 +1,225 @@
 import { create } from 'zustand';
+import axios from 'axios';
 import { Product } from '@/types/Product';
-import { CartItem } from '@/types/CartItem';
-import { WishlistItem } from '@/types/WishlistItem';
+import { CartItem } from '@/types/Cart';
 import { useAuthStore } from '@/stores/useAuthStore';
+import { API_URL } from '@/constants/api';
 
 interface ShoppingStore {
   cart: CartItem[];
-  wishlist: WishlistItem[];
+  wishlist: Product[];
 
-  addToCart: (product: Product, size?: string, color?: string) => void;
-  removeFromCart: (productId: string) => void;
-  updateCartQuantity: (productId: string, quantity: number) => void;
+  addToCart: (product: Product, quantity: number, size?: string, variant?: string ) => Promise<void>;
+  removeFromCart: (productId: string, size?: string, variant?: string) => Promise<void>;
+  updateCartQuantity: (productId: string, quantity: number, size?: string, variant?: string) => Promise<void>;
 
-  addToWishlist: (product: Product) => void;
-  removeFromWishlist: (productId: string) => void;
+  addToWishlist: (product: Product) => Promise<void>;
+  removeFromWishlist: (productId: string) => Promise<void>;
   isInWishlist: (productId: string) => boolean;
 
-  getCartTotal: (products: Product[]) => number;
+  getCartTotal: () => number;
   getCartItemCount: () => number;
+  fetchCart: () => Promise<void>;
+  fetchWishlist: () => Promise<void>;
+
+  reset: () => void;
 }
 
-export const useShoppingStore = create<ShoppingStore>((set, get) => ({
-  cart: [],
-  wishlist: [],
-
-  addToCart: (product, size, variant) => {
-    const user = useAuthStore.getState().user;
-    if (!user) return console.error('User not authenticated');
-
-    set((state) => {
-      const existingItem = state.cart.find(
-        (item) =>
-          item.productId === product.id &&
-          item.variant === variant &&
-          item.size === size
-      );
-
-      if (existingItem) {
-        return {
-          cart: state.cart.map((item) =>
-            item.productId === product.id &&
-            item.size === size &&
-            item.variant === variant
-              ? { ...item, quantity: item.quantity + 1 }
-              : item
-          ),
-        };
-      }
-
-      const newItem: CartItem = {
-        id: (state.cart.length + 1).toString(),
-        userId: user._id,
-        productId: product.id,
-        quantity: 1,
-        size: size,
-        variant: variant,
-      };
-
-      return { cart: [...state.cart, newItem] };
-    });
-  },
-
-  removeFromCart: (productId) =>
-    set((state) => ({
-      cart: state.cart.filter((item) => item.productId !== productId),
-    })),
-
-  updateCartQuantity: (productId, quantity) => {
-    if (quantity <= 0) {
-      get().removeFromCart(productId);
-      return;
+export const useShoppingStore = create<ShoppingStore>((set, get) => {
+  useAuthStore.subscribe((state, prevState) => {
+    if (prevState.user && !state.user) {
+      set({ cart: [], wishlist: [] });
     }
+  });
 
-    set((state) => ({
-      cart: state.cart.map((item) =>
-        item.id === productId ? { ...item, quantity } : item
-      ),
-    }));
-  },
+  return {
+    cart: [],
+    wishlist: [],
 
-  addToWishlist: (product) => {
-    const user = useAuthStore.getState().user;
-    if (!user) return console.error('User not authenticated');
+    fetchCart: async () => {
+      const user = useAuthStore.getState().user;
+      const token = useAuthStore.getState().token;
+      if (!user || !token) return;
 
-    set((state) => {
-      const exists = state.wishlist.find(
-        (item) => item.productId === product.id
-      );
-      if (exists) {
-        return {
-          wishlist: state.wishlist.filter(
-            (item) => item.productId !== product.id
-          ),
-        };
+      try {
+        const res = await axios.get(`${API_URL}/api/cart`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        const cartItems: CartItem[] = res.data.cart?.products?.map((item: any) => ({
+          productId: item.productId,
+          quantity: item.quantity,
+          size: item.size,
+          variant: item.variant,
+          _id: item._id,
+        })) || [];
+
+        set({ cart: cartItems });
+      } catch (error) {
+        console.error('Error fetching cart:', error);
+        set({ cart: [] });
       }
+    },
 
-      const newItem: WishlistItem = {
-        id: (state.wishlist.length + 1).toString(),
-        userId: user._id,
-        productId: product.id,
-      };
+    fetchWishlist: async () => {
+      const user = useAuthStore.getState().user;
+      const token = useAuthStore.getState().token;
+      if (!user || !token) return;
 
-      return { wishlist: [...state.wishlist, newItem] };
-    });
-  },
+      try {
+        const res = await axios.get(`${API_URL}/api/wishlist`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        set({ wishlist: res.data.wishlist || [] });
+      } catch (error) {
+        console.error('Error fetching wishlist:', error);
+        set({ wishlist: [] });
+      }
+    },
 
-  removeFromWishlist: (productId) =>
-    set((state) => ({
-      wishlist: state.wishlist.filter((item) => item.productId !== productId),
-    })),
+    addToCart: async (product, quantity, size, variant) => {
+      const user = useAuthStore.getState().user;
+      const token = useAuthStore.getState().token;
+      if (!user || !token) return console.error('User not authenticated');
 
-  isInWishlist: (productId) =>
-    get().wishlist.some((item) => item.productId === productId),
+      try {
+        const res = await axios.post(`${API_URL}/api/cart`, {
+          productId: product._id,
+          size,
+          variant,
+          quantity: quantity || 1,
+        }, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
 
-  getCartTotal: (products) => {
-    const cart = get().cart;
-    return cart.reduce((total, item) => {
-      const product = products.find((p) => p.id === item.productId);
-      if (!product) return total;
-      return total + product.price * item.quantity;
-    }, 0);
-  },
+        const cartItems: CartItem[] = res.data.cart?.products?.map((item: any) => ({
+          productId: item.productId,
+          quantity: item.quantity,
+          size: item.size,
+          variant: item.variant,
+          _id: item._id,
+        })) || [];
 
-  getCartItemCount: () => {
-    return get().cart.reduce((total, item) => total + item.quantity, 0);
-  },
-}));
+        set({ cart: cartItems });
+      } catch (error) {
+        console.error('Error adding to cart:', error);
+      }
+    },
+
+    removeFromCart: async (productId, size, variant) => {
+      const user = useAuthStore.getState().user;
+      const token = useAuthStore.getState().token;
+      if (!user || !token) return;
+
+      try {
+        const res = await axios.delete(`${API_URL}/api/cart`, {
+          data: { productId, size, variant },
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        const cartItems: CartItem[] = res.data.cart?.products?.map((item: any) => ({
+          productId: item.productId,
+          quantity: item.quantity,
+          size: item.size,
+          variant: item.variant,
+          _id: item._id,
+        })) || [];
+
+        set({ cart: cartItems });
+      } catch (error) {
+        console.error('Error removing from cart:', error);
+      }
+    },
+
+    updateCartQuantity: async (productId, quantity, size, variant) => {
+      const user = useAuthStore.getState().user;
+      const token = useAuthStore.getState().token;
+      if (!user || !token) return;
+
+      try {
+        if (quantity <= 0) {
+          await get().removeFromCart(productId, size, variant);
+          return;
+        }
+
+        const res = await axios.patch(`${API_URL}/api/cart`, {
+          productId,
+          size,
+          variant,
+          quantity,
+        }, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        const cartItems: CartItem[] = res.data.cart?.products?.map((item: any) => ({
+          productId: item.productId,
+          quantity: item.quantity,
+          size: item.size,
+          variant: item.variant,
+          _id: item._id,
+        })) || [];
+
+        set({ cart: cartItems });
+      } catch (error) {
+        console.error('Error updating cart quantity:', error);
+      }
+    },
+
+    addToWishlist: async (product) => {
+      const user = useAuthStore.getState().user;
+      const token = useAuthStore.getState().token;
+      if (!user || !token) return console.error('User not authenticated');
+
+      try {
+        await axios.post(`${API_URL}/api/wishlist/toggle`, {
+          productId: product._id,
+        }, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        await get().fetchWishlist();
+      } catch (error) {
+        console.error('Error toggling wishlist:', error);
+      }
+    },
+
+    removeFromWishlist: async (productId) => {
+      const user = useAuthStore.getState().user;
+      const token = useAuthStore.getState().token;
+      if (!user || !token) return;
+
+      try {
+        await axios.delete(`${API_URL}/api/wishlist`, {
+          data: { productId },
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        await get().fetchWishlist();
+      } catch (error) {
+        console.error('Error removing from wishlist:', error);
+      }
+    },
+
+    isInWishlist: (productId) => {
+      return get().wishlist.some((item) => item._id === productId);
+    },
+
+    getCartTotal: () => {
+      const cart = get().cart;
+      return cart.reduce((total, item) => {
+        const product = typeof item.productId === 'string' ? null : item.productId;
+        if (!product) return total;
+        return total + product.price * item.quantity;
+      }, 0);
+    },
+
+    getCartItemCount: () => {
+      return get().cart.reduce((total, item) => total + item.quantity, 0);
+    },
+
+    reset: () => set({
+      cart: [],
+      wishlist: [],
+    }),
+  };
+});

@@ -647,7 +647,7 @@ export default function ShoppingScreen() {
 
   const confirmAddToCart = () => {
     if (selectedProduct) {
-      addToCart(selectedProduct, selectedSize, selectedColor);
+      addToCart(selectedProduct, 1, selectedSize, selectedColor);
       setSelectedProduct(null);
       Alert.alert('Success', 'Item added to cart!');
     }

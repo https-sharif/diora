@@ -12,6 +12,8 @@ import productRoutes from './routes/product.js';
 import shopRoutes from './routes/shop.js';
 import reviewRoutes from './routes/review.js';
 import searchRoutes from './routes/search.js';
+import cartRoutes from './routes/cart.js';
+import wishlistRoutes from './routes/wishlist.js';
 import { initSocket } from './sockets/socketSetup.js';
 
 dotenv.config();
@@ -38,6 +40,8 @@ app.use('/api/product', productRoutes);
 app.use('/api/shop', shopRoutes);
 app.use('/api/review', reviewRoutes);
 app.use('/api/search', searchRoutes);
+app.use('/api/cart', cartRoutes);
+app.use('/api/wishlist', wishlistRoutes);
 
 const server = http.createServer(app);
 const io = initSocket(server);

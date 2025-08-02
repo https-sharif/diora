@@ -4,6 +4,8 @@ export interface Comment {
     _id: string;
     username: string;
     avatar?: string;
+    isVerified?: boolean;
+    type: 'user' | 'shop' | 'admin';
   };
   postId?: string;
   text: string;

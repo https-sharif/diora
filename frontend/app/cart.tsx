@@ -19,10 +19,10 @@ import { useShopping } from '@/hooks/useShopping';
 import { useTheme } from '@/contexts/ThemeContext';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 import { Animated } from 'react-native';
-import { mockProducts } from '@/mock/Product';
-import { CartItem } from '@/types/CartItem';
+import { Cart, CartItem } from '@/types/Cart';
 import { Product } from '@/types/Product';
 import { Theme } from '@/types/Theme';
+import { useEffect } from 'react';
 
 const createStyles = (theme: Theme) =>
   StyleSheet.create({
@@ -191,7 +191,7 @@ const createStyles = (theme: Theme) =>
     },
   });
 
-const Cart = () => {
+const CartPage = () => {
   const { theme } = useTheme();
   const styles = createStyles(theme);
 
@@ -201,7 +201,12 @@ const Cart = () => {
     updateCartQuantity,
     getCartTotal,
     addToWishlist,
+    fetchCart,
   } = useShopping();
+
+  useEffect(() => {
+    fetchCart();
+  }, [fetchCart]);
 
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
@@ -216,7 +221,8 @@ const Cart = () => {
   );
 
   const renderCartItem = ({ item }: { item: CartItem }) => {
-    const product = mockProducts.find(product => product._id === item.productId) as Product;
+    const product = item.productId as Product;
+    
     const renderRightActions = (
       progress: Animated.AnimatedInterpolation<number>
     ) => {
@@ -227,7 +233,7 @@ const Cart = () => {
       });
 
       return (
-        <TouchableOpacity onPress={() => removeFromCart(item.id)}>
+        <TouchableOpacity onPress={() => removeFromCart(product._id, item.size, item.variant)}>
           <Animated.View
             style={[styles.swipeActionRight, { transform: [{ translateX }] }]}
           >
@@ -265,20 +271,20 @@ const Cart = () => {
       >
         <View style={styles.cartItem}>
           <TouchableOpacity
-            onPress={() => router.push(`/product/${item.id}`)}
+            onPress={() => router.push(`/product/${product._id}`)}
             activeOpacity={0.7}
           >
-            <Image source={{ uri: product.imageUrl[0] }} style={styles.cartItemImage} />
+            <Image source={{ uri: product.imageUrl?.[0] }} style={styles.cartItemImage} />
           </TouchableOpacity>
           <View style={styles.cartItemInfo}>
             <TouchableOpacity
-              onPress={() => router.push(`/product/${item.id}`)}
+              onPress={() => router.push(`/product/${product._id}`)}
               activeOpacity={0.7}
             >
               <Text style={styles.cartItemName}>{product.name}</Text>
             </TouchableOpacity>
             <Text style={styles.cartItemDetails}>
-              {item.size} • {item.variant}
+              {item.size && `${item.size}${item.variant ? ' • ' : ''}`}{item.variant}
             </Text>
             <Text style={styles.cartItemPrice}>${product.price}</Text>
           </View>
@@ -286,14 +292,14 @@ const Cart = () => {
             <View style={styles.quantityControls}>
               <TouchableOpacity
                 style={styles.quantityButton}
-                onPress={() => updateCartQuantity(item.id, item.quantity - 1)}
+                onPress={() => updateCartQuantity(product._id, item.quantity - 1, item.size, item.variant)}
               >
                 <Minus size={16} color="#666" />
               </TouchableOpacity>
               <Text style={styles.quantityText}>{item.quantity}</Text>
               <TouchableOpacity
                 style={styles.quantityButton}
-                onPress={() => updateCartQuantity(item.id, item.quantity + 1)}
+                onPress={() => updateCartQuantity(product._id, item.quantity + 1, item.size, item.variant)}
               >
                 <Plus size={16} color="#666" />
               </TouchableOpacity>
@@ -303,6 +309,8 @@ const Cart = () => {
       </Swipeable>
     );
   };
+
+  const total = getCartTotal();
 
   return (
     <SafeAreaView style={styles.container}>
@@ -327,15 +335,16 @@ const Cart = () => {
             <FlatList
               data={cart}
               renderItem={renderCartItem}
-              keyExtractor={(item) =>
-                `${item.id}-${item.size}-${item.variant}`
-              }
+              keyExtractor={(item) => {
+                const product = item.productId as Product;
+                return `${product._id}-${item.size || 'no-size'}-${item.variant || 'no-variant'}`;
+              }}
               style={styles.cartList}
             />
             <View style={styles.cartFooter}>
               <View style={styles.cartTotal}>
                 <Text style={styles.cartTotalText}>
-                  Total: ${getCartTotal(cart.map((item : CartItem) => mockProducts.find(product => product._id === item.productId) as Product)).toFixed(2)}
+                  Total: ${total.toFixed(2)}
                 </Text>
               </View>
               <TouchableOpacity style={styles.checkoutButton}>
@@ -349,4 +358,4 @@ const Cart = () => {
   );
 };
 
-export default Cart;
+export default CartPage;

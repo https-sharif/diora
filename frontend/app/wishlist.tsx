@@ -1,5 +1,5 @@
 import { ArrowLeft, Bookmark, Menu, PackageMinus,  X } from 'lucide-react-native';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -15,7 +15,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useShopping } from '@/hooks/useShopping';
 import { useTheme } from '@/contexts/ThemeContext';
-import { mockProducts } from '@/mock/Product';
 import { Product } from '@/types/Product';
 import { Theme } from '@/types/Theme';
 
@@ -267,7 +266,12 @@ const Wishlist = () => {
     removeFromWishlist,
     isInWishlist,
     addToCart,
+    fetchWishlist,
   } = useShopping();
+
+  useEffect(() => {
+    fetchWishlist();
+  }, [fetchWishlist]);
 
   const renderEmptyState = () => (
       <View style={styles.emptyState}>
@@ -282,15 +286,15 @@ const Wishlist = () => {
     );
 
   const toggleWishlist = (product: Product) => {
-    if (isInWishlist(product.id)) {
-      removeFromWishlist(product.id);
+    if (isInWishlist(product._id)) {
+      removeFromWishlist(product._id);
     } else {
       addToWishlist(product);
     }
   };
 
   const handleProductPress = (product: Product) => {
-    router.push(`/product/${product.id}`);
+    router.push(`/product/${product._id}`);
   };
 
   const handleAddToCart = (product: Product) => {
@@ -301,7 +305,7 @@ const Wishlist = () => {
 
   const confirmAddToCart = () => {
     if (selectedProduct) {
-      addToCart(selectedProduct, selectedSize, selectedColor);
+      addToCart(selectedProduct, 1, selectedSize, selectedColor);
       setSelectedProduct(null);
       Alert.alert('Success', 'Item added to cart!');
     }
@@ -315,19 +319,19 @@ const Wishlist = () => {
       <TouchableOpacity
         style={[
           styles.wishlistButton,
-          isInWishlist(item.id) && { backgroundColor: theme.text },
+          isInWishlist(item._id) && { backgroundColor: theme.text },
         ]}
         onPress={() => toggleWishlist(item)}
       >
         <Bookmark
           size={20}
           color={ theme.background }
-          fill={isInWishlist(item.id) ? theme.background : 'transparent'}
+          fill={isInWishlist(item._id) ? theme.background : 'transparent'}
         />
       </TouchableOpacity>
 
       <View style={styles.productInfo}>
-        <Text style={styles.productBrand}>{item.brand}</Text>
+        <Text style={styles.productBrand}>{item.shopId.fullName}</Text>
         <TouchableOpacity onPress={() => handleProductPress(item)}>
           <Text style={styles.productName}>{item.name}</Text>
         </TouchableOpacity>
@@ -363,9 +367,9 @@ const Wishlist = () => {
           renderEmptyState()
         ) : (
           <FlatList
-            data={wishlist.map(item => mockProducts.find(product => product.id === item.productId) as Product)}
+            data={wishlist}
             renderItem={renderProduct}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item) => item._id}
             numColumns={2}
             contentContainerStyle={styles.wishlistGrid}
             columnWrapperStyle={styles.productRow}

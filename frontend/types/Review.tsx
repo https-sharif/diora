@@ -1,6 +1,6 @@
 export interface Review {
   _id: string;
-  user: { _id: string; username: string; avatar: string };
+  user: { _id: string; username: string; avatar: string, isVerified: boolean; type: 'user' | 'shop' | 'admin' };
   targetId: string;
   targetType: 'product' | 'shop';
   rating: number;

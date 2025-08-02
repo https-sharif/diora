@@ -338,67 +338,36 @@ export default function UserProfileScreen() {
   const styles = createStyles(theme);
 
   useEffect(() => {
-    const fetchUserProfile = async () => {
+    const fetchData = async () => {
+      setLoading(true);
       try {
-        const response = await axios.get(`${API_URL}/api/user/${userId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const [profileRes, postsRes, likedRes] = await Promise.all([
+          axios.get(`${API_URL}/api/user/${userId}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          axios.get(`${API_URL}/api/post/user/${userId}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          axios.get(`${API_URL}/api/post/user/${userId}/liked`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+        ]);
 
-        if (!response.data.status) {
-          throw new Error('Failed to fetch user profile');
-        }
+        if (!profileRes.data.status) throw new Error('Failed to fetch user profile');
 
-        setUserProfile(response.data.user);
-
+        setUserProfile(profileRes.data.user);
         setIsFollowing(user?.following.includes(user._id) || false);
+        setPosts(postsRes.data.posts);
+        setLikedPosts(likedRes.data.posts);
       } catch (error) {
-        console.error('Error fetching user profile:', error);
+        console.error('Error fetching data:', error);
+      } finally {
+        setSelectedTab('posts');
         setLoading(false);
-        return;
       }
     };
 
-    const fetchPosts = async () => {
-      try {
-        const response = await axios.get(`${API_URL}/api/post/user/${userId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        setPosts(response.data.posts);
-      } catch (error) {
-        console.error('Error fetching posts:', error);
-      }
-    };
-
-    const fetchLikedPosts = async () => {
-      try {
-        const response = await axios.get(
-          `${API_URL}/api/post/user/${userId}/liked`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        setLikedPosts(response.data.posts);
-      } catch (error) {
-        console.error('Error fetching liked posts:', error);
-      }
-    };
-
-    setLoading(true);
-
-    fetchUserProfile();
-    fetchPosts();
-    fetchLikedPosts();
-
-    setSelectedTab('posts');
-    setLoading(false);
+    fetchData();
   }, [userId]);
 
   const handleFollow = () => {

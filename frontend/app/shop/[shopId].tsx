@@ -37,6 +37,7 @@ import {
   UserMinus,
   Bookmark,
   ImageIcon,
+  Check,
 } from 'lucide-react-native';
 import ImageSlashIcon from '@/icon/ImageSlashIcon';
 import { useShopping } from '@/hooks/useShopping';
@@ -514,6 +515,19 @@ const createStyles = (theme: Theme) => {
     reviewInfo: {
       marginLeft: 12,
     },
+    userNameRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+    },
+    verifiedBadgeContainer: {
+      width: 12,
+      height: 12,
+      borderRadius: 8,
+      backgroundColor: '#007AFF',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
     reviewUser: {
       fontSize: 14,
       fontFamily: 'Inter-SemiBold',
@@ -617,7 +631,9 @@ export default function ShopProfileScreen() {
 
   const [shopProfile, setShopProfile] = useState<User | null>(null);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
-  const [selectedTab, setSelectedTab] = useState<'posts' | 'products' | 'reviews'>('posts');
+  const [selectedTab, setSelectedTab] = useState<
+    'posts' | 'products' | 'reviews'
+  >('posts');
   const [loading, setLoading] = useState(true);
   const { user, followUser, token } = useAuth();
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -911,7 +927,6 @@ export default function ShopProfileScreen() {
 
       const review = response.data.review;
 
-      
       setReviews([...reviews, review]);
       setEditingReview(false);
       setSelectedReview(null);
@@ -925,7 +940,6 @@ export default function ShopProfileScreen() {
     }
   };
 
-
   const pickReviewImages = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
@@ -934,7 +948,7 @@ export default function ShopProfileScreen() {
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"],
+      mediaTypes: ['images'],
       allowsMultipleSelection: true,
       quality: 0.8,
       selectionLimit: 3,
@@ -1032,7 +1046,9 @@ export default function ShopProfileScreen() {
       </View>
       <View style={styles.ratingRow}>
         <Star size={12} color="#FFD700" fill="#FFD700" />
-        <Text style={styles.ratingText}>{(item.rating / (item.ratingCount || 1)).toFixed(1)}</Text>
+        <Text style={styles.ratingText}>
+          {(item.rating / (item.ratingCount || 1)).toFixed(1)}
+        </Text>
       </View>
     </TouchableOpacity>
   );
@@ -1049,7 +1065,9 @@ export default function ShopProfileScreen() {
       >
         <View style={styles.reviewHeader}>
           <TouchableOpacity
-            onPress={() => router.push(`/user/${item.user._id}`)}
+            onPress={() =>
+              router.push(`/${item.user.type}/${item.user._id}` as any)
+            }
           >
             <Image
               source={{ uri: item.user.avatar }}
@@ -1058,9 +1076,18 @@ export default function ShopProfileScreen() {
           </TouchableOpacity>
           <View style={styles.reviewInfo}>
             <TouchableOpacity
-              onPress={() => router.push(`/user/${item.user._id}`)}
+              onPress={() =>
+                router.push(`/${item.user.type}/${item.user._id}` as any)
+              }
             >
-              <Text style={styles.reviewUser}>{item.user.username}</Text>
+              <View style={styles.userNameRow}>
+                <Text style={styles.reviewUser}>{item.user.username}</Text>
+                {item.user.isVerified && (
+                  <View style={styles.verifiedBadgeContainer}>
+                    <Check size={8} strokeWidth={4} color="white" />
+                  </View>
+                )}
+              </View>
             </TouchableOpacity>
             <View style={styles.reviewRating}>
               {[...Array(5)].map((_, i) => (
@@ -1115,7 +1142,8 @@ export default function ShopProfileScreen() {
   );
 
   const renderTabContent = () => {
-    if (!shopProfile || shopProfile.type !== 'shop' || !shopProfile.shop) return null;
+    if (!shopProfile || shopProfile.type !== 'shop' || !shopProfile.shop)
+      return null;
 
     switch (selectedTab) {
       case 'products':
@@ -1153,7 +1181,10 @@ export default function ShopProfileScreen() {
                   isEditing={!!editingReview}
                 />
                 <View style={{ marginTop: 8 }}>
-                  <TouchableOpacity onPress={pickReviewImages} style={styles.addImageBtn}>
+                  <TouchableOpacity
+                    onPress={pickReviewImages}
+                    style={styles.addImageBtn}
+                  >
                     <Text style={{ color: '#000' }}>+ Add Images</Text>
                   </TouchableOpacity>
 
@@ -1162,7 +1193,12 @@ export default function ShopProfileScreen() {
                       <Image
                         key={i}
                         source={{ uri }}
-                        style={{ width: 80, height: 80, marginRight: 8, borderRadius: 8 }}
+                        style={{
+                          width: 80,
+                          height: 80,
+                          marginRight: 8,
+                          borderRadius: 8,
+                        }}
                       />
                     ))}
                   </ScrollView>
@@ -1291,7 +1327,9 @@ export default function ShopProfileScreen() {
                   <Text style={styles.statLabel}>Products</Text>
                 </View>
                 <View style={styles.statItem}>
-                  <Text style={styles.statNumber}>{shopProfile.followers.length}</Text>
+                  <Text style={styles.statNumber}>
+                    {shopProfile.followers.length}
+                  </Text>
                   <Text style={styles.statLabel}>Followers</Text>
                 </View>
                 <View style={styles.statItem}>
@@ -1318,15 +1356,15 @@ export default function ShopProfileScreen() {
                   </View>
                 )}
               </View>
-              <Text style={styles.shopDescription}>
-                {shopProfile.bio}
-              </Text>
+              <Text style={styles.shopDescription}>{shopProfile.bio}</Text>
 
               {/* Contact Info */}
               <View style={styles.contactInfo}>
                 <View style={styles.contactItem}>
                   <MapPin size={16} color={theme.textSecondary} />
-                  <Text style={styles.contactText}>{shopProfile.shop.location}</Text>
+                  <Text style={styles.contactText}>
+                    {shopProfile.shop.location}
+                  </Text>
                 </View>
                 {shopProfile.shop.contactPhone && (
                   <View style={styles.contactItem}>
@@ -1352,7 +1390,10 @@ export default function ShopProfileScreen() {
                       if (url?.trim()) {
                         Linking.openURL(url);
                       } else {
-                        Alert.alert('Invalid URL', 'This shop does not have a valid website.');
+                        Alert.alert(
+                          'Invalid URL',
+                          'This shop does not have a valid website.'
+                        );
                       }
                     }}
                   >
@@ -1365,7 +1406,8 @@ export default function ShopProfileScreen() {
               </View>
 
               <Text style={styles.establishedText}>
-                Established {format(new Date(shopProfile.createdAt ?? ''), 'MMMM yyyy')}
+                Established{' '}
+                {format(new Date(shopProfile.createdAt ?? ''), 'MMMM yyyy')}
               </Text>
             </View>
 
@@ -1382,37 +1424,40 @@ export default function ShopProfileScreen() {
             </View>
 
             {/* Action Buttons */}
-            <View style={styles.actionButtons}>
-              <TouchableOpacity
-                style={[
-                  styles.followButton,
-                  isFollowing && styles.followingButton,
-                ]}
-                onPress={toggleFollow}
-              >
-                {isFollowing ? (
-                  <UserMinus size={16} color={theme.text} />
-                ) : (
-                  <UserPlus size={16} color={theme.background} />
-                )}
-                <Text
-                  style={[
-                    styles.followButtonText,
-                    isFollowing && styles.followingButtonText,
-                  ]}
-                >
-                  {isFollowing ? 'Following' : 'Follow'}
-                </Text>
-              </TouchableOpacity>
 
-              <TouchableOpacity
-                style={styles.contactButton}
-                onPress={handleContact}
-              >
-                <MessageCircle size={16} color="#000" />
-                <Text style={styles.contactButtonText}>Contact</Text>
-              </TouchableOpacity>
-            </View>
+            {user && user._id !== shopProfile._id && (
+              <View style={styles.actionButtons}>
+                <TouchableOpacity
+                  style={[
+                    styles.followButton,
+                    isFollowing && styles.followingButton,
+                  ]}
+                  onPress={toggleFollow}
+                >
+                  {isFollowing ? (
+                    <UserMinus size={16} color={theme.text} />
+                  ) : (
+                    <UserPlus size={16} color={theme.background} />
+                  )}
+                  <Text
+                    style={[
+                      styles.followButtonText,
+                      isFollowing && styles.followingButtonText,
+                    ]}
+                  >
+                    {isFollowing ? 'Following' : 'Follow'}
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.contactButton}
+                  onPress={handleContact}
+                >
+                  <MessageCircle size={16} color="#000" />
+                  <Text style={styles.contactButtonText}>Contact</Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
 
           {/* Tabs Section */}

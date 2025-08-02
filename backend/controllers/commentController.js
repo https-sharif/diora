@@ -179,7 +179,7 @@ export const getComments = async (req, res) => {
 
   try {
     const comments = await Comment.find({ postId })
-      .populate('user', 'username avatar')
+      .populate('user', 'username avatar isVerified type')
       .sort({ createdAt: -1 })
       .populate({
         path: 'replies',
