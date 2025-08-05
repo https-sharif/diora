@@ -11,6 +11,23 @@ export const useShopping = () => {
   const isInWishlist = useShoppingStore(state => state.isInWishlist);
   const getCartTotal = useShoppingStore(state => state.getCartTotal);
   const getCartItemCount = useShoppingStore(state => state.getCartItemCount);
+  const fetchCart = useShoppingStore(state => state.fetchCart);
+  const fetchWishlist = useShoppingStore(state => state.fetchWishlist);
+  const initializeUserData = useShoppingStore(state => state.initializeUserData);
 
-  return { cart, wishlist, addToCart, removeFromCart, updateCartQuantity, addToWishlist, removeFromWishlist, isInWishlist, getCartTotal, getCartItemCount };
+  return { 
+    cart, 
+    wishlist, 
+    addToCart, 
+    removeFromCart, 
+    updateCartQuantity, 
+    addToWishlist, 
+    removeFromWishlist, 
+    isInWishlist, 
+    getCartTotal, 
+    getCartItemCount, 
+    fetchCart, 
+    fetchWishlist,
+    initializeUserData
+  };
 };

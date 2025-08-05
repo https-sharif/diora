@@ -1,29 +1,58 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, FlatList, TextInput, Modal, Alert, TouchableWithoutFeedback, Keyboard } from 'react-native';
+import React, { useEffect, useState, useCallback } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Image,
+  FlatList,
+  TextInput,
+  Modal,
+  Alert,
+  TouchableWithoutFeedback,
+  Keyboard,
+  RefreshControl,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ShoppingCart, Heart, Search, Filter, X, Bookmark, Star, } from 'lucide-react-native';
+import {
+  ShoppingCart,
+  Heart,
+  Search,
+  Filter,
+  X,
+  Bookmark,
+  Star,
+  Check,
+} from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useShopping } from '@/hooks/useShopping';
+import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/contexts/ThemeContext';
 import Color from 'color';
-import { mockProducts } from '@/mock/Product';
 import { Product } from '@/types/Product';
 import { Theme } from '@/types/Theme';
 import ReceiptClockIcon from '@/icon/ReceiptClockIcon';
+import axios from 'axios';
+import { API_URL } from '@/constants/api';
+import LoadingView from '@/components/Loading';
+import debounce from 'lodash.debounce';
 
 const categories = [
   'All',
+  'Men',
+  'Women',
+  'Unisex',
   'Tops',
   'Bottoms',
-  'Dresses',
-  'Shoes',
+  'Footwear',
   'Accessories',
 ];
 
 const createStyles = (theme: Theme) => {
   const bookmarkInactiveColor = Color(theme.text).alpha(0.5).toString();
   const outOfStockOverlay = Color(theme.text).alpha(0.5).toString();
-  
+
   return StyleSheet.create({
     container: {
       flex: 1,
@@ -347,7 +376,129 @@ const createStyles = (theme: Theme) => {
       fontSize: 16,
       fontFamily: 'Inter-SemiBold',
     },
+    filterModal: {
+      flex: 1,
+      backgroundColor: theme.card,
+      borderTopLeftRadius: 20,
+      borderTopRightRadius: 20,
+      paddingBottom: 20,
+      overflow: 'hidden',
+    },
+    filterHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.border,
+    },
+    filterHeaderTitle: {
+      fontSize: 20,
+      fontFamily: 'Inter-Bold',
+      color: theme.text,
+    },
+    filterContent: {
+      flex: 1,
+      padding: 16,
+    },
+    filterSection: {
+      marginBottom: 32,
+    },
+    filterTitle: {
+      fontSize: 18,
+      fontFamily: 'Inter-SemiBold',
+      color: theme.text,
+      marginBottom: 16,
+    },
+    filterOptions: {
+      flexDirection: 'row',
+      gap: 8,
+    },
+    filterOption: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 16,
+      paddingVertical: 10,
+      borderRadius: 25,
+      borderWidth: 1,
+      borderColor: theme.border,
+      backgroundColor: theme.background,
+      gap: 6,
+    },
+    filterOptionActive: {
+      backgroundColor: theme.accent,
+      borderColor: theme.accent,
+    },
+    filterOptionText: {
+      fontSize: 14,
+      fontFamily: 'Inter-Medium',
+      color: theme.text,
+    },
+    filterOptionTextActive: {
+      color: '#000',
+    },
+    filterCheck: {
+      marginLeft: 4,
+    },
+    filterFooter: {
+      flexDirection: 'row',
+      padding: 16,
+      gap: 12,
+      borderTopWidth: 1,
+      borderTopColor: theme.border,
+    },
+    clearFiltersButton: {
+      flex: 1,
+      backgroundColor: '#f8f9fa',
+      borderRadius: 12,
+      paddingVertical: 16,
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: theme.border,
+    },
+    clearFiltersText: {
+      fontSize: 16,
+      fontFamily: 'Inter-SemiBold',
+      color: '#000',
+    },
+    applyFiltersText: {
+      fontSize: 16,
+      fontFamily: 'Inter-SemiBold',
+      color: '#fff',
+    },
+    applyFiltersButton: {
+      flex: 1,
+      backgroundColor: '#000',
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderWidth: 1,
+      borderColor: theme.border,
+      borderRadius: 12,
+    },
   });
+};
+
+const filterOptions = {
+  priceRange: ['All', '$0-$50', '$50-$100', '$100-$200', '$200+'],
+  rating: ['All', '4+ Stars', '4.5+ Stars', '4.8+ Stars'],
+  availability: ['All', 'In Stock', 'On Sale', 'New Arrivals'],
+  categories: [
+    'All',
+    'Men',
+    'Women',
+    'Unisex',
+    'Tops',
+    'Bottoms',
+    'Footwear',
+    'Accessories',
+  ],
+};
+
+const initialFilter = {
+  priceRange: 'All',
+  rating: 'All',
+  availability: 'All',
+  categories: 'All',
 };
 
 export default function ShoppingScreen() {
@@ -367,25 +518,122 @@ export default function ShoppingScreen() {
   const { theme } = useTheme();
 
   const styles = createStyles(theme);
+  const { token } = useAuth();
 
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [showFilter, setShowFilter] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-
+  const [products, setProducts] = useState<Product[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [selectedSize, setSelectedSize] = useState<string>('');
   const [selectedColor, setSelectedColor] = useState<string>('');
+  const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [filters, setFilters] = useState(initialFilter);
 
-  const filteredProducts = mockProducts.filter((product) => {
-    const matchesCategory =
-      selectedCategory === 'All' || product.category === selectedCategory;
-    const matchesSearch =
-      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.brand.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
-  });
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      if (!token) {
+        console.error('No token available for refreshing products');
+        return;
+      }
+
+      console.log('Refreshing products from /api/product');
+      const response = await axios.get(`${API_URL}/api/product`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      console.log('Refresh response:', response.data);
+
+      if (response.data && response.data.products) {
+        setProducts(response.data.products);
+      } else {
+        console.warn('No products found in refresh response:', response.data);
+        setProducts([]);
+      }
+    } catch (err: any) {
+      console.error(
+        'Error fetching products:',
+        err.response?.data || err.message
+      );
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  const fetchProductResults = async (query: string, filterSnapshot: any) => {
+    try {
+      if (!token) {
+        console.error('No token available for product search');
+        return;
+      }
+
+      console.log('Fetching products with:', { query, filterSnapshot });
+
+      const response = await axios.get(`${API_URL}/api/search`, {
+        params: {
+          query,
+          ...filterSnapshot,
+        },
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      console.log('Search response:', response.data);
+
+      if (response.data.status && response.data.products) {
+        setProducts(response.data.products);
+      } else {
+        console.warn('No products found or invalid response:', response.data);
+        setProducts([]);
+      }
+    } catch (err: any) {
+      console.error(
+        'Error fetching product results: ',
+        err.response?.data || err.message
+      );
+    }
+  };
+
+  const debouncedProductSearch = useCallback(
+    debounce((query, filterSnapshot) => {
+      fetchProductResults(query, filterSnapshot);
+    }, 500),
+    []
+  );
+
+  useEffect(() => {
+    if (!token) return; 
+
+    const hasSearchQuery = searchQuery.trim() !== '';
+    const hasActiveFilters = selectedCategory !== 'All';
+
+    if (hasSearchQuery || hasActiveFilters) {
+      const filterSnapshot = {
+        categories: selectedCategory !== 'All' ? selectedCategory : undefined,
+        query: searchQuery,
+        contentType: 'Products',
+      };
+      debouncedProductSearch(searchQuery, filterSnapshot);
+    } else {
+      onRefresh();
+    }
+  }, [searchQuery, selectedCategory, debouncedProductSearch, token]);
+
+  useEffect(() => {
+    const fetch = async () => {
+      if (!token) return;
+
+      setLoading(true);
+      await onRefresh();
+      setLoading(false);
+    };
+
+    fetch();
+  }, [token]); 
 
   const handleProductPress = (product: Product) => {
-    router.push(`/product/${product.id}`);
+    router.push(`/product/${product._id}`);
   };
 
   const handleAddToCart = (product: Product) => {
@@ -396,15 +644,15 @@ export default function ShoppingScreen() {
 
   const confirmAddToCart = () => {
     if (selectedProduct) {
-      addToCart(selectedProduct, selectedSize, selectedColor);
+      addToCart(selectedProduct, 1, selectedSize, selectedColor);
       setSelectedProduct(null);
       Alert.alert('Success', 'Item added to cart!');
     }
   };
 
   const toggleWishlist = (product: Product) => {
-    if (isInWishlist(product.id)) {
-      removeFromWishlist(product.id);
+    if (isInWishlist(product._id)) {
+      removeFromWishlist(product._id);
     } else {
       addToWishlist(product);
     }
@@ -424,13 +672,16 @@ export default function ShoppingScreen() {
               <Text style={styles.outOfStockText}>Out of Stock</Text>
             </View>
           )}
-          <Image source={{ uri: item.imageUrl[0] }} style={styles.productImage} />
+          <Image
+            source={{ uri: item.imageUrl[0] }}
+            style={styles.productImage}
+          />
         </View>
       </TouchableOpacity>
       <TouchableOpacity
         style={[
           styles.wishlistButton,
-          isInWishlist(item.id) && styles.wishlistButtonActive,
+          isInWishlist(item._id) && styles.wishlistButtonActive,
         ]}
         onPress={() => toggleWishlist(item)}
         activeOpacity={0.7}
@@ -438,20 +689,21 @@ export default function ShoppingScreen() {
         <Bookmark
           size={20}
           color={theme.background}
-          fill={isInWishlist(item.id) ? theme.background : 'transparent'}
+          fill={isInWishlist(item._id) ? theme.background : 'transparent'}
         />
       </TouchableOpacity>
 
-      
       <View style={styles.productInfo}>
-        <Text style={styles.productBrand}>{item.brand}</Text>
+        <Text style={styles.productBrand}>{item.shopId.fullName}</Text>
         <TouchableOpacity onPress={() => handleProductPress(item)}>
           <Text style={styles.productName}>{item.name}</Text>
         </TouchableOpacity>
         <View style={styles.priceRow}>
           {item.discount ? (
             <>
-              <Text style={styles.productPrice}>${(item.price - (item.price * (item.discount / 100))).toFixed(2)}</Text>
+              <Text style={styles.productPrice}>
+                ${(item.price - item.price * (item.discount / 100)).toFixed(2)}
+              </Text>
               <Text style={styles.originalPrice}>${item.price.toFixed(2)}</Text>
             </>
           ) : (
@@ -465,13 +717,60 @@ export default function ShoppingScreen() {
       </View>
       <View style={styles.addToCartContainer}>
         <TouchableOpacity
-          style={[styles.addToCartButton, !item.stock && styles.addToCartButtonDisabled]}
+          style={[
+            styles.addToCartButton,
+            !item.stock && styles.addToCartButtonDisabled,
+          ]}
           onPress={() => handleAddToCart(item)}
           disabled={!item.stock}
         >
-          <Text style={[styles.addToCartText, !item.stock && styles.addToCartButtonDisabledText]}>{!item.stock ? 'Out of Stock' : 'Add to Cart'}</Text>
+          <Text
+            style={[
+              styles.addToCartText,
+              !item.stock && styles.addToCartButtonDisabledText,
+            ]}
+          >
+            {!item.stock ? 'Out of Stock' : 'Add to Cart'}
+          </Text>
         </TouchableOpacity>
       </View>
+    </View>
+  );
+
+  const renderFilterOption = (
+    title: string,
+    options: string[],
+    selectedValue: string,
+    onSelect: (value: string) => void
+  ) => (
+    <View style={styles.filterSection}>
+      <Text style={styles.filterTitle}>{title}</Text>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+        <View style={styles.filterOptions}>
+          {options.map((option) => (
+            <TouchableOpacity
+              key={option}
+              style={[
+                styles.filterOption,
+                selectedValue === option && styles.filterOptionActive,
+              ]}
+              onPress={() => onSelect(option)}
+            >
+              <Text
+                style={[
+                  styles.filterOptionText,
+                  selectedValue === option && styles.filterOptionTextActive,
+                ]}
+              >
+                {option}
+              </Text>
+              {selectedValue === option && (
+                <Check size={14} color="#000" style={styles.filterCheck} />
+              )}
+            </TouchableOpacity>
+          ))}
+        </View>
+      </ScrollView>
     </View>
   );
 
@@ -512,7 +811,11 @@ export default function ShoppingScreen() {
           </View>
 
           <View style={styles.searchContainer}>
-            <Search size={20} color={theme.textSecondary} style={styles.searchIcon} />
+            <Search
+              size={20}
+              color={theme.textSecondary}
+              style={styles.searchIcon}
+            />
             <TextInput
               style={styles.searchInput}
               placeholder="Search products..."
@@ -520,7 +823,10 @@ export default function ShoppingScreen() {
               onChangeText={setSearchQuery}
               placeholderTextColor={theme.textSecondary}
             />
-            <TouchableOpacity style={styles.filterButton}>
+            <TouchableOpacity
+              style={styles.filterButton}
+              onPress={() => setShowFilter(true)}
+            >
               <Filter size={20} color={theme.textSecondary} />
             </TouchableOpacity>
           </View>
@@ -553,15 +859,26 @@ export default function ShoppingScreen() {
           ))}
         </ScrollView>
 
-        <FlatList
-          data={filteredProducts}
-          renderItem={renderProduct}
-          keyExtractor={(item) => item.id}
-          numColumns={2}
-          contentContainerStyle={styles.productsGrid}
-          columnWrapperStyle={styles.productRow}
-          showsVerticalScrollIndicator={false}
-        />
+        {loading ? (
+          <View
+            style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}
+          >
+            <LoadingView message="Loading products..." size="large" />
+          </View>
+        ) : (
+          <FlatList
+            data={products}
+            renderItem={renderProduct}
+            keyExtractor={(item) => item._id}
+            numColumns={2}
+            contentContainerStyle={styles.productsGrid}
+            columnWrapperStyle={styles.productRow}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            }
+          />
+        )}
 
         {/* Product Selection Modal */}
         <Modal
@@ -654,6 +971,126 @@ export default function ShoppingScreen() {
               </TouchableOpacity>
             </View>
           )}
+        </Modal>
+
+        <Modal
+          visible={showFilter}
+          animationType="slide"
+          transparent
+          onRequestClose={() => setShowFilter(false)}
+        >
+          <TouchableWithoutFeedback onPress={() => setShowFilter(false)}>
+            <View
+              style={{
+                flex: 1,
+                justifyContent: 'flex-end',
+                backgroundColor: 'rgba(0, 0, 0, 0.5)',
+              }}
+            >
+              <TouchableWithoutFeedback onPress={() => {}}>
+                <View
+                  style={{
+                    height: '80%',
+                    backgroundColor: theme.background,
+                    borderTopLeftRadius: 20,
+                    borderTopRightRadius: 20,
+                    overflow: 'hidden',
+                  }}
+                >
+                  <SafeAreaView style={styles.filterModal}>
+                    <View style={styles.filterHeader}>
+                      <Text style={styles.filterHeaderTitle}>
+                        Advanced Filters
+                      </Text>
+                      <TouchableOpacity onPress={() => setShowFilter(false)}>
+                        <X size={24} color={theme.text} />
+                      </TouchableOpacity>
+                    </View>
+
+                    <ScrollView style={styles.filterContent}>
+                      {renderFilterOption(
+                        'Price Range',
+                        filterOptions.priceRange,
+                        filters.priceRange,
+                        (value) =>
+                          setFilters((prev) => ({
+                            ...prev,
+                            priceRange: value,
+                          }))
+                      )}
+
+                      {renderFilterOption(
+                        'Rating',
+                        filterOptions.rating,
+                        filters.rating,
+                        (value) =>
+                          setFilters((prev) => ({ ...prev, rating: value }))
+                      )}
+
+                      {renderFilterOption(
+                        'Availability',
+                        filterOptions.availability,
+                        filters.availability,
+                        (value) =>
+                          setFilters((prev) => ({
+                            ...prev,
+                            availability: value,
+                          }))
+                      )}
+
+                      {renderFilterOption(
+                        'Categories',
+                        filterOptions.categories,
+                        filters.categories,
+                        (value) =>
+                          setFilters((prev) => ({ ...prev, categories: value }))
+                      )}
+                    </ScrollView>
+
+                    <View style={styles.filterFooter}>
+                      <TouchableOpacity
+                        style={styles.clearFiltersButton}
+                        onPress={() => setFilters(initialFilter)}
+                      >
+                        <Text style={styles.clearFiltersText}>Clear All</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.applyFiltersButton}
+                        onPress={() => {
+                          setShowFilter(false);
+                          const filterSnapshot = {
+                            categories:
+                              filters.categories !== 'All'
+                                ? filters.categories
+                                : undefined,
+                            priceRange:
+                              filters.priceRange !== 'All'
+                                ? filters.priceRange
+                                : undefined,
+                            rating:
+                              filters.rating !== 'All'
+                                ? filters.rating
+                                : undefined,
+                            availability:
+                              filters.availability !== 'All'
+                                ? filters.availability
+                                : undefined,
+                            query: searchQuery,
+                            contentType: 'Products',
+                          };
+                          fetchProductResults(searchQuery, filterSnapshot);
+                        }}
+                      >
+                        <Text style={styles.applyFiltersText}>
+                          Apply Filters
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  </SafeAreaView>
+                </View>
+              </TouchableWithoutFeedback>
+            </View>
+          </TouchableWithoutFeedback>
         </Modal>
       </SafeAreaView>
     </TouchableWithoutFeedback>

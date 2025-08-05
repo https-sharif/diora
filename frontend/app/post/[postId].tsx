@@ -25,6 +25,7 @@ import {
   Send,
   MoreHorizontal,
   Flag,
+  Check,
 } from 'lucide-react-native';
 import { useAuth } from '@/hooks/useAuth';
 import { Comment } from '@/types/Comment';
@@ -78,6 +79,19 @@ const createStyles = (theme: Theme) => {
     userInfo: {
       marginLeft: 12,
       flex: 1,
+    },
+    userNameRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+    },
+    verifiedBadgeContainer: {
+      width: 12,
+      height: 12,
+      borderRadius: 8,
+      backgroundColor: '#007AFF',
+      justifyContent: 'center',
+      alignItems: 'center',
     },
     username: {
       fontSize: 16,
@@ -521,7 +535,7 @@ export default function PostDetailScreen() {
       style={[styles.commentItem, isReply && styles.replyItem]}
     >
       <TouchableOpacity
-        onPress={() => router.push(`/user/${comment.user._id}`)}
+        onPress={() => router.push(`/${comment.user.type}/${comment.user._id}` as any)}
       >
         <Image
           source={{ uri: comment.user.avatar }}
@@ -531,9 +545,16 @@ export default function PostDetailScreen() {
       <View style={styles.commentContent}>
         <View style={styles.commentHeader}>
           <TouchableOpacity
-            onPress={() => router.push(`/user/${comment.user._id}`)}
+            onPress={() => router.push(`/${comment.user.type}/${comment.user._id}` as any)}
           >
-            <Text style={styles.commentUser}>{comment.user.username}</Text>
+            <View style={styles.userNameRow}>
+              <Text style={styles.username}>{comment.user.username}</Text>
+              {comment.user.isVerified && (
+                <View style={styles.verifiedBadgeContainer}>
+                  <Check size={8} strokeWidth={4} color="white" />
+                </View>
+              )}
+            </View>
           </TouchableOpacity>
           <Text style={styles.commentTime}>
             {format(new Date(comment.createdAt))}
@@ -578,7 +599,7 @@ export default function PostDetailScreen() {
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.userSection}>
           <TouchableOpacity
-            onPress={() => router.push(`/user/${post.user._id}`)}
+            onPress={() => router.push(`/${post.user.type}/${post.user._id}` as any)}
           >
             <Image
               source={{ uri: post.user.avatar }}
@@ -587,9 +608,16 @@ export default function PostDetailScreen() {
           </TouchableOpacity>
           <View style={styles.userInfo}>
             <TouchableOpacity
-              onPress={() => router.push(`/user/${post.user._id}`)}
+              onPress={() => router.push(`/${post.user.type}/${post.user._id}` as any)}
             >
-              <Text style={styles.username}>{post.user.username}</Text>
+              <View style={styles.userNameRow}>
+                <Text style={styles.username}>{post.user.username}</Text>
+                {post.user.isVerified && (
+                  <View style={styles.verifiedBadgeContainer}>
+                    <Check size={8} strokeWidth={4} color="white" />
+                  </View>
+                )}
+              </View>
             </TouchableOpacity>
             <Text style={styles.timestamp}>
               {format(new Date(post.createdAt))}

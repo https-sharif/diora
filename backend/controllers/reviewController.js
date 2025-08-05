@@ -82,7 +82,7 @@ export const getReviewsByShopId = async (req, res) => {
     }
 
     const reviews = await Review.find({ targetId: shopId, targetType: 'shop' })
-      .populate('user', 'username avatar')
+      .populate('user', 'username avatar isVerified type')
       .sort({ createdAt: -1 });
 
     if (!reviews || reviews.length === 0) {
@@ -257,7 +257,7 @@ export const getReviewsByProductId = async (req, res) => {
     }
 
     const reviews = await Review.find({ targetId: productId, targetType: 'product' })
-      .populate('user', 'username avatar')
+      .populate('user', 'username avatar isVerified type')
       .sort({ createdAt: -1 });
 
     if (!reviews || reviews.length === 0) {

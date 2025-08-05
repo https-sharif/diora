@@ -14,7 +14,7 @@ import {
   Platform,
   Animated,
 } from 'react-native';
-import { Star, MessageCircle, X, Send } from 'lucide-react-native';
+import { Star, MessageCircle, X, Send, Check } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Post } from '@/types/Post';
 import { Comment } from '@/types/Comment';
@@ -55,6 +55,19 @@ const createStyles = (theme: Theme) => {
     userInfo: {
       marginLeft: 12,
       flex: 1,
+    },
+    userNameRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+    },
+    verifiedBadgeContainer: {
+      width: 12,
+      height: 12,
+      borderRadius: 8,
+      backgroundColor: '#007AFF',
+      justifyContent: 'center',
+      alignItems: 'center',
     },
     username: {
       fontSize: 16,
@@ -238,11 +251,13 @@ export default function PostCard({ post }: { post: Post }) {
 
   useEffect(() => {
     const fetchComments = async () => {
-      
-      const response = await axios.get(`${API_URL}/api/comment/post/${post._id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      
+      const response = await axios.get(
+        `${API_URL}/api/comment/post/${post._id}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
       if (response.data.status) {
         console.log('Fetched comments:', response.data.comments);
         setComments(response.data.comments);
@@ -291,7 +306,9 @@ export default function PostCard({ post }: { post: Post }) {
     if (!newComment.trim() || !user) return;
 
     try {
-      const url = replyingTo ? `${API_URL}/api/comment/reply/${replyingTo}` : `${API_URL}/api/comment/create`;
+      const url = replyingTo
+        ? `${API_URL}/api/comment/reply/${replyingTo}`
+        : `${API_URL}/api/comment/create`;
       const payload = { userId: user._id, postId: post._id, text: newComment };
 
       console.log('Adding comment:', payload);
@@ -356,7 +373,14 @@ export default function PostCard({ post }: { post: Post }) {
                 setShowComments(false);
               }}
             >
-              <Text style={styles.commentUser}>{comment.user.username}</Text>
+              <View style={styles.userNameRow}>
+                <Text style={styles.username}>{comment.user.username}</Text>
+                {comment.user.isVerified && (
+                  <View style={styles.verifiedBadgeContainer}>
+                    <Check size={8} strokeWidth={4} color="white" />
+                  </View>
+                )}
+              </View>
             </TouchableOpacity>
             <Text style={styles.commentTime}>
               {format(new Date(comment.createdAt))}
@@ -387,7 +411,7 @@ export default function PostCard({ post }: { post: Post }) {
         <View style={styles.header}>
           <TouchableOpacity
             onPress={() => {
-              if(post.user.type === 'shop') {
+              if (post.user.type === 'shop') {
                 router.push(`/shop/${post.user._id}`);
                 return;
               }
@@ -399,14 +423,21 @@ export default function PostCard({ post }: { post: Post }) {
           <View style={styles.userInfo}>
             <TouchableOpacity
               onPress={() => {
-                if(post.user.type === 'shop') {
+                if (post.user.type === 'shop') {
                   router.push(`/shop/${post.user._id}`);
                   return;
                 }
                 router.push(`/user/${post.user._id}`);
               }}
             >
-              <Text style={styles.username}>{post.user.username}</Text>
+              <View style={styles.userNameRow}>
+                <Text style={styles.username}>{post.user.username}</Text>
+                {post.user.isVerified && (
+                  <View style={styles.verifiedBadgeContainer}>
+                    <Check size={8} strokeWidth={4} color="white" />
+                  </View>
+                )}
+              </View>
             </TouchableOpacity>
             <Text style={styles.timestamp}>
               {format(new Date(post.createdAt))}

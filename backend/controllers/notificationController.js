@@ -75,7 +75,7 @@ export const getNotifications = async (req, res) => {
 
   try {
     const notifications = await Notification.find({ userId })
-      .sort({ createdAt: -1 })
+      .sort({ updatedAt: -1 })
       .limit(100);
 
     if (!notifications || notifications.length === 0) {

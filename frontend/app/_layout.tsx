@@ -21,6 +21,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useAuth } from '@/hooks/useAuth';
 import { useNotification } from '@/hooks/useNotification';
 import { useMessage } from '@/hooks/useMessage';
+import { useShopping } from '@/hooks/useShopping';
 import initSocket, { getSocket } from './utils/useSocket';
 
 SplashScreen.preventAutoHideAsync();
@@ -44,6 +45,15 @@ function AppReadyWrapper({ insets }: { insets: EdgeInsets }) {
   const { user, loading } = useAuth();
   const { handleIncomingNotification } = useNotification();
   const { sendMessage } = useMessage();
+  const { initializeUserData } = useShopping();
+
+  // Initialize shopping data when user is authenticated
+  useEffect(() => {
+    if (user?._id) {
+      console.log('🛒 Initializing shopping data for user:', user._id);
+      initializeUserData();
+    }
+  }, [user?._id, initializeUserData]);
 
   useEffect(() => {
     if (user?._id) {

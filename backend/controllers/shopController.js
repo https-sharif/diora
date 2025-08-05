@@ -1,4 +1,7 @@
 import User from '../models/User.js';
+import Product from '../models/Product.js';
+import Order from '../models/Order.js';
+import Wishlist from '../models/Wishlist.js';
 import mongoose from 'mongoose';
 
 export const getAllShops = async (req, res) => {
@@ -255,8 +258,9 @@ export const getTrendingShops = async (req, res) => {
 export const followShop = async (req, res) => {
   console.log('Follow shop route/controller hit');
   try {
-    const shopId = req.params.shopId;
     const userId = req.user.id;
+    const shopId = req.params.shopId;
+    console.log(`User ID: ${userId}, Shop ID: ${shopId}`);
 
     if(shopId === userId) {
       return res.status(400).json({ status: false, message: 'Cannot follow your own shop' });
@@ -272,12 +276,12 @@ export const followShop = async (req, res) => {
     const isFollowing = user.following.includes(shopId);
 
     if(isFollowing) {
-      user.following = user.following.pull(shopId);
-      shop.followers -= 1;
+      user.following.pull(shopId);
+      shop.followers.pull(userId);
     }
     else {
       user.following.push(shopId);
-      shop.followers += 1;
+      shop.followers.push(userId);
     }
 
     await user.save();
@@ -286,6 +290,170 @@ export const followShop = async (req, res) => {
     res.json({ status: true, message: `Successfully ${isFollowing ? 'unfollowed' : 'followed'} the shop`, following: user.following });
   } catch (err) {
     console.error(err);
+    res.status(500).json({ status: false, message: 'Something went wrong' });
+  }
+};
+
+export const getShopAnalytics = async (req, res) => {
+  console.log('Get shop analytics route/controller hit');
+  try {
+    const shopId = req.user.id;
+    
+    const shop = await User.findById(shopId);
+    if (!shop || shop.type !== 'shop') {
+      return res.status(403).json({ status: false, message: 'Access denied. User is not a shop owner.' });
+    }
+
+    const totalOrders = await Order.countDocuments({ shopId: shopId });
+    
+    const revenueData = await Order.aggregate([
+      { $match: { shopId: new mongoose.Types.ObjectId(shopId), status: { $in: ['delivered', 'completed'] } } },
+      { $group: { _id: null, totalRevenue: { $sum: '$totalAmount' } } }
+    ]);
+    const totalRevenue = revenueData.length > 0 ? revenueData[0].totalRevenue : 0;
+
+    const totalProducts = await Product.countDocuments({ shopId: shopId });
+
+    const wishlistCount = await Wishlist.countDocuments({ 
+      'items.productId': { $in: await Product.find({ shopId: shopId }).distinct('_id') }
+    });
+
+    // Get order trends over time (last 30 days)
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    const orderTrends = await Order.aggregate([
+      { 
+        $match: { 
+          shopId: new mongoose.Types.ObjectId(shopId), 
+          createdAt: { $gte: thirtyDaysAgo }
+        }
+      },
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+          orderCount: { $sum: 1 },
+          revenue: { $sum: '$totalAmount' }
+        }
+      },
+      { $sort: { _id: 1 } }
+    ]);
+
+    // Get recent orders (last 10)
+    const recentOrders = await Order.find({ shopId: shopId })
+      .sort({ createdAt: -1 })
+      .limit(10)
+      .populate('userId', 'fullName avatar')
+      .select('_id userId totalAmount status createdAt items');
+
+    // Get top selling products
+    const topProducts = await Order.aggregate([
+      { $match: { shopId: new mongoose.Types.ObjectId(shopId) } },
+      { $unwind: '$items' },
+      { 
+        $group: { 
+          _id: '$items.productId', 
+          totalSold: { $sum: '$items.quantity' },
+          revenue: { $sum: { $multiply: ['$items.quantity', '$items.price'] } }
+        }
+      },
+      { $sort: { totalSold: -1 } },
+      { $limit: 5 },
+      {
+        $lookup: {
+          from: 'products',
+          localField: '_id',
+          foreignField: '_id',
+          as: 'product'
+        }
+      },
+      { $unwind: '$product' },
+      {
+        $project: {
+          _id: 1,
+          totalSold: 1,
+          revenue: 1,
+          name: '$product.name',
+          imageUrl: '$product.imageUrl',
+          price: '$product.price'
+        }
+      }
+    ]);
+
+    const analyticsData = {
+      summary: {
+        totalOrders,
+        totalRevenue,
+        totalProducts,
+        wishlistCount,
+        followers: shop.followers.length
+      },
+      orderTrends,
+      recentOrders,
+      topProducts
+    };
+
+    res.json({ status: true, analytics: analyticsData });
+  } catch (err) {
+    console.error('Get shop analytics error:', err);
+    res.status(500).json({ status: false, message: 'Something went wrong' });
+  }
+};
+
+export const updateShopProfile = async (req, res) => {
+  console.log('Update shop profile route/controller hit');
+  
+  try {
+    const shopId = req.user.id;
+    
+    const fullName = req.body.fullName;
+    const bio = req.body.bio;
+    const location = req.body.location;
+    const contactEmail = req.body.contactEmail;
+    const contactPhone = req.body.contactPhone;
+    const website = req.body.website;
+    const socialLinks = req.body.socialLinks ? JSON.parse(req.body.socialLinks) : {};
+
+    const existingShop = await User.findById(shopId);
+    if (!existingShop || existingShop.type !== 'shop') {
+      return res.status(403).json({ status: false, message: 'Access denied. User is not a shop owner.' });
+    }
+
+    const updateData = {};
+    
+    if (fullName) updateData.fullName = fullName;
+    if (bio !== undefined) updateData.bio = bio;
+
+    if (req.files) {
+      if (req.files.avatar && req.files.avatar[0]) {
+        updateData.avatar = req.files.avatar[0].path;
+        updateData.avatarId = req.files.avatar[0].filename;
+      }
+      if (req.files.coverImage && req.files.coverImage[0]) {
+        updateData['shop.coverImageUrl'] = req.files.coverImage[0].path;
+        updateData['shop.coverImageId'] = req.files.coverImage[0].filename;
+      }
+    }
+
+    if (location !== undefined) updateData['shop.location'] = location;
+    if (contactEmail !== undefined) updateData['shop.contactEmail'] = contactEmail;
+    if (contactPhone !== undefined) updateData['shop.contactPhone'] = contactPhone;
+    if (website !== undefined) updateData['shop.website'] = website;
+    if (socialLinks) {
+      if (socialLinks.facebook !== undefined) updateData['shop.socialLinks.facebook'] = socialLinks.facebook;
+      if (socialLinks.instagram !== undefined) updateData['shop.socialLinks.instagram'] = socialLinks.instagram;
+      if (socialLinks.twitter !== undefined) updateData['shop.socialLinks.twitter'] = socialLinks.twitter;
+      if (socialLinks.tiktok !== undefined) updateData['shop.socialLinks.tiktok'] = socialLinks.tiktok;
+    }
+
+    const updatedShop = await User.findByIdAndUpdate(shopId, updateData, {
+      new: true,
+      runValidators: true
+    });
+
+    res.json({ status: true, user: updatedShop });
+  } catch (err) {
+    console.error('Update shop profile error:', err);
     res.status(500).json({ status: false, message: 'Something went wrong' });
   }
 };

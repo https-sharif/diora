@@ -12,4 +12,5 @@ export interface Notification {
   avatar?: string;
   actionUrl?: string;
   orderId?: string;
+  imageUrl?: string;
 }

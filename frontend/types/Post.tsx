@@ -5,6 +5,7 @@ export interface Post {
     username: string;
     avatar: string;
     type: 'user' | 'shop' | 'admin';
+    isVerified: boolean;
   }
   imageUrl: string;
   caption?: string;

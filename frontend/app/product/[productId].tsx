@@ -17,7 +17,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
-import { ArrowLeft, Share, Star, ShoppingCart, Store, Plus, Minus, Bookmark, X, Flag } from 'lucide-react-native';
+import { ArrowLeft, Share, Star, ShoppingCart, Store, Plus, Minus, Bookmark, X, Flag, Check } from 'lucide-react-native';
 import { useShopping } from '@/hooks/useShopping';
 import { useAuth } from '@/hooks/useAuth';
 import { User } from '@/types/User';
@@ -195,6 +195,19 @@ const createStyles = (theme: Theme) => {
     storeDetails: {
       flex: 1,
       marginLeft: 12,
+    },
+    userNameRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+    },
+    verifiedBadgeContainer: {
+      width: 12,
+      height: 12,
+      borderRadius: 8,
+      backgroundColor: '#007AFF',
+      justifyContent: 'center',
+      alignItems: 'center',
     },
     storeName: {
       fontSize: 16,
@@ -517,6 +530,8 @@ export default function ProductDetailScreen() {
           return;
         }
 
+        console.log('Product fetched successfully:', response.data.product);
+
         setProduct(response.data.product);
         setShopProfile(response.data.product.shopId);
       } catch (error) {
@@ -658,9 +673,10 @@ export default function ProductDetailScreen() {
       return;
     }
     
-    for (let i = 0; i < quantity; i++) {
-      addToCart(product, selectedSize, selectedColor);
-    }
+    addToCart(product, quantity, selectedSize, selectedColor);
+    setQuantity(1);
+    setSelectedSize('');
+    setSelectedColor('');
     Alert.alert('Success', `${quantity} item(s) added to cart!`);
   };
 
@@ -837,7 +853,7 @@ export default function ProductDetailScreen() {
       >
         <View style={styles.reviewHeader}>
           <TouchableOpacity
-            onPress={() => router.push(`/user/${item.user._id}`)}
+            onPress={() => router.push(`/${item.user.type}/${item.user._id}` as any)}
           >
             <Image
               source={{ uri: item.user.avatar }}
@@ -846,9 +862,16 @@ export default function ProductDetailScreen() {
           </TouchableOpacity>
           <View style={styles.reviewInfo}>
             <TouchableOpacity
-              onPress={() => router.push(`/user/${item.user._id}`)}
+              onPress={() => router.push(`/${item.user.type}/${item.user._id}` as any)}
             >
-              <Text style={styles.reviewUser}>{item.user.username}</Text>
+              <View style={styles.userNameRow}>
+                <Text style={styles.storeName}>{item.user.username}</Text>
+                {item.user.isVerified && (
+                  <View style={styles.verifiedBadgeContainer}>
+                    <Check size={8} strokeWidth={4} color="white" />
+                  </View>
+                )}
+              </View>
             </TouchableOpacity>
             <View style={styles.reviewRating}>
               {[...Array(5)].map((_, i) => (
@@ -971,11 +994,22 @@ export default function ProductDetailScreen() {
           <View style={styles.storeInfo}>
             <Image source={{ uri: shopProfile?.avatar }} style={styles.storeAvatar} />
             <View style={styles.storeDetails}>
-              <Text style={styles.storeName}>{shopProfile?.fullName}</Text>
+              <View style={styles.userNameRow}>
+                <Text style={styles.storeName}>{shopProfile?.fullName}</Text>
+                {shopProfile?.isVerified && (
+                  <View style={styles.verifiedBadgeContainer}>
+                    <Check size={8} strokeWidth={4} color="white" />
+                  </View>
+                )}
+              </View>
               <View style={styles.storeStats}>
                 <View style={styles.storeRating}>
                   <Star size={14} color="#FFD700" fill="#FFD700" />
-                  <Text style={styles.storeRatingText}>{(shopProfile?.shop?.rating && shopProfile?.shop?.ratingCount > 0 ? shopProfile.shop.rating / shopProfile.shop.ratingCount : 0.0).toFixed(1)}</Text>
+                  <Text style={styles.storeRatingText}>
+                    {(shopProfile?.shop?.ratingCount ?? 0) > 0
+                      ? ((shopProfile?.shop?.rating ?? 0) / (shopProfile?.shop?.ratingCount ?? 1)).toFixed(1)
+                      : '0.0'}
+                  </Text>
                 </View>
                 <Text style={styles.storeFollowers}>{shopProfile?.followers.length} followers</Text>
               </View>

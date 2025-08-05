@@ -65,7 +65,7 @@ export const getAllPost = async (req, res) => {
   try {
     const posts = await Post.find()
       .sort({ createdAt: -1 })
-      .populate('user', 'username avatar type');
+      .populate('user', 'username avatar type isVerified');
 
     if (!posts || posts.length === 0) {
       return res.status(404).json({ status: false, message: 'No posts found' });
@@ -157,8 +157,8 @@ export const getPost = async (req, res) => {
     console.log('Get post route/controller hit');
     const postId = req.params.postId;
     const post = await Post.findById(postId)
-      .populate('user', 'username avatar')
-      .populate('comments.user', 'username avatar');
+      .populate('user', 'username avatar isVerified type')
+      .populate('comments.user', 'username avatar isVerified type');
 
     if (!post) {
       return res.status(404).json({ status: false, message: 'Post not found' });

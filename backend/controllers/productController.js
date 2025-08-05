@@ -3,7 +3,9 @@ import Product from '../models/Product.js';
 export const getAllProducts = async (req, res) => {
   console.log('Get all products route/controller hit');
   try {
-    const products = await Product.find().populate('shopId', 'name');
+    const products = await Product.aggregate([{ $sample: { size: 10 } }]);
+    await Product.populate(products, { path: 'shopId', select: 'name' });
+
     res.json({ status: true, products });
   } catch (err) {
     console.error(err);
@@ -15,7 +17,7 @@ export const getProductById = async (req, res) => {
   console.log('Get product by ID route/controller hit');
   try {
     const productId = req.params.productId;
-    const product = await Product.findById(productId).populate('shopId', 'fullName avatar followers');
+    const product = await Product.findById(productId).populate('shopId', 'fullName avatar followers shop.rating shop.ratingCount isVerified');
 
     if (!product) {
       return res
@@ -131,6 +133,19 @@ export const getTrendingProducts = async (req, res) => {
     console.log('Trending products:', trendingProducts);
 
     res.json({ status: true, trendingProducts });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ status: false, message: 'Something went wrong' });
+  }
+};
+
+export const getProductsByShop = async (req, res) => {
+  console.log('Get products by shop route/controller hit');
+  try {
+    const { shopId } = req.params;
+    const products = await Product.find({ shopId }).populate('shopId', 'fullName avatar');
+
+    res.json({ status: true, products });
   } catch (err) {
     console.error(err);
     res.status(500).json({ status: false, message: 'Something went wrong' });

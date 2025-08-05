@@ -23,13 +23,9 @@ export const followUser = async (req, res) => {
       return res.status(404).json({ status: false, message: 'User not found' });
     }
 
-    console.log(
-      `Current user: ${user.username}, Target user: ${targetUser.username}`
-    );
+    const isFollowing = user.following.includes(targetUserId);
 
-    const alreadyFollowing = user.following.includes(targetUserId);
-
-    if (alreadyFollowing) {
+    if (isFollowing) {
       user.following.pull(targetUserId);
       targetUser.followers.pull(currentUserId);
     } else {

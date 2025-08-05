@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -7,24 +7,25 @@ import {
   TouchableOpacity,
   Image,
   FlatList,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Settings, Grid2x2 as Grid, Star, LogOut } from 'lucide-react-native';
+import { Settings, Grid2x2 as Grid, Star, LogOut, Check, Package, BarChart3, Edit3, MapPin, Phone, Mail, Globe, ExternalLink } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/contexts/ThemeContext';
-import { mockPosts } from '@/mock/Post';
-import { mockUsers } from '@/mock/User';
 import { Post } from '@/types/Post';
+import { Product } from '@/types/Product';
 import { Theme } from '@/types/Theme';  
+import axios from 'axios';
+import { API_URL } from '@/constants/api';
 
 const createStyles = (theme: Theme) =>
   StyleSheet.create({
     container: {
       flex: 1,
       backgroundColor: theme.background,
-      paddingTop: -100,
-      paddingBottom: -100,
+      paddingVertical: -100,
     },
     header: {
       flexDirection: 'row',
@@ -43,76 +44,187 @@ const createStyles = (theme: Theme) =>
     },
     headerButtons: {
       flexDirection: 'row',
-      gap: 16,
+      gap: 12,
     },
     headerButton: {
       padding: 4,
     },
+    actionButton: {
+      backgroundColor: theme.primary,
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      borderRadius: 8,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+    },
+    actionButtonText: {
+      color: 'white',
+      fontSize: 14,
+      fontFamily: 'Inter-SemiBold',
+    },
     content: {
       flex: 1,
     },
-    profileSection: {
-      flexDirection: 'row',
-      alignItems: 'center',
+    coverImage: {
+      width: '100%',
+      height: 200,
+    },
+    shopSection: {
       backgroundColor: theme.background,
       padding: 20,
       borderBottomWidth: 1,
-      borderBottomColor: theme.background,
+      borderBottomColor: theme.border,
     },
-    profileImage: {
+    shopHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 16,
+      marginTop: -40,
+    },
+    shopAvatar: {
       width: 80,
       height: 80,
       borderRadius: 40,
+      marginRight: 20,
+      borderWidth: 4,
+      borderColor: theme.background,
     },
-    profileInfo: {
+    shopStats: {
       flex: 1,
-      marginLeft: 16,
+      flexDirection: 'row',
+      justifyContent: 'space-around',
+      marginTop: 25,
     },
-    fullName: {
-      fontSize: 20,
+    shopInfo: {
+      marginBottom: 16,
+    },
+    nameContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 8,
+    },
+    shopName: {
+      fontSize: 24,
       fontFamily: 'Inter-Bold',
       color: theme.text,
+      marginRight: 8,
     },
-    username: {
+    verifiedBadgeContainer: {
+      width: 20,
+      height: 20,
+      borderRadius: 10,
+      backgroundColor: '#007AFF',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    shopDescription: {
       fontSize: 16,
       fontFamily: 'Inter-Regular',
-      color: theme.textSecondary,
-      marginTop: 2,
+      color: theme.text,
+      lineHeight: 22,
+      marginBottom: 16,
     },
-    bio: {
+    contactInfo: {
+      marginBottom: 12,
+    },
+    contactItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 8,
+      gap: 8,
+    },
+    contactText: {
       fontSize: 14,
       fontFamily: 'Inter-Regular',
-      color: theme.text,
-      marginTop: 8,
-      lineHeight: 20,
+      color: theme.textSecondary,
     },
-    statsSection: {
+    contactLinkText: {
+      fontSize: 14,
+      fontFamily: 'Inter-Regular',
+      color: theme.primary,
+    },
+    categories: {
+      marginBottom: 20,
+    },
+    categoriesTitle: {
+      fontSize: 16,
+      fontFamily: 'Inter-SemiBold',
+      color: theme.text,
+      marginBottom: 8,
+    },
+    categoryTags: {
       flexDirection: 'row',
-      backgroundColor: theme.background,
-      paddingVertical: 20,
-      borderBottomWidth: 1,
-      borderBottomColor: theme.background,
+      flexWrap: 'wrap',
+      gap: 8,
+    },
+    categoryTag: {
+      backgroundColor: theme.primary,
+      borderRadius: 16,
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+    },
+    categoryTagText: {
+      fontSize: 14,
+      fontFamily: 'Inter-Medium',
+      color: 'white',
+    },
+    actionButtons: {
+      flexDirection: 'row',
+      gap: 12,
+    },
+    editButton: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: theme.card,
+      borderWidth: 1,
+      borderColor: theme.border,
+      borderRadius: 8,
+      paddingVertical: 12,
+      gap: 8,
+    },
+    editButtonText: {
+      color: theme.text,
+      fontSize: 16,
+      fontFamily: 'Inter-SemiBold',
+    },
+    analyticsButton: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: theme.primary,
+      borderRadius: 8,
+      paddingVertical: 12,
+      gap: 8,
+    },
+    analyticsButtonText: {
+      color: '#000',
+      fontSize: 16,
+      fontFamily: 'Inter-SemiBold',
     },
     statItem: {
-      flex: 1,
       alignItems: 'center',
     },
     statNumber: {
-      fontSize: 20,
+      fontSize: 18,
       fontFamily: 'Inter-Bold',
       color: theme.text,
     },
     statLabel: {
-      fontSize: 14,
+      fontSize: 12,
       fontFamily: 'Inter-Regular',
       color: theme.textSecondary,
-      marginTop: 4,
+      marginTop: 2,
+      textAlign: 'center',
     },
     tabsSection: {
       flexDirection: 'row',
       backgroundColor: theme.background,
       borderBottomWidth: 1,
-      borderBottomColor: theme.background,
+      borderBottomColor: theme.border,
     },
     tab: {
       flex: 1,
@@ -139,6 +251,9 @@ const createStyles = (theme: Theme) =>
     postsGrid: {
       backgroundColor: theme.background,
     },
+    productGrid: {
+      backgroundColor: theme.background,
+    },
     postsRow: {
       paddingHorizontal: 2,
     },
@@ -151,40 +266,206 @@ const createStyles = (theme: Theme) =>
     postImage: {
       width: '100%',
       height: '100%',
+      backgroundColor: theme.card,
+    },
+    productItem: {
+      width: '46%',
+      backgroundColor: theme.card,
+      borderRadius: 12,
+      overflow: 'hidden',
+      marginVertical: 8,
+      marginHorizontal: '2%',
+    },
+    productImage: {
+      width: '100%',
+      height: 200,
+      backgroundColor: theme.card,
+    },
+    productInfo: {
+      padding: 8,
+    },
+    productName: {
+      fontSize: 12,
+      fontFamily: 'Inter-SemiBold',
+      color: theme.text,
+      marginBottom: 2,
+    },
+    productPrice: {
+      fontSize: 14,
+      fontFamily: 'Inter-Bold',
+      color: theme.text,
     },
   });
 
 export default function ShopProfile() {
-  const { user, logout } = useAuth();
-  const [activeTab, setActiveTab] = React.useState<'posts' | 'liked'>('posts');
-
-  const handleTabPress = (tab: 'posts' | 'liked') => {
-    setActiveTab(tab);
-  };
+  const { user, logout, token } = useAuth();
+  const [activeTab, setActiveTab] = React.useState<'posts' | 'products' | 'liked'>('posts');
   const { theme } = useTheme();
-  const myPosts = mockPosts.filter(post => post.user._id === user?._id);
-  const likedPosts = mockPosts.filter(post => user?.likedPosts.includes(post._id));
-
   const styles = createStyles(theme);
+  const [myPosts, setMyPosts] = useState([]);
+  const [myProducts, setMyProducts] = useState([]);
+  const [myLikedPosts, setMyLikedPosts] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [shopProfile, setShopProfile] = useState(null);
+
+  useEffect(() => {
+    const fetchShopProfile = async () => {
+      try {
+        setLoading(true);
+
+        console.log('Fetching shop profile for:', user?._id);
+        const response = await axios.get(`${API_URL}/api/user/${user?._id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.data.status === false) {
+          setShopProfile(null);
+          return;
+        }
+        const shop = response.data.user;
+
+        setShopProfile(shop);
+      } catch (error) {
+        console.error('Error fetching shop profile:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const fetchPosts = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/api/post/user/${user?._id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.data.status === false) {
+          return;
+        }
+
+        setMyPosts(response.data.posts);
+      } catch (error) {
+        console.error('Error fetching posts:', error);
+      }
+    };
+
+    const fetchProducts = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/api/product/shop/${user?._id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.data.status === false) {
+          return;
+        }
+
+        setMyProducts(response.data.products);
+      } catch (error) {
+        console.error('Error fetching products:', error);
+      }
+    };
+
+    fetchShopProfile();
+    fetchPosts();
+    fetchProducts();
+  }, [user, token]);
+
+  const fetchData = async () => {
+    if (!user) return;
+
+    try {
+      const likedPostsResponse = await axios.get(`${API_URL}/api/post/user/${user?._id}/liked`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      setMyLikedPosts(likedPostsResponse.data.posts);
+
+      const myPostsResponse = await axios.get(`${API_URL}/api/post/user/${user?._id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setMyPosts(myPostsResponse.data.posts);
+
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    if (user?._id) fetchData();
+  }, [user, user?.posts, user?.likedPosts, token]);
+
+  const handleTabPress = (tab: 'posts' | 'products' | 'liked') => { setActiveTab(tab) };
 
   const handlePostPress = (postId: string) => {
     router.push(`/post/${postId}`);
+  };
+
+  const handleProductPress = (productId: string) => {
+    router.push(`/product/${productId}`);
   };
 
   const handleSettingsPress = () => {
     router.push('/settings');
   };
 
-  const renderPost = ({ item }: { item: Post }) => {
-    const user = mockUsers.find(user => user._id === item._id);
-    if (!user) return null;
+  const handleAnalyticsPress = () => {
+    router.push('/shop/analytics');
+  };
 
+  const handleEditProfilePress = () => {
+    router.push('/shop/edit-profile');
+  };
+
+  const handleContactPress = (type: 'email' | 'phone' | 'website', value: string) => {
+    if (!value) return;
+    
+    let url = '';
+    switch (type) {
+      case 'email':
+        url = `mailto:${value}`;
+        break;
+      case 'phone':
+        url = `tel:${value}`;
+        break;
+      case 'website':
+        url = value.startsWith('http') ? value : `https://${value}`;
+        break;
+    }
+    
+    Linking.openURL(url);
+  };
+
+  const renderPost = ({ item }: { item: Post }) => {
     return (
       <TouchableOpacity
         style={styles.postItem}
         onPress={() => handlePostPress(item._id)}
       >
         <Image source={{ uri: item.imageUrl }} style={styles.postImage} />
+      </TouchableOpacity>
+    )
+  }
+
+  const renderProduct = ({ item }: { item: Product }) => {
+    return (
+      <TouchableOpacity
+        style={styles.productItem}
+        onPress={() => handleProductPress(item._id)}
+      >
+        <Image source={{ uri: item.imageUrl[0] }} style={styles.productImage} />
+        <View style={styles.productInfo}>
+          <Text style={styles.productName} numberOfLines={2}>{item.name}</Text>
+          <Text style={styles.productPrice}>${item.price.toFixed(2)}</Text>
+        </View>
       </TouchableOpacity>
     )
   }
@@ -211,35 +492,121 @@ export default function ShopProfile() {
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Profile Info */}
-        <View style={styles.profileSection}>
-          <Image source={{ uri: user.avatar }} style={styles.profileImage} />
-          <View style={styles.profileInfo}>
-            <Text style={styles.fullName}>{user.fullName}</Text>
-            <Text style={styles.username}>@{user.username}</Text>
-            <Text style={styles.bio}>{user.bio}</Text>
+        {/* Cover Image */}
+        <Image 
+          source={{ 
+            uri: user.shop?.coverImageUrl || 'https://images.unsplash.com/photo-1557821552-17105176677c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1932&h=1087'
+          }} 
+          style={styles.coverImage} 
+        />
+
+        {/* Shop Info */}
+        <View style={styles.shopSection}>
+          <View style={styles.shopHeader}>
+            <Image source={{ uri: user.avatar }} style={styles.shopAvatar} />
+            <View style={styles.shopStats}>
+              <View style={styles.statItem}>
+                <Text style={styles.statNumber}>{myProducts.length}</Text>
+                <Text style={styles.statLabel}>Products</Text>
+              </View>
+              <View style={styles.statItem}>
+                <Text style={styles.statNumber}>{user.followers.length}</Text>
+                <Text style={styles.statLabel}>Followers</Text>
+              </View>
+              <View style={styles.statItem}>
+                <Text style={styles.statNumber}>{myPosts.length}</Text>
+                <Text style={styles.statLabel}>Posts</Text>
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.shopInfo}>
+            <View style={styles.nameContainer}>
+              <Text style={styles.shopName}>{user.fullName}</Text>
+              {user.isVerified && (
+                <View style={styles.verifiedBadgeContainer}>
+                  <Check size={10} color="white" />
+                </View>
+              )}
+            </View>
+            <Text style={styles.shopDescription}>{user.bio}</Text>
+
+            {/* Contact Info */}
+            <View style={styles.contactInfo}>
+              {user.shop?.location && (
+                <View style={styles.contactItem}>
+                  <MapPin size={16} color={theme.textSecondary} />
+                  <Text style={styles.contactText}>{user.shop.location}</Text>
+                </View>
+              )}
+              
+              {user.shop?.contactPhone && (
+                <TouchableOpacity 
+                  style={styles.contactItem}
+                  onPress={() => handleContactPress('phone', user.shop?.contactPhone || '')}
+                >
+                  <Phone size={16} color={theme.textSecondary} />
+                  <Text style={styles.contactLinkText}>{user.shop.contactPhone}</Text>
+                </TouchableOpacity>
+              )}
+              
+              {user.shop?.contactEmail && (
+                <TouchableOpacity 
+                  style={styles.contactItem}
+                  onPress={() => handleContactPress('email', user.shop?.contactEmail || '')}
+                >
+                  <Mail size={16} color={theme.textSecondary} />
+                  <Text style={styles.contactLinkText}>{user.shop.contactEmail}</Text>
+                </TouchableOpacity>
+              )}
+              
+              {user.shop?.website && (
+                <TouchableOpacity 
+                  style={styles.contactItem}
+                  onPress={() => handleContactPress('website', user.shop?.website || '')}
+                >
+                  <Globe size={16} color={theme.primary} />
+                  <Text style={styles.contactLinkText}>{user.shop.website}</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+
+          {/* Categories */}
+          {user.shop?.categories && user.shop.categories.length > 0 && (
+            <View style={styles.categories}>
+              <Text style={styles.categoriesTitle}>Categories</Text>
+              <View style={styles.categoryTags}>
+                {user.shop.categories.map((category, index) => (
+                  <View key={index} style={styles.categoryTag}>
+                    <Text style={styles.categoryTagText}>{category}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
+
+          {/* Action Buttons */}
+          <View style={styles.actionButtons}>
+            <TouchableOpacity
+              style={styles.editButton}
+              onPress={handleEditProfilePress}
+            >
+              <Edit3 size={16} strokeWidth={2} color={theme.text} />
+              <Text style={styles.editButtonText}>Edit Profile</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={styles.analyticsButton}
+              onPress={handleAnalyticsPress}
+            >
+              <BarChart3 size={16} strokeWidth={2} color="#000" />
+              <Text style={styles.analyticsButtonText}>Analytics</Text>
+            </TouchableOpacity>
           </View>
         </View>
 
-        {/* Stats */}
-        <View style={styles.statsSection}>
-          <View style={styles.statItem}>
-            <Text style={styles.statNumber}>{user.posts.toLocaleString()}</Text>
-            <Text style={styles.statLabel}>Posts</Text>
-          </View>
-          <View style={styles.statItem}>
-            <Text style={styles.statNumber}>
-              {user.followers.length.toLocaleString()}
-            </Text>
-            <Text style={styles.statLabel}>Followers</Text>
-          </View>
-          <View style={styles.statItem}>
-            <Text style={styles.statNumber}>{user.following.length.toLocaleString()}</Text>
-            <Text style={styles.statLabel}>Following</Text>
-          </View>
-        </View>
-
-        {/* Posts Tab */}
+        {/* Tabs Section */}
         <View style={styles.tabsSection}>
           <TouchableOpacity
             style={[styles.tab, activeTab === 'posts' ? styles.activeTab : {}]}
@@ -256,6 +623,23 @@ export default function ShopProfile() {
               }
             >
               Posts
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === 'products' ? styles.activeTab : {}]}
+            onPress={() => handleTabPress('products')}
+            activeOpacity={0.7}
+          >
+            <Package
+              size={activeTab === 'products' ? 22 : 20}
+              color={activeTab === 'products' ? theme.text : theme.textSecondary}
+            />
+            <Text
+              style={
+                activeTab === 'products' ? styles.activeTabText : styles.tabText
+              }
+            >
+              Products
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -290,10 +674,22 @@ export default function ShopProfile() {
           />
         )}
 
+        {/* Products Grid */}
+        {activeTab === 'products' && (
+          <FlatList
+            data={myProducts}
+            renderItem={renderProduct}
+            keyExtractor={(item) => item._id}
+            numColumns={2}
+            scrollEnabled={false}
+            contentContainerStyle={styles.productGrid}
+          />
+        )}
+
         {/* Liked Posts */}
         {activeTab === 'liked' && (
           <FlatList
-            data={likedPosts}
+            data={myLikedPosts}
             renderItem={renderPost}
             keyExtractor={(item) => item._id}
             numColumns={3}

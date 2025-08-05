@@ -309,9 +309,9 @@ export default function NotificationsScreen() {
 
         <View style={styles.notificationRight}>
           {/* Implement Later */}
-          {/* {item.postImage && (
-            // <Image source={{ uri: item.postImage }} style={styles.postThumbnail} />
-          )} */}
+          {item.imageUrl && (
+            <Image source={{ uri: item.imageUrl }} style={styles.postThumbnail} />
+          )}
         </View>
       </View>
     </TouchableOpacity>
