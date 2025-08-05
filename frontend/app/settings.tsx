@@ -27,11 +27,15 @@ import {
   TriangleAlert as AlertTriangle,
   ImageIcon,
   ImageOff,
+  Store,
+  Edit,
+  ChevronRight,
 } from 'lucide-react-native';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useToast } from '@/hooks/useToast';
 import { Toast } from '@/components/Toast';
+import { PromotionRequestModal } from '@/components/PromotionRequestModal';
 import axios from 'axios';
 import { API_URL } from '@/constants/api';
 import * as ImagePicker from 'expo-image-picker';
@@ -418,6 +422,7 @@ export default function SettingsScreen() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showDeactivateConfirm, setShowDeactivateConfirm] = useState(false);
   const [showImagePicker, setShowImagePicker] = useState(false);
+  const [showPromotionModal, setShowPromotionModal] = useState(false);
   const [downloadLoading, setDownloadLoading] = useState(false);
 
   const openCamera = async () => {
@@ -675,108 +680,32 @@ export default function SettingsScreen() {
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Profile Editor */}
+        {/* Profile Management */}
         {renderSection(
           'Profile',
           <>
-            <View style={styles.profileImageSection}>
-              <TouchableOpacity onPress={() => setShowImagePicker(true)}>
-                <Image
-                  source={{ uri: profileImage || 'https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png' }}
-                  style={styles.profileImageLarge}
-                />
-                <View style={styles.cameraOverlay}>
-                  <Camera size={20} color={theme.text} />
-                </View>
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={[styles.inputLabel, { color: theme.text }]}>
-                Full Name
-              </Text>
-              <TextInput
-                style={[
-                  styles.textInput,
-                  {
-                    backgroundColor: theme.background,
-                    color: theme.text,
-                    borderColor: theme.border,
-                  },
-                ]}
-                value={fullName}
-                onChangeText={setFullName}
-                placeholder="Enter your full name"
-                placeholderTextColor={theme.textSecondary}
-                maxLength={50}
-              />
-              <Text
-                style={[styles.characterCount, { color: theme.textSecondary }]}
-              >
-                {fullName.length}/50
-              </Text>
-            </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={[styles.inputLabel, { color: theme.text }]}>
-                Username
-              </Text>
-              <TextInput
-                style={[
-                  styles.textInput,
-                  {
-                    backgroundColor: theme.background,
-                    color: theme.text,
-                    borderColor: theme.border,
-                  },
-                ]}
-                value={username}
-                onChangeText={(text) => setUsername(text.toLowerCase())}
-                placeholder="Enter your username"
-                placeholderTextColor={theme.textSecondary}
-                maxLength={20}
-              />
-              <Text
-                style={[styles.characterCount, { color: theme.textSecondary }]}
-              >
-                {username.length}/20
-              </Text>
-            </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={[styles.inputLabel, { color: theme.text }]}>
-                Bio
-              </Text>
-              <TextInput
-                style={[
-                  styles.textArea,
-                  {
-                    backgroundColor: theme.background,
-                    color: theme.text,
-                    borderColor: theme.border,
-                  },
-                ]}
-                value={bio}
-                onChangeText={setBio}
-                placeholder="Tell us about yourself..."
-                placeholderTextColor={theme.textSecondary}
-                multiline
-                numberOfLines={4}
-                maxLength={200}
-              />
-              <Text
-                style={[styles.characterCount, { color: theme.textSecondary }]}
-              >
-                {bio.length}/200
-              </Text>
-            </View>
-
-            <TouchableOpacity
-              style={styles.saveButton}
-              onPress={handleSaveProfile}
-            >
-              <Text style={styles.saveButtonText}>Save Profile</Text>
-            </TouchableOpacity>
+            {renderSettingItem(
+              <Edit size={20} color={theme.primary} />,
+              'Edit Profile',
+              'Update your profile information',
+              <ChevronRight size={20} color={theme.textSecondary} />,
+              () => {
+                if (user?.type === 'shop') {
+                  router.push('/shop/edit-profile');
+                } else {
+                  router.push('/user/edit-profile');
+                }
+              }
+            )}
+            {user?.type === 'user' && (
+              renderSettingItem(
+                <Store size={20} color={theme.primary} />,
+                'Request Shop Promotion',
+                'Apply to become a shop owner',
+                <ChevronRight size={20} color={theme.textSecondary} />,
+                () => setShowPromotionModal(true)
+              )
+            )}
           </>
         )}
 
@@ -1324,6 +1253,12 @@ export default function SettingsScreen() {
           </View>
         </TouchableWithoutFeedback>
       </Modal>
+
+      {/* Promotion Request Modal */}
+      <PromotionRequestModal
+        visible={showPromotionModal}
+        onClose={() => setShowPromotionModal(false)}
+      />
 
       {/* Toast Notifications */}
       {visible.error && (

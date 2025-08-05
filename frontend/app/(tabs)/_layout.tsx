@@ -1,5 +1,5 @@
 import { router, Tabs } from 'expo-router';
-import { BarChart3, Home, Plus, Search, ShoppingBag, User } from 'lucide-react-native';
+import { BarChart3, Home, Plus, Search, ShoppingBag, User, Shield } from 'lucide-react-native';
 import React, { useEffect } from 'react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/hooks/useAuth';
@@ -75,9 +75,13 @@ export default function TabLayout() {
       <Tabs.Screen
         name="shopping"
         options={{
-          title: 'Shop',
+          title: user?.type === 'admin' ? 'Reports' : 'Shop',
           tabBarIcon: ({ size, color, focused }) => (
-            <ShoppingBag size={size} color={color} strokeWidth={focused ? 3 : 2} />
+            user?.type === 'admin' ? (
+              <Shield size={size} color={color} strokeWidth={focused ? 3 : 2} />
+            ) : (
+              <ShoppingBag size={size} color={color} strokeWidth={focused ? 3 : 2} />
+            )
           ),
         }}
       />

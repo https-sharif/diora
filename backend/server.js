@@ -5,6 +5,7 @@ import cors from 'cors';
 import connectDB from './config/db.js';
 import authRoutes from './routes/auth.js';
 import userRoutes from './routes/user.js';
+import adminRoutes from './routes/admin.js';
 import postRoutes from './routes/post.js';
 import commentRoutes from './routes/comment.js';
 import notificationRoutes from './routes/notification.js';
@@ -15,6 +16,7 @@ import searchRoutes from './routes/search.js';
 import cartRoutes from './routes/cart.js';
 import wishlistRoutes from './routes/wishlist.js';
 import orderRoutes from './routes/order.js';
+import reportRoutes from './routes/report.js';
 import { initSocket } from './sockets/socketSetup.js';
 
 dotenv.config();
@@ -34,6 +36,7 @@ app.get('/', (req, res) => {
 
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
+app.use('/api/admin', adminRoutes);
 app.use('/api/post', postRoutes);
 app.use('/api/comment', commentRoutes);
 app.use('/api/notification', notificationRoutes);
@@ -44,6 +47,7 @@ app.use('/api/search', searchRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/order', orderRoutes);
+app.use('/api/reports', reportRoutes);
 
 const server = http.createServer(app);
 const io = initSocket(server);

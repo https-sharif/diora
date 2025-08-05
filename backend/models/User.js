@@ -32,6 +32,9 @@ const userSchema = new mongoose.Schema({
     productIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }],
     rating: { type: Number, default: 0 },
     ratingCount: { type: Number, default: 0 },
+    businessType: { type: String, default: '' },
+    yearsInBusiness: { type: String, default: '' },
+    expectedProducts: { type: String, default: '' },
   },
   settings: {
     theme: { type: String, enum: ['light', 'dark'], default: 'light' },
