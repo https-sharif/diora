@@ -115,6 +115,35 @@ const createStyles = (theme: Theme) =>
       color: theme.text,
       marginBottom: 8,
     },
+    productPriceContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 8,
+    },
+    originalPrice: {
+      fontSize: 14,
+      fontFamily: 'Inter-Medium',
+      color: theme.textSecondary,
+      textDecorationLine: 'line-through',
+      marginRight: 8,
+    },
+    discountedPrice: {
+      fontSize: 16,
+      fontFamily: 'Inter-Bold',
+      color: theme.text,
+    },
+    discountBadge: {
+      backgroundColor: '#ff4444',
+      borderRadius: 4,
+      paddingHorizontal: 6,
+      paddingVertical: 2,
+      marginLeft: 8,
+    },
+    discountText: {
+      fontSize: 10,
+      fontFamily: 'Inter-Bold',
+      color: '#fff',
+    },
     addToCartButton: {
       backgroundColor: theme.text,
       borderRadius: 8,
@@ -166,6 +195,35 @@ const createStyles = (theme: Theme) =>
       fontFamily: 'Inter-Bold',
       color: theme.text,
       marginBottom: 16,
+    },
+    productModalPriceContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 16,
+    },
+    modalOriginalPrice: {
+      fontSize: 18,
+      fontFamily: 'Inter-Medium',
+      color: theme.textSecondary,
+      textDecorationLine: 'line-through',
+      marginRight: 12,
+    },
+    modalDiscountedPrice: {
+      fontSize: 20,
+      fontFamily: 'Inter-Bold',
+      color: theme.text,
+    },
+    modalDiscountBadge: {
+      backgroundColor: '#ff4444',
+      borderRadius: 6,
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      marginLeft: 12,
+    },
+    modalDiscountText: {
+      fontSize: 12,
+      fontFamily: 'Inter-Bold',
+      color: '#fff',
     },
     productModalDescription: {
       fontSize: 16,
@@ -266,12 +324,43 @@ const Wishlist = () => {
     removeFromWishlist,
     isInWishlist,
     addToCart,
-    fetchWishlist,
   } = useShopping();
 
-  useEffect(() => {
-    fetchWishlist();
-  }, [fetchWishlist]);
+  // Helper function to calculate discounted price
+  const getDiscountedPrice = (price: number, discount?: number) => {
+    if (!discount || discount <= 0) return null;
+    return price - (price * discount / 100);
+  };
+
+  // Helper function to render price with discount
+  const renderPrice = (item: Product, isModal = false) => {
+    const hasDiscount = item.discount && item.discount > 0;
+    const discountedPrice = hasDiscount ? getDiscountedPrice(item.price, item.discount) : null;
+
+    if (hasDiscount && discountedPrice) {
+      return (
+        <View style={isModal ? styles.productModalPriceContainer : styles.productPriceContainer}>
+          <Text style={isModal ? styles.modalOriginalPrice : styles.originalPrice}>
+            ${item.price.toFixed(2)}
+          </Text>
+          <Text style={isModal ? styles.modalDiscountedPrice : styles.discountedPrice}>
+            ${discountedPrice.toFixed(2)}
+          </Text>
+          <View style={isModal ? styles.modalDiscountBadge : styles.discountBadge}>
+            <Text style={isModal ? styles.modalDiscountText : styles.discountText}>
+              -{item.discount}%
+            </Text>
+          </View>
+        </View>
+      );
+    } else {
+      return (
+        <Text style={isModal ? styles.productModalPrice : styles.productPrice}>
+          ${item.price.toFixed(2)}
+        </Text>
+      );
+    }
+  };
 
   const renderEmptyState = () => (
       <View style={styles.emptyState}>
@@ -335,7 +424,7 @@ const Wishlist = () => {
         <TouchableOpacity onPress={() => handleProductPress(item)}>
           <Text style={styles.productName}>{item.name}</Text>
         </TouchableOpacity>
-        <Text style={styles.productPrice}>${item.price}</Text>
+        {renderPrice(item)}
 
         <TouchableOpacity
           style={styles.addToCartButton}
@@ -399,9 +488,7 @@ const Wishlist = () => {
               <Text style={styles.productModalName}>
                 {selectedProduct.name}
               </Text>
-              <Text style={styles.productModalPrice}>
-                ${selectedProduct.price}
-              </Text>
+              {renderPrice(selectedProduct, true)}
               <Text style={styles.productModalDescription}>
                 {selectedProduct.description}
               </Text>

@@ -13,6 +13,7 @@ export const useShopping = () => {
   const getCartItemCount = useShoppingStore(state => state.getCartItemCount);
   const fetchCart = useShoppingStore(state => state.fetchCart);
   const fetchWishlist = useShoppingStore(state => state.fetchWishlist);
+  const initializeUserData = useShoppingStore(state => state.initializeUserData);
 
   return { 
     cart, 
@@ -26,6 +27,7 @@ export const useShopping = () => {
     getCartTotal, 
     getCartItemCount, 
     fetchCart, 
-    fetchWishlist 
+    fetchWishlist,
+    initializeUserData
   };
 };

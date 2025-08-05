@@ -113,6 +113,34 @@ const createStyles = (theme: Theme) =>
       fontFamily: 'Inter-Bold',
       color: theme.text,
     },
+    cartItemPriceContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    cartItemOriginalPrice: {
+      fontSize: 14,
+      fontFamily: 'Inter-Medium',
+      color: theme.textSecondary,
+      textDecorationLine: 'line-through',
+      marginRight: 8,
+    },
+    cartItemDiscountedPrice: {
+      fontSize: 16,
+      fontFamily: 'Inter-Bold',
+      color: theme.text,
+    },
+    cartItemDiscountBadge: {
+      backgroundColor: '#ff4444',
+      borderRadius: 4,
+      paddingHorizontal: 4,
+      paddingVertical: 2,
+      marginLeft: 6,
+    },
+    cartItemDiscountText: {
+      fontSize: 10,
+      fontFamily: 'Inter-Bold',
+      color: '#fff',
+    },
     cartItemActions: {
       alignItems: 'center',
       justifyContent: 'center',
@@ -201,12 +229,43 @@ const CartPage = () => {
     updateCartQuantity,
     getCartTotal,
     addToWishlist,
-    fetchCart,
   } = useShopping();
 
-  useEffect(() => {
-    fetchCart();
-  }, [fetchCart]);
+  // Helper function to calculate discounted price
+  const getDiscountedPrice = (price: number, discount?: number) => {
+    if (!discount || discount <= 0) return null;
+    return price - (price * discount / 100);
+  };
+
+  // Helper function to render price with discount
+  const renderCartItemPrice = (product: Product) => {
+    const hasDiscount = product.discount && product.discount > 0;
+    const discountedPrice = hasDiscount ? getDiscountedPrice(product.price, product.discount) : null;
+
+    if (hasDiscount && discountedPrice) {
+      return (
+        <View style={styles.cartItemPriceContainer}>
+          <Text style={styles.cartItemOriginalPrice}>
+            ${product.price.toFixed(2)}
+          </Text>
+          <Text style={styles.cartItemDiscountedPrice}>
+            ${discountedPrice.toFixed(2)}
+          </Text>
+          <View style={styles.cartItemDiscountBadge}>
+            <Text style={styles.cartItemDiscountText}>
+              -{product.discount}%
+            </Text>
+          </View>
+        </View>
+      );
+    } else {
+      return (
+        <Text style={styles.cartItemPrice}>
+          ${product.price.toFixed(2)}
+        </Text>
+      );
+    }
+  };
 
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
@@ -286,7 +345,7 @@ const CartPage = () => {
             <Text style={styles.cartItemDetails}>
               {item.size && `${item.size}${item.variant ? ' • ' : ''}`}{item.variant}
             </Text>
-            <Text style={styles.cartItemPrice}>${product.price}</Text>
+            {renderCartItemPrice(product)}
           </View>
           <View style={styles.cartItemActions}>
             <View style={styles.quantityControls}>
@@ -347,7 +406,10 @@ const CartPage = () => {
                   Total: ${total.toFixed(2)}
                 </Text>
               </View>
-              <TouchableOpacity style={styles.checkoutButton}>
+              <TouchableOpacity 
+                style={styles.checkoutButton}
+                onPress={() => router.push('/checkout')}
+              >
                 <Text style={styles.checkoutButtonText}>Checkout</Text>
               </TouchableOpacity>
             </View>

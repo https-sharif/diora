@@ -557,7 +557,6 @@ export default function ShoppingScreen() {
         'Error fetching products:',
         err.response?.data || err.message
       );
-      // Keep existing products on error
     } finally {
       setRefreshing(false);
     }
@@ -604,9 +603,8 @@ export default function ShoppingScreen() {
   );
 
   useEffect(() => {
-    if (!token) return; // Don't fetch if no token
+    if (!token) return; 
 
-    // Only use search API if there's a search query or non-default filters
     const hasSearchQuery = searchQuery.trim() !== '';
     const hasActiveFilters = selectedCategory !== 'All';
 
@@ -618,14 +616,13 @@ export default function ShoppingScreen() {
       };
       debouncedProductSearch(searchQuery, filterSnapshot);
     } else {
-      // Use the regular product endpoint for initial load without filters
       onRefresh();
     }
   }, [searchQuery, selectedCategory, debouncedProductSearch, token]);
 
   useEffect(() => {
     const fetch = async () => {
-      if (!token) return; // Don't fetch if no token
+      if (!token) return;
 
       setLoading(true);
       await onRefresh();
@@ -633,7 +630,7 @@ export default function ShoppingScreen() {
     };
 
     fetch();
-  }, [token]); // Add token as dependency
+  }, [token]); 
 
   const handleProductPress = (product: Product) => {
     router.push(`/product/${product._id}`);
