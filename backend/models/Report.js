@@ -14,8 +14,7 @@ const reportSchema = new mongoose.Schema({
     },
     itemId: {
       type: mongoose.Schema.Types.ObjectId,
-      required: true,
-      refPath: 'reportedItem.itemType'
+      required: true
     }
   },
   type: {
@@ -109,36 +108,6 @@ reportSchema.methods.getRefModel = function() {
     'shop': 'Shop'
   };
   return modelMap[this.reportedItem.itemType];
-};
-
-// Static method to get reports with populated data
-reportSchema.statics.getPopulatedReports = function(filter = {}, options = {}) {
-  return this.find(filter, null, options)
-    .populate('reporter', 'username fullName avatar email')
-    .populate('reviewedBy', 'username fullName')
-    .populate({
-      path: 'reportedItemDetails',
-      select: function() {
-        // Select different fields based on item type
-        switch (this.reportedItem.itemType) {
-          case 'user':
-            return 'username fullName avatar email type';
-          case 'post':
-            return 'content images user createdAt';
-          case 'product':
-            return 'name description price images shop';
-          case 'comment':
-            return 'content user post createdAt';
-          case 'review':
-            return 'rating comment user product createdAt';
-          case 'shop':
-            return 'businessName description owner avatar';
-          default:
-            return '';
-        }
-      }
-    })
-    .sort({ createdAt: -1 });
 };
 
 export default mongoose.model('Report', reportSchema);

@@ -13,6 +13,8 @@ import {
   Platform,
   KeyboardAvoidingView,
   ActivityIndicator,
+  Keyboard,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -33,6 +35,7 @@ import { Post } from '@/types/Post';
 import { Theme } from '@/types/Theme';
 import { useTheme } from '@/contexts/ThemeContext';
 import ImageSlashIcon from '@/icon/ImageSlashIcon';
+import MenuModal from '@/components/MenuModal';
 import axios from 'axios';
 import { API_URL } from '@/constants/api';
 import { format } from 'timeago.js';
@@ -336,6 +339,87 @@ const createStyles = (theme: Theme) => {
       fontFamily: 'Inter-Medium',
       color: theme.text,
     },
+    reportModal: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: 20,
+    },
+    reportContainer: {
+      backgroundColor: theme.card,
+      borderRadius: 12,
+      padding: 20,
+      width: '100%',
+      maxWidth: 400,
+    },
+    reportHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 20,
+    },
+    reportTitle: {
+      fontSize: 18,
+      fontFamily: 'Inter-SemiBold',
+      color: theme.text,
+    },
+    reportOption: {
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: theme.border,
+      marginBottom: 8,
+    },
+    reportOptionSelected: {
+      borderColor: theme.text,
+      backgroundColor: theme.background,
+    },
+    reportOptionText: {
+      fontSize: 16,
+      fontFamily: 'Inter-Regular',
+      color: theme.text,
+    },
+    reportInput: {
+      borderWidth: 1,
+      borderColor: theme.border,
+      borderRadius: 8,
+      padding: 12,
+      marginTop: 12,
+      marginBottom: 20,
+      height: 80,
+      textAlignVertical: 'top',
+      color: theme.text,
+      fontSize: 14,
+      fontFamily: 'Inter-Regular',
+    },
+    reportButtons: {
+      flexDirection: 'row',
+      justifyContent: 'flex-end',
+      gap: 12,
+    },
+    reportButton: {
+      paddingVertical: 10,
+      paddingHorizontal: 20,
+      borderRadius: 8,
+    },
+    reportButtonCancel: {
+      backgroundColor: theme.background,
+    },
+    reportButtonSubmit: {
+      backgroundColor: theme.text,
+    },
+    reportButtonText: {
+      fontSize: 14,
+      fontFamily: 'Inter-Medium',
+    },
+    reportButtonTextCancel: {
+      color: theme.text,
+    },
+    reportButtonTextSubmit: {
+      color: theme.background,
+    },
   });
 };
 
@@ -352,6 +436,9 @@ export default function PostDetailScreen() {
   const [imageHeight, setImageHeight] = useState(400);
   const { theme } = useTheme();
   const styles = createStyles(theme);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportReason, setReportReason] = useState('');
+  const [reportDescription, setReportDescription] = useState('');
 
   useEffect(() => {
     const fetchPostAndComment = async () => {
@@ -512,21 +599,47 @@ export default function PostDetailScreen() {
     Alert.alert('Share', `Share ${post.user.username}'s post`);
   };
 
-  const handleReport = () => {
-    Alert.alert('Report Post', 'Are you sure you want to report this post?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Report',
-        style: 'destructive',
-        onPress: () => {
-          Alert.alert(
-            'Reported',
-            'Post has been reported. Thank you for keeping our community safe.'
-          );
-          setShowMoreMenu(false);
+  const handleReport = async () => {
+    if (!reportReason.trim() || !user) return;
+
+    const reasonMap: { [key: string]: string } = {
+      'Spam': 'spam',
+      'Inappropriate Content': 'inappropriate_content',
+      'False Information': 'other',
+      'Copyright Violation': 'copyright_violation',
+      'Other': 'other'
+    };
+
+    try {
+      const payload = {
+        reportedItem: {
+          itemType: 'post',
+          itemId: post._id
         },
-      },
-    ]);
+        type: reasonMap[reportReason] || 'other',
+        description: reportDescription.trim() || 'No additional details provided'
+      };
+
+      const response = await axios.post(`${API_URL}/api/report`, payload, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      console.log('Report response:', response.data);
+
+      if (response.data.status) {
+        setShowReportModal(false);
+        setReportReason('');
+        setReportDescription('');
+        Alert.alert('Report Submitted', 'Thank you for your report. We will review it shortly.');
+        console.log('Report submitted successfully');
+      }
+    } catch (err) {
+      console.error('Error submitting report:', err);
+      if (axios.isAxiosError(err) && err.response) {
+        console.error('Response data:', err.response.data);
+        console.error('Response status:', err.response.status);
+      }
+    }
   };
 
   const renderComment = (comment: Comment, isReply = false) => (
@@ -720,6 +833,7 @@ export default function PostDetailScreen() {
         </View>
       </KeyboardAvoidingView>
 
+      {/* Menu Modal */}
       <Modal
         visible={showMoreMenu}
         transparent
@@ -735,27 +849,99 @@ export default function PostDetailScreen() {
             <View style={styles.moreMenuHeader}>
               <Text style={styles.moreMenuTitle}>More Options</Text>
               <TouchableOpacity onPress={() => setShowMoreMenu(false)}>
-                <X size={24} color="#000" />
+                <X size={24} color={theme.text} />
               </TouchableOpacity>
             </View>
 
             <TouchableOpacity style={styles.moreMenuItem} onPress={handleShare}>
               <Share size={20} color={theme.text} />
-              <Text style={styles.moreMenuItemText}>Share</Text>
+              <Text style={styles.moreMenuItemText}>Share Post</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.moreMenuItem}
-              onPress={handleReport}
-            >
-              <Flag size={20} color={theme.error} />
-              <Text style={[styles.moreMenuItemText, { color: theme.error }]}>
-                Report
-              </Text>
-            </TouchableOpacity>
+            {post && post.user._id !== user?._id && (
+              <TouchableOpacity
+                style={styles.moreMenuItem}
+                onPress={() => {
+                  setShowMoreMenu(false);
+                  setShowReportModal(true);
+                }}
+              >
+                <Flag size={20} color={theme.error} />
+                <Text style={[styles.moreMenuItemText, { color: theme.error }]}>
+                  Report Post
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
         </TouchableOpacity>
       </Modal>
+
+      <Modal
+        visible={showReportModal}
+        animationType="fade"
+        transparent
+        onRequestClose={() => setShowReportModal(false)}
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <View style={styles.reportModal}>
+            <View style={styles.reportContainer}>
+              <View style={styles.reportHeader}>
+                <Text style={styles.reportTitle}>Report Post</Text>
+                <TouchableOpacity onPress={() => setShowReportModal(false)}>
+                  <X size={24} color={theme.text} />
+                </TouchableOpacity>
+              </View>
+
+              <Text style={[styles.reportOptionText, { marginBottom: 12, color: theme.textSecondary }]}>
+                Why are you reporting this post?
+              </Text>
+
+              {['Spam', 'Inappropriate Content', 'False Information', 'Copyright Violation', 'Other'].map((reason) => (
+                <TouchableOpacity
+                  key={reason}
+                  style={[
+                    styles.reportOption,
+                    reportReason === reason && styles.reportOptionSelected,
+                  ]}
+                  onPress={() => setReportReason(reason)}
+                >
+                  <Text style={styles.reportOptionText}>{reason}</Text>
+                </TouchableOpacity>
+              ))}
+
+              <TextInput
+                style={styles.reportInput}
+                placeholder="Additional details (optional)"
+                placeholderTextColor={theme.textSecondary}
+                value={reportDescription}
+                onChangeText={setReportDescription}
+                multiline
+              />
+
+              <View style={styles.reportButtons}>
+                <TouchableOpacity
+                  style={[styles.reportButton, styles.reportButtonCancel]}
+                  onPress={() => setShowReportModal(false)}
+                >
+                  <Text style={[styles.reportButtonText, styles.reportButtonTextCancel]}>
+                    Cancel
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.reportButton, styles.reportButtonSubmit]}
+                  onPress={handleReport}
+                  disabled={!reportReason.trim()}
+                >
+                  <Text style={[styles.reportButtonText, styles.reportButtonTextSubmit]}>
+                    Submit
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
+
     </SafeAreaView>
   );
 }

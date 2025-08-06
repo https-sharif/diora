@@ -397,7 +397,7 @@ export default function MessageScreen() {
     });
 
     const product = item.productId
-      ? mockProducts.find((p) => p.id === item.productId)
+      ? mockProducts.find((p) => p._id === item.productId)
       : null;
 
     return (

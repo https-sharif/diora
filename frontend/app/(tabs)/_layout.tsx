@@ -75,13 +75,20 @@ export default function TabLayout() {
       <Tabs.Screen
         name="shopping"
         options={{
-          title: user?.type === 'admin' ? 'Reports' : 'Shop',
+          href: user?.type === 'admin' ? null : '/shopping',
+          title: 'Shop',
           tabBarIcon: ({ size, color, focused }) => (
-            user?.type === 'admin' ? (
-              <Shield size={size} color={color} strokeWidth={focused ? 3 : 2} />
-            ) : (
-              <ShoppingBag size={size} color={color} strokeWidth={focused ? 3 : 2} />
-            )
+            <ShoppingBag size={size} color={color} strokeWidth={focused ? 3 : 2} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="reports"
+        options={{
+          href: user?.type === 'admin' ? '/reports' : null,
+          title: 'Reports',
+          tabBarIcon: ({ size, color, focused }) => (
+            <Shield size={size} color={color} strokeWidth={focused ? 3 : 2} />
           ),
         }}
       />

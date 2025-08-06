@@ -37,8 +37,6 @@ import axios from 'axios';
 import { API_URL } from '@/constants/api';
 import LoadingView from '@/components/Loading';
 import debounce from 'lodash.debounce';
-import ReportsManagement from '@/components/ReportsManagement';
-
 const categories = [
   'All',
   'Men',
@@ -504,11 +502,6 @@ const initialFilter = {
 
 export default function ShoppingScreen() {
   const { user } = useAuth();
-  
-  // Show reports management for admin users
-  if (user && user.type === 'admin') {
-    return <ReportsManagement />;
-  }
 
   const {
     cart,
