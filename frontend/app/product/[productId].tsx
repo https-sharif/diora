@@ -13,11 +13,26 @@ import {
   Modal,
   Pressable,
   Animated,
-  PanResponder, 
+  PanResponder,
+  Keyboard,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
-import { ArrowLeft, Share, Star, ShoppingCart, Store, Plus, Minus, Bookmark, X, Flag, Check } from 'lucide-react-native';
+import {
+  ArrowLeft,
+  Share,
+  Star,
+  ShoppingCart,
+  Store,
+  Plus,
+  Minus,
+  Bookmark,
+  X,
+  Flag,
+  Check,
+  MoreHorizontal,
+} from 'lucide-react-native';
 import { useShopping } from '@/hooks/useShopping';
 import { useAuth } from '@/hooks/useAuth';
 import { User } from '@/types/User';
@@ -25,7 +40,7 @@ import { Product } from '@/types/Product';
 import { Review } from '@/types/Review';
 import { Theme } from '@/types/Theme';
 import { useTheme } from '@/contexts/ThemeContext';
-import ProductSlashIcon from '@/icon/ProductSlashIcon'
+import ProductSlashIcon from '@/icon/ProductSlashIcon';
 import axios from 'axios';
 import { BlurView } from 'expo-blur';
 import { API_URL } from '@/constants/api';
@@ -35,15 +50,15 @@ import * as ImagePicker from 'expo-image-picker';
 import { format as timeago } from 'timeago.js';
 import LoadingView from '@/components/Loading';
 
-const { width, height } = Dimensions.get('window')
+const { width, height } = Dimensions.get('window');
 
 const createStyles = (theme: Theme) => {
   return StyleSheet.create({
     container: {
       flex: 1,
       backgroundColor: theme.background,
-      paddingTop: -59,
-      paddingBottom: -34,
+      paddingTop: -100,
+      paddingBottom: -100,
     },
     header: {
       flexDirection: 'row',
@@ -486,8 +501,89 @@ const createStyles = (theme: Theme) => {
       height: width * 0.9,
       resizeMode: 'contain',
     },
+    reportModal: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: 20,
+    },
+    reportContainer: {
+      backgroundColor: theme.card,
+      borderRadius: 12,
+      padding: 20,
+      width: '100%',
+      maxWidth: 400,
+    },
+    reportHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 20,
+    },
+    reportTitle: {
+      fontSize: 18,
+      fontFamily: 'Inter-SemiBold',
+      color: theme.text,
+    },
+    reportOption: {
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: theme.border,
+      marginBottom: 8,
+    },
+    reportOptionSelected: {
+      borderColor: theme.text,
+      backgroundColor: theme.background,
+    },
+    reportOptionText: {
+      fontSize: 16,
+      fontFamily: 'Inter-Regular',
+      color: theme.text,
+    },
+    reportInput: {
+      borderWidth: 1,
+      borderColor: theme.border,
+      borderRadius: 8,
+      padding: 12,
+      marginTop: 12,
+      marginBottom: 20,
+      height: 80,
+      textAlignVertical: 'top',
+      color: theme.text,
+      fontSize: 14,
+      fontFamily: 'Inter-Regular',
+    },
+    reportButtons: {
+      flexDirection: 'row',
+      justifyContent: 'flex-end',
+      gap: 12,
+    },
+    reportButton: {
+      paddingVertical: 10,
+      paddingHorizontal: 20,
+      borderRadius: 8,
+    },
+    reportButtonCancel: {
+      backgroundColor: theme.background,
+    },
+    reportButtonSubmit: {
+      backgroundColor: theme.text,
+    },
+    reportButtonText: {
+      fontSize: 14,
+      fontFamily: 'Inter-Medium',
+    },
+    reportButtonTextCancel: {
+      color: theme.text,
+    },
+    reportButtonTextSubmit: {
+      color: theme.background,
+    },
   });
-}
+};
 
 export default function ProductDetailScreen() {
   const { productId } = useLocalSearchParams<{ productId: string }>();
@@ -511,21 +607,28 @@ export default function ProductDetailScreen() {
   const [hasReviewed, setHasReviewed] = useState(false);
   const [editingReview, setEditingReview] = useState(false);
   const [reviewImages, setReviewImages] = useState<string[]>([]);
-  const [enlargedPost, setEnlargedPost] = useState<string | null>(null);
+  const [enlargedImage, setEnlargedImage] = useState<string | null>(null);
   const [scaleAnim] = useState(new Animated.Value(1));
   const [opacityAnim] = useState(new Animated.Value(0));
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportReason, setReportReason] = useState('');
+  const [reportDescription, setReportDescription] = useState('');
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
 
   useEffect(() => {
     const fetchProduct = async () => {
       setLoading(true);
       try {
-        const response = await axios.get(`${API_URL}/api/product/${productId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const response = await axios.get(
+          `${API_URL}/api/product/${productId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
 
-        if(!response.data.status) {
+        if (!response.data.status) {
           Alert.alert('Error', response.data.message);
           return;
         }
@@ -543,11 +646,14 @@ export default function ProductDetailScreen() {
 
     const fetchReviews = async () => {
       try {
-        const response = await axios.get(`${API_URL}/api/review/product/${productId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const response = await axios.get(
+          `${API_URL}/api/review/product/${productId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
 
         if (response.data.status) {
           setReviews(response.data.reviews);
@@ -630,7 +736,7 @@ export default function ProductDetailScreen() {
         useNativeDriver: true,
       }),
     ]).start(() => {
-      setEnlargedPost(null);
+      setEnlargedImage(null);
       scaleAnim.setValue(1);
     });
   };
@@ -659,7 +765,10 @@ export default function ProductDetailScreen() {
             <ProductSlashIcon size={40} />
           </View>
           <Text style={styles.errorText}>Product not found</Text>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+          >
             <Text style={styles.backButtonText}>Go Back</Text>
           </TouchableOpacity>
         </View>
@@ -672,7 +781,7 @@ export default function ProductDetailScreen() {
       Alert.alert('Please select size and color');
       return;
     }
-    
+
     addToCart(product, quantity, selectedSize, selectedColor);
     setQuantity(1);
     setSelectedSize('');
@@ -681,23 +790,29 @@ export default function ProductDetailScreen() {
   };
 
   const handleReviewImage = (image: string) => {
-      setEnlargedPost(image);
-      Animated.parallel([
-        Animated.spring(scaleAnim, {
-          toValue: 1,
-          useNativeDriver: true,
-          tension: 50,
-          friction: 8,
-        }),
-        Animated.timing(opacityAnim, {
-          toValue: 1,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    };
+    setEnlargedImage(image);
+    Animated.parallel([
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        useNativeDriver: true,
+        tension: 50,
+        friction: 8,
+      }),
+      Animated.timing(opacityAnim, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
 
-  const renderImageItem = ({ item, index }: { item: string; index: number }) => (
+  const renderImageItem = ({
+    item,
+    index,
+  }: {
+    item: string;
+    index: number;
+  }) => (
     <TouchableOpacity onPress={() => setSelectedImageIndex(index)}>
       <Image source={{ uri: item }} style={styles.thumbnailImage} />
     </TouchableOpacity>
@@ -820,7 +935,6 @@ export default function ProductDetailScreen() {
     }
   };
 
-
   const pickReviewImages = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
@@ -829,7 +943,7 @@ export default function ProductDetailScreen() {
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"],
+      mediaTypes: ['images'],
       allowsMultipleSelection: true,
       quality: 0.8,
       selectionLimit: 3,
@@ -838,6 +952,61 @@ export default function ProductDetailScreen() {
     if (!result.canceled) {
       const selected = result.assets.map((asset) => asset.uri);
       setReviewImages([...reviewImages, ...selected]);
+    }
+  };
+
+  const handleShare = () => {
+    Alert.alert('Share Product', `Share ${product?.name}`);
+  };
+
+  const handleReport = async () => {
+    if (!reportReason.trim() || !user || !product) return;
+
+    const reasonMap: { [key: string]: string } = {
+      'Counterfeit Product': 'fraud',
+      'Inappropriate Content': 'inappropriate_content',
+      'Misleading Information': 'other',
+      'Copyright Violation': 'copyright_violation',
+      'Prohibited Item': 'other',
+      'Other': 'other',
+    };
+
+    try {
+      const payload = {
+        reportedItem: {
+          itemType: 'product',
+          itemId: product._id,
+        },
+        type: reasonMap[reportReason] || 'other',
+        description:
+          reportDescription.trim() || 'No additional details provided',
+      };
+
+      console.log('Submitting report with payload:', payload);
+
+      const response = await axios.post(`${API_URL}/api/report`, payload, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      console.log('Report response:', response.data);
+
+      if (response.data.status) {
+        setShowReportModal(false);
+        setReportReason('');
+        setReportDescription('');
+        Alert.alert(
+          'Report Submitted',
+          'Thank you for your report. We will review it shortly.'
+        );
+        console.log('Report submitted successfully');
+      }
+    } catch (err) {
+      console.error('Error submitting report:', err);
+      if (axios.isAxiosError(err) && err.response) {
+        console.error('Response data:', err.response.data);
+        console.error('Response status:', err.response.status);
+      }
+      Alert.alert('Error', 'Failed to submit report. Please try again.');
     }
   };
 
@@ -853,7 +1022,9 @@ export default function ProductDetailScreen() {
       >
         <View style={styles.reviewHeader}>
           <TouchableOpacity
-            onPress={() => router.push(`/${item.user.type}/${item.user._id}` as any)}
+            onPress={() =>
+              router.push(`/${item.user.type}/${item.user._id}` as any)
+            }
           >
             <Image
               source={{ uri: item.user.avatar }}
@@ -862,7 +1033,9 @@ export default function ProductDetailScreen() {
           </TouchableOpacity>
           <View style={styles.reviewInfo}>
             <TouchableOpacity
-              onPress={() => router.push(`/${item.user.type}/${item.user._id}` as any)}
+              onPress={() =>
+                router.push(`/${item.user.type}/${item.user._id}` as any)
+              }
             >
               <View style={styles.userNameRow}>
                 <Text style={styles.storeName}>{item.user.username}</Text>
@@ -918,15 +1091,18 @@ export default function ProductDetailScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.headerButton} onPress={() => router.back()}>
+        <TouchableOpacity
+          style={styles.headerButton}
+          onPress={() => router.back()}
+        >
           <ArrowLeft size={24} color={theme.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{product.name}</Text>
         <View style={styles.headerActions}>
-          <TouchableOpacity style={styles.headerButton}>
+          <TouchableOpacity style={styles.headerButton} onPress={handleShare}>
             <Share size={24} color={theme.text} />
           </TouchableOpacity>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.headerButton}
             onPress={() => addToWishlist(product)}
           >
@@ -935,6 +1111,12 @@ export default function ProductDetailScreen() {
               color={theme.text}
               fill={isInWishlist(product._id) ? theme.text : 'transparent'}
             />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.headerButton}
+            onPress={() => setShowMoreMenu(true)}
+          >
+            <MoreHorizontal size={24} color={theme.text} />
           </TouchableOpacity>
         </View>
       </View>
@@ -947,8 +1129,7 @@ export default function ProductDetailScreen() {
             style={styles.mainImage}
             resizeMode="contain"
           />
-        </View>           
-
+        </View>
 
         {/* Image Thumbnails */}
         <FlatList
@@ -966,7 +1147,12 @@ export default function ProductDetailScreen() {
           <Text style={styles.productBrand}>{product.shopId.fullName}</Text>
           <Text style={styles.productName}>{product.name}</Text>
           <View style={styles.priceContainer}>
-            <Text style={styles.productPrice}>${(product.discount && product.discount > 0 ? (product.price * (1 - product.discount / 100)).toFixed(2) : product.price)}</Text>
+            <Text style={styles.productPrice}>
+              $
+              {product.discount && product.discount > 0
+                ? (product.price * (1 - product.discount / 100)).toFixed(2)
+                : product.price}
+            </Text>
             {product.discount && product.discount > 0 && (
               <Text style={styles.originalPrice}>${product.price}</Text>
             )}
@@ -977,11 +1163,20 @@ export default function ProductDetailScreen() {
                 <Star
                   key={i}
                   size={16}
-                  color={i < Math.floor(product.rating) ? '#FFD700' : theme.textSecondary}
-                  fill={i < Math.floor(product.rating) ? '#FFD700' : 'transparent'}
+                  color={
+                    i < Math.floor(product.rating)
+                      ? '#FFD700'
+                      : theme.textSecondary
+                  }
+                  fill={
+                    i < Math.floor(product.rating) ? '#FFD700' : 'transparent'
+                  }
                 />
               ))}
-              <Text style={styles.ratingText}>{(product.rating / (product.ratingCount || 1)).toFixed(1)} ({product.ratingCount} reviews)</Text>
+              <Text style={styles.ratingText}>
+                {(product.rating / (product.ratingCount || 1)).toFixed(1)} (
+                {product.ratingCount} reviews)
+              </Text>
             </View>
           </View>
 
@@ -992,7 +1187,10 @@ export default function ProductDetailScreen() {
         <View style={styles.storeSection}>
           <Text style={styles.sectionTitle}>Store</Text>
           <View style={styles.storeInfo}>
-            <Image source={{ uri: shopProfile?.avatar }} style={styles.storeAvatar} />
+            <Image
+              source={{ uri: shopProfile?.avatar }}
+              style={styles.storeAvatar}
+            />
             <View style={styles.storeDetails}>
               <View style={styles.userNameRow}>
                 <Text style={styles.storeName}>{shopProfile?.fullName}</Text>
@@ -1007,14 +1205,22 @@ export default function ProductDetailScreen() {
                   <Star size={14} color="#FFD700" fill="#FFD700" />
                   <Text style={styles.storeRatingText}>
                     {(shopProfile?.shop?.ratingCount ?? 0) > 0
-                      ? ((shopProfile?.shop?.rating ?? 0) / (shopProfile?.shop?.ratingCount ?? 1)).toFixed(1)
+                      ? (
+                          (shopProfile?.shop?.rating ?? 0) /
+                          (shopProfile?.shop?.ratingCount ?? 1)
+                        ).toFixed(1)
                       : '0.0'}
                   </Text>
                 </View>
-                <Text style={styles.storeFollowers}>{shopProfile?.followers.length} followers</Text>
+                <Text style={styles.storeFollowers}>
+                  {shopProfile?.followers.length} followers
+                </Text>
               </View>
             </View>
-            <TouchableOpacity style={styles.visitStoreButton} onPress={() => router.push(`/shop/${shopProfile?._id}`)}>
+            <TouchableOpacity
+              style={styles.visitStoreButton}
+              onPress={() => router.push(`/shop/${shopProfile?._id}`)}
+            >
               <Store size={16} color="#000" />
               <Text style={styles.visitStoreText}>Visit</Text>
             </TouchableOpacity>
@@ -1030,14 +1236,16 @@ export default function ProductDetailScreen() {
                 key={size}
                 style={[
                   styles.optionButton,
-                  selectedSize === size && styles.optionButtonActive
+                  selectedSize === size && styles.optionButtonActive,
                 ]}
                 onPress={() => setSelectedSize(size)}
               >
-                <Text style={[
-                  styles.optionButtonText,
-                  selectedSize === size && styles.optionButtonTextActive
-                ]}>
+                <Text
+                  style={[
+                    styles.optionButtonText,
+                    selectedSize === size && styles.optionButtonTextActive,
+                  ]}
+                >
                   {size}
                 </Text>
               </TouchableOpacity>
@@ -1054,14 +1262,16 @@ export default function ProductDetailScreen() {
                 key={color}
                 style={[
                   styles.optionButton,
-                  selectedColor === color && styles.optionButtonActive
+                  selectedColor === color && styles.optionButtonActive,
                 ]}
                 onPress={() => setSelectedColor(color)}
               >
-                <Text style={[
-                  styles.optionButtonText,
-                  selectedColor === color && styles.optionButtonTextActive
-                ]}>
+                <Text
+                  style={[
+                    styles.optionButtonText,
+                    selectedColor === color && styles.optionButtonTextActive,
+                  ]}
+                >
                   {color}
                 </Text>
               </TouchableOpacity>
@@ -1073,16 +1283,24 @@ export default function ProductDetailScreen() {
         <View style={styles.quantitySection}>
           <Text style={styles.optionTitle}>Quantity</Text>
           <View style={styles.quantityControls}>
-            <TouchableOpacity 
-              style={[styles.quantityButton, (!product.stock || quantity <= 1) && styles.quantityButtonDisabled]}
+            <TouchableOpacity
+              style={[
+                styles.quantityButton,
+                (!product.stock || quantity <= 1) &&
+                  styles.quantityButtonDisabled,
+              ]}
               onPress={() => setQuantity(Math.max(1, quantity - 1))}
               disabled={!product.stock || quantity <= 1}
             >
               <Minus size={20} color="#000" />
             </TouchableOpacity>
             <Text style={styles.quantityText}>{quantity}</Text>
-            <TouchableOpacity 
-              style={[styles.quantityButton, (!product.stock || quantity >= product.stock) && styles.quantityButtonDisabled]}
+            <TouchableOpacity
+              style={[
+                styles.quantityButton,
+                (!product.stock || quantity >= product.stock) &&
+                  styles.quantityButtonDisabled,
+              ]}
               onPress={() => setQuantity(Math.min(product.stock, quantity + 1))}
               disabled={!product.stock || quantity >= product.stock}
             >
@@ -1094,34 +1312,42 @@ export default function ProductDetailScreen() {
         {/* Reviews */}
         <View style={styles.reviewsSection}>
           <Text style={styles.sectionTitle}>Reviews ({reviews.length})</Text>
-            {!hasReviewed && (
-              <>
-                <Text style={styles.reviewHeading}>Leave a review</Text>
-                <RatingStars rating={rating} onPress={setRating} />
-                <ReviewInput
-                  reviewInputRef={reviewInputRef}
-                  value={newReview}
-                  onChangeText={setNewReview}
-                  onSend={handleSubmitReview}
-                  onCancel={cancelEditReview}
-                  isEditing={!!editingReview}
-                />
-                <View style={{ marginTop: 8 }}>
-                  <TouchableOpacity onPress={pickReviewImages} style={styles.addImageBtn}>
-                    <Text style={{ color: '#000' }}>+ Add Images</Text>
-                  </TouchableOpacity>
+          {!hasReviewed && (
+            <>
+              <Text style={styles.reviewHeading}>Leave a review</Text>
+              <RatingStars rating={rating} onPress={setRating} />
+              <ReviewInput
+                reviewInputRef={reviewInputRef}
+                value={newReview}
+                onChangeText={setNewReview}
+                onSend={handleSubmitReview}
+                onCancel={cancelEditReview}
+                isEditing={!!editingReview}
+              />
+              <View style={{ marginTop: 8 }}>
+                <TouchableOpacity
+                  onPress={pickReviewImages}
+                  style={styles.addImageBtn}
+                >
+                  <Text style={{ color: '#000' }}>+ Add Images</Text>
+                </TouchableOpacity>
 
-                  <ScrollView horizontal style={{ marginTop: 8 }}>
-                    {reviewImages.map((uri, i) => (
-                      <Image
-                        key={i}
-                        source={{ uri }}
-                        style={{ width: 80, height: 80, marginRight: 8, borderRadius: 8 }}
-                      />
-                    ))}
-                  </ScrollView>
-                </View>
-              </>
+                <ScrollView horizontal style={{ marginTop: 8 }}>
+                  {reviewImages.map((uri, i) => (
+                    <Image
+                      key={i}
+                      source={{ uri }}
+                      style={{
+                        width: 80,
+                        height: 80,
+                        marginRight: 8,
+                        borderRadius: 8,
+                      }}
+                    />
+                  ))}
+                </ScrollView>
+              </View>
+            </>
           )}
           <FlatList
             data={reviews}
@@ -1136,15 +1362,29 @@ export default function ProductDetailScreen() {
 
       {/* Add to Cart Button */}
       <View style={styles.footer}>
-        <TouchableOpacity style={[styles.addToCartButton, !product.stock && styles.addToCartButtonDisabled]} onPress={handleAddToCart} disabled={!product.stock}>
+        <TouchableOpacity
+          style={[
+            styles.addToCartButton,
+            !product.stock && styles.addToCartButtonDisabled,
+          ]}
+          onPress={handleAddToCart}
+          disabled={!product.stock}
+        >
           {product.stock ? <ShoppingCart size={20} color="#000" /> : null}
-          <Text style={[styles.addToCartText, !product.stock && styles.addToCartButtonDisabledText]}>{!product.stock ? 'Out of Stock' : 'Add to Cart'}</Text>
+          <Text
+            style={[
+              styles.addToCartText,
+              !product.stock && styles.addToCartButtonDisabledText,
+            ]}
+          >
+            {!product.stock ? 'Out of Stock' : 'Add to Cart'}
+          </Text>
         </TouchableOpacity>
       </View>
 
-      {enlargedPost && (
+      {enlargedImage && (
         <Modal
-          visible={!!enlargedPost}
+          visible={!!enlargedImage}
           transparent
           animationType="none"
           onRequestClose={handleCloseEnlarged}
@@ -1171,7 +1411,7 @@ export default function ProductDetailScreen() {
               ]}
             >
               <Image
-                source={{ uri: enlargedPost }}
+                source={{ uri: enlargedImage }}
                 style={styles.enlargedImage}
               />
             </Animated.View>
@@ -1217,6 +1457,137 @@ export default function ProductDetailScreen() {
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
+      </Modal>
+
+      {/* Menu Modal */}
+      <Modal
+        visible={showMoreMenu}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowMoreMenu(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowMoreMenu(false)}
+        >
+          <View style={styles.moreMenu}>
+            <View style={styles.moreMenuHeader}>
+              <Text style={styles.moreMenuTitle}>More Options</Text>
+              <TouchableOpacity onPress={() => setShowMoreMenu(false)}>
+                <X size={24} color={theme.text} />
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity style={styles.moreMenuItem} onPress={handleShare}>
+              <Share size={20} color={theme.text} />
+              <Text style={styles.moreMenuItemText}>Share Product</Text>
+            </TouchableOpacity>
+
+            {product && product.shopId._id !== user?._id && (
+              <TouchableOpacity
+                style={styles.moreMenuItem}
+                onPress={() => {
+                  setShowMoreMenu(false);
+                  setShowReportModal(true);
+                }}
+              >
+                <Flag size={20} color={theme.error} />
+                <Text style={[styles.moreMenuItemText, { color: theme.error }]}>
+                  Report Product
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      <Modal
+        visible={showReportModal}
+        animationType="fade"
+        transparent
+        onRequestClose={() => setShowReportModal(false)}
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <View style={styles.reportModal}>
+            <View style={styles.reportContainer}>
+              <View style={styles.reportHeader}>
+                <Text style={styles.reportTitle}>Report Product</Text>
+                <TouchableOpacity onPress={() => setShowReportModal(false)}>
+                  <X size={24} color={theme.text} />
+                </TouchableOpacity>
+              </View>
+
+              <Text
+                style={[
+                  styles.reportOptionText,
+                  { marginBottom: 12, color: theme.textSecondary },
+                ]}
+              >
+                Why are you reporting this product?
+              </Text>
+
+              {[
+                'Counterfeit Product',
+                'Inappropriate Content',
+                'Misleading Information',
+                'Copyright Violation',
+                'Prohibited Item',
+                'Other',
+              ].map((reason) => (
+                <TouchableOpacity
+                  key={reason}
+                  style={[
+                    styles.reportOption,
+                    reportReason === reason && styles.reportOptionSelected,
+                  ]}
+                  onPress={() => setReportReason(reason)}
+                >
+                  <Text style={styles.reportOptionText}>{reason}</Text>
+                </TouchableOpacity>
+              ))}
+
+              <TextInput
+                style={styles.reportInput}
+                placeholder="Additional details (optional)"
+                placeholderTextColor={theme.textSecondary}
+                value={reportDescription}
+                onChangeText={setReportDescription}
+                multiline
+              />
+
+              <View style={styles.reportButtons}>
+                <TouchableOpacity
+                  style={[styles.reportButton, styles.reportButtonCancel]}
+                  onPress={() => setShowReportModal(false)}
+                >
+                  <Text
+                    style={[
+                      styles.reportButtonText,
+                      styles.reportButtonTextCancel,
+                    ]}
+                  >
+                    Cancel
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.reportButton, styles.reportButtonSubmit]}
+                  onPress={handleReport}
+                  disabled={!reportReason.trim()}
+                >
+                  <Text
+                    style={[
+                      styles.reportButtonText,
+                      styles.reportButtonTextSubmit,
+                    ]}
+                  >
+                    Submit
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </TouchableWithoutFeedback>
       </Modal>
     </SafeAreaView>
   );

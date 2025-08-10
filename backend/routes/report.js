@@ -7,7 +7,9 @@ import {
   getReportById,
   updateReport,
   takeModerationAction,
-  getReportStats
+  getReportStats,
+  clearOldReports,
+  clearResolvedReports
 } from '../controllers/reportController.js';
 
 const router = express.Router();
@@ -41,5 +43,15 @@ router.put('/:id', protect, adminAuth, updateReport);
 // @desc    Take moderation action on reported item
 // @access  Private (Admin only)
 router.post('/:id/moderate', protect, adminAuth, takeModerationAction);
+
+// @route   DELETE /api/reports/cleanup
+// @desc    Clear reports older than 7 days
+// @access  Private (Admin only)
+router.delete('/cleanup', protect, adminAuth, clearOldReports);
+
+// @route   DELETE /api/reports/cleanup-resolved
+// @desc    Clear resolved and dismissed reports
+// @access  Private (Admin only)
+router.delete('/cleanup-resolved', protect, adminAuth, clearResolvedReports);
 
 export default router;

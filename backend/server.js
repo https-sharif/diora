@@ -47,9 +47,14 @@ app.use('/api/search', searchRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/order', orderRoutes);
-app.use('/api/reports', reportRoutes);
+app.use('/api/report', reportRoutes);
+
+import { autoCleanupReports } from './controllers/reportController.js';
 
 const server = http.createServer(app);
 const io = initSocket(server);
+
+autoCleanupReports();
+setInterval(autoCleanupReports, 24 * 60 * 60 * 1000);
 
 server.listen(PORT, '0.0.0.0', () => console.log(`Server running on port ${PORT}`));

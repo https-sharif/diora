@@ -14,7 +14,7 @@ import {
   Platform,
   Animated,
 } from 'react-native';
-import { Star, MessageCircle, X, Send, Check } from 'lucide-react-native';
+import { Star, MessageCircle, X, Send, Check, Flag } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Post } from '@/types/Post';
 import { Comment } from '@/types/Comment';

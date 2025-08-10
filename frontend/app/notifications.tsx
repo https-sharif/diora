@@ -10,10 +10,11 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { ArrowLeft, Heart, MessageCircle, UserPlus, AtSign, Package, Tag, Trash2, Check, CheckCheck, Star, BellOff } from 'lucide-react-native';
+import { ArrowLeft, Heart, MessageCircle, UserPlus, AtSign, Package, Tag, Trash2, Check, CheckCheck, BellOff } from 'lucide-react-native';
 import { useNotification } from '@/hooks/useNotification';
 import { Notification } from '@/types/Notification';
 import { useTheme } from '@/contexts/ThemeContext';
+import { format } from 'timeago.js'
 import { useAuth } from '@/hooks/useAuth';
 
 const createStyle = (theme: any) => StyleSheet.create({
@@ -170,7 +171,7 @@ const createStyle = (theme: any) => StyleSheet.create({
 const getNotificationIcon = (type: Notification['type'], theme : any) => {
   switch (type) {
     case 'like':
-      return <Star size={20} color= "#FFD700" fill="#FFD700" />;
+      return <Heart size={20} color="#ff453a" fill="#ff453a" />;
     case 'comment':
       return <MessageCircle size={20} color="#1DA1F2" fill="#1DA1F2" />;
     case 'follow':
@@ -181,6 +182,8 @@ const getNotificationIcon = (type: Notification['type'], theme : any) => {
       return <Package size={20} color='#FF9500' />;
     case 'promotion':
       return <Tag size={20} color="#FF9FF3" />;
+    case 'warning':
+      return <BellOff size={20} color="#FF6B6B" />;
     default:
       return <Heart size={20} color="#ff453a" />;
   }
@@ -250,27 +253,6 @@ export default function NotificationsScreen() {
     exitSelectionMode();
   };
 
-  const formatTime = (timestamp: string) => {
-    const seconds = Math.floor((new Date().getTime() - new Date(timestamp).getTime()) / 1000);
-    const intervals = {
-      year: 31536000,
-      month: 2592000,
-      week: 604800,
-      day: 86400,
-      hour: 3600,
-      minute: 60,
-    };
-
-    for (const [unit, value] of Object.entries(intervals)) {
-      const count = Math.floor(seconds / value);
-      if (count >= 1) {
-        return `${count} ${unit}${count > 1 ? 's' : ''} ago`;
-      }
-    }
-
-    return `just now`;
-  };
-
   const renderNotification = ({ item }: { item: Notification }) => (
     <TouchableOpacity
       style={[
@@ -304,7 +286,7 @@ export default function NotificationsScreen() {
         <View style={styles.notificationBody}>
           <Text style={styles.notificationTitle}>{item.title}</Text>
           <Text style={styles.notificationMessage}>{item.message}</Text>
-          <Text style={styles.notificationTime}>{formatTime(item.timestamp)}</Text>
+          <Text style={styles.notificationTime}>{format(new Date(item.updatedAt))}</Text>
         </View>
 
         <View style={styles.notificationRight}>

@@ -9,6 +9,9 @@ import {
   FlatList,
   Modal,
   Alert,
+  TextInput,
+  Keyboard,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -318,6 +321,83 @@ const createStyles = (theme: Theme) => {
       fontFamily: 'Inter-Medium',
       color: theme.text,
     },
+    reportModal: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: 20,
+    },
+    reportContainer: {
+      backgroundColor: theme.card,
+      borderRadius: 12,
+      padding: 20,
+      width: '100%',
+      maxWidth: 400,
+    },
+    reportHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 20,
+    },
+    reportTitle: {
+      fontSize: 18,
+      fontFamily: 'Inter-SemiBold',
+      color: theme.text,
+    },
+    reportSubtitle: {
+      fontSize: 16,
+      fontFamily: 'Inter-Regular',
+      marginBottom: 16,
+    },
+    reportOption: {
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: theme.border,
+      marginBottom: 8,
+    },
+    reportOptionSelected: {
+      borderColor: theme.text,
+      backgroundColor: theme.background,
+    },
+    reportOptionText: {
+      fontSize: 16,
+      fontFamily: 'Inter-Regular',
+    },
+    reportInput: {
+      borderWidth: 1,
+      borderRadius: 8,
+      padding: 12,
+      marginTop: 12,
+      marginBottom: 20,
+      height: 80,
+      textAlignVertical: 'top',
+      fontSize: 14,
+      fontFamily: 'Inter-Regular',
+    },
+    reportButtons: {
+      flexDirection: 'row',
+      justifyContent: 'flex-end',
+      gap: 12,
+    },
+    reportButton: {
+      paddingVertical: 10,
+      paddingHorizontal: 20,
+      borderRadius: 8,
+    },
+    reportButtonCancel: {
+      borderWidth: 1,
+    },
+    reportButtonSubmit: {
+      // backgroundColor handled inline
+    },
+    reportButtonText: {
+      fontSize: 14,
+      fontFamily: 'Inter-Medium',
+    },
   });
 };
 
@@ -327,6 +407,9 @@ export default function UserProfileScreen() {
 
   const [userProfile, setUserProfile] = useState<User | null>(null);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportReason, setReportReason] = useState('');
+  const [reportDescription, setReportDescription] = useState('');
   const [loading, setLoading] = useState(true);
   const [isFollowing, setIsFollowing] = useState(false);
   const [selectedTab, setSelectedTab] = useState<'posts' | 'liked'>('posts');
@@ -385,21 +468,56 @@ export default function UserProfileScreen() {
     Alert.alert('Share Profile', `Share ${userProfile?.fullName}'s profile`);
   };
 
-  const handleReport = () => {
-    Alert.alert('Report User', 'Are you sure you want to report this user?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Report',
-        style: 'destructive',
-        onPress: () => {
-          Alert.alert(
-            'Reported',
-            'User has been reported. Thank you for keeping our community safe.'
-          );
-          setShowMoreMenu(false);
+  const handleReport = async () => {
+    if (!reportReason.trim() || !user || !userProfile) return;
+
+    // Map display text to backend enum values
+    const reasonMap: { [key: string]: string } = {
+      'Harassment': 'harassment',
+      'Spam': 'spam',
+      'Inappropriate Behavior': 'inappropriate_content',
+      'Fake Account': 'fraud',
+      'Other': 'other'
+    };
+
+    try {
+      const payload = {
+        reportedItem: {
+          itemType: 'user',
+          itemId: userProfile._id
         },
-      },
-    ]);
+        type: reasonMap[reportReason] || 'other',
+        description: reportDescription.trim() || 'No additional details provided'
+      };
+
+      console.log('Submitting report:', payload);
+
+      const response = await axios.post(`${API_URL}/api/report`, payload, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (response.data.status) {
+        setShowReportModal(false);
+        setShowMoreMenu(false);
+        setReportReason('');
+        setReportDescription('');
+        Alert.alert(
+          'Report Submitted', 
+          `Thank you for reporting this user. We will review it shortly.`
+        );
+      }
+      else {
+        console.log('Report submission failed:', response.data.message);
+      }
+
+    } catch (err) {
+      console.error('Error submitting report:', err);
+      Alert.alert('Error', 'Failed to submit report. Please try again.');
+    }
+  };
+
+  const getReportReasons = () => {
+    return ['Harassment', 'Spam', 'Inappropriate Behavior', 'Fake Account', 'Other'];
   };
 
   const handlePostPress = (postId: string) => {
@@ -504,7 +622,10 @@ export default function UserProfileScreen() {
         <View style={styles.headerActions}>
           <TouchableOpacity
             style={styles.headerButton}
-            onPress={() => setShowMoreMenu(true)}
+            onPress={() => {
+              console.log('Menu button pressed, setting showMoreMenu to true');
+              setShowMoreMenu(true);
+            }}
           >
             <MoreHorizontal size={24} color={theme.text} />
           </TouchableOpacity>
@@ -643,7 +764,7 @@ export default function UserProfileScreen() {
             <View style={styles.moreMenuHeader}>
               <Text style={styles.moreMenuTitle}>More Options</Text>
               <TouchableOpacity onPress={() => setShowMoreMenu(false)}>
-                <X size={24} color="#000" />
+                <X size={24} color={theme.text} />
               </TouchableOpacity>
             </View>
 
@@ -652,20 +773,26 @@ export default function UserProfileScreen() {
               <Text style={styles.moreMenuItemText}>Share Profile</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.moreMenuItem}
-              onPress={handleReport}
-            >
-              <Flag size={20} color={theme.error} />
-              <Text style={[styles.moreMenuItemText, { color: theme.error }]}>
-                Report User
-              </Text>
-            </TouchableOpacity>
+            {userProfile && userProfile._id !== user?._id && (
+              <TouchableOpacity
+                style={styles.moreMenuItem}
+                onPress={() => {
+                  setShowMoreMenu(false);
+                  setShowReportModal(true);
+                }}
+              >
+                <Flag size={20} color={theme.error} />
+                <Text style={[styles.moreMenuItemText, { color: theme.error }]}>
+                  Report User
+                </Text>
+              </TouchableOpacity>
+            )}
 
             <TouchableOpacity
               style={styles.moreMenuItem}
               onPress={() => {
                 Alert.alert('Block User', `Block ${userProfile.fullName}?`);
+                setShowMoreMenu(false);
               }}
             >
               <X size={20} color={theme.error} />
@@ -675,6 +802,86 @@ export default function UserProfileScreen() {
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
+      </Modal>
+
+      {/* Report Modal */}
+      <Modal
+        visible={showReportModal}
+        animationType="fade"
+        transparent
+        onRequestClose={() => setShowReportModal(false)}
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <View style={styles.reportModal}>
+            <View style={styles.reportContainer}>
+              <View style={styles.reportHeader}>
+                <Text style={styles.reportTitle}>Report User</Text>
+                <TouchableOpacity onPress={() => setShowReportModal(false)}>
+                  <X size={24} color={theme.text} />
+                </TouchableOpacity>
+              </View>
+
+              <Text style={[styles.reportSubtitle, { color: theme.textSecondary }]}>
+                Why are you reporting this user?
+              </Text>
+
+              {getReportReasons().map((reason) => (
+                <TouchableOpacity
+                  key={reason}
+                  style={[
+                    styles.reportOption,
+                    reportReason === reason && styles.reportOptionSelected,
+                  ]}
+                  onPress={() => setReportReason(reason)}
+                >
+                  <Text style={[
+                    styles.reportOptionText,
+                    { color: theme.text }
+                  ]}>
+                    {reason}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+
+              <TextInput
+                style={[styles.reportInput, { 
+                  color: theme.text,
+                  borderColor: theme.border 
+                }]}
+                placeholder="Additional details (optional)"
+                placeholderTextColor={theme.textSecondary}
+                value={reportDescription}
+                onChangeText={setReportDescription}
+                multiline
+              />
+
+              <View style={styles.reportButtons}>
+                <TouchableOpacity
+                  style={[styles.reportButton, styles.reportButtonCancel, {
+                    backgroundColor: theme.background,
+                    borderColor: theme.border
+                  }]}
+                  onPress={() => setShowReportModal(false)}
+                >
+                  <Text style={[styles.reportButtonText, { color: theme.text }]}>
+                    Cancel
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.reportButton, styles.reportButtonSubmit, {
+                    backgroundColor: theme.error
+                  }]}
+                  onPress={handleReport}
+                  disabled={!reportReason.trim()}
+                >
+                  <Text style={[styles.reportButtonText, { color: '#000' }]}>
+                    Submit
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </TouchableWithoutFeedback>
       </Modal>
     </SafeAreaView>
   );
