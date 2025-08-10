@@ -30,6 +30,9 @@ export interface User {
     productIds: Product[];
     rating: number;
     ratingCount: number;
+    businessType?: string;
+    yearsInBusiness?: string;
+    expectedProducts?: string;
   };
   avatarId?: string;
   settings: {

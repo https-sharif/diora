@@ -7,10 +7,11 @@ export interface Notification {
   productId?: string;
   title: string;
   message: string;
-  timestamp: string;
   read: boolean;
   avatar?: string;
   actionUrl?: string;
   orderId?: string;
   imageUrl?: string;
+  createdAt: string;
+  updatedAt: string;
 }

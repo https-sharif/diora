@@ -25,6 +25,7 @@ const createStyles = (theme: Theme) =>
     container: {
       flex: 1,
       backgroundColor: theme.background,
+      paddingVertical: -100,
     },
     header: {
       flexDirection: 'row',

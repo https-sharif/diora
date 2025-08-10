@@ -24,8 +24,7 @@ const createStyles = (theme: Theme) => {
     container: {
       flex: 1,
       backgroundColor: theme.background,
-      paddingTop: -100,
-      paddingBottom: -100,
+      paddingVertical: -100,
     },
     header: {
       paddingHorizontal: 16,

@@ -18,3 +18,6 @@ export const verifyToken = (req, res, next) => {
     return res.status(401).json({ status: false, message: 'Invalid or expired token' });
   }
 };
+
+// Alias for backward compatibility
+export const protect = verifyToken;

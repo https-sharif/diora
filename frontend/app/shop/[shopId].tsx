@@ -17,6 +17,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
+  Keyboard,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -48,10 +50,11 @@ import { User } from '@/types/User';
 import { Post } from '@/types/Post';
 import { Theme } from '@/types/Theme';
 import { useTheme } from '@/contexts/ThemeContext';
-import Color from 'color';
-import { BlurView } from 'expo-blur';
 import axios from 'axios';
 import { API_URL } from '@/constants/api';
+import MenuModal from '@/components/MenuModal';
+import Color from 'color';
+import { BlurView } from 'expo-blur';
 import { format as timeago } from 'timeago.js';
 import { format } from 'date-fns';
 import { EmptyState } from '@/components/EmptyState';
@@ -60,6 +63,7 @@ import StarSlashIcon from '@/icon/StarSlashIcon';
 import RatingStars from '@/components/RatingStar';
 import ReviewInput from '@/components/ReviewInput';
 import * as ImagePicker from 'expo-image-picker';
+import { set } from 'zod';
 
 const { width, height } = Dimensions.get('window');
 const isSmallScreen = width < 360;
@@ -622,6 +626,83 @@ const createStyles = (theme: Theme) => {
       height: width * 0.9,
       resizeMode: 'contain',
     },
+    reportModal: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: 20,
+    },
+    reportContainer: {
+      backgroundColor: theme.card,
+      borderRadius: 12,
+      padding: 20,
+      width: '100%',
+      maxWidth: 400,
+    },
+    reportHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 20,
+    },
+    reportTitle: {
+      fontSize: 18,
+      fontFamily: 'Inter-SemiBold',
+      color: theme.text,
+    },
+    reportSubtitle: {
+      fontSize: 16,
+      fontFamily: 'Inter-Regular',
+      marginBottom: 16,
+    },
+    reportOption: {
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: theme.border,
+      marginBottom: 8,
+    },
+    reportOptionSelected: {
+      borderColor: theme.text,
+      backgroundColor: theme.background,
+    },
+    reportOptionText: {
+      fontSize: 16,
+      fontFamily: 'Inter-Regular',
+    },
+    reportInput: {
+      borderWidth: 1,
+      borderRadius: 8,
+      padding: 12,
+      marginTop: 12,
+      marginBottom: 20,
+      height: 80,
+      textAlignVertical: 'top',
+      fontSize: 14,
+      fontFamily: 'Inter-Regular',
+    },
+    reportButtons: {
+      flexDirection: 'row',
+      justifyContent: 'flex-end',
+      gap: 12,
+    },
+    reportButton: {
+      paddingVertical: 10,
+      paddingHorizontal: 20,
+      borderRadius: 8,
+    },
+    reportButtonCancel: {
+      borderWidth: 1,
+    },
+    reportButtonSubmit: {
+      // backgroundColor handled inline
+    },
+    reportButtonText: {
+      fontSize: 14,
+      fontFamily: 'Inter-Medium',
+    },
   });
 };
 
@@ -631,6 +712,9 @@ export default function ShopProfileScreen() {
 
   const [shopProfile, setShopProfile] = useState<User | null>(null);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportReason, setReportReason] = useState('');
+  const [reportDescription, setReportDescription] = useState('');
   const [selectedTab, setSelectedTab] = useState<
     'posts' | 'products' | 'reviews'
   >('posts');
@@ -969,21 +1053,58 @@ export default function ShopProfileScreen() {
     Alert.alert('Share Shop', `Share ${shopProfile?.fullName}'s shop`);
   };
 
-  const handleReport = () => {
-    Alert.alert('Report Shop', 'Are you sure you want to report this shop?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Report',
-        style: 'destructive',
-        onPress: () => {
-          Alert.alert(
-            'Reported',
-            'Shop has been reported. Thank you for keeping our community safe.'
-          );
-          setShowMoreMenu(false);
+  const handleReport = async () => {
+    if (!reportReason.trim() || !user || !shopProfile) return;
+
+    const reasonMap: { [key: string]: string } = {
+      Spam: 'spam',
+      'Inappropriate Content': 'inappropriate_content',
+      Fraud: 'fraud',
+      'Copyright Violation': 'copyright_violation',
+      'Fake Business': 'fraud',
+      Other: 'other',
+    };
+
+    try {
+      const payload = {
+        reportedItem: {
+          itemType: 'shop',
+          itemId: shopProfile._id,
         },
-      },
-    ]);
+        type: reasonMap[reportReason] || 'other',
+        description:
+          reportDescription.trim() || 'No additional details provided',
+      };
+
+      const response = await axios.post(`${API_URL}/api/report`, payload, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (response.data.status) {
+        setShowReportModal(false);
+        setShowMoreMenu(false);
+        setReportReason('');
+        setReportDescription('');
+        Alert.alert(
+          'Report Submitted',
+          'Thank you for reporting this shop. We will review it shortly.'
+        );
+      }
+    } catch (err) {
+      console.error('Error submitting report:', err);
+      Alert.alert('Error', 'Failed to submit report. Please try again.');
+    }
+  };
+
+  const getReportReasons = () => {
+    return [
+      'Spam',
+      'Inappropriate Content',
+      'Fraud',
+      'Copyright Violation',
+      'Fake Business',
+      'Other',
+    ];
   };
 
   const handleProductPress = (productId: string) => {
@@ -1571,7 +1692,10 @@ export default function ShopProfileScreen() {
 
             <TouchableOpacity
               style={styles.moreMenuItem}
-              onPress={handleReport}
+              onPress={() => {
+                setShowMoreMenu(false);
+                setShowReportModal(true);
+              }}
             >
               <Flag size={20} color={theme.error} />
               <Text style={[styles.moreMenuItemText, { color: theme.error }]}>
@@ -1657,6 +1781,95 @@ export default function ShopProfileScreen() {
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
+      </Modal>
+
+      <Modal
+        visible={showReportModal}
+        animationType="fade"
+        transparent
+        onRequestClose={() => setShowReportModal(false)}
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <View style={styles.reportModal}>
+            <View style={styles.reportContainer}>
+              <View style={styles.reportHeader}>
+                <Text style={styles.reportTitle}>Report User</Text>
+                <TouchableOpacity onPress={() => setShowReportModal(false)}>
+                  <X size={24} color={theme.text} />
+                </TouchableOpacity>
+              </View>
+
+              <Text
+                style={[styles.reportSubtitle, { color: theme.textSecondary }]}
+              >
+                Why are you reporting this user?
+              </Text>
+
+              {getReportReasons().map((reason) => (
+                <TouchableOpacity
+                  key={reason}
+                  style={[
+                    styles.reportOption,
+                    reportReason === reason && styles.reportOptionSelected,
+                  ]}
+                  onPress={() => setReportReason(reason)}
+                >
+                  <Text style={[styles.reportOptionText, { color: theme.text }]}>
+                    {reason}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+
+              <TextInput
+                style={[
+                  styles.reportInput,
+                  {
+                    color: theme.text,
+                    borderColor: theme.border,
+                  },
+                ]}
+                placeholder="Additional details (optional)"
+                placeholderTextColor={theme.textSecondary}
+                value={reportDescription}
+                onChangeText={setReportDescription}
+                multiline
+              />
+
+              <View style={styles.reportButtons}>
+                <TouchableOpacity
+                  style={[
+                    styles.reportButton,
+                    styles.reportButtonCancel,
+                    {
+                      backgroundColor: theme.background,
+                      borderColor: theme.border,
+                    },
+                  ]}
+                  onPress={() => setShowReportModal(false)}
+                >
+                  <Text style={[styles.reportButtonText, { color: theme.text }]}>
+                    Cancel
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.reportButton,
+                    styles.reportButtonSubmit,
+                    {
+                      backgroundColor: theme.error,
+                    },
+                  ]}
+                  onPress={handleReport}
+                  disabled={!reportReason.trim()}
+                >
+                  <Text style={[styles.reportButtonText, { color: '#000' }]}>
+                    Submit
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </TouchableWithoutFeedback>
       </Modal>
     </SafeAreaView>
   );

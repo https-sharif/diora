@@ -37,7 +37,6 @@ import axios from 'axios';
 import { API_URL } from '@/constants/api';
 import LoadingView from '@/components/Loading';
 import debounce from 'lodash.debounce';
-
 const categories = [
   'All',
   'Men',
@@ -502,6 +501,8 @@ const initialFilter = {
 };
 
 export default function ShoppingScreen() {
+  const { user } = useAuth();
+
   const {
     cart,
     wishlist,
