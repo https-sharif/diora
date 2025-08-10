@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Theme } from '@/types/Theme';
+import { useAuthStore } from '@/stores/useAuthStore';
 
 const THEME_KEY = 'app_theme';
 
@@ -54,6 +55,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const loadTheme = async () => {
       try {
+        const user = useAuthStore.getState().user;
+        if (user?.settings?.theme) {
+          setIsDarkMode(user.settings.theme === 'dark');
+          return;
+        }
+
         const savedTheme = await AsyncStorage.getItem(THEME_KEY);
         if (savedTheme !== null) {
           setIsDarkMode(savedTheme === 'dark');
@@ -64,12 +71,26 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     };
 
     loadTheme();
+
+    const unsubscribe = useAuthStore.subscribe((state, prevState) => {
+      if (!prevState.user && state.user?.settings?.theme) {
+        setIsDarkMode(state.user.settings.theme === 'dark');
+      }
+      else if (state.user?.settings?.theme !== prevState.user?.settings?.theme) {
+        if (state.user?.settings?.theme) {
+          setIsDarkMode(state.user.settings.theme === 'dark');
+        }
+      }
+    });
+
+    return unsubscribe;
   }, []);
 
   const toggleTheme = async () => {
     try {
       const newTheme = !isDarkMode;
       setIsDarkMode(newTheme);
+      
       await AsyncStorage.setItem(THEME_KEY, newTheme ? 'dark' : 'light');
     } catch (e) {
       console.log('Failed to save theme:', e);

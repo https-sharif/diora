@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -425,6 +425,58 @@ export default function SettingsScreen() {
   const [showPromotionModal, setShowPromotionModal] = useState(false);
   const [downloadLoading, setDownloadLoading] = useState(false);
 
+  // Debounced settings save
+  const saveTimeoutRef = useRef<any>(null);
+
+  const saveSettings = useCallback(async (updatedSettings: any) => {
+    try {
+      await axios.put(`${API_URL}/api/user/settings`, {
+        theme: updatedSettings.theme,
+        notifications: updatedSettings.notifications
+      }, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      console.log('Settings saved successfully');
+    } catch (error) {
+      console.error('Error saving settings:', error);
+      showToast('error', 'Failed to save settings');
+    }
+  }, [token, showToast]);
+
+  const debouncedSaveSettings = useCallback((updatedUser: any) => {
+    // Clear existing timeout
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    
+    // Set new timeout to save after 1 second of no changes
+    saveTimeoutRef.current = setTimeout(() => {
+      saveSettings(updatedUser.settings);
+    }, 1000);
+  }, [saveSettings]);
+
+  const updateUserSettings = useCallback((updatedUser: any) => {
+    setUser(updatedUser);
+    debouncedSaveSettings(updatedUser);
+  }, [setUser, debouncedSaveSettings]);
+
+  const handleThemeToggle = useCallback(() => {
+    toggleTheme();
+    // Update user settings with new theme
+    if (user) {
+      const newTheme = isDarkMode ? 'light' : 'dark';
+      updateUserSettings({
+        ...user,
+        settings: {
+          ...user.settings,
+          theme: newTheme,
+        },
+      });
+    }
+  }, [toggleTheme, isDarkMode, user, updateUserSettings]);
+
   const openCamera = async () => {
     const permission = await ImagePicker.requestCameraPermissionsAsync();
     if (!permission.granted) return;
@@ -692,7 +744,7 @@ export default function SettingsScreen() {
               () => {
                 if (user?.type === 'shop') {
                   router.push('/shop/edit-profile');
-                } else {
+                } else if (user?.type === 'user' || user?.type === 'admin') {
                   router.push('/user/edit-profile');
                 }
               }
@@ -839,7 +891,7 @@ export default function SettingsScreen() {
               <Switch
                 value={user?.settings.notifications.likes}
                 onValueChange={(value) =>
-                  setUser({
+                  updateUserSettings({
                     ...user,
                     settings: {
                       ...user.settings,
@@ -864,7 +916,7 @@ export default function SettingsScreen() {
               <Switch
                 value={user?.settings.notifications.comments}
                 onValueChange={(value) =>
-                  setUser({
+                  updateUserSettings({
                     ...user,
                     settings: {
                       ...user.settings,
@@ -884,12 +936,162 @@ export default function SettingsScreen() {
 
             {renderSettingItem(
               <Bell size={20} color={theme.text} />,
+              'Follow Notifications',
+              'Get notified when someone follows you',
+              <Switch
+                value={user?.settings.notifications.follow}
+                onValueChange={(value) =>
+                  updateUserSettings({
+                    ...user,
+                    settings: {
+                      ...user.settings,
+                      notifications: {
+                        ...user.settings.notifications,
+                        follow: value,
+                      },
+                    },
+                  })
+                }
+                trackColor={{ false: theme.border, true: '#4CAF50' }}
+                thumbColor={
+                  user?.settings.notifications.follow ? '#fff' : '#f4f3f4'
+                }
+              />
+            )}
+
+            {renderSettingItem(
+              <Bell size={20} color={theme.text} />,
+              'Mention Notifications',
+              'Get notified when someone mentions you',
+              <Switch
+                value={user?.settings.notifications.mention}
+                onValueChange={(value) =>
+                  updateUserSettings({
+                    ...user,
+                    settings: {
+                      ...user.settings,
+                      notifications: {
+                        ...user.settings.notifications,
+                        mention: value,
+                      },
+                    },
+                  })
+                }
+                trackColor={{ false: theme.border, true: '#4CAF50' }}
+                thumbColor={
+                  user?.settings.notifications.mention ? '#fff' : '#f4f3f4'
+                }
+              />
+            )}
+
+            {user?.type === 'shop' && renderSettingItem(
+              <Bell size={20} color={theme.text} />,
+              'Order Notifications',
+              'Get notified about new orders',
+              <Switch
+                value={user?.settings.notifications.order}
+                onValueChange={(value) =>
+                  updateUserSettings({
+                    ...user,
+                    settings: {
+                      ...user.settings,
+                      notifications: {
+                        ...user.settings.notifications,
+                        order: value,
+                      },
+                    },
+                  })
+                }
+                trackColor={{ false: theme.border, true: '#4CAF50' }}
+                thumbColor={
+                  user?.settings.notifications.order ? '#fff' : '#f4f3f4'
+                }
+              />
+            )}
+
+            {renderSettingItem(
+              <Bell size={20} color={theme.text} />,
+              'System Notifications',
+              'Get notified about system updates and changes',
+              <Switch
+                value={user?.settings.notifications.system}
+                onValueChange={(value) =>
+                  updateUserSettings({
+                    ...user,
+                    settings: {
+                      ...user.settings,
+                      notifications: {
+                        ...user.settings.notifications,
+                        system: value,
+                      },
+                    },
+                  })
+                }
+                trackColor={{ false: theme.border, true: '#4CAF50' }}
+                thumbColor={
+                  user?.settings.notifications.system ? '#fff' : '#f4f3f4'
+                }
+              />
+            )}
+
+            {renderSettingItem(
+              <Bell size={20} color={theme.text} />,
+              'Warning Notifications',
+              'Get notified about account warnings',
+              <Switch
+                value={user?.settings.notifications.warning}
+                onValueChange={(value) =>
+                  updateUserSettings({
+                    ...user,
+                    settings: {
+                      ...user.settings,
+                      notifications: {
+                        ...user.settings.notifications,
+                        warning: value,
+                      },
+                    },
+                  })
+                }
+                trackColor={{ false: theme.border, true: '#4CAF50' }}
+                thumbColor={
+                  user?.settings.notifications.warning ? '#fff' : '#f4f3f4'
+                }
+              />
+            )}
+
+            {renderSettingItem(
+              <Bell size={20} color={theme.text} />,
+              'Report Updates',
+              'Get notified about updates on your reports',
+              <Switch
+                value={user?.settings.notifications.reportUpdate}
+                onValueChange={(value) =>
+                  updateUserSettings({
+                    ...user,
+                    settings: {
+                      ...user.settings,
+                      notifications: {
+                        ...user.settings.notifications,
+                        reportUpdate: value,
+                      },
+                    },
+                  })
+                }
+                trackColor={{ false: theme.border, true: '#4CAF50' }}
+                thumbColor={
+                  user?.settings.notifications.reportUpdate ? '#fff' : '#f4f3f4'
+                }
+              />
+            )}
+
+            {renderSettingItem(
+              <Bell size={20} color={theme.text} />,
               'Sales Alerts',
               'Get notified about sales and promotions',
               <Switch
                 value={user?.settings.notifications.promotion}
                 onValueChange={(value) =>
-                  setUser({
+                  updateUserSettings({
                     ...user,
                     settings: {
                       ...user.settings,
@@ -914,7 +1116,7 @@ export default function SettingsScreen() {
               <Switch
                 value={user?.settings.notifications.messages}
                 onValueChange={(value) =>
-                  setUser({
+                  updateUserSettings({
                     ...user,
                     settings: {
                       ...user.settings,
@@ -947,7 +1149,7 @@ export default function SettingsScreen() {
                       { borderColor: theme.border },
                     ]}
                     onPress={() =>
-                      setUser({
+                      updateUserSettings({
                         ...user,
                         settings: {
                           ...user.settings,
@@ -992,7 +1194,7 @@ export default function SettingsScreen() {
               'Switch between light and dark themes',
               <Switch
                 value={isDarkMode}
-                onValueChange={toggleTheme}
+                onValueChange={handleThemeToggle}
                 trackColor={{ false: theme.border, true: '#4CAF50' }}
                 thumbColor={isDarkMode ? '#fff' : '#f4f3f4'}
               />

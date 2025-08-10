@@ -17,6 +17,8 @@ interface NotificationStore {
   deleteNotification: (id: string) => void;
   clearAllNotifications: () => void;
   reset: () => void;
+  shouldShowNotification: (type: string) => boolean;
+  isNotificationEnabled: (type: string) => boolean;
 }
 
 export const useNotificationStore = create<NotificationStore>((set, get) => {
@@ -111,6 +113,16 @@ export const useNotificationStore = create<NotificationStore>((set, get) => {
       if (!user || !token || user._id === toUserId) return;
 
       try {
+        let shouldSendNotification = true;
+
+        if (toUserId === user._id) {
+          shouldSendNotification = get().isNotificationEnabled(data.type);
+          if (!shouldSendNotification) {
+            console.log(`Local check: Notification type '${data.type}' is disabled`);
+            return;
+          }
+        }
+
         const settingsRes = await axios.get(
           `${API_URL}/api/user/settings/${toUserId}`,
           { headers: { Authorization: `Bearer ${token}` } }
@@ -119,7 +131,10 @@ export const useNotificationStore = create<NotificationStore>((set, get) => {
         if (!settingsRes.data.status) return;
 
         const notify = settingsRes.data.settings.notifications?.[data.type];
-        if (!notify) return;
+        if (!notify) {
+          console.log(`Backend check: Notification type '${data.type}' is disabled for recipient`);
+          return;
+        }
 
         const notifRes = await axios.post(
           `${API_URL}/api/notification/add`,
@@ -147,6 +162,11 @@ export const useNotificationStore = create<NotificationStore>((set, get) => {
 
     handleIncomingNotification: (notification) => {
       console.log('Received socket notification:', notification);
+
+      if (!get().shouldShowNotification(notification.type)) {
+        console.log(`Notification type '${notification.type}' is disabled for user`);
+        return;
+      }
 
       const newNotification: Notification = {
         ...notification,
@@ -186,5 +206,43 @@ export const useNotificationStore = create<NotificationStore>((set, get) => {
     clearAllNotifications: () => set({ notifications: [], unreadCount: 0 }),
 
     reset: () => set({ notifications: [], unreadCount: 0 }),
+
+    isNotificationEnabled: (type: string) => {
+      const user = useAuthStore.getState().user;
+      if (!user?.settings?.notifications) return true; 
+
+      const notificationMap: { [key: string]: keyof typeof user.settings.notifications } = {
+        'like': 'likes',
+        'likes': 'likes',
+        'comment': 'comments',
+        'comments': 'comments',
+        'follow': 'follow',
+        'mention': 'mention',
+        'order': 'order',
+        'promotion': 'promotion',
+        'system': 'system',
+        'warning': 'warning',
+        'reportUpdate': 'reportUpdate',
+        'message': 'messages',
+        'messages': 'messages',
+      };
+
+      const settingKey = notificationMap[type];
+      if (!settingKey) return true;
+      
+      const settingValue = user.settings.notifications[settingKey];
+      return typeof settingValue === 'boolean' ? settingValue : true;
+    },
+
+    shouldShowNotification: (type: string) => {
+      const user = useAuthStore.getState().user;
+      if (!user) return false;
+
+      if (!get().isNotificationEnabled(type)) return false;
+
+      if (user.status === 'banned' || user.status === 'suspended') return false;
+
+      return true;
+    },
   };
 });
