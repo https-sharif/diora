@@ -27,6 +27,7 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -70,7 +71,7 @@ const createStyles = (theme: Theme) =>
       flexDirection: 'row',
       justifyContent: 'space-around',
       paddingVertical: 16,
-      backgroundColor: theme.card,
+      backgroundColor: theme.background,
       marginBottom: 8,
     },
     statItem: {
@@ -88,7 +89,7 @@ const createStyles = (theme: Theme) =>
     },
     categoryTabs: {
       flexDirection: 'row',
-      backgroundColor: theme.card,
+      backgroundColor: theme.background,
       paddingHorizontal: 4,
       paddingVertical: 8,
       marginBottom: 8,
@@ -98,8 +99,11 @@ const createStyles = (theme: Theme) =>
       paddingVertical: 8,
       paddingHorizontal: 12,
       marginHorizontal: 2,
-      borderRadius: 6,
+      borderRadius: 20,
+      backgroundColor: theme.card,
       alignItems: 'center',
+      borderWidth: 1,
+      borderColor: theme.border,
     },
     categoryTabActive: {
       backgroundColor: theme.primary,
@@ -107,7 +111,7 @@ const createStyles = (theme: Theme) =>
     categoryTabText: {
       fontSize: 12,
       fontFamily: 'Inter-Medium',
-      color: theme.textSecondary,
+      color: theme.text,
     },
     categoryTabTextActive: {
       color: '#000',
@@ -116,7 +120,7 @@ const createStyles = (theme: Theme) =>
       flexDirection: 'row',
       paddingHorizontal: 16,
       paddingVertical: 8,
-      backgroundColor: theme.card,
+      backgroundColor: theme.background,
       marginBottom: 8,
     },
     searchInput: {
@@ -128,7 +132,7 @@ const createStyles = (theme: Theme) =>
       paddingHorizontal: 12,
       marginRight: 8,
       color: theme.text,
-      backgroundColor: theme.background,
+      backgroundColor: theme.card,
     },
     filterButton: {
       width: 40,
@@ -334,7 +338,6 @@ const createStyles = (theme: Theme) =>
       backgroundColor: theme.border,
       marginTop: 8,
     },
-    // Modal styles
     reportModal: {
       flex: 1,
       backgroundColor: 'rgba(0, 0, 0, 0.5)',
@@ -392,7 +395,6 @@ export default function ReportsManagement() {
   const { theme } = useTheme();
   const { user, token } = useAuth();
   
-  // Categories for report filtering
   const categories = [
     { id: 'all', label: 'All', icon: Shield },
     { id: 'user', label: 'Users', icon: null },
@@ -404,12 +406,15 @@ export default function ReportsManagement() {
   const [reports, setReports] = useState<Report[]>([]);
   const [stats, setStats] = useState<ReportStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [reportsLoading, setReportsLoading] = useState(false);
+  const [statsLoading, setStatsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [activeCategory, setActiveCategory] = useState('all');
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [showActionModal, setShowActionModal] = useState(false);
   const [showActionsMenu, setShowActionsMenu] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const styles = createStyles(theme);
 
@@ -419,12 +424,16 @@ export default function ReportsManagement() {
       return;
     }
     fetchReports();
-    fetchStats();
   }, [user, activeCategory, filterStatus]);
 
   const fetchReports = async () => {
     try {
-      setLoading(true);
+      if (reports.length === 0) {
+        setLoading(true);
+      } else {
+        setReportsLoading(true);
+      }
+      
       const response = await axios.get(`${API_URL}/api/report`, {
         headers: { Authorization: `Bearer ${token}` },
         params: {
@@ -438,16 +447,20 @@ export default function ReportsManagement() {
         setReports(response.data.reports);
         console.log('Fetched reports:', response.data.reports);
       }
+      
+      await fetchStats();
     } catch (error) {
       console.error('Fetch reports error:', error);
       Alert.alert('Error', 'Failed to fetch reports');
     } finally {
       setLoading(false);
+      setReportsLoading(false);
     }
   };
 
   const fetchStats = async () => {
     try {
+      setStatsLoading(true);
       const response = await axios.get(`${API_URL}/api/report/stats`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -457,7 +470,18 @@ export default function ReportsManagement() {
       }
     } catch (error) {
       console.error('Fetch stats error:', error);
+    } finally {
+      setStatsLoading(false);
     }
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await Promise.all([
+      fetchReports(),
+      fetchStats()
+    ]);
+    setRefreshing(false);
   };
 
   const updateReportStatus = async (
@@ -502,8 +526,7 @@ export default function ReportsManagement() {
 
       if (response.data.status) {
         Alert.alert('Success', 'Moderation action completed');
-        fetchReports();
-        fetchStats();
+        fetchReports(); // This now includes fetchStats()
         setShowActionModal(false);
         setSelectedReport(null);
       }
@@ -536,8 +559,7 @@ export default function ReportsManagement() {
                     'Success',
                     `Cleared ${response.data.deletedCount} old reports`
                   );
-                  fetchReports(); // Refresh reports
-                  fetchStats(); // Refresh stats
+                  fetchReports(); // This now includes fetchStats()
                 } else {
                   Alert.alert('Error', 'Failed to clear old reports');
                 }
@@ -578,8 +600,7 @@ export default function ReportsManagement() {
                     'Success',
                     `Cleared ${response.data.deletedCount} resolved/dismissed reports`
                   );
-                  fetchReports(); // Refresh reports
-                  fetchStats(); // Refresh stats
+                  fetchReports(); // This now includes fetchStats()
                 } else {
                   Alert.alert(
                     'Error',
@@ -621,13 +642,13 @@ export default function ReportsManagement() {
   const getItemTypeColor = (itemType: string) => {
     switch (itemType) {
       case 'user':
-        return '#3B82F6'; // Blue
+        return '#3B82F6';
       case 'post':
-        return '#8B5CF6'; // Purple
+        return '#8B5CF6';
       case 'product':
-        return '#F59E0B'; // Orange
+        return '#F59E0B';
       case 'shop':
-        return '#10B981'; // Green
+        return '#10B981';
       default:
         return theme.textSecondary;
     }
@@ -813,7 +834,7 @@ export default function ReportsManagement() {
     );
   };
 
-  if (loading) {
+  if (loading && reports.length === 0) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
@@ -842,6 +863,60 @@ export default function ReportsManagement() {
             <Filter size={20} color="#000" />
           </TouchableOpacity>
         </View>
+
+        {/* Stats - Keep visible during loading */}
+        {stats && (
+          <View style={styles.statsContainer}>
+            <View style={styles.statItem}>
+              <Text style={[styles.statNumber, { color: '#F59E0B' }]}>
+                {stats.pending}
+              </Text>
+              <Text style={styles.statLabel}>Pending</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={[styles.statNumber, { color: '#3B82F6' }]}>
+                {stats.underReview}
+              </Text>
+              <Text style={styles.statLabel}>Reviewing</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={[styles.statNumber, { color: '#10B981' }]}>
+                {stats.resolved}
+              </Text>
+              <Text style={styles.statLabel}>Resolved</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={[styles.statNumber, { color: '#EF4444' }]}>
+                {stats.urgent}
+              </Text>
+              <Text style={styles.statLabel}>Urgent</Text>
+            </View>
+          </View>
+        )}
+
+        {/* Category Tabs */}
+        <View style={styles.categoryTabs}>
+          {categories.map((category) => (
+            <TouchableOpacity
+              key={category.id}
+              style={[
+                styles.categoryTab,
+                activeCategory === category.id && styles.categoryTabActive,
+              ]}
+              onPress={() => setActiveCategory(category.id)}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text style={[
+                  styles.categoryTabText,
+                  activeCategory === category.id && styles.categoryTabTextActive,
+                ]}>
+                  {category.label}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.primary} />
           <Text style={{ color: theme.textSecondary, marginTop: 16 }}>
@@ -923,26 +998,41 @@ export default function ReportsManagement() {
             ]}
             onPress={() => setActiveCategory(category.id)}
           >
-            <Text style={[
-              styles.categoryTabText,
-              activeCategory === category.id && styles.categoryTabTextActive,
-            ]}>
-              {category.label}
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Text style={[
+                styles.categoryTabText,
+                activeCategory === category.id && styles.categoryTabTextActive,
+              ]}>
+                {category.label}
+              </Text>
+            </View>
           </TouchableOpacity>
         ))}
       </View>
 
       {/* Reports List */}
-      {filteredReports.length > 0 ? (
+      {reportsLoading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={theme.primary} />
+          <Text style={{ color: theme.textSecondary, marginTop: 16 }}>
+            Loading reports...
+          </Text>
+        </View>
+      ) : filteredReports.length > 0 ? (
         <FlatList
           data={filteredReports}
           renderItem={renderReport}
           keyExtractor={(item) => item._id}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: 20 }}
-          refreshing={loading}
-          onRefresh={fetchReports}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={[theme.accent]}
+              tintColor={theme.accent}
+            />
+          }
         />
       ) : (
         <View style={styles.emptyState}>

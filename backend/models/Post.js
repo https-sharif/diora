@@ -5,7 +5,10 @@ const postSchema = new mongoose.Schema({
   imageUrl: { type: String, required: true },
   caption: { type: String },
   stars: { type: Number, default: 0 },
-  comments: { type: Number, default: 0 },
+  likes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  comments: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Comment' }],
+  reports: { type: Number, default: 0 },
+  isHidden: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now },
   imageId: { type: String, required: true },
 });

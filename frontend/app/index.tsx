@@ -36,15 +36,31 @@ export default function Index() {
     const timeout = setTimeout(() => {
       if (loading) {
         setTimeout(() => {
-          if (isAuthenticated) {
-            router.replace('/(tabs)');
+          if (isAuthenticated && user) {
+            // Check if user needs onboarding
+            const needsUserOnboarding = !user.onboarding?.isComplete;
+            const needsShopOnboarding = user.type === 'shop' && !user.onboarding?.shopOnboarding?.isComplete;
+            
+            if (needsUserOnboarding || needsShopOnboarding) {
+              router.replace('/onboarding');
+            } else {
+              router.replace('/(tabs)');
+            }
           } else {
             router.replace('/auth');
           }
         }, 500);
       } else {
-        if (isAuthenticated) {
-          router.replace('/(tabs)');
+        if (isAuthenticated && user) {
+          // Check if user needs onboarding
+          const needsUserOnboarding = !user.onboarding?.isComplete;
+          const needsShopOnboarding = user.type === 'shop' && !user.onboarding?.shopOnboarding?.isComplete;
+          
+          if (needsUserOnboarding || needsShopOnboarding) {
+            router.replace('/onboarding');
+          } else {
+            router.replace('/(tabs)');
+          }
         } else {
           router.replace('/auth');
         }
@@ -52,7 +68,7 @@ export default function Index() {
     }, 1000);
   
     return () => clearTimeout(timeout);
-  }, []);
+  }, [isAuthenticated, loading, user]);
 
   return (
     <Animated.View style={[styles.container, { opacity: fadeAnim }]}>

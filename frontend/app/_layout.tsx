@@ -42,18 +42,20 @@ export default function RootLayout() {
 
 function AppReadyWrapper({ insets }: { insets: EdgeInsets }) {
   const { theme, isDarkMode } = useTheme();
-  const { user, loading } = useAuth();
+  const { user, loading, syncUser } = useAuth();
   const { handleIncomingNotification } = useNotification();
   const { sendMessage } = useMessage();
   const { initializeUserData } = useShopping();
 
-  // Initialize shopping data when user is authenticated
+  // Initialize shopping data when user is authenticated and has completed onboarding
   useEffect(() => {
-    if (user?._id) {
+    if (user?._id && user?.onboarding?.isComplete) {
       console.log('🛒 Initializing shopping data for user:', user._id);
       initializeUserData();
+      // Sync user data to ensure it's up to date with backend
+      syncUser();
     }
-  }, [user?._id, initializeUserData]);
+  }, [user?._id, user?.onboarding?.isComplete, initializeUserData, syncUser]);
 
   useEffect(() => {
     if (user?._id) {
@@ -103,6 +105,7 @@ function AppReadyWrapper({ insets }: { insets: EdgeInsets }) {
         <Stack.Screen name='auth' options={{ headerShown: false }} />
         <Stack.Screen name='index' options={{ headerShown: false }} />
         <Stack.Screen name='empty' options={{ headerShown: false }} />
+        <Stack.Screen name='onboarding' options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="notifications" options={{ headerShown: false }} />
         <Stack.Screen name="product/[productId]" options={{ headerShown: false }} />

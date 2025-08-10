@@ -22,7 +22,6 @@ export const likePost = async (req, res) => {
       user.likedPosts.pull(postId);
       post.stars -= 1;
 
-      // Handle unlike notification cleanup
       if(post.user._id.toString() !== userId) {
         const existingNotification = await Notification.findOne({
           type: 'like',
@@ -31,19 +30,21 @@ export const likePost = async (req, res) => {
         });
 
         if (existingNotification && existingNotification.fromUserIds) {
-          // Remove user from fromUserIds array
           existingNotification.fromUserIds = existingNotification.fromUserIds.filter(
             id => id.toString() !== userId
           );
 
           if (existingNotification.fromUserIds.length === 0) {
-            // Delete notification if no one likes the post anymore
             await Notification.findByIdAndDelete(existingNotification._id);
           } else {
             try {
-              // Update notification message with remaining users
               const users = await User.find({ _id: { $in: existingNotification.fromUserIds } }, 'username');
-              const usernames = users.map(u => u.username);
+              const usernames = users.map(u => u.username).filter(name => name); 
+
+              if (usernames.length === 0) {
+                await Notification.findByIdAndDelete(existingNotification._id);
+                return;
+              }
 
               let message = '';
               if (usernames.length === 1) {
@@ -60,7 +61,6 @@ export const likePost = async (req, res) => {
 
               await existingNotification.save();
 
-              // Emit updated notification
               const io = getIO();
               const targetSocketId = onlineUsers.get(post.user._id.toString());
               if (targetSocketId) {
@@ -68,7 +68,6 @@ export const likePost = async (req, res) => {
               }
             } catch (userFetchError) {
               console.error('Error updating notification after unlike:', userFetchError);
-              // Fallback: just keep the notification as is
             }
           }
         }
@@ -78,7 +77,6 @@ export const likePost = async (req, res) => {
       post.stars += 1;
 
       if(post.user._id.toString() !== userId) {
-        // Check if there's already a like notification for this post
         const existingNotification = await Notification.findOne({
           type: 'like',
           postId,
@@ -86,19 +84,20 @@ export const likePost = async (req, res) => {
         });
 
         if (existingNotification) {
-          // Merge with existing notification
           if (!existingNotification.fromUserIds) existingNotification.fromUserIds = [];
 
-          if (!existingNotification.fromUserIds.includes(userId)) {
+          if (!existingNotification.fromUserIds.some(id => id.toString() === userId)) {
             existingNotification.fromUserIds.push(userId);
           }
 
           try {
-            // Get usernames of all users who liked the post
             const users = await User.find({ _id: { $in: existingNotification.fromUserIds } }, 'username');
-            const usernames = users.map(u => u.username);
+            const usernames = users.map(u => u.username).filter(name => name); 
 
-            // Move current user to the front of the list
+            if (usernames.length === 0) {
+              usernames.push(user.username);
+            }
+
             const currentUsernameIndex = usernames.indexOf(user.username);
             if (currentUsernameIndex > -1) {
               usernames.splice(currentUsernameIndex, 1);
@@ -118,7 +117,7 @@ export const likePost = async (req, res) => {
             existingNotification.title = 'New Like';
             existingNotification.updatedAt = new Date();
             existingNotification.read = false;
-            existingNotification.fromUserId = userId; // Update to most recent liker
+            existingNotification.fromUserId = userId;
 
             await existingNotification.save();
             await existingNotification.populate('userId', 'username avatar');
@@ -130,13 +129,11 @@ export const likePost = async (req, res) => {
             }
           } catch (userFetchError) {
             console.error('Error fetching users for notification merging:', userFetchError);
-            // Fallback: just update with current user
             existingNotification.message = `${user.username} liked your post`;
             existingNotification.fromUserId = userId;
             await existingNotification.save();
           }
         } else {
-          // Create new notification
           const notification = new Notification({
             type: 'like',
             userId: post.user._id,
@@ -177,15 +174,25 @@ export const likePost = async (req, res) => {
 export const getAllPost = async (req, res) => {
   console.log('Get all posts route/controller hit');
   try {
+    const isAdmin = req.userDetails && req.userDetails.type === 'admin';
+    
     const posts = await Post.find()
       .sort({ createdAt: -1 })
-      .populate('user', 'username avatar type isVerified');
+      .populate('user', 'username avatar type isVerified status');
 
     if (!posts || posts.length === 0) {
       return res.status(404).json({ status: false, message: 'No posts found' });
     }
 
-    res.json({ status: true, posts });
+    const filteredPosts = isAdmin ? posts : posts.filter(post => post.user && post.user.status === 'active');
+
+    // Transform posts to include comment count
+    const transformedPosts = filteredPosts.map(post => ({
+      ...post.toObject(),
+      comments: post.comments ? post.comments.length : 0
+    }));
+
+    res.json({ status: true, posts: transformedPosts });
   } catch (err) {
     console.error(err);
     res.status(500).json({ status: false, message: 'Something went wrong' });
@@ -229,10 +236,21 @@ export const getUserPosts = async (req, res) => {
   try {
     console.log('Get user posts route/controller hit');
     const userId = req.params.userId;
+    const isAdmin = req.userDetails && req.userDetails.type === 'admin';
+    
+    // First check if the user is accessible (unless requester is admin)
+    if (!isAdmin) {
+      const user = await User.findById(userId);
+      if (!user || user.status !== 'active') {
+        return res
+          .status(200)
+          .json({ status: false, message: 'No posts found for this user' });
+      }
+    }
+    
     const posts = await Post.find({ user: userId })
       .sort({ createdAt: -1 })
-      .populate('user', 'username avatar');
-
+      .populate('user', 'username avatar status');
 
     if (!posts || posts.length === 0) {
       return res
@@ -240,7 +258,13 @@ export const getUserPosts = async (req, res) => {
         .json({ status: false, message: 'No posts found for this user' });
     }
 
-    res.json({ status: true, posts });
+    // Transform posts to include comment count
+    const transformedPosts = posts.map(post => ({
+      ...post.toObject(),
+      comments: post.comments ? post.comments.length : 0
+    }));
+
+    res.json({ status: true, posts: transformedPosts });
   } catch (err) {
     console.error(err);
     res.status(500).json({ status: false, message: 'Something went wrong' });
@@ -259,7 +283,13 @@ export const getLikedPosts = async (req, res) => {
       .sort({ createdAt: -1 })
       .populate('user', 'username avatar');
 
-    res.json({ status: true, posts: posts });
+    // Transform posts to include comment count
+    const transformedPosts = posts.map(post => ({
+      ...post.toObject(),
+      comments: post.comments ? post.comments.length : 0
+    }));
+
+    res.json({ status: true, posts: transformedPosts });
   } catch (err) {
     console.error(err);
     res.status(500).json({ status: false, message: 'Something went wrong' });
@@ -288,21 +318,48 @@ export const getPost = async (req, res) => {
 export const getTrendingPosts = async (req, res) => {
   try {
     console.log('Get trending posts route/controller hit');
+    const isAdmin = req.userDetails && req.userDetails.type === 'admin';
 
-    const trendingPosts = await Post.aggregate([
-      { $sample: { size: 9 } }
-    ]);
+    let trendingPosts;
+    if (isAdmin) {
+      // Admins see all posts
+      trendingPosts = await Post.aggregate([{ $sample: { size: 9 } }]);
+    } else {
+      // Regular users only see posts from active users
+      trendingPosts = await Post.aggregate([
+        {
+          $lookup: {
+            from: 'users',
+            localField: 'user',
+            foreignField: '_id',
+            as: 'userInfo'
+          }
+        },
+        {
+          $match: {
+            'userInfo.status': 'active' // Only include posts from active users
+          }
+        },
+        { $sample: { size: 9 } }
+      ]);
+    }
 
     await Post.populate(trendingPosts, {
       path: 'user',
-      select: 'username avatar',
+      select: 'username avatar status',
     });
 
     if (!trendingPosts || trendingPosts.length === 0) {
       return res.status(404).json({ status: false, message: 'No trending posts found' });
     }
 
-    res.json({ status: true, trendingPosts });
+    // Transform posts to include comment count
+    const transformedPosts = trendingPosts.map(post => ({
+      ...post,
+      comments: post.comments ? post.comments.length : 0
+    }));
+
+    res.json({ status: true, trendingPosts: transformedPosts });
   } catch (err) {
     console.error(err);
     res.status(500).json({ status: false, message: 'Something went wrong' });

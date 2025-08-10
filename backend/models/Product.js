@@ -21,6 +21,11 @@ const productSchema = new mongoose.Schema(
       required: true,
       default: [],
     },
+    images: {
+      type: [String],
+      required: true,
+      default: [],
+    },
     category: {
       type: [String],
       required: true,
@@ -57,6 +62,9 @@ const productSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    reviews: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Review' }],
+    reports: { type: Number, default: 0 },
+    isHidden: { type: Boolean, default: false },
   },
   {
     timestamps: true,

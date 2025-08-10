@@ -9,7 +9,8 @@ const migrateNotifications = async () => {
       $or: [
         { fromUserIds: { $exists: false } },
         { fromUserIds: { $size: 0 } },
-        { fromUserIds: null }
+        { fromUserIds: null },
+        { fromUserId: { $exists: false } }
       ]
     });
 

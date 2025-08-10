@@ -120,6 +120,43 @@ export const login = async (req, res) => {
         .json({ status: false, message: 'Password didnt match' });
     }
 
+    // Check if user is banned
+    if (user.status === 'banned') {
+      return res.status(403).json({ 
+        status: false, 
+        message: 'Account Banned',
+        details: `Your account has been permanently banned. Reason: ${user.banReason || 'Violation of community guidelines'}. If you believe this is an error, please contact support.`,
+        banReason: user.banReason,
+        bannedAt: user.bannedAt
+      });
+    }
+
+    // Check if user is suspended
+    if (user.status === 'suspended') {
+      const isStillSuspended = user.suspendedUntil && new Date() < new Date(user.suspendedUntil);
+      
+      if (isStillSuspended) {
+        const suspendedUntilDate = new Date(user.suspendedUntil).toLocaleDateString();
+        return res.status(403).json({ 
+          status: false, 
+          message: 'Account Suspended',
+          details: `Your account is suspended until ${suspendedUntilDate}. Reason: ${user.suspensionReason || 'Violation of community guidelines'}. You can log in again after the suspension period ends.`,
+          suspendedUntil: user.suspendedUntil,
+          suspensionReason: user.suspensionReason
+        });
+      } else {
+        // Suspension period has ended, reactivate the account
+        user.status = 'active';
+        user.suspendedUntil = null;
+        user.suspensionReason = null;
+        await user.save();
+      }
+    }
+
+    // Update last active timestamp
+    user.lastActiveAt = new Date();
+    await user.save();
+
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
       expiresIn: '30d',
     });
@@ -137,6 +174,12 @@ export const login = async (req, res) => {
       posts: user.posts,
       likedPosts: user.likedPosts,
       type: user.type,
+      status: user.status,
+      suspendedUntil: user.suspendedUntil,
+      suspensionReason: user.suspensionReason,
+      banReason: user.banReason,
+      bannedAt: user.bannedAt,
+      lastActiveAt: user.lastActiveAt,
       createdAt: user.createdAt,
       settings: user.settings,
       avatarId: user.avatarId,
