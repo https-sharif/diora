@@ -118,6 +118,12 @@ const createStyles = (theme: Theme) =>
       justifyContent: 'center',
       alignItems: 'center',
     },
+    shopUsername: {
+      fontSize: 16,
+      fontFamily: 'Inter-Medium',
+      color: theme.textSecondary,
+      marginBottom: 8,
+    },
     shopDescription: {
       fontSize: 16,
       fontFamily: 'Inter-Regular',
@@ -159,7 +165,7 @@ const createStyles = (theme: Theme) =>
       gap: 8,
     },
     categoryTag: {
-      backgroundColor: theme.primary,
+      backgroundColor: theme.card,
       borderRadius: 16,
       paddingHorizontal: 12,
       paddingVertical: 6,
@@ -167,13 +173,13 @@ const createStyles = (theme: Theme) =>
     categoryTagText: {
       fontSize: 14,
       fontFamily: 'Inter-Medium',
-      color: 'white',
+      color: theme.textSecondary,
     },
     actionButtons: {
       flexDirection: 'row',
       gap: 12,
     },
-    editButton: {
+    viewOrder: {
       flex: 1,
       flexDirection: 'row',
       alignItems: 'center',
@@ -185,7 +191,7 @@ const createStyles = (theme: Theme) =>
       paddingVertical: 12,
       gap: 8,
     },
-    editButtonText: {
+    viewOrderText: {
       color: theme.text,
       fontSize: 16,
       fontFamily: 'Inter-SemiBold',
@@ -421,8 +427,8 @@ export default function ShopProfile() {
     router.push('/shop/analytics');
   };
 
-  const handleEditProfilePress = () => {
-    router.push('/shop/edit-profile');
+  const handleViewOrdersPress = () => {
+    console.log('View Orders pressed');
   };
 
   const handleContactPress = (type: 'email' | 'phone' | 'website', value: string) => {
@@ -529,6 +535,7 @@ export default function ShopProfile() {
                 </View>
               )}
             </View>
+            <Text style={styles.shopUsername}>@{user.username}</Text>
             <Text style={styles.shopDescription}>{user.bio}</Text>
 
             {/* Contact Info */}
@@ -589,11 +596,11 @@ export default function ShopProfile() {
           {/* Action Buttons */}
           <View style={styles.actionButtons}>
             <TouchableOpacity
-              style={styles.editButton}
-              onPress={handleEditProfilePress}
+              style={styles.viewOrder}
+              onPress={handleViewOrdersPress}
             >
-              <Edit3 size={16} strokeWidth={2} color={theme.text} />
-              <Text style={styles.editButtonText}>Edit Profile</Text>
+              <Package size={16} strokeWidth={2} color={theme.text} />
+              <Text style={styles.viewOrderText}>View Orders</Text>
             </TouchableOpacity>
             
             <TouchableOpacity

@@ -15,6 +15,7 @@ import { ArrowLeft, ArrowRight, Store, Package, Settings, Camera, Image as Image
 import * as ImagePicker from 'expo-image-picker';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/useToast';
 import { Theme } from '@/types/Theme';
 import axios from 'axios';
 import { API_URL } from '@/constants/api';
@@ -23,12 +24,9 @@ interface ShopOnboardingProps {
   onComplete: () => void;
 }
 
-const SHIPPING_REGIONS = [
-  'Local Only', 'Nationwide', 'North America', 'Europe', 'Asia', 'Worldwide'
-];
-
-const PAYMENT_METHODS = [
-  'Credit/Debit Cards', 'PayPal', 'Apple Pay', 'Google Pay', 'Bank Transfer', 'Cash on Delivery'
+const BUSINESS_CATEGORIES = [
+  'Women\'s Clothing', 'Men\'s Clothing', 'Shoes & Footwear', 'Bags & Accessories', 
+  'Jewelry & Watches', 'Activewear & Sports', 'Other Fashion'
 ];
 
 const createStyles = (theme: Theme) =>
@@ -255,31 +253,54 @@ const createStyles = (theme: Theme) =>
       color: theme.text,
       fontSize: 14,
     },
+    imageContainer: {
+      position: 'relative',
+    },
+    uploadingOverlay: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0, 0, 0, 0.6)',
+      borderRadius: 12,
+      justifyContent: 'center',
+      alignItems: 'center',
+      flexDirection: 'row',
+      gap: 8,
+    },
+    uploadingText: {
+      color: '#fff',
+      fontSize: 14,
+      fontWeight: '600',
+    },
   });
 
-export const ShopOnboarding: React.FC<ShopOnboardingProps> = ({ onComplete }) => {
+export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
   const { theme } = useTheme();
   const { user, token, refreshUser } = useAuth();
+  const { showToast } = useToast();
   const styles = createStyles(theme);
-
   const [currentStep, setCurrentStep] = useState(0);
   const [loading, setLoading] = useState(false);
 
-  const [businessData, setBusinessData] = useState({
-    description: '',
-    targetAudience: '',
-    uniqueSellingPoint: '',
-  });
-
-  const [setupData, setSetupData] = useState({
-    shippingRegions: [] as string[],
-    paymentMethods: [] as string[],
-    returnPolicy: '',
-    estimatedShippingTime: '',
+  const [shopData, setShopData] = useState({
+    location: user?.shop?.location || '',
+    contactEmail: user?.shop?.contactEmail || '',
+    contactPhone: user?.shop?.contactPhone || '',
+    website: user?.shop?.website || '',
+    socialLinks: {
+      facebook: user?.shop?.socialLinks?.facebook || '',
+      instagram: user?.shop?.socialLinks?.instagram || '',
+      twitter: user?.shop?.socialLinks?.twitter || '',
+      tiktok: user?.shop?.socialLinks?.tiktok || '',
+    },
+    categories: user?.shop?.categories || [],
   });
 
   const [photoData, setPhotoData] = useState({
-    coverPhoto: null as string | null,
+    coverPhoto: user?.shop?.coverImageUrl || null as string | null,
+    coverPhotoId: user?.shop?.coverImageId || null as string | null,
     profilePicture: user?.avatar || null as string | null,
     uploadingCover: false,
     uploadingProfile: false,
@@ -296,14 +317,14 @@ export const ShopOnboarding: React.FC<ShopOnboardingProps> = ({ onComplete }) =>
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: 'images',
         allowsEditing: true,
         aspect: type === 'cover' ? [16, 9] : [1, 1],
         quality: 0.8,
       });
 
       if (!result.canceled && result.assets[0]) {
-        await uploadImage(result.assets[0].uri, type);
+        await uploadPhoto(type, result);
       }
     } catch (error) {
       console.error('Error picking image:', error);
@@ -311,67 +332,88 @@ export const ShopOnboarding: React.FC<ShopOnboardingProps> = ({ onComplete }) =>
     }
   };
 
-  const uploadImage = async (uri: string, type: 'cover' | 'profile') => {
-    try {
-      if (type === 'cover') {
-        setPhotoData(prev => ({ ...prev, uploadingCover: true }));
-      } else {
-        setPhotoData(prev => ({ ...prev, uploadingProfile: true }));
-      }
-
-      const formData = new FormData();
-      formData.append('image', {
-        uri,
-        type: 'image/jpeg',
-        name: `${type}_${Date.now()}.jpg`,
-      } as any);
-
-      const response = await axios.post(
-        `${API_URL}/api/user/upload-image`,
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (response.data.status && response.data.data.url) {
-        if (type === 'cover') {
-          setPhotoData(prev => ({ ...prev, coverPhoto: response.data.data.url }));
-        } else {
-          setPhotoData(prev => ({ ...prev, profilePicture: response.data.data.url }));
-        }
-      }
-    } catch (error) {
-      console.error('Error uploading image:', error);
-      Alert.alert('Error', 'Failed to upload image');
-    } finally {
-      if (type === 'cover') {
-        setPhotoData(prev => ({ ...prev, uploadingCover: false }));
-      } else {
-        setPhotoData(prev => ({ ...prev, uploadingProfile: false }));
-      }
+    const uploadPhoto = async (type: string, result: ImagePicker.ImagePickerResult) => {
+    if (result.canceled) {
+      console.log('Photo upload cancelled by user');
+      return;
     }
-  };
 
-  const toggleShippingRegion = (region: string) => {
-    setSetupData(prev => ({
-      ...prev,
-      shippingRegions: prev.shippingRegions.includes(region)
-        ? prev.shippingRegions.filter(r => r !== region)
-        : [...prev.shippingRegions, region]
-    }));
-  };
+    const asset = result.assets[0];
+    console.log('Starting photo upload - Type:', type, 'Asset URI:', asset.uri);
+    
+    // Map the type to the correct property name
+    const propertyName = type === 'cover' ? 'coverPhoto' : 'profilePicture';
+    const uploadingProperty = type === 'cover' ? 'uploadingCover' : 'uploadingProfile';
 
-  const togglePaymentMethod = (method: string) => {
-    setSetupData(prev => ({
+    // Optimistic update - immediately show the image in UI
+    setPhotoData(prev => ({
       ...prev,
-      paymentMethods: prev.paymentMethods.includes(method)
-        ? prev.paymentMethods.filter(m => m !== method)
-        : [...prev.paymentMethods, method]
+      [propertyName]: asset.uri, // Use local URI for immediate display
+      [uploadingProperty]: true
     }));
+
+    console.log('Optimistic update applied - showing local image immediately');
+    showToast('success', `${type.replace(/([A-Z])/g, ' $1').toLowerCase()} selected! Uploading...`);
+    
+    const formData = new FormData();
+    formData.append('image', {
+      uri: asset.uri,
+      type: asset.type || 'image/jpeg',
+      name: `${type}_${Date.now()}.${asset.uri.split('.').pop()}`,
+    } as any);
+
+    // Background upload
+    try {
+      const response = await axios.post(`${API_URL}/api/user/upload-image`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      console.log('Photo upload response:', response.data);
+      console.log('Response status:', response.status);
+
+      if (response.data.status) {
+        // Update with the actual cloud URL and ID after successful upload
+        if (type === 'cover') {
+          setPhotoData(prev => ({
+            ...prev,
+            coverPhoto: response.data.data.url,
+            coverPhotoId: response.data.data.id,
+            uploadingCover: false
+          }));
+        } else {
+          setPhotoData(prev => ({
+            ...prev,
+            [propertyName]: response.data.data.url,
+            [uploadingProperty]: false
+          }));
+        }
+        console.log('Upload completed - URL:', response.data.data.url, 'ID:', response.data.data.id);
+        showToast('success', `${type.replace(/([A-Z])/g, ' $1').toLowerCase()} uploaded successfully!`);
+      } else {
+        // Revert optimistic update on failure
+        setPhotoData(prev => ({
+          ...prev,
+          [propertyName]: null,
+          [uploadingProperty]: false
+        }));
+        console.error('Upload failed - Response:', response.data);
+        showToast('error', `Failed to upload ${type.replace(/([A-Z])/g, ' $1').toLowerCase()}`);
+      }
+    } catch (error: any) {
+      // Revert optimistic update on error
+      setPhotoData(prev => ({
+        ...prev,
+        [propertyName]: null,
+        [uploadingProperty]: false
+      }));
+      console.error('Photo upload error:', error);
+      console.error('Error response:', error.response?.data);
+      console.error('Error status:', error.response?.status);
+      showToast('error', `Failed to upload ${type.replace(/([A-Z])/g, ' $1').toLowerCase()}`);
+    }
   };
 
   const handleNext = async () => {
@@ -392,28 +434,33 @@ export const ShopOnboarding: React.FC<ShopOnboardingProps> = ({ onComplete }) =>
     try {
       setLoading(true);
 
+      console.log('Starting shop onboarding completion...');
+      console.log('Cover photo:', photoData.coverPhoto);
+
       const shopOnboardingData = {
-        businessInfo: {
-          ...businessData,
-          completed: true,
-        },
-        setupInfo: {
-          ...setupData,
-          completed: true,
-        },
-        photos: {
-          coverPhoto: photoData.coverPhoto,
-          completed: true,
-        },
         isComplete: true,
         step: totalSteps,
       };
 
-      // Update profile picture if changed
-      const updateData: any = { shopOnboarding: shopOnboardingData };
+      // Update data including cover image in shop object
+      const updateData: any = { 
+        onboarding: shopOnboardingData,
+        shop: {
+          location: shopData.location,
+          contactEmail: shopData.contactEmail,
+          contactPhone: shopData.contactPhone,
+          website: shopData.website,
+          socialLinks: shopData.socialLinks,
+          categories: shopData.categories,
+          coverImageUrl: photoData.coverPhoto,
+          coverImageId: photoData.coverPhotoId
+        }
+      };
       if (photoData.profilePicture && photoData.profilePicture !== user?.avatar) {
         updateData.avatar = photoData.profilePicture;
       }
+
+      console.log('Sending shop onboarding data:', updateData);
 
       const response = await axios.put(
         `${API_URL}/api/user/complete-shop-onboarding`,
@@ -421,15 +468,59 @@ export const ShopOnboarding: React.FC<ShopOnboardingProps> = ({ onComplete }) =>
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
+      console.log('Shop onboarding response:', response.data);
+
       if (response.data.status) {
+        console.log('Shop onboarding completed successfully');
+        console.log('Backend response user data:', JSON.stringify(response.data.user?.onboarding, null, 2));
+        
+        // First refresh to sync latest data
+        console.log('🔄 First refresh attempt...');
         await refreshUser();
-        onComplete();
+        
+        // Wait for state to propagate
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+        console.log('User state after first refresh:', JSON.stringify(user?.onboarding, null, 2));
+        console.log('Shop onboarding isComplete after first refresh:', user?.onboarding?.isComplete);
+        
+        // Double check with another refresh if not complete yet
+        if (!user?.onboarding?.isComplete) {
+          console.log('🔄 Not complete yet, trying second refresh...');
+          await refreshUser();
+          await new Promise(resolve => setTimeout(resolve, 300));
+          console.log('User state after second refresh:', JSON.stringify(user?.onboarding, null, 2));
+        }
+        
+        // Verify completion before calling onComplete
+        const isCompleteInResponse = response.data.user?.onboarding?.isComplete;
+        const isCompleteInStore = user?.onboarding?.isComplete;
+        
+        console.log('🔍 Final verification:');
+        console.log('  - Backend response says complete:', isCompleteInResponse);
+        console.log('  - Store state says complete:', isCompleteInStore);
+        
+        if (isCompleteInResponse || isCompleteInStore) {
+          console.log('✅ Shop onboarding verified as complete, calling onComplete...');
+          onComplete();
+        } else {
+          console.log('❌ Shop onboarding not marked as complete anywhere, forcing completion...');
+          // Force another sync attempt
+          await refreshUser();
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          // Call onComplete anyway since backend succeeded
+          console.log('🔧 Forcing completion despite state mismatch...');
+          onComplete();
+        }
       } else {
-        Alert.alert('Error', 'Failed to complete shop onboarding');
+        console.error('Shop onboarding failed:', response.data.message);
+        Alert.alert('Error', response.data.message || 'Failed to complete shop onboarding');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error completing shop onboarding:', error);
-      Alert.alert('Error', 'Failed to complete shop onboarding');
+      console.error('Error response:', error.response?.data);
+      Alert.alert('Error', error.response?.data?.message || 'Failed to complete shop onboarding');
     } finally {
       setLoading(false);
     }
@@ -440,13 +531,15 @@ export const ShopOnboarding: React.FC<ShopOnboardingProps> = ({ onComplete }) =>
       case 0:
         return true; // Welcome step
       case 1:
-        return photoData.coverPhoto !== null; // Cover photo is required
+        // Shop details step - require location
+        return shopData.location.trim().length > 0;
       case 2:
-        return businessData.description.trim().length > 0 && 
-               businessData.targetAudience.trim().length > 0;
+        // Images step - require cover photo
+        const hasCoverPhoto = photoData.coverPhoto !== null && photoData.coverPhoto.trim().length > 0;
+        return hasCoverPhoto;
       case 3:
-        return setupData.shippingRegions.length > 0 && 
-               setupData.paymentMethods.length > 0;
+        // Categories step - require at least one category
+        return shopData.categories.length > 0;
       default:
         return false;
     }
@@ -478,7 +571,15 @@ export const ShopOnboarding: React.FC<ShopOnboardingProps> = ({ onComplete }) =>
         </Text>
         
         {photoData.coverPhoto ? (
-          <Image source={{ uri: photoData.coverPhoto }} style={styles.coverPhoto} />
+          <View style={styles.imageContainer}>
+            <Image source={{ uri: photoData.coverPhoto }} style={styles.coverPhoto} />
+            {photoData.uploadingCover && (
+              <View style={styles.uploadingOverlay}>
+                <ActivityIndicator color="#fff" size="small" />
+                <Text style={styles.uploadingText}>Uploading...</Text>
+              </View>
+            )}
+          </View>
         ) : (
           <View style={styles.coverPhotoPlaceholder}>
             <ImageIcon size={40} color={theme.textSecondary} />
@@ -512,7 +613,15 @@ export const ShopOnboarding: React.FC<ShopOnboardingProps> = ({ onComplete }) =>
         
         <View style={styles.profileImageContainer}>
           {photoData.profilePicture ? (
-            <Image source={{ uri: photoData.profilePicture }} style={styles.profileImage} />
+            <View style={styles.imageContainer}>
+              <Image source={{ uri: photoData.profilePicture }} style={styles.profileImage} />
+              {photoData.uploadingProfile && (
+                <View style={[styles.uploadingOverlay, { borderRadius: 60 }]}>
+                  <ActivityIndicator color="#fff" size="small" />
+                  <Text style={styles.uploadingText}>Uploading...</Text>
+                </View>
+              )}
+            </View>
           ) : (
             <View style={styles.profileImagePlaceholder}>
               <ImageIcon size={40} color={theme.textSecondary} />
@@ -537,139 +646,218 @@ export const ShopOnboarding: React.FC<ShopOnboardingProps> = ({ onComplete }) =>
     </ScrollView>
   );
 
-  const renderBusinessInfoStep = () => (
+  const renderShopDetailsStep = () => (
     <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-      <Text style={styles.title}>Tell us about your business</Text>
-      <Text style={styles.subtitle}>
-        Help customers understand what makes your shop special
-      </Text>
-
+      <Text style={[styles.title, { color: '#000' }]}>Shop Details</Text>
+      <Text style={[styles.subtitle, { color: '#000' }]}>Tell customers about your shop</Text>
+      
       <View style={styles.inputGroup}>
-        <Text style={styles.label}>Business Description *</Text>
+        <Text style={styles.label}>Shop Location *</Text>
         <TextInput
-          style={[styles.input, styles.textArea]}
-          value={businessData.description}
-          onChangeText={(text) => setBusinessData(prev => ({ ...prev, description: text }))}
-          placeholder="Describe your business, what you sell, and your story..."
-          placeholderTextColor={theme.textSecondary}
-          multiline
-          numberOfLines={4}
+          style={styles.input}
+          placeholder="Enter your shop address or area"
+          value={shopData.location}
+          onChangeText={(text) => setShopData(prev => ({ ...prev, location: text }))}
         />
       </View>
 
       <View style={styles.inputGroup}>
-        <Text style={styles.label}>Target Audience *</Text>
+        <Text style={styles.label}>Contact Email</Text>
         <TextInput
-          style={[styles.input, styles.textArea]}
-          value={businessData.targetAudience}
-          onChangeText={(text) => setBusinessData(prev => ({ ...prev, targetAudience: text }))}
-          placeholder="Who are your ideal customers? (e.g., young professionals, parents, students...)"
-          placeholderTextColor={theme.textSecondary}
-          multiline
-          numberOfLines={3}
+          style={styles.input}
+          placeholder="shop@example.com"
+          value={shopData.contactEmail}
+          onChangeText={(text) => setShopData(prev => ({ ...prev, contactEmail: text }))}
+          keyboardType="email-address"
         />
       </View>
 
       <View style={styles.inputGroup}>
-        <Text style={styles.label}>Unique Selling Point (Optional)</Text>
+        <Text style={styles.label}>Contact Phone</Text>
         <TextInput
-          style={[styles.input, styles.textArea]}
-          value={businessData.uniqueSellingPoint}
-          onChangeText={(text) => setBusinessData(prev => ({ ...prev, uniqueSellingPoint: text }))}
-          placeholder="What makes your products or service unique? What sets you apart from competitors?"
-          placeholderTextColor={theme.textSecondary}
-          multiline
-          numberOfLines={3}
+          style={styles.input}
+          placeholder="+1 (555) 123-4567"
+          value={shopData.contactPhone}
+          onChangeText={(text) => setShopData(prev => ({ ...prev, contactPhone: text }))}
+          keyboardType="phone-pad"
+        />
+      </View>
+
+      <View style={styles.inputGroup}>
+        <Text style={styles.label}>Website (Optional)</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="https://yourshop.com"
+          value={shopData.website}
+          onChangeText={(text) => setShopData(prev => ({ ...prev, website: text }))}
+          keyboardType="url"
+        />
+      </View>
+
+      <View style={styles.inputGroup}>
+        <Text style={styles.label}>Instagram (Optional)</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="@yourshop"
+          value={shopData.socialLinks.instagram}
+          onChangeText={(text) => setShopData(prev => ({ 
+            ...prev, 
+            socialLinks: { ...prev.socialLinks, instagram: text }
+          }))}
+        />
+      </View>
+
+      <View style={styles.inputGroup}>
+        <Text style={styles.label}>Facebook (Optional)</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="facebook.com/yourshop"
+          value={shopData.socialLinks.facebook}
+          onChangeText={(text) => setShopData(prev => ({ 
+            ...prev, 
+            socialLinks: { ...prev.socialLinks, facebook: text }
+          }))}
         />
       </View>
     </ScrollView>
   );
 
-  const renderSetupStep = () => (
+  const renderImagesStep = () => (
     <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-      <Text style={styles.title}>Shop Setup</Text>
-      <Text style={styles.subtitle}>
-        Configure your shipping, payments, and policies
-      </Text>
+      <Text style={[styles.title, { color: '#000' }]}>Shop Images</Text>
+      <Text style={[styles.subtitle, { color: '#000' }]}>Upload your shop's cover photo and profile picture</Text>
 
-      <View style={styles.inputGroup}>
-        <Text style={styles.label}>Shipping Regions *</Text>
-        <View style={styles.optionsGrid}>
-          {SHIPPING_REGIONS.map((region) => (
-            <TouchableOpacity
-              key={region}
-              style={[
-                styles.option,
-                setupData.shippingRegions.includes(region) && styles.optionSelected
-              ]}
-              onPress={() => toggleShippingRegion(region)}
-            >
-              <Text style={[
-                styles.optionText,
-                setupData.shippingRegions.includes(region) && styles.optionTextSelected
-              ]}>
-                {region}
+      <View style={styles.coverPhotoSection}>
+        <Text style={styles.label}>Cover Photo *</Text>
+        <Text style={[styles.subtitle, { marginBottom: 12, fontSize: 14 }]}>
+          This will be displayed at the top of your shop profile
+        </Text>
+        
+        {photoData.coverPhoto ? (
+          <View style={styles.imageContainer}>
+            <Image source={{ uri: photoData.coverPhoto }} style={styles.coverPhoto} />
+            {photoData.uploadingCover && (
+              <View style={styles.uploadingOverlay}>
+                <ActivityIndicator color="#fff" size="small" />
+                <Text style={styles.uploadingText}>Uploading...</Text>
+              </View>
+            )}
+          </View>
+        ) : (
+          <View style={styles.coverPhotoPlaceholder}>
+            <ImageIcon size={40} color={theme.textSecondary} />
+            <Text style={[styles.subtitle, { marginTop: 8 }]}>No cover photo</Text>
+          </View>
+        )}
+        
+        <TouchableOpacity 
+          style={styles.uploadButton} 
+          onPress={() => pickImage('cover')}
+          disabled={photoData.uploadingCover}
+        >
+          {photoData.uploadingCover ? (
+            <ActivityIndicator color="#000" size="small" />
+          ) : (
+            <>
+              <Camera size={20} color="#000" />
+              <Text style={styles.uploadButtonText}>
+                {photoData.coverPhoto ? 'Change Cover Photo' : 'Upload Cover Photo'}
               </Text>
-            </TouchableOpacity>
-          ))}
+            </>
+          )}
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.profileSection}>
+        <Text style={styles.label}>Profile Picture</Text>
+        <Text style={[styles.subtitle, { marginBottom: 12, fontSize: 14 }]}>
+          This will be your shop's avatar
+        </Text>
+        
+        <View style={styles.profileImageContainer}>
+          {photoData.profilePicture ? (
+            <View style={styles.imageContainer}>
+              <Image source={{ uri: photoData.profilePicture }} style={styles.profileImage} />
+              {photoData.uploadingProfile && (
+                <View style={styles.uploadingOverlay}>
+                  <ActivityIndicator color="#fff" size="small" />
+                  <Text style={styles.uploadingText}>Uploading...</Text>
+                </View>
+              )}
+            </View>
+          ) : (
+            <View style={styles.profileImagePlaceholder}>
+              <ImageIcon size={40} color={theme.textSecondary} />
+            </View>
+          )}
         </View>
+        
+        <TouchableOpacity 
+          style={styles.changeProfileButton} 
+          onPress={() => pickImage('profile')}
+          disabled={photoData.uploadingProfile}
+        >
+          {photoData.uploadingProfile ? (
+            <ActivityIndicator color={theme.text} size="small" />
+          ) : (
+            <Text style={styles.changeProfileButtonText}>
+              {photoData.profilePicture ? 'Change Profile Picture' : 'Upload Profile Picture'}
+            </Text>
+          )}
+        </TouchableOpacity>
+      </View>
+    </ScrollView>
+  );
+
+  const renderCategoriesStep = () => (
+    <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <Text style={[styles.title, { color: '#000' }]}>Shop Categories</Text>
+      <Text style={[styles.subtitle, { color: '#000' }]}>What type of products do you sell? Select all that apply.</Text>
+      
+      <View style={styles.optionsGrid}>
+        {BUSINESS_CATEGORIES.map((category) => (
+          <TouchableOpacity
+            key={category}
+            style={[
+              styles.option,
+              shopData.categories.includes(category) && styles.optionSelected
+            ]}
+            onPress={() => {
+              setShopData(prev => ({
+                ...prev,
+                categories: prev.categories.includes(category)
+                  ? prev.categories.filter(c => c !== category)
+                  : [...prev.categories, category]
+              }));
+            }}
+          >
+            <Text style={[
+              styles.optionText,
+              shopData.categories.includes(category) && styles.optionTextSelected
+            ]}>
+              {category}
+            </Text>
+          </TouchableOpacity>
+        ))}
       </View>
 
-      <View style={styles.inputGroup}>
-        <Text style={styles.label}>Payment Methods *</Text>
-        <View style={styles.optionsGrid}>
-          {PAYMENT_METHODS.map((method) => (
-            <TouchableOpacity
-              key={method}
-              style={[
-                styles.option,
-                setupData.paymentMethods.includes(method) && styles.optionSelected
-              ]}
-              onPress={() => togglePaymentMethod(method)}
-            >
-              <Text style={[
-                styles.optionText,
-                setupData.paymentMethods.includes(method) && styles.optionTextSelected
-              ]}>
-                {method}
-              </Text>
-            </TouchableOpacity>
-          ))}
+      {shopData.categories.length > 0 && (
+        <View style={{ marginTop: 20, paddingTop: 20, borderTopWidth: 1, borderTopColor: theme.border }}>
+          <Text style={[styles.label, { marginBottom: 8 }]}>Selected Categories:</Text>
+          <Text style={[styles.subtitle, { fontSize: 14 }]}>
+            {shopData.categories.join(', ')}
+          </Text>
         </View>
-      </View>
-
-      <View style={styles.inputGroup}>
-        <Text style={styles.label}>Return Policy (Optional)</Text>
-        <TextInput
-          style={[styles.input, styles.textArea]}
-          value={setupData.returnPolicy}
-          onChangeText={(text) => setSetupData(prev => ({ ...prev, returnPolicy: text }))}
-          placeholder="Describe your return and refund policy..."
-          placeholderTextColor={theme.textSecondary}
-          multiline
-          numberOfLines={3}
-        />
-      </View>
-
-      <View style={styles.inputGroup}>
-        <Text style={styles.label}>Estimated Shipping Time (Optional)</Text>
-        <TextInput
-          style={styles.input}
-          value={setupData.estimatedShippingTime}
-          onChangeText={(text) => setSetupData(prev => ({ ...prev, estimatedShippingTime: text }))}
-          placeholder="e.g., 2-5 business days, 1-2 weeks..."
-          placeholderTextColor={theme.textSecondary}
-        />
-      </View>
+      )}
     </ScrollView>
   );
 
   const renderCurrentStep = () => {
     switch (currentStep) {
       case 0: return renderWelcomeStep();
-      case 1: return renderPhotoStep();
-      case 2: return renderBusinessInfoStep();
-      case 3: return renderSetupStep();
+      case 1: return renderShopDetailsStep();
+      case 2: return renderImagesStep();
+      case 3: return renderCategoriesStep();
       default: return null;
     }
   };
@@ -697,9 +885,7 @@ export const ShopOnboarding: React.FC<ShopOnboardingProps> = ({ onComplete }) =>
           ))}
         </View>
 
-        <TouchableOpacity style={styles.skipButton} onPress={onComplete}>
-          <Text style={styles.skipText}>Skip</Text>
-        </TouchableOpacity>
+        <View style={styles.skipButton} />
       </View>
 
       <View style={styles.progressBar}>

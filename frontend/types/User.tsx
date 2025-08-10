@@ -37,38 +37,21 @@ export interface User {
       shoppingFrequency?: 'rarely' | 'monthly' | 'weekly' | 'daily';
       budgetRange?: 'under-50' | '50-200' | '200-500' | '500-1000' | 'over-1000';
     };
-    shopOnboarding?: {
-      isComplete: boolean;
-      completedAt?: string;
-      step: number;
-      businessInfo: {
-        completed: boolean;
-        description?: string;
-        targetAudience?: string;
-        uniqueSellingPoint?: string;
-      };
-      setupInfo: {
-        completed: boolean;
-        shippingRegions: string[];
-        paymentMethods: string[];
-        returnPolicy?: string;
-        estimatedShippingTime?: string;
-      };
-    };
   };
   shop?: {
     coverImageUrl?: string;
+    coverImageId?: string;
     location?: string;
     contactEmail?: string;
     contactPhone?: string;
     website?: string;
     socialLinks?: {
-      instagram?: string;
       facebook?: string;
+      instagram?: string;
       twitter?: string;
       tiktok?: string;
     };
-    categories: string[];
+    categories?: string[];
     productIds: Product[];
     rating: number;
     ratingCount: number;

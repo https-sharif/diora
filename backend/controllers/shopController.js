@@ -475,6 +475,7 @@ export const updateShopProfile = async (req, res) => {
     const contactPhone = req.body.contactPhone;
     const website = req.body.website;
     const socialLinks = req.body.socialLinks ? JSON.parse(req.body.socialLinks) : {};
+    const categories = req.body.categories ? JSON.parse(req.body.categories) : undefined;
 
     const existingShop = await User.findById(shopId);
     if (!existingShop || existingShop.type !== 'shop') {
@@ -507,6 +508,7 @@ export const updateShopProfile = async (req, res) => {
       if (socialLinks.twitter !== undefined) updateData['shop.socialLinks.twitter'] = socialLinks.twitter;
       if (socialLinks.tiktok !== undefined) updateData['shop.socialLinks.tiktok'] = socialLinks.tiktok;
     }
+    if (categories !== undefined) updateData['shop.categories'] = categories;
 
     const updatedShop = await User.findByIdAndUpdate(shopId, updateData, {
       new: true,

@@ -13,7 +13,8 @@ import {
   getCurrentUser,
   completeOnboarding,
   completeShopOnboarding,
-  uploadImage
+  uploadImage,
+  updateShopDetails
 } from '../controllers/userController.js';
 import { parser, documentParser } from '../utils/cloudinary.js';
 
@@ -29,6 +30,7 @@ router.put('/update/email', updateUserEmail);
 router.post('/request-promotion', documentParser.array('proofDocuments', 5), requestPromotion);
 router.put('/complete-onboarding', completeOnboarding);
 router.put('/complete-shop-onboarding', completeShopOnboarding);
+router.put('/update-shop-details', updateShopDetails);
 router.post('/upload-image', parser.single('image'), uploadImage);
 router.get('/trending', getTrendingUsers);
 router.get('/settings/:userId', getUserSettings);

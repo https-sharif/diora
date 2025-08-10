@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -188,6 +188,31 @@ const createStyles = (theme: Theme) =>
       justifyContent: 'center',
       alignItems: 'center',
     },
+    categoriesContainer: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 12,
+    },
+    categoryItem: {
+      backgroundColor: theme.card,
+      borderRadius: 16,
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      borderWidth: 1,
+      borderColor: theme.border,
+    },
+    categoryItemSelected: {
+      backgroundColor: theme.accent,
+      borderColor: theme.accent,
+    },
+    categoryText: {
+      fontSize: 14,
+      fontFamily: 'Inter-Medium',
+      color: theme.text,
+    },
+    categoryTextSelected: {
+      color: '#000',
+    },
   });
 
 export default function EditShopProfile() {
@@ -212,7 +237,14 @@ export default function EditShopProfile() {
       twitter: user?.shop?.socialLinks?.twitter || '',
       tiktok: user?.shop?.socialLinks?.tiktok || '',
     },
+    categories: user?.shop?.categories || [],
   });
+
+  // Available categories
+  const BUSINESS_CATEGORIES = [
+    'Women\'s Clothing', 'Men\'s Clothing', 'Shoes & Footwear', 'Bags & Accessories', 
+    'Jewelry & Watches', 'Activewear & Sports', 'Other Fashion'
+  ];
 
   // Store actual files for upload
   const [selectedFiles, setSelectedFiles] = useState<{
@@ -238,6 +270,15 @@ export default function EditShopProfile() {
     }
   };
 
+  const toggleCategory = (category: string) => {
+    setFormData(prev => ({
+      ...prev,
+      categories: prev.categories.includes(category)
+        ? prev.categories.filter(c => c !== category)
+        : [...prev.categories, category]
+    }));
+  };
+
   const pickImage = async (type: 'avatar' | 'cover') => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
     
@@ -256,7 +297,6 @@ export default function EditShopProfile() {
     if (!result.canceled && result.assets[0]) {
       const asset = result.assets[0];
       
-      // Store the file for upload
       setSelectedFiles(prev => ({
         ...prev,
         [type === 'avatar' ? 'avatar' : 'coverImage']: {
@@ -266,7 +306,6 @@ export default function EditShopProfile() {
         }
       }));
 
-      // Update form data with URI for preview
       if (type === 'avatar') {
         setFormData(prev => ({ ...prev, avatar: asset.uri }));
       } else {
@@ -289,6 +328,7 @@ export default function EditShopProfile() {
       requestFormData.append('contactPhone', formData.contactPhone);
       requestFormData.append('website', formData.website);
       requestFormData.append('socialLinks', JSON.stringify(formData.socialLinks));
+      requestFormData.append('categories', JSON.stringify(formData.categories));
       
       // Append files if selected
       if (selectedFiles.avatar) {
@@ -488,6 +528,34 @@ export default function EditShopProfile() {
                 keyboardType="url"
               />
             </View>
+          </View>
+        </View>
+
+        {/* Categories */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Business Categories</Text>
+          <Text style={[styles.label, { marginBottom: 12, color: theme.textSecondary }]}>
+            Select categories that best describe your products
+          </Text>
+          
+          <View style={styles.categoriesContainer}>
+            {BUSINESS_CATEGORIES.map((category) => (
+              <TouchableOpacity
+                key={category}
+                style={[
+                  styles.categoryItem,
+                  formData.categories.includes(category) && styles.categoryItemSelected
+                ]}
+                onPress={() => toggleCategory(category)}
+              >
+                <Text style={[
+                  styles.categoryText,
+                  formData.categories.includes(category) && styles.categoryTextSelected
+                ]}>
+                  {category}
+                </Text>
+              </TouchableOpacity>
+            ))}
           </View>
         </View>
 

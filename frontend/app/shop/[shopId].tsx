@@ -214,6 +214,12 @@ const createStyles = (theme: Theme) => {
       fontSize: 12,
       fontFamily: 'Inter-Bold',
     },
+    shopUsername: {
+      fontSize: 16,
+      fontFamily: 'Inter-Medium',
+      color: theme.textSecondary,
+      marginBottom: 8,
+    },
     shopDescription: {
       fontSize: 16,
       fontFamily: 'Inter-Regular',
@@ -1479,16 +1485,25 @@ export default function ShopProfileScreen() {
                   </View>
                 )}
               </View>
-              <Text style={styles.shopDescription}>{shopProfile.bio}</Text>
+              <Text style={styles.shopUsername}>
+                @{shopProfile.username}
+              </Text>
+
+              {shopProfile.bio && (
+                <Text style={styles.shopDescription}>{shopProfile.bio}</Text>
+              )}
 
               {/* Contact Info */}
               <View style={styles.contactInfo}>
-                <View style={styles.contactItem}>
-                  <MapPin size={16} color={theme.textSecondary} />
-                  <Text style={styles.contactText}>
-                    {shopProfile.shop.location}
-                  </Text>
-                </View>
+
+                {shopProfile.shop.location && (
+                  <View style={styles.contactItem}>
+                    <MapPin size={16} color={theme.textSecondary} />
+                    <Text style={styles.contactText}>
+                      {shopProfile.shop.location}
+                    </Text>
+                  </View>
+                )}
                 {shopProfile.shop.contactPhone && (
                   <View style={styles.contactItem}>
                     <Phone size={16} color={theme.textSecondary} />
@@ -1528,17 +1543,19 @@ export default function ShopProfileScreen() {
                 )}
               </View>
 
-              <Text style={styles.establishedText}>
-                Established{' '}
-                {format(new Date(shopProfile.createdAt ?? ''), 'MMMM yyyy')}
-              </Text>
+              {shopProfile.createdAt ? (
+                <Text style={styles.establishedText}>
+                  Established{' '}
+                  {format(new Date(shopProfile.createdAt), 'MMMM yyyy')}
+                </Text>
+              ) : null}
             </View>
 
             {/* Categories */}
             <View style={styles.categories}>
               <Text style={styles.categoriesTitle}>Categories</Text>
               <View style={styles.categoryTags}>
-                {shopProfile.shop.categories.map((category, index) => (
+                {(shopProfile.shop.categories || []).map((category, index) => (
                   <View key={index} style={styles.categoryTag}>
                     <Text style={styles.categoryTagText}>{category}</Text>
                   </View>
@@ -1547,7 +1564,6 @@ export default function ShopProfileScreen() {
             </View>
 
             {/* Action Buttons */}
-
             {user && user._id !== shopProfile._id && (
               <View style={styles.actionButtons}>
                 <TouchableOpacity
@@ -1816,7 +1832,9 @@ export default function ShopProfileScreen() {
                   ]}
                   onPress={() => setReportReason(reason)}
                 >
-                  <Text style={[styles.reportOptionText, { color: theme.text }]}>
+                  <Text
+                    style={[styles.reportOptionText, { color: theme.text }]}
+                  >
                     {reason}
                   </Text>
                 </TouchableOpacity>
@@ -1849,7 +1867,9 @@ export default function ShopProfileScreen() {
                   ]}
                   onPress={() => setShowReportModal(false)}
                 >
-                  <Text style={[styles.reportButtonText, { color: theme.text }]}>
+                  <Text
+                    style={[styles.reportButtonText, { color: theme.text }]}
+                  >
                     Cancel
                   </Text>
                 </TouchableOpacity>

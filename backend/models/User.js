@@ -38,32 +38,6 @@ const userSchema = new mongoose.Schema({
       shoppingFrequency: { type: String, enum: ['rarely', 'monthly', 'weekly', 'daily'], default: null },
       budgetRange: { type: String, enum: ['under-50', '50-200', '200-500', '500-1000', 'over-1000'], default: null },
     },
-    shopOnboarding: {
-      type: {
-        isComplete: { type: Boolean, default: false },
-        completedAt: { type: Date, default: null },
-        step: { type: Number, default: 0 },
-        photos: {
-          completed: { type: Boolean, default: false },
-          coverPhoto: { type: String, default: null },
-        },
-        businessInfo: {
-          completed: { type: Boolean, default: false },
-          description: { type: String, default: '' },
-          targetAudience: { type: String, default: '' },
-          uniqueSellingPoint: { type: String, default: '' },
-        },
-        setupInfo: {
-          completed: { type: Boolean, default: false },
-          shippingRegions: [{ type: String }],
-          paymentMethods: [{ type: String }],
-          returnPolicy: { type: String, default: '' },
-          estimatedShippingTime: { type: String, default: '' },
-        },
-      },
-      required: false,
-      default: null
-    },
   },
   shop: {
     coverImageUrl: { type: String, default: null },

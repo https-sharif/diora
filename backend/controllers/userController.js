@@ -50,6 +50,28 @@ export const getCurrentUser = async (req, res) => {
       await user.save();
     }
 
+    // Ensure user has onboarding object (migration for existing users)
+    if (!user.onboarding) {
+      console.log('User missing onboarding object, creating default...');
+      user.onboarding = {
+        isComplete: user.type === 'user', // Regular users default to complete, shops need onboarding
+        step: user.type === 'user' ? 3 : 0,
+        profile: {
+          completed: user.type === 'user',
+          interests: []
+        },
+        preferences: {
+          completed: user.type === 'user',
+          favoriteCategories: []
+        }
+      };
+      if (user.type === 'user') {
+        user.onboarding.completedAt = new Date();
+      }
+      await user.save();
+      console.log('Created default onboarding for user:', user._id);
+    }
+
     const safeUser = {
       _id: user._id,
       email: user.email,
@@ -72,6 +94,8 @@ export const getCurrentUser = async (req, res) => {
       createdAt: user.createdAt,
       settings: user.settings,
       avatarId: user.avatarId,
+      onboarding: user.onboarding,
+      shop: user.shop,
     };
 
     res.json({ status: true, user: safeUser });
@@ -566,47 +590,38 @@ export const approvePromotionRequest = async (req, res) => {
         expectedProducts: promotionRequest.expectedProducts
       };
 
-      // Initialize shop onboarding (reset to incomplete)
+      // Reset onboarding to incomplete for shop onboarding
       if (!user.onboarding) {
         user.onboarding = {
-          isComplete: true, // Keep user onboarding complete
-          completedAt: new Date(),
-          step: 3,
+          isComplete: false,
+          step: 0,
           profile: {
-            completed: true,
+            completed: false,
             interests: []
           },
           preferences: {
-            completed: true,
+            completed: false,
             favoriteCategories: []
-          },
-          shopOnboarding: {
-            isComplete: false,
-            step: 0,
-            businessInfo: {
-              completed: false
-            },
-            setupInfo: {
-              completed: false,
-              shippingRegions: [],
-              paymentMethods: []
-            }
           }
         };
       } else {
-        // Just reset shop onboarding
-        user.onboarding.shopOnboarding = {
-          isComplete: false,
-          step: 0,
-          businessInfo: {
-            completed: false
-          },
-          setupInfo: {
+        // Reset isComplete to false so user goes through shop onboarding
+        user.onboarding.isComplete = false;
+        user.onboarding.step = 0;
+        
+        // Ensure profile and preferences exist
+        if (!user.onboarding.profile) {
+          user.onboarding.profile = {
             completed: false,
-            shippingRegions: [],
-            paymentMethods: []
-          }
-        };
+            interests: []
+          };
+        }
+        if (!user.onboarding.preferences) {
+          user.onboarding.preferences = {
+            completed: false,
+            favoriteCategories: []
+          };
+        }
       }
 
       await user.save();
@@ -765,28 +780,6 @@ export const completeOnboarding = async (req, res) => {
     user.onboarding.completedAt = new Date();
     user.onboarding.step = onboarding.step || 4;
 
-    // Only initialize shopOnboarding for shop users, leave it null for regular users
-    if (user.type === 'shop' && !user.onboarding.shopOnboarding) {
-      user.onboarding.shopOnboarding = {
-        isComplete: false,
-        completedAt: null,
-        step: 0,
-        businessInfo: {
-          completed: false,
-          description: '',
-          targetAudience: '',
-          uniqueSellingPoint: '',
-        },
-        setupInfo: {
-          completed: false,
-          shippingRegions: [],
-          paymentMethods: [],
-          returnPolicy: '',
-          estimatedShippingTime: '',
-        },
-      };
-    }
-
     // Mark the onboarding field as modified
     user.markModified('onboarding');
 
@@ -842,10 +835,11 @@ export const uploadImage = async (req, res) => {
 export const completeShopOnboarding = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { shopOnboarding, avatar } = req.body;
+    const { onboarding, avatar, shop } = req.body;
 
     console.log('Completing shop onboarding for user:', userId);
-    console.log('Shop onboarding data:', shopOnboarding);
+    console.log('Shop onboarding data:', onboarding);
+    console.log('Shop data:', shop);
 
     const user = await User.findById(userId);
     if (!user) {
@@ -859,18 +853,86 @@ export const completeShopOnboarding = async (req, res) => {
       });
     }
 
-    // Update user shop onboarding data
+    // Update user onboarding data - preserve existing profile and preferences
     if (!user.onboarding) {
-      user.onboarding = {};
+      user.onboarding = {
+        isComplete: false,
+        step: 0,
+        profile: {
+          completed: false,
+          interests: []
+        },
+        preferences: {
+          completed: false,
+          favoriteCategories: []
+        }
+      };
     }
 
-    user.onboarding.shopOnboarding = {
-      ...user.onboarding.shopOnboarding,
-      ...shopOnboarding,
-      completedAt: new Date(),
-    };
+    // Ensure profile and preferences exist
+    if (!user.onboarding.profile) {
+      user.onboarding.profile = {
+        completed: false,
+        interests: []
+      };
+    }
+    if (!user.onboarding.preferences) {
+      user.onboarding.preferences = {
+        completed: false,
+        favoriteCategories: []
+      };
+    }
 
-    console.log('Final shop onboarding data to be saved:', user.onboarding.shopOnboarding);
+    // Update only the completion status and timestamp
+    user.onboarding.isComplete = onboarding.isComplete;
+    user.onboarding.step = onboarding.step || user.onboarding.step;
+    if (onboarding.isComplete) {
+      user.onboarding.completedAt = new Date();
+    }
+
+    console.log('About to save user with onboarding:', {
+      userId: user._id,
+      isComplete: user.onboarding.isComplete,
+      step: user.onboarding.step,
+      completedAt: user.onboarding.completedAt
+    });
+
+    // Update shop data if provided
+    if (shop) {
+      if (!user.shop) {
+        user.shop = {};
+      }
+      if (shop.coverImageUrl) {
+        user.shop.coverImageUrl = shop.coverImageUrl;
+      }
+      if (shop.coverImageId) {
+        user.shop.coverImageId = shop.coverImageId;
+      }
+      if (shop.location) {
+        user.shop.location = shop.location;
+      }
+      if (shop.contactEmail) {
+        user.shop.contactEmail = shop.contactEmail;
+      }
+      if (shop.contactPhone) {
+        user.shop.contactPhone = shop.contactPhone;
+      }
+      if (shop.website) {
+        user.shop.website = shop.website;
+      }
+      if (shop.socialLinks) {
+        if (!user.shop.socialLinks) {
+          user.shop.socialLinks = {};
+        }
+        Object.assign(user.shop.socialLinks, shop.socialLinks);
+      }
+      if (shop.categories) {
+        user.shop.categories = shop.categories;
+      }
+    }
+
+    console.log('Final onboarding data to be saved:', user.onboarding);
+    console.log('Final shop data to be saved:', user.shop);
 
     // Update avatar if provided
     if (avatar) {
@@ -879,8 +941,14 @@ export const completeShopOnboarding = async (req, res) => {
 
     await user.save();
 
+    console.log('User saved successfully. Verifying save:', {
+      userId: user._id,
+      isComplete: user.onboarding.isComplete,
+      step: user.onboarding.step,
+      completedAt: user.onboarding.completedAt
+    });
+
     console.log('Shop onboarding saved successfully for user:', userId);
-    console.log('Updated user onboarding:', user.onboarding);
 
     res.json({ 
       status: true, 
@@ -888,6 +956,7 @@ export const completeShopOnboarding = async (req, res) => {
       user: {
         _id: user._id,
         onboarding: user.onboarding,
+        shop: user.shop,
         avatar: user.avatar
       }
     });
@@ -896,6 +965,75 @@ export const completeShopOnboarding = async (req, res) => {
     res.status(500).json({ 
       status: false, 
       message: 'Failed to complete shop onboarding',
+      error: err.message 
+    });
+  }
+};
+
+export const updateShopDetails = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { shop } = req.body;
+
+    console.log('Updating shop details for user:', userId);
+    console.log('Shop data:', shop);
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ status: false, message: 'User not found' });
+    }
+
+    if (user.type !== 'shop') {
+      return res.status(400).json({ 
+        status: false, 
+        message: 'Only shop owners can update shop details' 
+      });
+    }
+
+    // Update shop details
+    if (!user.shop) {
+      user.shop = {};
+    }
+
+    if (shop.location !== undefined) {
+      user.shop.location = shop.location;
+    }
+    if (shop.contactEmail !== undefined) {
+      user.shop.contactEmail = shop.contactEmail;
+    }
+    if (shop.contactPhone !== undefined) {
+      user.shop.contactPhone = shop.contactPhone;
+    }
+    if (shop.website !== undefined) {
+      user.shop.website = shop.website;
+    }
+    if (shop.socialLinks !== undefined) {
+      if (!user.shop.socialLinks) {
+        user.shop.socialLinks = {};
+      }
+      Object.assign(user.shop.socialLinks, shop.socialLinks);
+    }
+    if (shop.categories !== undefined) {
+      user.shop.categories = shop.categories;
+    }
+
+    await user.save();
+
+    console.log('Shop details updated successfully for user:', userId);
+
+    res.json({ 
+      status: true, 
+      message: 'Shop details updated successfully',
+      user: {
+        _id: user._id,
+        shop: user.shop
+      }
+    });
+  } catch (err) {
+    console.error('Error updating shop details:', err);
+    res.status(500).json({ 
+      status: false, 
+      message: 'Failed to update shop details',
       error: err.message 
     });
   }

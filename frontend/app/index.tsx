@@ -37,11 +37,10 @@ export default function Index() {
       if (loading) {
         setTimeout(() => {
           if (isAuthenticated && user) {
-            // Check if user needs onboarding
-            const needsUserOnboarding = !user.onboarding?.isComplete;
-            const needsShopOnboarding = user.type === 'shop' && !user.onboarding?.shopOnboarding?.isComplete;
+            // Check if user needs onboarding (simplified logic)
+            const needsOnboarding = !user.onboarding?.isComplete;
             
-            if (needsUserOnboarding || needsShopOnboarding) {
+            if (needsOnboarding) {
               router.replace('/onboarding');
             } else {
               router.replace('/(tabs)');
@@ -52,16 +51,26 @@ export default function Index() {
         }, 500);
       } else {
         if (isAuthenticated && user) {
-          // Check if user needs onboarding
-          const needsUserOnboarding = !user.onboarding?.isComplete;
-          const needsShopOnboarding = user.type === 'shop' && !user.onboarding?.shopOnboarding?.isComplete;
+          // Check if user needs onboarding (simplified logic)
+          const needsOnboarding = !user.onboarding?.isComplete;
           
-          if (needsUserOnboarding || needsShopOnboarding) {
+          console.log('🔍 Index page - User loaded:', {
+            userId: user._id,
+            type: user.type,
+            onboardingComplete: user.onboarding?.isComplete,
+            fullOnboarding: JSON.stringify(user.onboarding, null, 2),
+            needsOnboarding
+          });
+          
+          if (needsOnboarding) {
+            console.log('📍 Index page - Redirecting to onboarding');
             router.replace('/onboarding');
           } else {
+            console.log('📍 Index page - Redirecting to main app');
             router.replace('/(tabs)');
           }
         } else {
+          console.log('📍 Index page - Not authenticated, redirecting to auth');
           router.replace('/auth');
         }
       }
