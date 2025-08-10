@@ -93,6 +93,12 @@ export default function FeedScreen() {
   }
 
   useEffect(() => {
+    if (user?.type === 'admin') {
+      router.replace('/(tabs)/analytics');
+    }
+  }, [user]);
+
+  useEffect(() => {
     if(!user) return;
     const fetchPosts = async () => {
       setLoading(true);

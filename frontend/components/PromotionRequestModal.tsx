@@ -181,7 +181,7 @@ export const PromotionRequestModal: React.FC<PromotionRequestModalProps> = ({
   const pickDocument = async () => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.All,
+        mediaTypes: ['images', 'videos'],
         allowsEditing: false,
         quality: 0.8,
         allowsMultipleSelection: true,
@@ -216,26 +216,39 @@ export const PromotionRequestModal: React.FC<PromotionRequestModalProps> = ({
 
       const requestFormData = new FormData();
       
-      // Append text fields
+      // Add form fields
       Object.keys(formData).forEach(key => {
         requestFormData.append(key, formData[key as keyof typeof formData]);
       });
       
-      // Append documents
+      // Add files with correct structure
       proofDocuments.forEach((doc, index) => {
+        const fileExtension = doc.uri.split('.').pop() || 'jpg';
+        const fileName = doc.fileName || `document_${index}.${fileExtension}`;
+        
         requestFormData.append('proofDocuments', {
           uri: doc.uri,
-          type: doc.type || 'image/jpeg',
-          name: doc.fileName || `document_${index}.jpg`,
+          type: doc.type || doc.mimeType || 'image/jpeg',
+          name: fileName,
         } as any);
+      });
+
+      console.log('Submitting form data with', proofDocuments.length, 'documents');
+      console.log('Request payload preview:', {
+        businessName: formData.businessName,
+        businessDescription: formData.businessDescription,
+        businessType: formData.businessType,
+        documentCount: proofDocuments.length
       });
 
       const response = await axios.post(`${API_URL}/api/user/request-promotion`, requestFormData, {
         headers: {
-          Authorization: `Bearer ${token}`,
-          // Don't set Content-Type for FormData, let axios handle it
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data',
         },
       });
+
+      console.log('Response received:', response.data);
 
       if (response.data.status) {
         Alert.alert(
@@ -256,9 +269,35 @@ export const PromotionRequestModal: React.FC<PromotionRequestModalProps> = ({
       } else {
         Alert.alert('Error', response.data.message || 'Failed to submit request');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error submitting request:', error);
-      Alert.alert('Error', 'Failed to submit request. Please try again.');
+      if (error.response) {
+        console.error('Response data:', error.response.data);
+        console.error('Response status:', error.response.status);
+        
+        // Handle specific error cases
+        if (error.response.status === 400 && error.response.data?.message) {
+          const message = error.response.data.message;
+          
+          if (message.includes('already have a pending promotion request')) {
+            Alert.alert(
+              'Pending Application',
+              'You already have a pending promotion request. Please wait for admin review before submitting a new request.',
+              [{ text: 'OK', onPress: onClose }]
+            );
+            return;
+          } else if (message.includes('required')) {
+            Alert.alert('Missing Information', message);
+            return;
+          }
+        }
+        
+        // Generic error with server message
+        Alert.alert('Error', error.response.data?.message || 'Failed to submit request. Please try again.');
+      } else {
+        // Network or other errors
+        Alert.alert('Error', 'Failed to submit request. Please check your connection and try again.');
+      }
     } finally {
       setLoading(false);
     }

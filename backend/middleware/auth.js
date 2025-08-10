@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
+import User from '../models/User.js';
 
-export const verifyToken = (req, res, next) => {
+export const verifyToken = async (req, res, next) => {
   console.log('Verify Token middleware hit');
   const authHeader = req.headers.authorization;
 
@@ -12,7 +13,44 @@ export const verifyToken = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    
+    // Get user from database to check status
+    const user = await User.findById(decoded.id);
+    if (!user) {
+      return res.status(401).json({ status: false, message: 'User not found' });
+    }
+
+    // Check if user is banned
+    if (user.status === 'banned') {
+      return res.status(403).json({ 
+        status: false, 
+        message: 'Account is banned',
+        details: `Your account has been permanently banned. Reason: ${user.banReason || 'Violation of community guidelines'}.`
+      });
+    }
+
+    // Check if user is suspended
+    if (user.status === 'suspended') {
+      const isStillSuspended = user.suspendedUntil && new Date() < new Date(user.suspendedUntil);
+      
+      if (isStillSuspended) {
+        const suspendedUntilDate = new Date(user.suspendedUntil).toLocaleDateString();
+        return res.status(403).json({ 
+          status: false, 
+          message: 'Account is suspended',
+          details: `Your account is suspended until ${suspendedUntilDate}. Reason: ${user.suspensionReason || 'Violation of community guidelines'}.`
+        });
+      } else {
+        // Suspension period has ended, reactivate the account
+        user.status = 'active';
+        user.suspendedUntil = null;
+        user.suspensionReason = null;
+        await user.save();
+      }
+    }
+
     req.user = decoded;
+    req.userDetails = user; // Add full user details to request
     next();
   } catch (err) {
     return res.status(401).json({ status: false, message: 'Invalid or expired token' });

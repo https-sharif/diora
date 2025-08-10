@@ -1,4 +1,5 @@
 import Notification from '../models/Notification.js';
+import User from '../models/User.js';
 import { getIO, onlineUsers } from '../sockets/socketSetup.js';
 
 export const addNotification = async (req, res) => {
@@ -19,11 +20,55 @@ export const addNotification = async (req, res) => {
   if (!type || !userId || !fromUserId) {
     return res.status(400).json({
       status: false,
-      message: 'Type, userId, and fromUserId  are required',
+      message: 'Type, userId, and fromUserId are required',
     });
   }
 
   try {
+    // Check if the target user has this notification type enabled
+    const targetUser = await User.findById(userId);
+    if (!targetUser) {
+      return res.status(404).json({
+        status: false,
+        message: 'Target user not found',
+      });
+    }
+
+    // Check user status - don't send notifications to banned/suspended users
+    if (targetUser.status === 'banned' || targetUser.status === 'suspended') {
+      console.log(`Not sending notification to ${targetUser.status} user ${userId}`);
+      return res.status(200).json({
+        status: true,
+        message: 'User status prevents notification delivery',
+      });
+    }
+
+    // Map notification types to user settings
+    const notificationTypeMap = {
+      'like': 'likes',
+      'likes': 'likes',
+      'comment': 'comments',
+      'comments': 'comments',
+      'follow': 'follow',
+      'mention': 'mention',
+      'order': 'order',
+      'promotion': 'promotion',
+      'system': 'system',
+      'warning': 'warning',
+      'reportUpdate': 'reportUpdate',
+      'message': 'messages',
+      'messages': 'messages',
+    };
+
+    const settingKey = notificationTypeMap[type];
+    if (settingKey && targetUser.settings?.notifications?.[settingKey] === false) {
+      console.log(`Notification type '${type}' is disabled for user ${userId}`);
+      return res.status(200).json({
+        status: true,
+        message: 'Notification type disabled for user',
+      });
+    }
+
     const newNotification = new Notification({
       type,
       userId,

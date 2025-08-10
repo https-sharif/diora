@@ -6,11 +6,87 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken'
 import mongoose from 'mongoose';
 
+// Helper function to check if user is accessible (not banned/suspended)
+// Admins can view all users regardless of status
+const isUserAccessible = (user, requesterIsAdmin = false) => {
+  if (!user) return false;
+  
+  // Admins can view all users
+  if (requesterIsAdmin) return true;
+  
+  // Check if banned
+  if (user.status === 'banned') return false;
+  
+  // Check if suspended and suspension hasn't expired
+  if (user.status === 'suspended') {
+    if (!user.suspendedUntil || new Date() < new Date(user.suspendedUntil)) {
+      return false;
+    }
+    // If suspension expired, update status to active (will be handled in individual functions)
+  }
+  
+  return true;
+};
+
+export const getCurrentUser = async (req, res) => {
+  console.log('Get current user route/controller hit');
+  try {
+    const userId = req.user.id;
+    
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ status: false, message: 'User not found' });
+    }
+
+    // Update last active timestamp
+    user.lastActiveAt = new Date();
+    await user.save();
+
+    // Check if suspended user's suspension has expired
+    if (user.status === 'suspended' && user.suspendedUntil && new Date() >= new Date(user.suspendedUntil)) {
+      user.status = 'active';
+      user.suspendedUntil = null;
+      user.suspensionReason = null;
+      await user.save();
+    }
+
+    const safeUser = {
+      _id: user._id,
+      email: user.email,
+      username: user.username,
+      fullName: user.fullName,
+      avatar: user.avatar,
+      bio: user.bio,
+      isVerified: user.isVerified,
+      followers: user.followers,
+      following: user.following,
+      posts: user.posts,
+      likedPosts: user.likedPosts,
+      type: user.type,
+      status: user.status,
+      suspendedUntil: user.suspendedUntil,
+      suspensionReason: user.suspensionReason,
+      banReason: user.banReason,
+      bannedAt: user.bannedAt,
+      lastActiveAt: user.lastActiveAt,
+      createdAt: user.createdAt,
+      settings: user.settings,
+      avatarId: user.avatarId,
+    };
+
+    res.json({ status: true, user: safeUser });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ status: false, message: 'Something went wrong' });
+  }
+};
+
 export const followUser = async (req, res) => {
   console.log('Follow user route/controller hit');
   try {
     const currentUserId = req.user.id;
     const targetUserId = req.params.targetUserId;
+    const isAdmin = req.userDetails && req.userDetails.type === 'admin';
 
     if (currentUserId === targetUserId) {
       return res
@@ -22,6 +98,11 @@ export const followUser = async (req, res) => {
     const targetUser = await User.findById(targetUserId);
 
     if (!targetUser) {
+      return res.status(404).json({ status: false, message: 'User not found' });
+    }
+
+    // Check if target user is accessible (not banned/suspended) unless requester is admin
+    if (!isUserAccessible(targetUser, isAdmin)) {
       return res.status(404).json({ status: false, message: 'User not found' });
     }
 
@@ -49,10 +130,24 @@ export const getUserProfile = async (req, res) => {
   console.log('Get user profile route/controller hit');
   try {
     const userId = req.params.userId;
+    const isAdmin = req.userDetails && req.userDetails.type === 'admin';
 
     const user = await User.findById(userId);
     if (!user) {
       return res.status(200).json({ status: false, message: 'User not found' });
+    }
+
+    // Check if user is accessible (not banned/suspended) unless requester is admin
+    if (!isUserAccessible(user, isAdmin)) {
+      return res.status(200).json({ status: false, message: 'User not found' });
+    }
+
+    // Update expired suspension if applicable
+    if (user.status === 'suspended' && user.suspendedUntil && new Date() >= new Date(user.suspendedUntil)) {
+      user.status = 'active';
+      user.suspendedUntil = null;
+      user.suspensionReason = null;
+      await user.save();
     }
 
     if(user.type === 'shop') {
@@ -76,8 +171,20 @@ export const getTrendingUsers = async (req, res) => {
   console.log('Get trending users route/controller hit');
   try {
     const currentUserId = req.user.id;
+    const isAdmin = req.userDetails && req.userDetails.type === 'admin';
+    
+    // Build match criteria - admins see all users, others only see active users
+    const matchCriteria = { 
+      _id: { $ne: new mongoose.Types.ObjectId(currentUserId) }, 
+      type: 'user'
+    };
+    
+    if (!isAdmin) {
+      matchCriteria.status = 'active'; // Only include active users for non-admins
+    }
+    
     const users = await User.aggregate([
-      { $match: { _id: { $ne: new mongoose.Types.ObjectId(currentUserId) }, type: 'user' } },
+      { $match: matchCriteria },
       { $sample: { size: 4 } },
     ]);
 
@@ -95,6 +202,7 @@ export const getTrendingUsers = async (req, res) => {
       followers: user.followers.length,
       following: user.following.length,
       isVerified: user.isVerified,
+      status: user.status, // Include status for admin visibility
     }));
 
     res.json({ status: true, trendingUsers });
@@ -136,10 +244,6 @@ export const updateUserProfile = async (req, res) => {
 
       user.avatar = file.path;
       user.avatarId = file.filename;
-    }
-    else {
-      user.avatar = 'https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png';
-      user.avatarId = null;
     }
 
     user.username = username ? username.toLowerCase() : user.username;
@@ -227,8 +331,57 @@ export const getUserSettings = async (req, res) => {
   }
 };
 
+export const updateUserSettings = async (req, res) => {
+  console.log('Update user settings route/controller hit');
+  try {
+    const userId = req.user.id;
+    const { theme, notifications } = req.body;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ status: false, message: 'User not found' });
+    }
+
+    // Update theme if provided
+    if (theme && ['light', 'dark'].includes(theme)) {
+      user.settings.theme = theme;
+    }
+
+    // Update notification settings if provided
+    if (notifications) {
+      const validBooleanFields = ['likes', 'comments', 'follow', 'mention', 'order', 'promotion', 'system', 'warning', 'reportUpdate', 'messages'];
+      
+      validBooleanFields.forEach(field => {
+        if (typeof notifications[field] === 'boolean') {
+          user.settings.notifications[field] = notifications[field];
+        }
+      });
+
+      // Update email frequency if provided
+      if (notifications.emailFrequency && ['instant', 'daily', 'weekly'].includes(notifications.emailFrequency)) {
+        user.settings.notifications.emailFrequency = notifications.emailFrequency;
+      }
+    }
+
+    await user.save();
+
+    res.json({ 
+      status: true, 
+      message: 'Settings updated successfully', 
+      settings: user.settings 
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ status: false, message: 'Something went wrong' });
+  }
+};
+
 export const requestPromotion = async (req, res) => {
-  console.log('Request promotion route/controller hit');
+  console.log('=== Promotion Request Started ===');
+  console.log('User ID:', req.user?.id);
+  console.log('Request body:', req.body);
+  console.log('Files received:', req.files ? req.files.length : 0);
+  
   try {
     const userId = req.user.id;
     const {
@@ -240,8 +393,27 @@ export const requestPromotion = async (req, res) => {
       additionalInfo
     } = req.body;
 
+    console.log('Form data:', {
+      businessName,
+      businessDescription,
+      businessType,
+      yearsInBusiness,
+      expectedProducts,
+      additionalInfo
+    });
+
+    // Validate required fields
+    if (!businessName || !businessDescription || !businessType) {
+      console.log('Missing required fields');
+      return res.status(400).json({ 
+        status: false, 
+        message: 'Business name, description, and type are required' 
+      });
+    }
+
     const user = await User.findById(userId);
     if (!user) {
+      console.log('User not found:', userId);
       return res.status(404).json({ status: false, message: 'User not found' });
     }
 
@@ -249,7 +421,6 @@ export const requestPromotion = async (req, res) => {
       return res.status(400).json({ status: false, message: 'Only regular users can request promotion' });
     }
 
-    // Check if user already has a pending promotion request
     const existingRequest = await PromotionRequest.findOne({ 
       userId: userId, 
       status: 'pending' 
@@ -264,12 +435,19 @@ export const requestPromotion = async (req, res) => {
 
     // Handle file uploads
     const proofDocuments = [];
-    if (req.files && req.files.proofDocuments) {
-      const files = Array.isArray(req.files.proofDocuments) 
-        ? req.files.proofDocuments 
-        : [req.files.proofDocuments];
-      
-      for (const file of files) {
+    console.log('Files check - req.files:', req.files);
+    console.log('Files type:', typeof req.files);
+    console.log('Files length:', req.files ? req.files.length : 'undefined');
+    
+    if (req.files && req.files.length > 0) {
+      console.log('Processing', req.files.length, 'files');
+      for (const file of req.files) {
+        console.log('File details:', {
+          filename: file.filename,
+          originalname: file.originalname,
+          path: file.path,
+          mimetype: file.mimetype
+        });
         proofDocuments.push({
           filename: file.filename,
           originalName: file.originalname,
@@ -277,7 +455,16 @@ export const requestPromotion = async (req, res) => {
           mimetype: file.mimetype
         });
       }
+    } else {
+      console.log('No files received or files array is empty');
+      return res.status(400).json({ 
+        status: false, 
+        message: 'At least one proof document is required' 
+      });
     }
+
+    console.log('Received files:', req.files ? req.files.length : 0);
+    console.log('Processed documents:', proofDocuments.length);
 
     // Create promotion request
     const promotionRequest = new PromotionRequest({
@@ -311,14 +498,20 @@ export const requestPromotion = async (req, res) => {
       await notification.save();
     }
 
+    console.log('Promotion request created successfully');
     res.json({ 
       status: true, 
       message: 'Promotion request submitted successfully',
       requestId: promotionRequest._id
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ status: false, message: 'Something went wrong' });
+    console.error('Error in requestPromotion:', err);
+    console.error('Error stack:', err.stack);
+    res.status(500).json({ 
+      status: false, 
+      message: 'Something went wrong while processing your request',
+      error: err.message 
+    });
   }
 };
 
@@ -372,6 +565,49 @@ export const approvePromotionRequest = async (req, res) => {
         yearsInBusiness: promotionRequest.yearsInBusiness,
         expectedProducts: promotionRequest.expectedProducts
       };
+
+      // Initialize shop onboarding (reset to incomplete)
+      if (!user.onboarding) {
+        user.onboarding = {
+          isComplete: true, // Keep user onboarding complete
+          completedAt: new Date(),
+          step: 3,
+          profile: {
+            completed: true,
+            interests: []
+          },
+          preferences: {
+            completed: true,
+            favoriteCategories: []
+          },
+          shopOnboarding: {
+            isComplete: false,
+            step: 0,
+            businessInfo: {
+              completed: false
+            },
+            setupInfo: {
+              completed: false,
+              shippingRegions: [],
+              paymentMethods: []
+            }
+          }
+        };
+      } else {
+        // Just reset shop onboarding
+        user.onboarding.shopOnboarding = {
+          isComplete: false,
+          step: 0,
+          businessInfo: {
+            completed: false
+          },
+          setupInfo: {
+            completed: false,
+            shippingRegions: [],
+            paymentMethods: []
+          }
+        };
+      }
 
       await user.save();
 
@@ -472,5 +708,195 @@ export const getPromotionRequests = async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ status: false, message: 'Something went wrong' });
+  }
+};
+
+export const completeOnboarding = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { onboarding } = req.body;
+
+    console.log('Completing onboarding for user:', userId);
+    console.log('Onboarding data:', onboarding);
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ status: false, message: 'User not found' });
+    }
+
+    // Update specific onboarding fields without overwriting the entire object
+    if (onboarding.profile) {
+      // Clean up profile data - convert empty strings to null for enum fields
+      const cleanedProfile = {
+        ...user.onboarding.profile,
+        ...onboarding.profile,
+        completed: true,
+      };
+      
+      // Convert empty strings to null for enum fields
+      if (cleanedProfile.gender === '') {
+        cleanedProfile.gender = null;
+      }
+      
+      user.onboarding.profile = cleanedProfile;
+    }
+
+    if (onboarding.preferences) {
+      // Clean up preferences data - convert empty strings to null for enum fields
+      const cleanedPreferences = {
+        ...user.onboarding.preferences,
+        ...onboarding.preferences,
+        completed: true,
+      };
+      
+      // Convert empty strings to null for enum fields
+      if (cleanedPreferences.shoppingFrequency === '') {
+        cleanedPreferences.shoppingFrequency = null;
+      }
+      if (cleanedPreferences.budgetRange === '') {
+        cleanedPreferences.budgetRange = null;
+      }
+      
+      user.onboarding.preferences = cleanedPreferences;
+    }
+
+    // Set completion status
+    user.onboarding.isComplete = true;
+    user.onboarding.completedAt = new Date();
+    user.onboarding.step = onboarding.step || 4;
+
+    // Only initialize shopOnboarding for shop users, leave it null for regular users
+    if (user.type === 'shop' && !user.onboarding.shopOnboarding) {
+      user.onboarding.shopOnboarding = {
+        isComplete: false,
+        completedAt: null,
+        step: 0,
+        businessInfo: {
+          completed: false,
+          description: '',
+          targetAudience: '',
+          uniqueSellingPoint: '',
+        },
+        setupInfo: {
+          completed: false,
+          shippingRegions: [],
+          paymentMethods: [],
+          returnPolicy: '',
+          estimatedShippingTime: '',
+        },
+      };
+    }
+
+    // Mark the onboarding field as modified
+    user.markModified('onboarding');
+
+    await user.save();
+
+    res.json({ 
+      status: true, 
+      message: 'Onboarding completed successfully',
+      user: {
+        _id: user._id,
+        onboarding: user.onboarding
+      }
+    });
+  } catch (err) {
+    console.error('Error completing onboarding:', err);
+    res.status(500).json({ 
+      status: false, 
+      message: 'Failed to complete onboarding',
+      error: err.message 
+    });
+  }
+};
+
+export const uploadImage = async (req, res) => {
+  try {
+    const file = req.file;
+    
+    if (!file) {
+      return res.status(400).json({ 
+        status: false, 
+        message: 'No image file provided' 
+      });
+    }
+
+    res.json({
+      status: true,
+      message: 'Image uploaded successfully',
+      data: {
+        url: file.path,
+        id: file.filename
+      }
+    });
+  } catch (error) {
+    console.error('Error uploading image:', error);
+    res.status(500).json({
+      status: false,
+      message: 'Failed to upload image',
+      error: error.message
+    });
+  }
+};
+
+export const completeShopOnboarding = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { shopOnboarding, avatar } = req.body;
+
+    console.log('Completing shop onboarding for user:', userId);
+    console.log('Shop onboarding data:', shopOnboarding);
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ status: false, message: 'User not found' });
+    }
+
+    if (user.type !== 'shop') {
+      return res.status(400).json({ 
+        status: false, 
+        message: 'Only shop owners can complete shop onboarding' 
+      });
+    }
+
+    // Update user shop onboarding data
+    if (!user.onboarding) {
+      user.onboarding = {};
+    }
+
+    user.onboarding.shopOnboarding = {
+      ...user.onboarding.shopOnboarding,
+      ...shopOnboarding,
+      completedAt: new Date(),
+    };
+
+    console.log('Final shop onboarding data to be saved:', user.onboarding.shopOnboarding);
+
+    // Update avatar if provided
+    if (avatar) {
+      user.avatar = avatar;
+    }
+
+    await user.save();
+
+    console.log('Shop onboarding saved successfully for user:', userId);
+    console.log('Updated user onboarding:', user.onboarding);
+
+    res.json({ 
+      status: true, 
+      message: 'Shop onboarding completed successfully',
+      user: {
+        _id: user._id,
+        onboarding: user.onboarding,
+        avatar: user.avatar
+      }
+    });
+  } catch (err) {
+    console.error('Error completing shop onboarding:', err);
+    res.status(500).json({ 
+      status: false, 
+      message: 'Failed to complete shop onboarding',
+      error: err.message 
+    });
   }
 };

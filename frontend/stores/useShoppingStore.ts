@@ -105,8 +105,9 @@ export const useShoppingStore = create<ShoppingStore>((set, get) => {
         })) || [];
 
         set({ cart: cartItems });
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching cart:', error);
+        // For new users or server errors, just set empty cart silently
         set({ cart: [] });
       }
     },
@@ -146,8 +147,9 @@ export const useShoppingStore = create<ShoppingStore>((set, get) => {
             }
           }
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching wishlist:', error);
+        // For new users or server errors, just set empty wishlist silently
         if (!silent) {
           set({ wishlist: [] });
         }
@@ -501,11 +503,26 @@ export const useShoppingStore = create<ShoppingStore>((set, get) => {
         return;
       }
 
+      // Only initialize shopping data for users who have completed onboarding
+      if (!user.onboarding?.isComplete) {
+        console.log('🔒 Skipping shopping data initialization - user onboarding not complete');
+        set({ cart: [], wishlist: [] });
+        return;
+      }
+
+      console.log('📦 Fetching cart and wishlist for user:', user._id);
+      
       // Fetch both cart and wishlist in parallel
-      await Promise.all([
-        get().fetchCart(),
-        get().fetchWishlist()
-      ]);
+      try {
+        await Promise.all([
+          get().fetchCart(),
+          get().fetchWishlist()
+        ]);
+      } catch (error) {
+        console.error('Error initializing shopping data:', error);
+        // Set empty arrays on error
+        set({ cart: [], wishlist: [] });
+      }
     },
   };
 });

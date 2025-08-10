@@ -152,10 +152,15 @@ export default function AuthScreen() {
 
       if (result.success) {
         setTimeout(() => {
-          router.replace('/(tabs)');
+          router.replace('/');
         }, 100);
       } else {
-        Alert.alert('Error', result.error || (isLogin ? 'Login failed' : 'Signup failed'));
+        // Check for suspension/ban details
+        if ((result as any).details) {
+          Alert.alert(result.error || 'Login Failed', (result as any).details);
+        } else {
+          Alert.alert('Error', result.error || (isLogin ? 'Login failed' : 'Signup failed'));
+        }
       }
     } catch (error: any) {
       Alert.alert('Error', error.message || (isLogin ? 'Login failed' : 'Signup failed'));

@@ -18,7 +18,7 @@ interface AuthState {
   login: (
     username: string,
     password: string
-  ) => Promise<{ success: boolean; error: string | null }>;
+  ) => Promise<{ success: boolean; error: string | null; details?: string }>;
   signup: (
     email: string,
     password: string,
@@ -28,6 +28,7 @@ interface AuthState {
   logout: () => void;
   followUser: (targetUserId: string, targetType: 'user' | 'shop') => void;
   likePost: (postId: string) => void;
+  syncUser: () => Promise<void>;
   setIsAuthenticated: (val: boolean) => void;
   setUser: (user: User | null) => void;
   setLoading: (val: boolean) => void;
@@ -79,12 +80,20 @@ export const useAuthStore = create<AuthState>()(
             return { success: true, error: null };
           } else {
             set({ error: data.message, loading: false });
-            return { success: false, error: data.message };
+            return { success: false, error: data.message, details: data.details };
           }
         } catch (err: any) {
-          const errorMsg = err.message || 'Login failed';
+          let errorMsg = err.message || 'Login failed';
+          let details = null;
+          
+          // Check if it's a suspension/ban error from the backend
+          if (err.response?.data) {
+            errorMsg = err.response.data.message || errorMsg;
+            details = err.response.data.details;
+          }
+          
           set({ error: errorMsg, loading: false });
-          return { success: false, error: errorMsg };
+          return { success: false, error: errorMsg, details };
         }
       },
 
@@ -128,6 +137,7 @@ export const useAuthStore = create<AuthState>()(
               isVerified: data.user.isVerified,
               createdAt: data.user.createdAt,
               type: data.user.type,
+              onboarding: data.user.onboarding,
               settings: {
                 theme: data.user.settings.theme,
                 notifications: {
@@ -236,6 +246,57 @@ export const useAuthStore = create<AuthState>()(
           loading: false,
           error: null,
         }),
+
+      syncUser: async () => {
+        const { token, isAuthenticated } = get();
+        if (!token || !isAuthenticated) return;
+
+        try {
+          const response = await axios.get(`${API_URL}/api/user/me`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+
+          if (response.data.status) {
+            const updatedUser = response.data.user;
+            
+            // Check if user is banned or suspended
+            if (updatedUser.status === 'banned') {
+              // Force logout if user is banned
+              await AsyncStorage.clear();
+              set({ user: null, token: null, isAuthenticated: false });
+              router.replace('/auth');
+              return;
+            }
+
+            if (updatedUser.status === 'suspended' && updatedUser.suspendedUntil) {
+              const suspendedUntil = new Date(updatedUser.suspendedUntil);
+              if (new Date() < suspendedUntil) {
+                // Force logout if still suspended
+                await AsyncStorage.clear();
+                set({ user: null, token: null, isAuthenticated: false });
+                router.replace('/auth');
+                return;
+              }
+            }
+
+            // Update user data
+            set({ user: updatedUser });
+          } else {
+            // Invalid token or user not found
+            await AsyncStorage.clear();
+            set({ user: null, token: null, isAuthenticated: false });
+            router.replace('/auth');
+          }
+        } catch (error: any) {
+          // If unauthorized, clear auth state
+          if (error.response?.status === 401 || error.response?.status === 403) {
+            await AsyncStorage.clear();
+            set({ user: null, token: null, isAuthenticated: false });
+            router.replace('/auth');
+          }
+          console.error('Failed to sync user:', error);
+        }
+      },
     }),
     {
       name: 'auth-store',

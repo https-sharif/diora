@@ -4,10 +4,40 @@ import Order from '../models/Order.js';
 import Wishlist from '../models/Wishlist.js';
 import mongoose from 'mongoose';
 
+// Helper function to check if user is accessible (not banned/suspended)
+// Admins can view all users regardless of status
+const isUserAccessible = (user, requesterIsAdmin = false) => {
+  if (!user) return false;
+  
+  // Admins can view all users
+  if (requesterIsAdmin) return true;
+  
+  // Check if banned
+  if (user.status === 'banned') return false;
+  
+  // Check if suspended and suspension hasn't expired
+  if (user.status === 'suspended') {
+    if (!user.suspendedUntil || new Date() < new Date(user.suspendedUntil)) {
+      return false;
+    }
+    // If suspension expired, update status to active (will be handled in individual functions)
+  }
+  
+  return true;
+};
+
 export const getAllShops = async (req, res) => {
   console.log('Get all shops route/controller hit');
   try {
-    const shops = await User.find({ type: 'shop' }).populate('userId', 'username avatar');
+    const isAdmin = req.userDetails && req.userDetails.type === 'admin';
+    
+    // Build query - admins see all shops, others only see active shops
+    const query = { type: 'shop' };
+    if (!isAdmin) {
+      query.status = 'active'; // Only include active shops for non-admins
+    }
+    
+    const shops = await User.find(query).populate('userId', 'username avatar');
 
     res.json({ status: true, shops });
   } catch (err) {
@@ -20,6 +50,8 @@ export const getShopById = async (req, res) => {
   console.log('Get shop by ID route/controller hit');
   try {
     const shopId = req.params.shopId;
+    const isAdmin = req.userDetails && req.userDetails.type === 'admin';
+    
     const shop = await User.findById(shopId)
       .populate({
         path: 'productIds',
@@ -28,6 +60,19 @@ export const getShopById = async (req, res) => {
 
     if (!shop) {
       return res.status(404).json({ status: false, message: 'Shop not found' });
+    }
+
+    // Check if shop is accessible (not banned/suspended) unless requester is admin
+    if (!isUserAccessible(shop, isAdmin)) {
+      return res.status(404).json({ status: false, message: 'Shop not found' });
+    }
+
+    // Update expired suspension if applicable
+    if (shop.status === 'suspended' && shop.suspendedUntil && new Date() >= new Date(shop.suspendedUntil)) {
+      shop.status = 'active';
+      shop.suspendedUntil = null;
+      shop.suspensionReason = null;
+      await shop.save();
     }
 
     const shopData = shop.toObject();
@@ -236,11 +281,22 @@ export const getTrendingShops = async (req, res) => {
   console.log('Get trending shops route/controller hit');
   try {
     const currentUserId = req.user.id;
+    const isAdmin = req.userDetails && req.userDetails.type === 'admin';
+    
+    // Build match criteria - admins see all shops, others only see active shops
+    const matchCriteria = { 
+      _id: { $ne: new mongoose.Types.ObjectId(currentUserId) }, 
+      type: 'shop'
+    };
+    
+    if (!isAdmin) {
+      matchCriteria.status = 'active'; // Only include active shops for non-admins
+    }
+    
     const trendingShops = await User.aggregate([
-      { $match: { _id: { $ne: new mongoose.Types.ObjectId(currentUserId) }, type: 'shop' } },
+      { $match: matchCriteria },
       { $sample: { size: 4 } }
     ]);
-
 
     if (!trendingShops || trendingShops.length === 0) {
       return res
@@ -260,6 +316,7 @@ export const followShop = async (req, res) => {
   try {
     const userId = req.user.id;
     const shopId = req.params.shopId;
+    const isAdmin = req.userDetails && req.userDetails.type === 'admin';
     console.log(`User ID: ${userId}, Shop ID: ${shopId}`);
 
     if(shopId === userId) {
@@ -271,6 +328,11 @@ export const followShop = async (req, res) => {
 
     if (!shop || !user) {
       return res.status(404).json({ status: false, message: 'Shop or user not found' });
+    }
+
+    // Check if shop is accessible (not banned/suspended) unless requester is admin
+    if (!isUserAccessible(shop, isAdmin)) {
+      return res.status(404).json({ status: false, message: 'Shop not found' });
     }
 
     const isFollowing = user.following.includes(shopId);

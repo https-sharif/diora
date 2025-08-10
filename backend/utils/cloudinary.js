@@ -18,6 +18,15 @@ const storage = new CloudinaryStorage({
   },
 });
 
+const documentStorage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: 'promotion-documents',
+    allowed_formats: ['jpg', 'jpeg', 'png', 'pdf', 'doc', 'docx'],
+    resource_type: 'auto',
+  },
+});
+
 const deleteImage = async (publicId) => {
   try {
     await cloudinary.uploader.destroy(publicId);
@@ -28,5 +37,6 @@ const deleteImage = async (publicId) => {
 }
 
 const parser = multer({ storage });
+const documentParser = multer({ storage: documentStorage });
 
-export { cloudinary, parser, deleteImage };
+export { cloudinary, parser, documentParser, deleteImage };

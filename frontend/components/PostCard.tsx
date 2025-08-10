@@ -237,7 +237,7 @@ const createStyles = (theme: Theme) => {
 
 export default function PostCard({ post }: { post: Post }) {
   const [isStarred, setIsStarred] = useState(false);
-  const [starCount, setStarCount] = useState(post.stars);
+  const [starCount, setStarCount] = useState(post.stars || 0);
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
@@ -295,7 +295,8 @@ export default function PostCard({ post }: { post: Post }) {
     likePost(post._id);
   };
 
-  const formatNumber = (num: number) => {
+  const formatNumber = (num: number | undefined) => {
+    if (num === undefined || num === null || isNaN(num)) return '0';
     if (num >= 1_000_000)
       return (num / 1_000_000).toFixed(1).replace('.0', '') + 'M';
     if (num > 9999) return (num / 1000).toFixed(1).replace('.0', '') + 'K';

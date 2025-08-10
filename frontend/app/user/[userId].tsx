@@ -436,7 +436,11 @@ export default function UserProfileScreen() {
           }),
         ]);
 
-        if (!profileRes.data.status) throw new Error('Failed to fetch user profile');
+        if (!profileRes.data.status) {
+          // User not found (could be banned/suspended)
+          router.back();
+          return;
+        }
 
         setUserProfile(profileRes.data.user);
         setIsFollowing(user?.following.includes(user._id) || false);
@@ -444,6 +448,8 @@ export default function UserProfileScreen() {
         setLikedPosts(likedRes.data.posts);
       } catch (error) {
         console.error('Error fetching data:', error);
+        // If there's an error fetching the user, go back
+        router.back();
       } finally {
         setSelectedTab('posts');
         setLoading(false);

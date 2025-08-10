@@ -43,12 +43,17 @@ export const createComment = async (req, res) => {
       if (existingNotification) {
         if (!existingNotification.fromUserIds) existingNotification.fromUserIds = [];
 
-        if (!existingNotification.fromUserIds.includes(userId)) {
+        if (!existingNotification.fromUserIds.some(id => id.toString() === userId)) {
           existingNotification.fromUserIds.push(userId);
         }
 
         const users = await User.find({ _id: { $in: existingNotification.fromUserIds } }, 'username');
-        const usernames = users.map(u => u.username);
+        const usernames = users.map(u => u.username).filter(name => name); // Filter out null/undefined usernames
+
+        if (usernames.length === 0) {
+          // Fallback if no valid usernames found - use current user
+          usernames.push(user.username);
+        }
 
         const currentUsernameIndex = usernames.indexOf(user.username);
         if (currentUsernameIndex > -1) {

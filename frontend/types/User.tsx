@@ -14,6 +14,48 @@ export interface User {
   posts: number;
   likedPosts: string[];
   type: 'user' | 'shop' | 'admin';
+  status?: 'active' | 'suspended' | 'banned';
+  suspendedUntil?: string;
+  suspensionReason?: string;
+  banReason?: string;
+  bannedAt?: string;
+  lastActiveAt?: string;
+  onboarding?: {
+    isComplete: boolean;
+    completedAt?: string;
+    step: number;
+    profile: {
+      completed: boolean;
+      dateOfBirth?: string;
+      gender?: 'male' | 'female' | 'other' | 'prefer-not-to-say';
+      location?: string;
+      interests: string[];
+    };
+    preferences: {
+      completed: boolean;
+      favoriteCategories: string[];
+      shoppingFrequency?: 'rarely' | 'monthly' | 'weekly' | 'daily';
+      budgetRange?: 'under-50' | '50-200' | '200-500' | '500-1000' | 'over-1000';
+    };
+    shopOnboarding?: {
+      isComplete: boolean;
+      completedAt?: string;
+      step: number;
+      businessInfo: {
+        completed: boolean;
+        description?: string;
+        targetAudience?: string;
+        uniqueSellingPoint?: string;
+      };
+      setupInfo: {
+        completed: boolean;
+        shippingRegions: string[];
+        paymentMethods: string[];
+        returnPolicy?: string;
+        estimatedShippingTime?: string;
+      };
+    };
+  };
   shop?: {
     coverImageUrl?: string;
     location?: string;

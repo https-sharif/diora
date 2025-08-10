@@ -1,5 +1,5 @@
 import { router, Tabs } from 'expo-router';
-import { BarChart3, Home, Plus, Search, ShoppingBag, User, Shield } from 'lucide-react-native';
+import { Eye, Flag, BarChart3, PlusCircle, User, Home, Search, Plus, ShoppingBag } from 'lucide-react-native';
 import React, { useEffect } from 'react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/hooks/useAuth';
@@ -15,6 +15,13 @@ export default function TabLayout() {
       fetchNotifications();
     }
   }, [isAuthenticated, fetchNotifications]);
+
+  // Redirect admin users to analytics tab on initial load
+  useEffect(() => {
+    if (isAuthenticated && user?.type === 'admin') {
+      router.replace('/(tabs)/analytics');
+    }
+  }, [isAuthenticated, user?.type]);
 
   if (!isAuthenticated) {
     return null;
@@ -42,21 +49,29 @@ export default function TabLayout() {
       }}
     >
       <Tabs.Screen
+        name="analytics"
+        options={{
+          href: user?.type === 'admin' ? undefined : null,
+          title: 'Analytics',
+          tabBarIcon: ({ size, color, focused }) => (
+            <BarChart3 size={size} color={color} strokeWidth={focused ? 3 : 2} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="index"
         options={{
+          href: user?.type === 'admin' ? null : undefined,
           title: 'Feed',
           tabBarIcon: ({ size, color, focused }) => (
-            (user?.type === 'admin') ? (
-              <BarChart3 size={size} color={color} strokeWidth={focused ? 3 : 2} />
-            ) : (
-              <Home size={size} color={color} strokeWidth={focused ? 3 : 2} />
-            )
+            <Home size={size} color={color} strokeWidth={focused ? 3 : 2} />
           ),
         }}
       />
       <Tabs.Screen
         name="explore"
         options={{
+          href: user?.type === 'admin' ? null : undefined,
           title: 'Explore',
           tabBarIcon: ({ size, color, focused }) => (
             <Search size={size} color={color} strokeWidth={focused ? 3 : 2} />
@@ -64,8 +79,19 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="monitor"
+        options={{
+          href: user?.type === 'admin' ? undefined : null,
+          title: 'Monitor',
+          tabBarIcon: ({ size, color, focused }) => (
+            <Eye size={size} color={color} strokeWidth={focused ? 3 : 2} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="create"
         options={{
+          href: user?.type === 'admin' ? null : undefined,
           title: 'Create',
           tabBarIcon: ({ size, color, focused }) => (
             <Plus size={size} color={color} strokeWidth={focused ? 3 : 2} />
@@ -88,7 +114,7 @@ export default function TabLayout() {
           href: user?.type === 'admin' ? '/reports' : null,
           title: 'Reports',
           tabBarIcon: ({ size, color, focused }) => (
-            <Shield size={size} color={color} strokeWidth={focused ? 3 : 2} />
+            <Flag size={size} color={color} strokeWidth={focused ? 3 : 2} />
           ),
         }}
       />

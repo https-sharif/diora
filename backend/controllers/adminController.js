@@ -4,6 +4,8 @@ import Product from '../models/Product.js';
 import PromotionRequest from '../models/PromotionRequest.js';
 import Comment from '../models/Comment.js';
 import Order from '../models/Order.js';
+import Notification from '../models/Notification.js';
+import { getIO, onlineUsers } from '../sockets/socketSetup.js';
 
 export const getAdminStats = async (req, res) => {
   console.log('Get admin stats route/controller hit');
@@ -150,5 +152,489 @@ export const getSystemHealth = async (req, res) => {
         error: err.message
       }
     });
+  }
+};
+
+// Search users for admin monitoring
+export const searchUsers = async (req, res) => {
+  console.log('Admin search users route/controller hit');
+  try {
+    const { query, type, status, page = 1, limit = 20 } = req.query;
+    
+    const filter = {};
+    
+    // Text search
+    if (query && query.trim()) {
+      const searchRegex = { $regex: query.trim(), $options: 'i' };
+      filter.$or = [
+        { username: searchRegex },
+        { fullName: searchRegex },
+        { email: searchRegex }
+      ];
+    }
+    
+    // Filter by user type
+    if (type && type !== 'all') {
+      filter.type = type;
+    }
+    
+    // Filter by status
+    if (status && status !== 'all') {
+      filter.status = status;
+    }
+    
+    const options = {
+      skip: (page - 1) * limit,
+      limit: parseInt(limit),
+      sort: { createdAt: -1 }
+    };
+    
+    const users = await User.find(filter, null, options)
+      .select('username fullName email avatar type isVerified followers following posts status suspendedUntil banReason createdAt lastActiveAt');
+    
+    const totalUsers = await User.countDocuments(filter);
+    
+    res.json({
+      status: true,
+      users,
+      pagination: {
+        current: parseInt(page),
+        total: Math.ceil(totalUsers / limit),
+        count: users.length,
+        totalCount: totalUsers
+      }
+    });
+  } catch (err) {
+    console.error('Error searching users:', err);
+    res.status(500).json({ status: false, message: 'Something went wrong' });
+  }
+};
+
+// Suspend user
+export const suspendUser = async (req, res) => {
+  console.log('Admin suspend user route/controller hit');
+  try {
+    const { userId } = req.params;
+    const { duration = 7, reason } = req.body;
+    
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ status: false, message: 'User not found' });
+    }
+    
+    if (user.type === 'admin') {
+      return res.status(400).json({ status: false, message: 'Cannot suspend admin users' });
+    }
+    
+    const suspendedUntil = new Date();
+    suspendedUntil.setDate(suspendedUntil.getDate() + duration);
+    
+    user.status = 'suspended';
+    user.suspendedUntil = suspendedUntil;
+    user.suspensionReason = reason || 'Violation of community guidelines';
+    
+    await user.save();
+    
+    // Create notification for suspended user
+    const notification = new Notification({
+      userId: user._id,
+      type: 'warning',
+      title: 'Account Suspended ⚠️',
+      message: `Your account has been suspended until ${suspendedUntil.toDateString()}. Reason: ${reason || 'Violation of community guidelines'}`,
+      data: {
+        action: 'suspension',
+        duration: duration,
+        reason: reason,
+        suspendedUntil: suspendedUntil
+      }
+    });
+    await notification.save();
+    
+    res.json({
+      status: true,
+      message: `User suspended for ${duration} days`,
+      user: {
+        _id: user._id,
+        username: user.username,
+        status: user.status,
+        suspendedUntil: user.suspendedUntil
+      }
+    });
+  } catch (err) {
+    console.error('Error suspending user:', err);
+    res.status(500).json({ status: false, message: 'Something went wrong' });
+  }
+};
+
+// Ban user permanently
+export const banUser = async (req, res) => {
+  console.log('Admin ban user route/controller hit');
+  try {
+    const { userId } = req.params;
+    const { reason } = req.body;
+    
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ status: false, message: 'User not found' });
+    }
+    
+    if (user.type === 'admin') {
+      return res.status(400).json({ status: false, message: 'Cannot ban admin users' });
+    }
+    
+    user.status = 'banned';
+    user.banReason = reason || 'Severe violation of community guidelines';
+    user.bannedAt = new Date();
+    
+    await user.save();
+    
+    // Create notification for banned user
+    const notification = new Notification({
+      userId: user._id,
+      type: 'warning',
+      title: 'Account Banned 🚫',
+      message: `Your account has been permanently banned. Reason: ${reason || 'Severe violation of community guidelines'}`,
+      data: {
+        action: 'ban',
+        reason: reason,
+        bannedAt: new Date()
+      }
+    });
+    await notification.save();
+    
+    res.json({
+      status: true,
+      message: 'User banned permanently',
+      user: {
+        _id: user._id,
+        username: user.username,
+        status: user.status,
+        banReason: user.banReason
+      }
+    });
+  } catch (err) {
+    console.error('Error banning user:', err);
+    res.status(500).json({ status: false, message: 'Something went wrong' });
+  }
+};
+
+// Unban/restore user
+export const unbanUser = async (req, res) => {
+  console.log('Admin unban user route/controller hit');
+  try {
+    const { userId } = req.params;
+    
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ status: false, message: 'User not found' });
+    }
+    
+    const previousStatus = user.status;
+    
+    user.status = 'active';
+    user.suspendedUntil = undefined;
+    user.suspensionReason = undefined;
+    user.banReason = undefined;
+    user.bannedAt = undefined;
+    
+    await user.save();
+    
+    // Create notification for restored user
+    const notification = new Notification({
+      userId: user._id,
+      type: 'system',
+      title: 'Account Restored ✅',
+      message: 'Your account has been restored and is now active. Please continue to follow our community guidelines.',
+      data: {
+        action: 'restoration',
+        previousStatus: previousStatus,
+        restoredAt: new Date()
+      }
+    });
+    await notification.save();
+    
+    res.json({
+      status: true,
+      message: 'User account restored',
+      user: {
+        _id: user._id,
+        username: user.username,
+        status: user.status
+      }
+    });
+  } catch (err) {
+    console.error('Error restoring user:', err);
+    res.status(500).json({ status: false, message: 'Something went wrong' });
+  }
+};
+
+// Warn user
+export const warnUser = async (req, res) => {
+  console.log('Admin warn user route/controller hit');
+  try {
+    const { userId } = req.params;
+    const { message } = req.body;
+    
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ status: false, message: 'User not found' });
+    }
+    
+    // Create warning notification
+    const notification = new Notification({
+      userId: user._id,
+      type: 'warning',
+      title: 'Community Guidelines Warning ⚠️',
+      message: message || 'Please review our community guidelines and ensure your behavior complies with our policies.',
+      data: {
+        action: 'warning',
+        warnedAt: new Date()
+      }
+    });
+    await notification.save();
+    
+    // Emit socket notification if user is online
+    const io = getIO();
+    const targetSocketId = onlineUsers.get(userId);
+    if (targetSocketId) {
+      io.to(targetSocketId).emit('notification', notification);
+    }
+    
+    res.json({
+      status: true,
+      message: 'Warning sent to user',
+      user: {
+        _id: user._id,
+        username: user.username
+      }
+    });
+  } catch (err) {
+    console.error('Error warning user:', err);
+    res.status(500).json({ status: false, message: 'Something went wrong' });
+  }
+};
+
+// Search posts for admin monitoring
+export const searchPosts = async (req, res) => {
+  console.log('Admin search posts route/controller hit');
+  try {
+    const { query, sort, reported, hidden } = req.query;
+    console.log('Search posts params:', { query, sort, reported, hidden });
+    
+    // First, let's check what posts exist in the database
+    const totalPosts = await Post.countDocuments();
+    console.log('Total posts in database:', totalPosts);
+    
+    let searchCriteria = {};
+    
+    // Search by caption if query provided
+    if (query) {
+      searchCriteria.caption = { $regex: query, $options: 'i' };
+    }
+    
+    // Filter by reported posts
+    if (reported === 'true') {
+      searchCriteria.reports = { $gt: 0 };
+    }
+    
+    // Filter by hidden posts
+    if (hidden === 'true') {
+      searchCriteria.isHidden = true;
+    }
+    
+    console.log('Search criteria:', searchCriteria);
+    
+    let sortCriteria = { createdAt: -1 }; // Default: newest first
+    
+    if (sort === 'recent') {
+      sortCriteria = { createdAt: -1 };
+    }
+    
+    const posts = await Post.find(searchCriteria)
+      .populate('user', 'username avatar type')
+      .sort(sortCriteria)
+      .limit(50);
+    
+    console.log('Found posts:', posts.length);
+    console.log('Sample post:', posts[0] ? {
+      _id: posts[0]._id,
+      caption: posts[0].caption,
+      imageUrl: posts[0].imageUrl,
+      user: posts[0].user,
+      likes: posts[0].likes,
+      comments: posts[0].comments
+    } : 'No posts found');
+    
+    res.json({
+      status: true,
+      posts: posts.map(post => ({
+        ...post.toObject(),
+        reports: post.reports || 0,
+        likes: (post.likes || []).length,
+        comments: (post.comments || []).length
+      }))
+    });
+  } catch (err) {
+    console.error('Error searching posts:', err);
+    res.status(500).json({ status: false, message: 'Something went wrong' });
+  }
+};
+
+// Search products for admin monitoring
+export const searchProducts = async (req, res) => {
+  console.log('Admin search products route/controller hit');
+  try {
+    const { query, sort, reported, stock } = req.query;
+    console.log('Search products params:', { query, sort, reported, stock });
+    
+    let searchCriteria = {};
+    
+    // Search by name or description if query provided
+    if (query) {
+      searchCriteria.$or = [
+        { name: { $regex: query, $options: 'i' } },
+        { description: { $regex: query, $options: 'i' } }
+      ];
+    }
+    
+    // Filter by reported products
+    if (reported === 'true') {
+      searchCriteria.reports = { $gt: 0 };
+    }
+    
+    // Filter by stock level
+    if (stock === '0') {
+      searchCriteria.stock = 0;
+    }
+    
+    let sortCriteria = { createdAt: -1 }; // Default: newest first
+    
+    if (sort === 'recent') {
+      sortCriteria = { createdAt: -1 };
+    }
+    
+    const products = await Product.find(searchCriteria)
+      .populate('shopId', 'username avatar')
+      .sort(sortCriteria)
+      .limit(50);
+    
+    console.log('Found products:', products.length);
+    
+    res.json({
+      status: true,
+      products: products.map(product => ({
+        ...product.toObject(),
+        reports: product.reports || 0,
+        reviews: (product.reviews || []).length,
+        images: product.images && product.images.length > 0 ? product.images : (product.imageUrl || [])
+      }))
+    });
+  } catch (err) {
+    console.error('Error searching products:', err);
+    res.status(500).json({ status: false, message: 'Something went wrong' });
+  }
+};
+
+// Hide post
+export const hidePost = async (req, res) => {
+  try {
+    const { postId } = req.params;
+    
+    const post = await Post.findByIdAndUpdate(
+      postId,
+      { isHidden: true },
+      { new: true }
+    );
+    
+    if (!post) {
+      return res.status(404).json({ status: false, message: 'Post not found' });
+    }
+    
+    res.json({
+      status: true,
+      message: 'Post hidden successfully',
+      post
+    });
+  } catch (err) {
+    console.error('Error hiding post:', err);
+    res.status(500).json({ status: false, message: 'Something went wrong' });
+  }
+};
+
+// Show post
+export const showPost = async (req, res) => {
+  try {
+    const { postId } = req.params;
+    
+    const post = await Post.findByIdAndUpdate(
+      postId,
+      { isHidden: false },
+      { new: true }
+    );
+    
+    if (!post) {
+      return res.status(404).json({ status: false, message: 'Post not found' });
+    }
+    
+    res.json({
+      status: true,
+      message: 'Post shown successfully',
+      post
+    });
+  } catch (err) {
+    console.error('Error showing post:', err);
+    res.status(500).json({ status: false, message: 'Something went wrong' });
+  }
+};
+
+// Hide product
+export const hideProduct = async (req, res) => {
+  try {
+    const { productId } = req.params;
+    
+    const product = await Product.findByIdAndUpdate(
+      productId,
+      { isHidden: true },
+      { new: true }
+    );
+    
+    if (!product) {
+      return res.status(404).json({ status: false, message: 'Product not found' });
+    }
+    
+    res.json({
+      status: true,
+      message: 'Product hidden successfully',
+      product
+    });
+  } catch (err) {
+    console.error('Error hiding product:', err);
+    res.status(500).json({ status: false, message: 'Something went wrong' });
+  }
+};
+
+// Show product
+export const showProduct = async (req, res) => {
+  try {
+    const { productId } = req.params;
+    
+    const product = await Product.findByIdAndUpdate(
+      productId,
+      { isHidden: false },
+      { new: true }
+    );
+    
+    if (!product) {
+      return res.status(404).json({ status: false, message: 'Product not found' });
+    }
+    
+    res.json({
+      status: true,
+      message: 'Product shown successfully',
+      product
+    });
+  } catch (err) {
+    console.error('Error showing product:', err);
+    res.status(500).json({ status: false, message: 'Something went wrong' });
   }
 };

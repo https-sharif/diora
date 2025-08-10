@@ -17,6 +17,7 @@ export const getSearchResults = async (req, res) => {
       likes = 'All',
     } = req.query;
 
+    const isAdmin = req.userDetails && req.userDetails.type === 'admin';
     console.log(contentType);
 
     const searchQuery = query?.trim() || '';
@@ -62,27 +63,38 @@ export const getSearchResults = async (req, res) => {
       return {};
     };
 
+    // Build base queries - admins see all, others only see active
+    const userQuery = {
+      type: 'user',
+      ...(hasQuery && {
+        $or: [{ username: regexQuery }, { fullName: regexQuery }],
+      }),
+      ...(verification !== 'All' && {
+        isVerified: verification === 'Verified Only',
+      }),
+      ...(followers !== 'All' && parseFollowers(followers)),
+    };
+
+    const shopQuery = {
+      type: 'shop',
+      ...(hasQuery && {
+        $or: [{ username: regexQuery }, { fullName: regexQuery }],
+      }),
+      ...(followers !== 'All' && parseFollowers(followers)),
+    };
+
+    // Add status filter for non-admins
+    if (!isAdmin) {
+      userQuery.status = 'active';
+      shopQuery.status = 'active';
+    }
+
     const [users, shops, posts, products] = await Promise.all([
       contentType === 'All' || contentType === 'Users'
-        ? User.find({
-            type: 'user',
-            ...(hasQuery && {
-              $or: [{ username: regexQuery }, { fullName: regexQuery }],
-            }),
-            ...(verification !== 'All' && {
-              isVerified: verification === 'Verified Only',
-            }),
-            ...(followers !== 'All' && parseFollowers(followers)),
-          })
+        ? User.find(userQuery)
         : [],
       contentType === 'All' || contentType === 'Shops'
-        ? User.find({
-            type: 'shop',
-            ...(hasQuery && {
-              $or: [{ username: regexQuery }, { fullName: regexQuery }],
-            }),
-            ...(followers !== 'All' && parseFollowers(followers)),
-          })
+        ? User.find(shopQuery)
         : [],
       contentType === 'All' || contentType === 'Posts'
         ? Post.find({
@@ -91,7 +103,11 @@ export const getSearchResults = async (req, res) => {
             ...(categories !== 'All' && {
               caption: { $regex: categories, $options: 'i' },
             }),
-          }).populate('user', 'username profilePicture')
+          }).populate({
+            path: 'user',
+            select: 'username profilePicture status',
+            match: isAdmin ? {} : { status: 'active' } // Admins see all, others only active
+          })
         : [],
       contentType === 'All' || contentType === 'Products'
         ? Product.find({
@@ -111,16 +127,24 @@ export const getSearchResults = async (req, res) => {
             ...(categories !== 'All' && {
               category: { $regex: categories, $options: 'i' },
             }),
-          }).populate('shopId', 'name username')
+          }).populate({
+            path: 'shopId',
+            select: 'name username status',
+            match: isAdmin ? {} : { status: 'active' } // Admins see all, others only active shops
+          })
         : [],
     ]);
+
+    // Filter out posts and products with inactive users/shops (only for non-admins)
+    const filteredPosts = isAdmin ? posts : posts.filter(post => post.user && post.user.status === 'active');
+    const filteredProducts = isAdmin ? products : products.filter(product => product.shopId && product.shopId.status === 'active');
 
     res.json({
       status: true,
       users,
       shops,
-      posts,
-      products,
+      posts: filteredPosts,
+      products: filteredProducts,
     });
   } catch (err) {
     console.error('Search error:', err);

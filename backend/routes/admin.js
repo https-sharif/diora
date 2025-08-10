@@ -1,4 +1,4 @@
-import express from 'express';
+ import express from 'express';
 import { verifyAdmin } from '../middleware/adminAuth.js';
 import { 
   getPromotionRequests,
@@ -6,7 +6,18 @@ import {
 } from '../controllers/userController.js';
 import {
   getAdminStats,
-  getSystemHealth
+  getSystemHealth,
+  searchUsers,
+  suspendUser,
+  banUser,
+  unbanUser,
+  warnUser,
+  searchPosts,
+  searchProducts,
+  hidePost,
+  showPost,
+  hideProduct,
+  showProduct
 } from '../controllers/adminController.js';
 
 const router = express.Router();
@@ -18,15 +29,25 @@ router.use(verifyAdmin);
 router.get('/stats', getAdminStats);
 router.get('/health', getSystemHealth);
 
+// User search and monitoring
+router.get('/users/search', searchUsers);
+router.post('/users/:userId/suspend', suspendUser);
+router.post('/users/:userId/ban', banUser);
+router.post('/users/:userId/unban', unbanUser);
+router.post('/users/:userId/warn', warnUser);
+
+// Post search and monitoring
+router.get('/posts/search', searchPosts);
+router.post('/posts/:postId/hide', hidePost);
+router.post('/posts/:postId/show', showPost);
+
+// Product search and monitoring
+router.get('/products/search', searchProducts);
+router.post('/products/:productId/hide', hideProduct);
+router.post('/products/:productId/show', showProduct);
+
 // Promotion request management
 router.get('/promotion-requests', getPromotionRequests);
 router.put('/promotion-requests/:requestId', approvePromotionRequest);
-
-// Future admin routes can be added here:
-// router.get('/users', getAllUsers);
-// router.put('/users/:userId/ban', banUser);
-// router.get('/reports', getReports);
-// router.put('/reports/:reportId', handleReport);
-// router.get('/analytics', getAnalytics);
 
 export default router;

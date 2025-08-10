@@ -52,7 +52,6 @@ import { Theme } from '@/types/Theme';
 import { useTheme } from '@/contexts/ThemeContext';
 import axios from 'axios';
 import { API_URL } from '@/constants/api';
-import MenuModal from '@/components/MenuModal';
 import Color from 'color';
 import { BlurView } from 'expo-blur';
 import { format as timeago } from 'timeago.js';
@@ -750,7 +749,8 @@ export default function ShopProfileScreen() {
         });
 
         if (response.data.status === false) {
-          setShopProfile(null);
+          // Shop not found (could be banned/suspended)
+          router.back();
           return;
         }
         const shop = response.data.user;
@@ -762,6 +762,8 @@ export default function ShopProfileScreen() {
         }
       } catch (error) {
         console.error('Error fetching shop profile:', error);
+        // If there's an error fetching the shop, go back
+        router.back();
       } finally {
         setLoading(false);
       }

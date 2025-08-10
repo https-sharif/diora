@@ -506,15 +506,15 @@ export default function ShopProfile() {
             <Image source={{ uri: user.avatar }} style={styles.shopAvatar} />
             <View style={styles.shopStats}>
               <View style={styles.statItem}>
-                <Text style={styles.statNumber}>{myProducts.length}</Text>
+                <Text style={styles.statNumber}>{myProducts?.length || 0}</Text>
                 <Text style={styles.statLabel}>Products</Text>
               </View>
               <View style={styles.statItem}>
-                <Text style={styles.statNumber}>{user.followers.length}</Text>
+                <Text style={styles.statNumber}>{user?.followers?.length || 0}</Text>
                 <Text style={styles.statLabel}>Followers</Text>
               </View>
               <View style={styles.statItem}>
-                <Text style={styles.statNumber}>{myPosts.length}</Text>
+                <Text style={styles.statNumber}>{myPosts?.length || 0}</Text>
                 <Text style={styles.statLabel}>Posts</Text>
               </View>
             </View>

@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
   Image,
   Linking,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { 
@@ -37,6 +38,7 @@ const createStyles = (theme: Theme) =>
     container: {
       flex: 1,
       backgroundColor: theme.background,
+      paddingVertical: -100,
     },
     header: {
       flexDirection: 'row',
@@ -44,8 +46,6 @@ const createStyles = (theme: Theme) =>
       paddingHorizontal: 16,
       paddingVertical: 16,
       backgroundColor: theme.background,
-      borderBottomWidth: 1,
-      borderBottomColor: theme.border,
     },
     backButton: {
       padding: 4,
@@ -81,7 +81,7 @@ const createStyles = (theme: Theme) =>
       color: theme.text,
     },
     filterButtonTextActive: {
-      color: 'white',
+      color: '#000',
     },
     requestCard: {
       backgroundColor: theme.card,
@@ -305,6 +305,7 @@ export default function PromotionRequestsScreen() {
   const [actionType, setActionType] = useState<'view' | 'approve' | 'reject'>('view');
   const [comments, setComments] = useState('');
   const [processing, setProcessing] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const filters = [
     { key: 'all', label: 'All' },
@@ -339,6 +340,12 @@ export default function PromotionRequestsScreen() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchRequests();
+    setRefreshing(false);
   };
 
   const handleAction = async (request: PromotionRequest, action: 'approve' | 'reject') => {
@@ -430,7 +437,17 @@ export default function PromotionRequestsScreen() {
           </Text>
         </View>
       ) : (
-        <ScrollView showsVerticalScrollIndicator={false}>
+        <ScrollView 
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={[theme.accent]}
+              tintColor={theme.accent}
+            />
+          }
+        >
           {requests.map((request) => (
             <View key={request._id} style={styles.requestCard}>
               <View style={styles.requestHeader}>
@@ -563,16 +580,54 @@ export default function PromotionRequestsScreen() {
 
                 <View style={styles.documentsSection}>
                   <Text style={styles.fieldLabel}>Proof Documents</Text>
-                  {selectedRequest.proofDocuments.map((doc, index) => (
-                    <TouchableOpacity
-                      key={index}
-                      style={styles.documentItem}
-                      onPress={() => Linking.openURL(`${API_URL}/${doc.path}`)}
-                    >
-                      <Text style={styles.documentName}>{doc.originalName}</Text>
-                      <ExternalLink size={16} color={theme.primary} />
-                    </TouchableOpacity>
-                  ))}
+                  {selectedRequest.proofDocuments.length > 0 ? (
+                    selectedRequest.proofDocuments.map((doc, index) => (
+                      <View key={index}>
+                        <TouchableOpacity
+                          style={styles.documentItem}
+                          onPress={() => {
+                            // Check if path is already a full URL (Cloudinary) or relative path
+                            const documentUrl = doc.path.startsWith('http') ? doc.path : `${API_URL}/${doc.path}`;
+                            console.log('Opening document:', documentUrl);
+                            Linking.openURL(documentUrl).catch(err => {
+                              console.error('Error opening document:', err);
+                              Alert.alert('Error', 'Unable to open document. Please try again.');
+                            });
+                          }}
+                        >
+                          <View style={{ flex: 1 }}>
+                            <Text style={styles.documentName}>{doc.originalName}</Text>
+                            <Text style={[styles.fieldValue, { fontSize: 12 }]}>
+                              Type: {doc.mimetype}
+                            </Text>
+                          </View>
+                          <ExternalLink size={16} color={theme.primary} />
+                        </TouchableOpacity>
+                        
+                        {doc.mimetype.startsWith('image/') && (
+                          <View style={{ marginTop: 8, marginBottom: 12 }}>
+                            <Image
+                              source={{ 
+                                uri: doc.path.startsWith('http') ? doc.path : `${API_URL}/${doc.path}`
+                              }}
+                              style={{
+                                width: '100%',
+                                height: 200,
+                                borderRadius: 8,
+                                backgroundColor: theme.card,
+                              }}
+                              resizeMode="contain"
+                              onError={(error) => {
+                                console.error('Error loading image:', error);
+                              }}
+                            />
+                          </View>
+                        )}
+                      </View>
+                    ))
+                  ) : (
+                    <Text style={styles.fieldValue}>No documents uploaded</Text>
+                  )}
                 </View>
 
                 {actionType !== 'view' && (
