@@ -35,6 +35,7 @@ import { Post } from '@/types/Post';
 import { Theme } from '@/types/Theme';
 import { useTheme } from '@/contexts/ThemeContext';
 import ImageSlashIcon from '@/icon/ImageSlashIcon';
+import MenuModal from '@/components/MenuModal';
 import axios from 'axios';
 import { API_URL } from '@/constants/api';
 import { format } from 'timeago.js';

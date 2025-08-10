@@ -117,8 +117,9 @@ export const likePost = async (req, res) => {
             existingNotification.title = 'New Like';
             existingNotification.updatedAt = new Date();
             existingNotification.read = false;
+            
             existingNotification.fromUserId = userId;
-
+            
             await existingNotification.save();
             await existingNotification.populate('userId', 'username avatar');
 
@@ -129,6 +130,7 @@ export const likePost = async (req, res) => {
             }
           } catch (userFetchError) {
             console.error('Error fetching users for notification merging:', userFetchError);
+            
             existingNotification.message = `${user.username} liked your post`;
             existingNotification.fromUserId = userId;
             await existingNotification.save();

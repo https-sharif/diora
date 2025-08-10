@@ -526,7 +526,7 @@ export default function ReportsManagement() {
 
       if (response.data.status) {
         Alert.alert('Success', 'Moderation action completed');
-        fetchReports(); // This now includes fetchStats()
+        fetchReports();
         setShowActionModal(false);
         setSelectedReport(null);
       }
@@ -559,7 +559,7 @@ export default function ReportsManagement() {
                     'Success',
                     `Cleared ${response.data.deletedCount} old reports`
                   );
-                  fetchReports(); // This now includes fetchStats()
+                  fetchReports();
                 } else {
                   Alert.alert('Error', 'Failed to clear old reports');
                 }
@@ -600,7 +600,7 @@ export default function ReportsManagement() {
                     'Success',
                     `Cleared ${response.data.deletedCount} resolved/dismissed reports`
                   );
-                  fetchReports(); // This now includes fetchStats()
+                  fetchReports();
                 } else {
                   Alert.alert(
                     'Error',
