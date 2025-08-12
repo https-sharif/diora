@@ -13,3 +13,10 @@ export interface Post {
   comments: number;
   createdAt: string;
 }
+
+// Post service types
+export interface PostData {
+  content: string;
+  media?: string[];
+  type?: string;
+}

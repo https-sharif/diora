@@ -15,8 +15,7 @@ import { X, Upload, Store } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Theme } from '@/types/Theme';
 import { useAuth } from '@/hooks/useAuth';
-import axios from 'axios';
-import { API_URL } from '@/constants/api';
+import { userService } from '@/services';
 import * as ImagePicker from 'expo-image-picker';
 
 interface PromotionRequestModalProps {
@@ -241,16 +240,16 @@ export const PromotionRequestModal: React.FC<PromotionRequestModalProps> = ({
         documentCount: proofDocuments.length
       });
 
-      const response = await axios.post(`${API_URL}/api/user/request-promotion`, requestFormData, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      if (!token) {
+        Alert.alert('Error', 'No authentication token available');
+        return;
+      }
 
-      console.log('Response received:', response.data);
+      const response = await userService.requestPromotion(requestFormData, token);
 
-      if (response.data.status) {
+      console.log('Response received:', response);
+
+      if (response.status) {
         Alert.alert(
           'Success', 
           'Your promotion request has been submitted successfully! You will be notified once an admin reviews your request.',

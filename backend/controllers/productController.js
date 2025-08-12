@@ -23,7 +23,7 @@ export const getAllProducts = async (req, res) => {
         },
         {
           $match: {
-            'shop.status': 'active' // Only include products from active shops
+            'shop.status': 'active'
           }
         },
         { $sample: { size: 10 } }
@@ -44,8 +44,8 @@ export const getProductById = async (req, res) => {
   try {
     const productId = req.params.productId;
     const isAdmin = req.userDetails && req.userDetails.type === 'admin';
-    
-    const product = await Product.findById(productId).populate('shopId', 'fullName avatar followers shop.rating shop.ratingCount isVerified status');
+
+    const product = await Product.findById(productId).populate('shopId', 'fullName avatar followers shop.rating shop.reviewCount isVerified status');
 
     if (!product) {
       return res
@@ -53,7 +53,6 @@ export const getProductById = async (req, res) => {
         .json({ status: false, message: 'Product not found' });
     }
 
-    // Check if shop is accessible (not banned/suspended) unless requester is admin
     if (!isAdmin && (!product.shopId || product.shopId.status !== 'active')) {
       return res
         .status(404)

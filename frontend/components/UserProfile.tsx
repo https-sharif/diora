@@ -1,22 +1,26 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
+  TouchableOpacity,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
   Image,
+  TouchableWithoutFeedback,
+  Dimensions,
+  Pressable,
+  Button,
+  SafeAreaView,
   FlatList,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Settings, Grid2x2 as Grid, Star, LogOut, Check } from 'lucide-react-native';
-import { router } from 'expo-router';
-import { useAuth } from '@/hooks/useAuth';
+import { User, Plus, Heart, Grid3X3 as Grid, X, Star, Settings, LogOut, Check } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useAuth } from '@/hooks/useAuth';
+import { postService } from '@/services';
+import { Theme } from '@/types/Theme';
 import { Post } from '@/types/Post';
-import { Theme } from '@/types/Theme';  
-import axios from 'axios';
-import { API_URL } from '@/constants/api';
+import PostCard from '@/components/PostCard';
+import { router } from 'expo-router';
 
 const createStyles = (theme: Theme) =>
   StyleSheet.create({
@@ -177,23 +181,16 @@ export default function UserProfile() {
   const [myLikedPosts, setMyLikedPosts] = useState([]);
 
   const fetchData = async () => {
-    if (!user) return;
+    if (!user || !token) return;
     
     try {
-      const likedPostsResponse = await axios.get(`${API_URL}/api/post/user/${user?._id}/liked`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      
-      setMyLikedPosts(likedPostsResponse.data.posts);
+      // Fetch liked posts
+      const likedPosts = await postService.getUserLikedPosts(user._id, token);
+      setMyLikedPosts(likedPosts);
 
-      const myPostsResponse = await axios.get(`${API_URL}/api/post/user/${user?._id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      setMyPosts(myPostsResponse.data.posts);
+      // Fetch user's posts
+      const userPosts = await postService.getUserPosts(user._id, token);
+      setMyPosts(userPosts);
 
     } catch (err) {
       console.error(err);

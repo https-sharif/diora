@@ -22,8 +22,7 @@ import { Theme } from '@/types/Theme';
 import { router } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { format } from 'timeago.js';
-import axios from 'axios';
-import { API_URL } from '@/constants/api';
+import { commentService } from '@/services';
 
 const createStyles = (theme: Theme) => {
   return StyleSheet.create({
@@ -251,16 +250,13 @@ export default function PostCard({ post }: { post: Post }) {
 
   useEffect(() => {
     const fetchComments = async () => {
-      const response = await axios.get(
-        `${API_URL}/api/comment/post/${post._id}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      if (!token) return;
+      
+      const response = await commentService.getPostComments(post._id, token);
 
-      if (response.data.status) {
-        console.log('Fetched comments:', response.data.comments);
-        setComments(response.data.comments);
+      if (response.status) {
+        console.log('Fetched comments:', response.comments);
+        setComments(response.comments);
       }
     };
 
@@ -304,22 +300,19 @@ export default function PostCard({ post }: { post: Post }) {
   };
 
   const handleAddComment = async () => {
-    if (!newComment.trim() || !user) return;
+    if (!newComment.trim() || !user || !token) return;
 
     try {
-      const url = replyingTo
-        ? `${API_URL}/api/comment/reply/${replyingTo}`
-        : `${API_URL}/api/comment/create`;
-      const payload = { userId: user._id, postId: post._id, text: newComment };
-
+      const payload = { content: newComment, postId: post._id };
+      
       console.log('Adding comment:', payload);
 
-      const response = await axios.post(url, payload, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = replyingTo
+        ? await commentService.replyToComment(replyingTo, { content: newComment, postId: post._id }, token)
+        : await commentService.createComment(payload, token);
 
-      if (response.data.status) {
-        const newAdded = response.data.comment;
+      if (response.status) {
+        const newAdded = response.comment;
 
         if (replyingTo) {
           setComments((prev) =>

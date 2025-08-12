@@ -26,4 +26,13 @@ export interface Order {
     trackingNumber?: string;
     estimatedDelivery?: string;
     canCancel: boolean;
-  }
+}
+
+// Order service types
+export interface OrderData {
+  items?: any[];
+  totalAmount?: number;
+  deliveryAddress?: any;
+  shippingAddress?: any;
+  paymentMethod: string;
+}

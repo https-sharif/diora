@@ -1,39 +1,13 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { User } from '@/types/User';
+import { AuthState } from '@/types/Auth';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { loginSchema, signupSchema } from '@/validation/authSchema';
-import { API_URL } from '@/constants/api';
-import axios from 'axios';
+import { authService } from '@/services';
 import { useNotificationStore } from '@/stores/useNotificationStore';
 import { useShoppingStore } from '@/stores/useShoppingStore';
-
-interface AuthState {
-  isAuthenticated: boolean;
-  user: User | null;
-  token: string | null;
-  loading: boolean;
-  error: string | null;
-  login: (
-    username: string,
-    password: string
-  ) => Promise<{ success: boolean; error: string | null; details?: string }>;
-  signup: (
-    email: string,
-    password: string,
-    username: string,
-    fullName: string
-  ) => Promise<{ success: boolean; error: string | null }>;
-  logout: () => void;
-  followUser: (targetUserId: string, targetType: 'user' | 'shop') => void;
-  likePost: (postId: string) => void;
-  syncUser: () => Promise<void>;
-  setIsAuthenticated: (val: boolean) => void;
-  setUser: (user: User | null) => void;
-  setLoading: (val: boolean) => void;
-  reset: () => void;
-}
 
 export const useAuthStore = create<AuthState>()(
   persist(
@@ -60,13 +34,7 @@ export const useAuthStore = create<AuthState>()(
             return { success: false, error: msg };
           }
 
-          const response = await axios.post(
-            `${API_URL}/api/auth/login`,
-            { username, password },
-            { headers: { 'Content-Type': 'application/json' } }
-          );
-
-          const data = response.data;
+          const data = await authService.login({ email: username, password });
 
           if (data.status) {
             await AsyncStorage.setItem('token', data.token);
@@ -86,7 +54,6 @@ export const useAuthStore = create<AuthState>()(
           let errorMsg = err.message || 'Login failed';
           let details = null;
           
-          // Check if it's a suspension/ban error from the backend
           if (err.response?.data) {
             errorMsg = err.response.data.message || errorMsg;
             details = err.response.data.details;
@@ -97,68 +64,55 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      signup: async (email, password, username, fullName) => {
+      signup: async (data) => {
         set({ loading: true, error: null });
         try {
-          const validated = signupSchema.safeParse({
-            email,
-            password,
-            username,
-            fullName,
-          });
+          const validated = signupSchema.safeParse(data);
           if (!validated.success) {
             const msg = validated.error?.issues[0]?.message || 'Invalid input';
             set({ error: msg, loading: false });
             return { success: false, error: msg };
           }
 
-          const response = await axios.post(
-            `${API_URL}/api/auth/signup`,
-            { email, password, username, fullName },
-            { headers: { 'Content-Type': 'application/json' } }
-          );
+          const signupData = await authService.signup(data);
 
-          const data = response.data;
-
-          if (data.status) {
-            await AsyncStorage.setItem('token', data.token);
-
-            const newUser: User = {
-              _id: data.user._id,
-              username: data.user.username,
-              fullName: data.user.fullName,
-              email: data.user.email,
-              following: data.user.following,
-              likedPosts: data.user.likedPosts,
-              followers: data.user.followers,
-              posts: data.user.posts,
-              avatar: data.user.avatar,
-              bio: data.user.bio,
-              isVerified: data.user.isVerified,
-              createdAt: data.user.createdAt,
-              type: data.user.type,
-              onboarding: data.user.onboarding,
+          if (signupData.status) {
+            await AsyncStorage.setItem('token', signupData.token);            const newUser: User = {
+              _id: signupData.user._id,
+              username: signupData.user.username,
+              fullName: signupData.user.fullName,
+              email: signupData.user.email,
+              following: signupData.user.following,
+              likedPosts: signupData.user.likedPosts,
+              followers: signupData.user.followers,
+              posts: signupData.user.posts,
+              avatar: signupData.user.avatar,
+              bio: signupData.user.bio,
+              isVerified: signupData.user.isVerified,
+              createdAt: signupData.user.createdAt,
+              type: signupData.user.type,
+              onboarding: signupData.user.onboarding,
               settings: {
-                theme: data.user.settings.theme,
+                theme: signupData.user.settings.theme,
                 notifications: {
-                  likes: data.user.settings.notifications.likes,
-                  comments: data.user.settings.notifications.comments,
-                  follow: data.user.settings.notifications.follow,
-                  mention: data.user.settings.notifications.mention,
-                  order: data.user.settings.notifications.order,
-                  promotion: data.user.settings.notifications.promotion,
-                  system: data.user.settings.notifications.system,
-                  warning: data.user.settings.notifications.warning,
-                  reportUpdate: data.user.settings.notifications.reportUpdate,
-                  messages: data.user.settings.notifications.messages,
-                  emailFrequency: data.user.settings.notifications.emailFrequency,
+                  likes: signupData.user.settings.notifications.likes,
+                  comments: signupData.user.settings.notifications.comments,
+                  follow: signupData.user.settings.notifications.follow,
+                  mention: signupData.user.settings.notifications.mention,
+                  order: signupData.user.settings.notifications.order,
+                  promotion: signupData.user.settings.notifications.promotion,
+                  system: signupData.user.settings.notifications.system,
+                  warning: signupData.user.settings.notifications.warning,
+                  reportUpdate: signupData.user.settings.notifications.reportUpdate,
+                  messages: signupData.user.settings.notifications.messages,
+                  emailFrequency: signupData.user.settings.notifications.emailFrequency,
                 },
               },
-              avatarId: data.user.avatarId,
+              avatarId: signupData.user.avatarId,
             };
 
             set({
-              token: data.token,
+              token: signupData.token,
               user: newUser,
               isAuthenticated: true,
               loading: false,
@@ -167,8 +121,8 @@ export const useAuthStore = create<AuthState>()(
 
             return { success: true, error: null };
           } else {
-            set({ error: data.message, loading: false });
-            return { success: false, error: data.message };
+            set({ error: signupData.message, loading: false });
+            return { success: false, error: signupData.message };
           }
         } catch (err: any) {
           const errorMsg = err.message || 'Signup failed';
@@ -185,16 +139,12 @@ export const useAuthStore = create<AuthState>()(
 
       followUser: async (targetUserId, targetType) => {
         const { user, token } = get();
-        if (!user) return;
+        if (!user || !token) return;
 
         try {
-          const res = await axios.put(
-            `${API_URL}/api/${targetType}/follow/${targetUserId}`,
-            {},
-            { headers: { Authorization: `Bearer ${token}` } }
-          );
+          const res = await authService.followUser(targetUserId, targetType, token);
 
-          const updatedFollowing = res.data.following;
+          const updatedFollowing = res.following;
 
           set({
             user: {
@@ -216,17 +166,9 @@ export const useAuthStore = create<AuthState>()(
         if (!user || !token) return;
 
         try {
-          const res = await axios.put(
-            `${API_URL}/api/post/like/${postId}`,
-            {},
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
+          const res = await authService.likePost(postId, token);
 
-          const updatedLikedPosts = res.data.user.likedPosts;
+          const updatedLikedPosts = res.user.likedPosts;
 
           set({
             user: {
@@ -252,12 +194,10 @@ export const useAuthStore = create<AuthState>()(
         if (!token || !isAuthenticated) return;
 
         try {
-          const response = await axios.get(`${API_URL}/api/user/me`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
+          const response = await authService.getMe(token);
 
-          if (response.data.status) {
-            const updatedUser = response.data.user;
+          if (response.status) {
+            const updatedUser = response.user;
             
             // Check if user is banned or suspended
             if (updatedUser.status === 'banned') {

@@ -1,19 +1,10 @@
 import { create } from 'zustand';
 import { Conversation } from '@/types/Conversation';
 import { Message } from '@/types/Message';
+import { MessageState } from '@/types/MessageStore';
 import { mockConversations } from '@/mock/Conversation';
 import { mockMessages } from '@/mock/Message';
-import { useAuthStore } from '@/stores/useAuthStore';
-
-interface MessageState {
-  conversations: Conversation[];
-  messages: Message[];
-  sendMessage: (conversationId: string, messageText: string, replyToId?: string, imageUri?: string, productId?: string) => void;
-  updateMessageStatus: (conversationId: string, messageId: string, status: Message['status']) => void;
-  handleReaction: (conversationId: string, messageId: string, emoji: string) => void;
-  markConversationAsRead: (conversationId: string) => void;
-  setTypingStatus: (conversationId: string, isTyping: boolean) => void;
-}
+import { useAuthStore } from '@/stores/authStore';
 
 export const useMessageStore = create<MessageState>((set, get) => ({
   conversations: mockConversations,

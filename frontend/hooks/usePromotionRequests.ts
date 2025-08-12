@@ -1,6 +1,5 @@
 import { useState, useCallback } from 'react';
-import axios from 'axios';
-import { API_URL } from '@/constants/api';
+import { adminService } from '@/services';
 import { PromotionRequest } from '@/types/PromotionRequest';
 import { useAuth } from './useAuth';
 
@@ -11,18 +10,17 @@ export const usePromotionRequests = () => {
   const [error, setError] = useState<string | null>(null);
 
   const fetchRequests = useCallback(async (status?: string) => {
+    if (!token) return;
+    
     try {
       setLoading(true);
       setError(null);
-      const params = status ? `?status=${status}` : '';
-      const response = await axios.get(`${API_URL}/api/admin/promotion-requests${params}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await adminService.getPromotionRequests(status, undefined, undefined, token);
 
-      if (response.data.status) {
-        setRequests(response.data.requests);
+      if (response.status) {
+        setRequests(response.requests);
       } else {
-        setError(response.data.message || 'Failed to fetch requests');
+        setError(response.message || 'Failed to fetch requests');
       }
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to fetch promotion requests');
@@ -32,16 +30,14 @@ export const usePromotionRequests = () => {
   }, [token]);
 
   const approveRequest = useCallback(async (requestId: string, comments?: string) => {
+    if (!token) return;
+    
     try {
       setLoading(true);
       setError(null);
-      const response = await axios.put(
-        `${API_URL}/api/admin/promotion-requests/${requestId}`,
-        { action: 'approve', comments },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const response = await adminService.approvePromotionRequest(requestId, token);
 
-      if (response.data.status) {
+      if (response.status) {
         // Update the local state
         setRequests(prev => 
           prev.map(req => 
@@ -64,16 +60,14 @@ export const usePromotionRequests = () => {
   }, [token]);
 
   const rejectRequest = useCallback(async (requestId: string, comments?: string) => {
+    if (!token) return false;
+    
     try {
       setLoading(true);
       setError(null);
-      const response = await axios.put(
-        `${API_URL}/api/admin/promotion-requests/${requestId}`,
-        { action: 'reject', comments },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const response = await adminService.rejectPromotionRequest(requestId, comments || '', token);
 
-      if (response.data.status) {
+      if (response.status) {
         // Update the local state
         setRequests(prev => 
           prev.map(req => 
@@ -84,7 +78,7 @@ export const usePromotionRequests = () => {
         );
         return true;
       } else {
-        setError(response.data.message || 'Failed to reject request');
+        setError(response.message || 'Failed to reject request');
         return false;
       }
     } catch (err: any) {

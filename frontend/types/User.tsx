@@ -54,7 +54,7 @@ export interface User {
     categories?: string[];
     productIds: Product[];
     rating: number;
-    ratingCount: number;
+    reviewCount: number;
     businessType?: string;
     yearsInBusiness?: string;
     expectedProducts?: string;
@@ -75,5 +75,21 @@ export interface User {
       messages: boolean;
       emailFrequency: 'instant' | 'daily' | 'weekly';
     };
+  };
+}
+
+// User service types
+export interface UserProfileData {
+  firstName?: string;
+  lastName?: string;
+  bio?: string;
+  profilePicture?: string;
+}
+
+export interface UserSettings {
+  notifications?: {
+    orders?: boolean;
+    messages?: boolean;
+    promotions?: boolean;
   };
 }

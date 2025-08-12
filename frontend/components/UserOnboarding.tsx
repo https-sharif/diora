@@ -15,8 +15,7 @@ import { ArrowLeft, ArrowRight, User, Camera, Upload } from 'lucide-react-native
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/hooks/useAuth';
 import { Theme } from '@/types/Theme';
-import axios from 'axios';
-import { API_URL } from '@/constants/api';
+import { userService } from '@/services';
 import * as ImagePicker from 'expo-image-picker';
 
 interface UserOnboardingProps {
@@ -138,6 +137,11 @@ export const UserOnboarding: React.FC<UserOnboardingProps> = ({ onComplete }) =>
       // First upload profile image if provided
       let avatarUrl = user?.avatar;
       if (profileImage) {
+        if (!token) {
+          Alert.alert('Error', 'No authentication token available');
+          return;
+        }
+
         const imageFormData = new FormData();
         imageFormData.append('avatar', {
           uri: profileImage.uri,
@@ -145,19 +149,10 @@ export const UserOnboarding: React.FC<UserOnboardingProps> = ({ onComplete }) =>
           name: profileImage.fileName || 'profile.jpg',
         } as any);
 
-        const uploadResponse = await axios.put(
-          `${API_URL}/api/user/profile`,
-          imageFormData,
-          {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'multipart/form-data',
-            },
-          }
-        );
+        const uploadResponse = await userService.updateProfileWithImage(imageFormData, token);
 
-        if (uploadResponse.data.status) {
-          avatarUrl = uploadResponse.data.user.avatar;
+        if (uploadResponse.status) {
+          avatarUrl = uploadResponse.user.avatar;
         }
       }
 
@@ -167,11 +162,12 @@ export const UserOnboarding: React.FC<UserOnboardingProps> = ({ onComplete }) =>
         bio: profileData.bio,
       };
 
-      await axios.put(
-        `${API_URL}/api/user/update/profile`,
-        profileUpdateData,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      if (!token) {
+        Alert.alert('Error', 'No authentication token available');
+        return;
+      }
+
+      await userService.updateProfileDetails(profileUpdateData, token);
 
       // Complete onboarding
       const cleanedProfile = {
@@ -196,13 +192,12 @@ export const UserOnboarding: React.FC<UserOnboardingProps> = ({ onComplete }) =>
         step: totalSteps,
       };
 
-      const response = await axios.put(
-        `${API_URL}/api/user/complete-onboarding`,
+      const response = await userService.completeUserOnboarding(
         { onboarding: onboardingData },
-        { headers: { Authorization: `Bearer ${token}` } }
+        token
       );
 
-      if (response.data.status) {
+      if (response.status) {
         await refreshUser();
         onComplete();
       } else {

@@ -21,8 +21,18 @@ export interface ShopProfile {
   categories: string[];
   productIds: Product[];
   rating: number;
-  ratingCount: number;
+  reviewCount: number;
   followers: number;
   isVerified: boolean;
   createdAt: string;
+}
+
+// Shop service types  
+export interface ShopProfileData {
+  name?: string;
+  description?: string;
+  profilePicture?: string;
+  bannerImage?: string;
+  address?: string;
+  phone?: string;
 }

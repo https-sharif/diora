@@ -584,7 +584,7 @@ export const approvePromotionRequest = async (req, res) => {
         categories: [],
         productIds: [],
         rating: 0,
-        ratingCount: 0,
+        reviewCount: 0,
         businessType: promotionRequest.businessType,
         yearsInBusiness: promotionRequest.yearsInBusiness,
         expectedProducts: promotionRequest.expectedProducts

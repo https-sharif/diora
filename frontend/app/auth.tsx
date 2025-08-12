@@ -147,19 +147,25 @@ export default function AuthScreen() {
       if (isLogin) {
         result = await login(email, password);
       } else {
-        result = await signup(email, password, username, fullName);
+        result = await signup({ 
+          email, 
+          password, 
+          firstName: username, 
+          lastName: fullName, 
+          type: 'user' 
+        });
       }
 
-      if (result.success) {
+      if (result?.success) {
         setTimeout(() => {
           router.replace('/');
         }, 100);
       } else {
         // Check for suspension/ban details
-        if ((result as any).details) {
-          Alert.alert(result.error || 'Login Failed', (result as any).details);
+        if ((result as any)?.details) {
+          Alert.alert(result?.error || 'Login Failed', (result as any).details);
         } else {
-          Alert.alert('Error', result.error || (isLogin ? 'Login failed' : 'Signup failed'));
+          Alert.alert('Error', result?.error || (isLogin ? 'Login failed' : 'Signup failed'));
         }
       }
     } catch (error: any) {

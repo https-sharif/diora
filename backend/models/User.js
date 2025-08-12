@@ -55,7 +55,7 @@ const userSchema = new mongoose.Schema({
     categories: [{ type: String }],
     productIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }],
     rating: { type: Number, default: 0 },
-    ratingCount: { type: Number, default: 0 },
+    reviewCount: { type: Number, default: 0 },
     businessType: { type: String, default: '' },
     yearsInBusiness: { type: String, default: '' },
     expectedProducts: { type: String, default: '' },

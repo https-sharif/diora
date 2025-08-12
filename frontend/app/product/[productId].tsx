@@ -1174,8 +1174,8 @@ export default function ProductDetailScreen() {
                 />
               ))}
               <Text style={styles.ratingText}>
-                {(product.rating / (product.ratingCount || 1)).toFixed(1)} (
-                {product.ratingCount} reviews)
+                {(product.rating / (product.reviewCount || 1)).toFixed(1)} (
+                {product.reviewCount} reviews)
               </Text>
             </View>
           </View>
@@ -1204,10 +1204,10 @@ export default function ProductDetailScreen() {
                 <View style={styles.storeRating}>
                   <Star size={14} color="#FFD700" fill="#FFD700" />
                   <Text style={styles.storeRatingText}>
-                    {(shopProfile?.shop?.ratingCount ?? 0) > 0
+                    {(shopProfile?.shop?.reviewCount ?? 0) > 0
                       ? (
                           (shopProfile?.shop?.rating ?? 0) /
-                          (shopProfile?.shop?.ratingCount ?? 1)
+                          (shopProfile?.shop?.reviewCount ?? 1)
                         ).toFixed(1)
                       : '0.0'}
                   </Text>

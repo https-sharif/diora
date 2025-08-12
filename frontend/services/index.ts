@@ -1,0 +1,26 @@
+// Service exports
+export { authService } from './authService';
+export { cartService, wishlistService } from './shoppingService';
+export { orderService } from './orderService';
+export { notificationService } from './notificationService';
+export { userService } from './userService';
+export { shopService } from './shopService';
+export { postService } from './postService';
+export { productService } from './productService';
+export { reviewService } from './reviewService';
+export { commentService } from './commentService';
+export { reportService } from './reportService';
+export { searchService } from './searchService';
+export { adminService } from './adminService';
+
+// Types - export from centralized types folder
+export type { LoginData, SignupData, AuthResponse } from '@/types/Auth';
+export type { CartItem, WishlistItem } from './shoppingService';
+export type { OrderData } from '@/types/Order';
+export type { UserProfileData, UserSettings } from '@/types/User';
+export type { ShopProfileData } from '@/types/ShopProfile';
+export type { PostData } from '@/types/Post';
+export type { ProductData } from '@/types/Product';
+export type { ReviewData } from '@/types/Review';
+export type { CommentData } from '@/types/Comment';
+export type { ReportData } from '@/types/Report';

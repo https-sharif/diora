@@ -1176,7 +1176,7 @@ export default function ShopProfileScreen() {
       <View style={styles.ratingRow}>
         <Star size={12} color="#FFD700" fill="#FFD700" />
         <Text style={styles.ratingText}>
-          {(item.rating / (item.ratingCount || 1)).toFixed(1)}
+          {(item.rating / (item.reviewCount || 1)).toFixed(1)}
         </Text>
       </View>
     </TouchableOpacity>
@@ -1465,8 +1465,8 @@ export default function ShopProfileScreen() {
                   <View style={styles.ratingContainer}>
                     <Star size={16} color="#FFD700" fill="#FFD700" />
                     <Text style={styles.statNumber}>
-                      {(shopProfile.shop.ratingCount > 0
-                        ? shopProfile.shop.rating / shopProfile.shop.ratingCount
+                      {(shopProfile.shop.reviewCount > 0
+                        ? shopProfile.shop.rating / shopProfile.shop.reviewCount
                         : 0.0
                       ).toFixed(1)}
                     </Text>

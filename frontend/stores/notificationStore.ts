@@ -1,25 +1,8 @@
 import { create } from 'zustand';
 import { Notification } from '@/types/Notification';
-import { useAuthStore } from '@/stores/useAuthStore';
-import { API_URL } from '@/constants/api';
-import axios from 'axios';
-
-interface NotificationStore {
-  notifications: Notification[];
-  unreadCount: number;
-  fetchNotifications: () => Promise<void>;
-  markAsRead: (id: string) => void;
-  markAllAsRead: () => void;
-  addNotification: (
-    notification: Omit<Notification, '_id' | 'timestamp' | 'read'>
-  ) => void;
-  handleIncomingNotification: (notification: any) => void;
-  deleteNotification: (id: string) => void;
-  clearAllNotifications: () => void;
-  reset: () => void;
-  shouldShowNotification: (type: string) => boolean;
-  isNotificationEnabled: (type: string) => boolean;
-}
+import { NotificationStore } from '@/types/NotificationStore';
+import { useAuthStore } from '@/stores/authStore';
+import { notificationService } from '@/services';
 
 export const useNotificationStore = create<NotificationStore>((set, get) => {
   useAuthStore.subscribe((state, prevState) => {
@@ -37,12 +20,10 @@ export const useNotificationStore = create<NotificationStore>((set, get) => {
       if (!token) return;
 
       try {
-        const response = await axios.get(`${API_URL}/api/notification`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const response = await notificationService.getNotifications(token);
 
-        if (response.data.status) {
-          const notifications = response.data.notifications.map((notif: any) => ({
+        if (response.status) {
+          const notifications = response.notifications.map((notif: any) => ({
             ...notif,
             timestamp: notif.createdAt,
           }));
@@ -62,15 +43,12 @@ export const useNotificationStore = create<NotificationStore>((set, get) => {
     markAsRead: async (id) => {
       if (!id) return;
       const token = useAuthStore.getState().token;
+      if (!token) return;
 
-      const response = await axios.patch(
-        `${API_URL}/api/notification/mark-as-read/${id}`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const response = await notificationService.markAsRead(id, token);
 
-      if (!response.data.status) {
-        console.error('Failed to mark notification as read:', response.data.message);
+      if (!response.status) {
+        console.error('Failed to mark notification as read:', response.message);
         return;
       }
 
@@ -87,15 +65,12 @@ export const useNotificationStore = create<NotificationStore>((set, get) => {
 
     markAllAsRead: async () => {
       const token = useAuthStore.getState().token;
+      if (!token) return;
 
-      const response = await axios.patch(
-        `${API_URL}/api/notification/mark-all-as-read`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const response = await notificationService.markAllAsRead(token);
 
-      if (!response.data.status) {
-        console.error('Failed to mark all notifications as read:', response.data.message);
+      if (!response.status) {
+        console.error('Failed to mark all notifications as read:', response.message);
         return;
       }
 
@@ -123,31 +98,30 @@ export const useNotificationStore = create<NotificationStore>((set, get) => {
           }
         }
 
-        const settingsRes = await axios.get(
-          `${API_URL}/api/user/settings/${toUserId}`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+        const settingsRes = await notificationService.getUserSettings(toUserId, token);
 
-        if (!settingsRes.data.status) return;
+        if (!settingsRes.status) return;
 
-        const notify = settingsRes.data.settings.notifications?.[data.type];
+        const notify = settingsRes.settings.notifications?.[data.type];
         if (!notify) {
           console.log(`Backend check: Notification type '${data.type}' is disabled for recipient`);
           return;
         }
 
-        const notifRes = await axios.post(
-          `${API_URL}/api/notification/add`,
-          { ...data, read: false },
-          { headers: { Authorization: `Bearer ${token}` } }
+        const notifRes = await notificationService.addNotification(
+          data.type,
+          toUserId,
+          data.message,
+          token,
+          (data as any).data
         );
 
-        if (!notifRes.data.status) return;
+        if (!notifRes.status) return;
 
         const newNotification: Notification = {
-          ...notifRes.data.notification,
-          _id: notifRes.data.notification._id,
-          timestamp: notifRes.data.notification.createdAt,
+          ...notifRes.notification,
+          _id: notifRes.notification._id,
+          timestamp: notifRes.notification.createdAt,
           read: false,
         };
 
@@ -184,13 +158,12 @@ export const useNotificationStore = create<NotificationStore>((set, get) => {
     deleteNotification: async (id) => {
       if (!id) return;
       const token = useAuthStore.getState().token;
+      if (!token) return;
 
-      const response = await axios.delete(`${API_URL}/api/notification/delete/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await notificationService.deleteNotification(id, token);
 
-      if (!response.data.status) {
-        console.error('Failed to delete notification:', response.data.message);
+      if (!response.status) {
+        console.error('Failed to delete notification:', response.message);
         return;
       }
 

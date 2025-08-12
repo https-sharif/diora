@@ -45,7 +45,7 @@ export const createReview = async (req, res) => {
       }
       
       product.rating += Number(rating);
-      product.ratingCount += 1;
+      product.reviewCount += 1;
       await product.save();
     } else {
       const shop = await User.findById(targetId);
@@ -55,7 +55,7 @@ export const createReview = async (req, res) => {
           .json({ status: false, message: 'Shop not found' });
       }
       shop.shop.rating += Number(rating);
-      shop.shop.ratingCount += 1;
+      shop.shop.reviewCount += 1;
 
       await shop.save();
     }
@@ -164,14 +164,14 @@ export const deleteReview = async (req, res) => {
         const product = await Product.findById(review.targetId);
         if (product) {
             product.rating -= review.rating;
-            product.ratingCount -= 1;
+            product.reviewCount -= 1;
             await product.save();
         }
     } else {
         const shop = await User.findById(review.targetId);
         if (shop) {
             shop.rating -= review.rating;
-            shop.ratingCount -= 1;
+            shop.reviewCount -= 1;
             await shop.save();
         }
     }

@@ -33,8 +33,7 @@ import Color from 'color';
 import { Product } from '@/types/Product';
 import { Theme } from '@/types/Theme';
 import ReceiptClockIcon from '@/icon/ReceiptClockIcon';
-import axios from 'axios';
-import { API_URL } from '@/constants/api';
+import { productService, searchService } from '@/services';
 import LoadingView from '@/components/Loading';
 import debounce from 'lodash.debounce';
 const categories = [
@@ -541,16 +540,14 @@ export default function ShoppingScreen() {
       }
 
       console.log('Refreshing products from /api/product');
-      const response = await axios.get(`${API_URL}/api/product`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const products = await productService.getProducts({}, token);
 
-      console.log('Refresh response:', response.data);
+      console.log('Refresh response:', products);
 
-      if (response.data && response.data.products) {
-        setProducts(response.data.products);
+      if (products) {
+        setProducts(products);
       } else {
-        console.warn('No products found in refresh response:', response.data);
+        console.warn('No products found in refresh response');
         setProducts([]);
       }
     } catch (err: any) {
@@ -572,20 +569,17 @@ export default function ShoppingScreen() {
 
       console.log('Fetching products with:', { query, filterSnapshot });
 
-      const response = await axios.get(`${API_URL}/api/search`, {
-        params: {
-          query,
-          ...filterSnapshot,
-        },
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const searchResults = await searchService.generalSearch({
+        query,
+        ...filterSnapshot,
+      }, token);
 
-      console.log('Search response:', response.data);
+      console.log('Search response:', searchResults);
 
-      if (response.data.status && response.data.products) {
-        setProducts(response.data.products);
+      if (searchResults && searchResults.status && searchResults.products) {
+        setProducts(searchResults.products);
       } else {
-        console.warn('No products found or invalid response:', response.data);
+        console.warn('No products found or invalid response:', searchResults);
         setProducts([]);
       }
     } catch (err: any) {

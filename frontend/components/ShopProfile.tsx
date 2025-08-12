@@ -17,8 +17,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { Post } from '@/types/Post';
 import { Product } from '@/types/Product';
 import { Theme } from '@/types/Theme';  
-import axios from 'axios';
-import { API_URL } from '@/constants/api';
+import { userService, postService, productService } from '@/services';
 
 const createStyles = (theme: Theme) =>
   StyleSheet.create({
@@ -316,61 +315,39 @@ export default function ShopProfile() {
 
   useEffect(() => {
     const fetchShopProfile = async () => {
+      if (!user?._id || !token) return;
+      
       try {
         setLoading(true);
 
-        console.log('Fetching shop profile for:', user?._id);
-        const response = await axios.get(`${API_URL}/api/user/${user?._id}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (response.data.status === false) {
-          setShopProfile(null);
-          return;
-        }
-        const shop = response.data.user;
-
+        console.log('Fetching shop profile for:', user._id);
+        const shop = await userService.getUserById(user._id, token);
         setShopProfile(shop);
       } catch (error) {
         console.error('Error fetching shop profile:', error);
+        setShopProfile(null);
       } finally {
         setLoading(false);
       }
     };
 
     const fetchPosts = async () => {
+      if (!user?._id || !token) return;
+      
       try {
-        const response = await axios.get(`${API_URL}/api/post/user/${user?._id}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (response.data.status === false) {
-          return;
-        }
-
-        setMyPosts(response.data.posts);
+        const posts = await postService.getUserPosts(user._id, token);
+        setMyPosts(posts);
       } catch (error) {
         console.error('Error fetching posts:', error);
       }
     };
 
     const fetchProducts = async () => {
+      if (!user?._id || !token) return;
+      
       try {
-        const response = await axios.get(`${API_URL}/api/product/shop/${user?._id}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (response.data.status === false) {
-          return;
-        }
-
-        setMyProducts(response.data.products);
+        const products = await productService.getShopProducts(user._id, token);
+        setMyProducts(products);
       } catch (error) {
         console.error('Error fetching products:', error);
       }
@@ -382,23 +359,16 @@ export default function ShopProfile() {
   }, [user, token]);
 
   const fetchData = async () => {
-    if (!user) return;
+    if (!user?._id || !token) return;
 
     try {
-      const likedPostsResponse = await axios.get(`${API_URL}/api/post/user/${user?._id}/liked`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      // Fetch liked posts
+      const likedPosts = await postService.getUserLikedPosts(user._id, token);
+      setMyLikedPosts(likedPosts);
 
-      setMyLikedPosts(likedPostsResponse.data.posts);
-
-      const myPostsResponse = await axios.get(`${API_URL}/api/post/user/${user?._id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      setMyPosts(myPostsResponse.data.posts);
+      // Fetch user's posts
+      const userPosts = await postService.getUserPosts(user._id, token);
+      setMyPosts(userPosts);
 
     } catch (err) {
       console.error(err);
@@ -512,16 +482,16 @@ export default function ShopProfile() {
             <Image source={{ uri: user.avatar }} style={styles.shopAvatar} />
             <View style={styles.shopStats}>
               <View style={styles.statItem}>
+                <Text style={styles.statNumber}>{myPosts?.length || 0}</Text>
+                <Text style={styles.statLabel}>Posts</Text>
+              </View>
+              <View style={styles.statItem}>
                 <Text style={styles.statNumber}>{myProducts?.length || 0}</Text>
                 <Text style={styles.statLabel}>Products</Text>
               </View>
               <View style={styles.statItem}>
                 <Text style={styles.statNumber}>{user?.followers?.length || 0}</Text>
                 <Text style={styles.statLabel}>Followers</Text>
-              </View>
-              <View style={styles.statItem}>
-                <Text style={styles.statNumber}>{myPosts?.length || 0}</Text>
-                <Text style={styles.statLabel}>Posts</Text>
               </View>
             </View>
           </View>
@@ -584,7 +554,7 @@ export default function ShopProfile() {
             <View style={styles.categories}>
               <Text style={styles.categoriesTitle}>Categories</Text>
               <View style={styles.categoryTags}>
-                {user.shop.categories.map((category, index) => (
+                {user.shop.categories.map((category: string, index: number) => (
                   <View key={index} style={styles.categoryTag}>
                     <Text style={styles.categoryTagText}>{category}</Text>
                   </View>

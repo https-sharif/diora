@@ -274,7 +274,7 @@ export default function EditShopProfile() {
     setFormData(prev => ({
       ...prev,
       categories: prev.categories.includes(category)
-        ? prev.categories.filter(c => c !== category)
+        ? prev.categories.filter((c: string) => c !== category)
         : [...prev.categories, category]
     }));
   };

@@ -7,9 +7,11 @@ export const mockComments: Comment[] = [
       _id: '1',
       username: 'john_doe',
       avatar: 'https://picsum.photos/seed/1/600',
+      isVerified: true,
+      type: 'user',
     },
-    targetId: '2',
-      text: 'This is so classy! Where did you get that top?',
+    postId: '2',
+    text: 'This is so classy! Where did you get that top?',
     createdAt: '1h ago',
   },
   {

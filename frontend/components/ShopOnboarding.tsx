@@ -17,8 +17,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
 import { Theme } from '@/types/Theme';
-import axios from 'axios';
-import { API_URL } from '@/constants/api';
+import { userService } from '@/services';
 
 interface ShopOnboardingProps {
   onComplete: () => void;
@@ -364,33 +363,31 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
 
     // Background upload
     try {
-      const response = await axios.post(`${API_URL}/api/user/upload-image`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      if (!token) {
+        throw new Error('No authentication token available');
+      }
+      
+      const response = await userService.uploadImage(formData, token);
 
-      console.log('Photo upload response:', response.data);
-      console.log('Response status:', response.status);
+      console.log('Photo upload response:', response);
 
-      if (response.data.status) {
+      if (response.status) {
         // Update with the actual cloud URL and ID after successful upload
         if (type === 'cover') {
           setPhotoData(prev => ({
             ...prev,
-            coverPhoto: response.data.data.url,
-            coverPhotoId: response.data.data.id,
+            coverPhoto: response.data.url,
+            coverPhotoId: response.data.id,
             uploadingCover: false
           }));
         } else {
           setPhotoData(prev => ({
             ...prev,
-            [propertyName]: response.data.data.url,
+            [propertyName]: response.data.url,
             [uploadingProperty]: false
           }));
         }
-        console.log('Upload completed - URL:', response.data.data.url, 'ID:', response.data.data.id);
+        console.log('Upload completed - URL:', response.data.url, 'ID:', response.data.id);
         showToast('success', `${type.replace(/([A-Z])/g, ' $1').toLowerCase()} uploaded successfully!`);
       } else {
         // Revert optimistic update on failure
@@ -462,17 +459,17 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
 
       console.log('Sending shop onboarding data:', updateData);
 
-      const response = await axios.put(
-        `${API_URL}/api/user/complete-shop-onboarding`,
-        updateData,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      if (!token) {
+        throw new Error('No authentication token available');
+      }
 
-      console.log('Shop onboarding response:', response.data);
+      const response = await userService.completeShopOnboarding(updateData, token);
 
-      if (response.data.status) {
+      console.log('Shop onboarding response:', response);
+
+      if (response.status) {
         console.log('Shop onboarding completed successfully');
-        console.log('Backend response user data:', JSON.stringify(response.data.user?.onboarding, null, 2));
+        console.log('Backend response user data:', JSON.stringify(response?.onboarding, null, 2));
         
         // First refresh to sync latest data
         console.log('🔄 First refresh attempt...');
@@ -493,7 +490,7 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
         }
         
         // Verify completion before calling onComplete
-        const isCompleteInResponse = response.data.user?.onboarding?.isComplete;
+        const isCompleteInResponse = response?.onboarding?.isComplete;
         const isCompleteInStore = user?.onboarding?.isComplete;
         
         console.log('🔍 Final verification:');
@@ -826,7 +823,7 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
               setShopData(prev => ({
                 ...prev,
                 categories: prev.categories.includes(category)
-                  ? prev.categories.filter(c => c !== category)
+                  ? prev.categories.filter((c: string) => c !== category)
                   : [...prev.categories, category]
               }));
             }}

@@ -85,3 +85,11 @@ export interface ReportStats {
   last24Hours: number;
   byType: { _id: string; count: number }[];
 }
+
+// Report service types
+export interface ReportData {
+  targetType: 'user' | 'post' | 'product' | 'comment';
+  targetId: string;
+  reason: string;
+  description?: string;
+}

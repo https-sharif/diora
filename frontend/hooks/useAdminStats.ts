@@ -1,6 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import axios from 'axios';
-import { API_URL } from '@/constants/api';
+import { adminService } from '@/services';
 import { useAuth } from './useAuth';
 
 interface AdminStats {
@@ -63,20 +62,18 @@ export const useAdminStats = () => {
   const [error, setError] = useState<string | null>(null);
 
   const fetchStats = useCallback(async () => {
-    if (!user || user.type !== 'admin') return;
+    if (!user || user.type !== 'admin' || !token) return;
 
     try {
       setLoading(true);
       setError(null);
       
-      const response = await axios.get(`${API_URL}/api/admin/stats`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await adminService.getStats(token);
 
-      if (response.data.status) {
-        setStats(response.data.stats);
+      if (response.status) {
+        setStats(response.stats);
       } else {
-        setError(response.data.message || 'Failed to fetch stats');
+        setError(response.message || 'Failed to fetch stats');
       }
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to fetch admin statistics');
@@ -86,19 +83,17 @@ export const useAdminStats = () => {
   }, [token, user]);
 
   const fetchHealth = useCallback(async () => {
-    if (!user || user.type !== 'admin') return;
+    if (!user || user.type !== 'admin' || !token) return;
 
     try {
       setError(null);
       
-      const response = await axios.get(`${API_URL}/api/admin/health`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await adminService.getHealth(token);
 
-      if (response.data.status) {
-        setHealth(response.data.health);
+      if (response.status) {
+        setHealth(response.health);
       } else {
-        setError(response.data.message || 'Failed to fetch system health');
+        setError(response.message || 'Failed to fetch system health');
       }
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to fetch system health');

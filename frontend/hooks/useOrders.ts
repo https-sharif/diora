@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
-import axios from 'axios';
-import { useAuth } from './useAuth';
-import { API_URL } from '@/constants/api';
+import { useState, useEffect, useMemo } from 'react';
+import { useAuthStore } from '@/stores/authStore';
+import { useAuth } from '@/hooks/useAuth';
+import { orderService } from '@/services';
 
 interface OrderItem {
   productId: string;
@@ -72,13 +72,11 @@ export const useOrders = (): UseOrdersResult => {
     setError(null);
 
     try {
-      const response = await axios.get(`${API_URL}/api/order?page=${page}&limit=10`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await orderService.getOrders(page, token);
 
-      if (response.data.status) {
-        setOrders(response.data.orders);
-        setTotalPages(response.data.totalPages);
+      if (response.status) {
+        setOrders(response.orders);
+        setTotalPages(response.totalPages);
         setCurrentPage(response.data.currentPage);
         setTotalOrders(response.data.totalOrders);
       }
@@ -95,12 +93,10 @@ export const useOrders = (): UseOrdersResult => {
     if (!user || !token) return null;
 
     try {
-      const response = await axios.get(`${API_URL}/api/order/${orderId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await orderService.getOrderById(orderId, token);
 
-      if (response.data.status) {
-        return response.data.order;
+      if (response.status) {
+        return response.order;
       }
       return null;
     } catch (err: any) {
@@ -114,15 +110,9 @@ export const useOrders = (): UseOrdersResult => {
     if (!user || !token) return false;
 
     try {
-      const response = await axios.patch(
-        `${API_URL}/api/order/${orderId}/cancel`,
-        {},
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const response = await orderService.cancelOrder(orderId, token);
 
-      if (response.data.status) {
+      if (response.status) {
         // Update the order in the local state
         setOrders(prevOrders =>
           prevOrders.map(order =>

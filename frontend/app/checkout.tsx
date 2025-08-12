@@ -11,7 +11,6 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import axios from 'axios';
 import {
   ArrowLeft,
   MapPin,
@@ -25,7 +24,7 @@ import {
 import { useTheme } from '@/contexts/ThemeContext';
 import { useShopping } from '@/hooks/useShopping';
 import { useAuth } from '@/hooks/useAuth';
-import { API_URL } from '@/constants/api';
+import { orderService } from '@/services';
 import { Theme } from '@/types/Theme';
 import { Product } from '@/types/Product';
 import { CartItem } from '@/types/Cart';
@@ -385,21 +384,23 @@ const CheckoutPage = () => {
         paymentMethod: form.paymentMethod,
       };
 
-      const response = await axios.post(`${API_URL}/api/order`, orderData, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      if (!token) {
+        Alert.alert('Error', 'Authentication required. Please log in again.');
+        return;
+      }
 
-      if (response.data.status) {
-        // Refresh cart to clear it
+      const response = await orderService.createOrder(orderData, token);
+
+      if (response.status) {
         await fetchCart();
         
         Alert.alert(
           'Order Placed Successfully!',
-          `Order #${response.data.order.orderNumber} has been placed. You will receive updates via email.`,
+          `Order #${response.order.orderNumber} has been placed. You will receive updates via email.`,
           [
             { 
               text: 'View Order', 
-              onPress: () => router.push(`/order/${response.data.order._id}`) 
+              onPress: () => router.push(`/order/${response.order._id}`) 
             },
             { 
               text: 'Continue Shopping', 

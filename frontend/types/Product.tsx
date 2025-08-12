@@ -12,6 +12,35 @@ export interface Product {
     variants: string[];
     stock: number;
     rating: number;
-    ratingCount: number;
+    reviewCount: number;
     discount?: number;
-  }
+}
+
+// Product service types
+export interface ProductData {
+  name: string;
+  description: string;
+  price: number;
+  category: string;
+  images?: string[];
+  specifications?: any;
+  variants?: any[];
+}
+
+export interface ProductFilters {
+  category?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  sortBy?: string;
+  shopId?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface ProductSearchParams {
+  q: string;
+  category?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  sortBy?: string;
+}
