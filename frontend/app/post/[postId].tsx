@@ -759,7 +759,7 @@ export default function PostDetailScreen() {
 
           <TouchableOpacity style={styles.actionButton}>
             <MessageCircle size={24} color={theme.text} strokeWidth={2} />
-            <Text style={styles.actionText}>{post.comments}</Text>
+            <Text style={styles.actionText}>{comments.length}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.actionButton} onPress={handleShare}>
@@ -778,7 +778,7 @@ export default function PostDetailScreen() {
         )}
         {/* Comments */}
         <View style={styles.commentsSection}>
-          <Text style={styles.commentsTitle}>Comments ({post.comments})</Text>
+          <Text style={styles.commentsTitle}>Comments ({comments.length})</Text>
           <ScrollView
             style={[styles.commentsList, { flex: 1 }]}
             contentContainerStyle={{ paddingBottom: 80 }}

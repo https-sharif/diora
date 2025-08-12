@@ -264,7 +264,7 @@ const createStyles = (theme: Theme) => {
       gap: 8,
     },
     categoryTag: {
-      backgroundColor: theme.accentSecondary,
+      backgroundColor: theme.card,
       borderRadius: 16,
       paddingHorizontal: 12,
       paddingVertical: 6,
@@ -272,9 +272,9 @@ const createStyles = (theme: Theme) => {
       borderColor: theme.accentSecondary,
     },
     categoryTagText: {
-      fontSize: 14,
+      fontSize: 12,
       fontFamily: 'Inter-Medium',
-      color: theme.background,
+      color: theme.textSecondary,
     },
     actionButtons: {
       flexDirection: 'row',

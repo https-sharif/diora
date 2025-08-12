@@ -28,6 +28,14 @@ export const OnboardingManager: React.FC<OnboardingManagerProps> = ({ onComplete
 
   console.log(`OnboardingManager [${refreshKey}] - needsOnboarding:`, needsOnboarding);
 
+  // If no onboarding is needed, call onComplete in useEffect to avoid setState during render
+  useEffect(() => {
+    if (!needsOnboarding) {
+      console.log(`OnboardingManager [${refreshKey}] - No onboarding needed, calling onComplete`);
+      onComplete();
+    }
+  }, [needsOnboarding, onComplete, refreshKey]);
+
   // If onboarding is needed, show the appropriate onboarding based on user type
   if (needsOnboarding) {
     if (user.type === 'user') {
@@ -41,8 +49,6 @@ export const OnboardingManager: React.FC<OnboardingManagerProps> = ({ onComplete
     }
   }
 
-  // No onboarding needed, complete immediately
-  console.log(`OnboardingManager [${refreshKey}] - No onboarding needed, calling onComplete`);
-  onComplete();
+  // Return null while waiting for useEffect to call onComplete
   return null;
 };

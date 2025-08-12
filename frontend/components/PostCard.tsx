@@ -482,7 +482,7 @@ export default function PostCard({ post }: { post: Post }) {
             activeOpacity={1}
           >
             <MessageCircle size={24} color={theme.text} strokeWidth={2} />
-            <Text style={styles.actionText}>{formatNumber(post.comments)}</Text>
+            <Text style={styles.actionText}>{formatNumber(comments.length)}</Text>
           </TouchableOpacity>
         </View>
 
