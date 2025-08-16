@@ -1,4 +1,3 @@
-import { Pressable } from 'react-native';
 import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
@@ -15,6 +14,7 @@ import {
   TouchableWithoutFeedback,
   ActivityIndicator,
   Alert,
+  Pressable,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -53,7 +53,7 @@ import { Conversation } from '@/types/Conversation';
 import { Message } from '@/types/Message';
 import { ReportData } from '@/types/Report';
 import axios from 'axios';
-import { searchService} from '@/services'
+import { searchService } from '@/services';
 
 const { width } = Dimensions.get('window');
 
@@ -684,7 +684,6 @@ export default function MessageScreen() {
   const [editGroupPhoto, setEditGroupPhoto] = useState(
     conversation?.avatar || ''
   );
-  const [editGroupPhotoLoading, setEditGroupPhotoLoading] = useState(false);
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [addUserSearch, setAddUserSearch] = useState('');
   const [addUserResults, setAddUserResults] = useState<User[]>([]);
@@ -757,7 +756,7 @@ export default function MessageScreen() {
       if (!result.canceled) {
         setEditGroupPhoto(result.assets[0].uri);
       }
-    } catch (e) {
+    } catch {
       alert('Failed to pick image');
     }
   };
@@ -843,16 +842,15 @@ export default function MessageScreen() {
                 <TouchableOpacity
                   style={[
                     styles.createGroupButton,
-                    (!editGroupName.trim() || editGroupPhotoLoading) &&
-                      styles.createGroupButtonDisabled,
+                    !editGroupName.trim() && styles.createGroupButtonDisabled,
                   ]}
                   onPress={handleSaveEditGroup}
-                  disabled={!editGroupName.trim() || editGroupPhotoLoading}
+                  disabled={!editGroupName.trim()}
                 >
                   <Text
                     style={[
                       styles.createGroupButtonText,
-                      (!editGroupName.trim() || editGroupPhotoLoading) &&
+                      !editGroupName.trim() &&
                         styles.createGroupButtonTextDisabled,
                     ]}
                   >
@@ -1034,12 +1032,16 @@ export default function MessageScreen() {
     try {
       const res = await searchService.searchUsers(text, token);
       if (res.status && Array.isArray(res.users)) {
-        const existingIds = (conversation?.participants || []).map((p: any) => typeof p === 'string' ? p : p._id);
-        setAddUserResults(res.users.filter((u: User) => !existingIds.includes(u._id)));
+        const existingIds = (conversation?.participants || []).map((p: any) =>
+          typeof p === 'string' ? p : p._id
+        );
+        setAddUserResults(
+          res.users.filter((u: User) => !existingIds.includes(u._id))
+        );
       } else {
         setAddUserResults([]);
       }
-    } catch (e) {
+    } catch {
       setAddUserResults([]);
     }
     setAddUserSearching(false);
@@ -1048,17 +1050,18 @@ export default function MessageScreen() {
   const handleAddUserToGroup = async () => {
     if (!addUserSelected || !conversation || !token) return;
     try {
-      const data = await messageService.addUser(conversation._id, token, [addUserSelected._id]);
+      const data = await messageService.addUser(conversation._id, token, [
+        addUserSelected._id,
+      ]);
       if (data.status) {
         updateConversation(conversation._id, data.conversation);
         setConversation(data.conversation);
         setShowAddUserModal(false);
         setAddUserSelected(null);
-      }
-      else {
+      } else {
         alert(data.message || 'Failed to add user');
       }
-    } catch (e) {
+    } catch {
       alert('Failed to add user');
     }
   };
@@ -1097,25 +1100,85 @@ export default function MessageScreen() {
                       keyExtractor={(item) => item._id}
                       renderItem={({ item }) => (
                         <TouchableOpacity
-                          style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 8, backgroundColor: addUserSelected?._id === item._id ? theme.accent : 'transparent', borderRadius: 8, marginBottom: 2 }}
+                          style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            paddingVertical: 10,
+                            paddingHorizontal: 8,
+                            backgroundColor:
+                              addUserSelected?._id === item._id
+                                ? theme.accent
+                                : 'transparent',
+                            borderRadius: 8,
+                            marginBottom: 2,
+                          }}
                           onPress={() => setAddUserSelected(item)}
                         >
                           {item.avatar ? (
-                            <Image source={{ uri: item.avatar }} style={{ width: 32, height: 32, borderRadius: 16, marginRight: 10 }} />
+                            <Image
+                              source={{ uri: item.avatar }}
+                              style={{
+                                width: 32,
+                                height: 32,
+                                borderRadius: 16,
+                                marginRight: 10,
+                              }}
+                            />
                           ) : (
-                            <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: theme.card, justifyContent: 'center', alignItems: 'center', marginRight: 10 }}>
-                              <Text style={{ color: theme.text }}>{(item.fullName || item.username || 'U').charAt(0).toUpperCase()}</Text>
+                            <View
+                              style={{
+                                width: 32,
+                                height: 32,
+                                borderRadius: 16,
+                                backgroundColor: theme.card,
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                marginRight: 10,
+                              }}
+                            >
+                              <Text style={{ color: theme.text }}>
+                                {(item.fullName || item.username || 'U')
+                                  .charAt(0)
+                                  .toUpperCase()}
+                              </Text>
                             </View>
                           )}
                           <View>
-                            <Text style={{ color: addUserSelected?._id === item._id ? '#000' : theme.text, fontWeight: 'bold' }}>{item.fullName || item.username}</Text>
-                            <Text style={{ color: theme.textSecondary, fontSize: 12 }}>@{item.username}</Text>
+                            <Text
+                              style={{
+                                color:
+                                  addUserSelected?._id === item._id
+                                    ? '#000'
+                                    : theme.text,
+                                fontWeight: 'bold',
+                              }}
+                            >
+                              {item.fullName || item.username}
+                            </Text>
+                            <Text
+                              style={{
+                                color: theme.textSecondary,
+                                fontSize: 12,
+                              }}
+                            >
+                              @{item.username}
+                            </Text>
                           </View>
                         </TouchableOpacity>
                       )}
-                      ListEmptyComponent={addUserSearch.trim() ? (
-                        <Text style={{ color: theme.textSecondary, textAlign: 'center', marginTop: 12 }}>No users found</Text>
-                      ) : null}
+                      ListEmptyComponent={
+                        addUserSearch.trim() ? (
+                          <Text
+                            style={{
+                              color: theme.textSecondary,
+                              textAlign: 'center',
+                              marginTop: 12,
+                            }}
+                          >
+                            No users found
+                          </Text>
+                        ) : null
+                      }
                       keyboardShouldPersistTaps="handled"
                     />
                   )}
@@ -1128,10 +1191,14 @@ export default function MessageScreen() {
                   onPress={handleAddUserToGroup}
                   disabled={!addUserSelected}
                 >
-                  <Text style={[
-                    styles.createGroupButtonText,
-                    !addUserSelected && styles.createGroupButtonTextDisabled,
-                  ]}>Add</Text>
+                  <Text
+                    style={[
+                      styles.createGroupButtonText,
+                      !addUserSelected && styles.createGroupButtonTextDisabled,
+                    ]}
+                  >
+                    Add
+                  </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={() => setShowAddUserModal(false)}
@@ -1275,7 +1342,7 @@ export default function MessageScreen() {
             console.log('No messages found');
             setMyMessages([]);
           }
-        } catch (messagesError) {
+        } catch {
           console.log(
             'Failed to fetch messages, treating as new conversation with user ID:',
             conversationId
@@ -1476,7 +1543,7 @@ export default function MessageScreen() {
           } else {
             throw new Error('Not a conversation ID');
           }
-        } catch (messageError) {
+        } catch {
           try {
             const conversationResponse =
               await messageService.getOrCreateConversation(
@@ -1595,7 +1662,7 @@ export default function MessageScreen() {
             console.log('Not a valid conversation, treating as user ID');
             throw new Error('Not a conversation ID');
           }
-        } catch (messageError) {
+        } catch {
           console.log(
             'Failed to fetch messages, treating as user ID and creating conversation'
           );
@@ -1829,6 +1896,27 @@ export default function MessageScreen() {
     );
   };
 
+  const handleDeleteMessage = async (messageId: string) => {
+    if(!token) return;
+
+    try {
+      const response = await messageService.deleteMessage(messageId, token);
+      if (response.status) {
+        Alert.alert('Success', 'Message deleted successfully');
+        setMyMessages(prev =>
+          prev.map(m =>
+            m._id === messageId ? { ...m, type: "deleted", text: "" } : m
+          )
+        );
+      } else {
+        Alert.alert('Error', 'Failed to delete message');
+      }
+    } catch (error) {
+      console.error('Error deleting message:', error);
+      Alert.alert('Error', 'Failed to delete message');
+    }
+  };
+
   const renderMessage = ({ item }: { item: Message }) => {
     if (!user) return null;
 
@@ -1868,27 +1956,10 @@ export default function MessageScreen() {
               }}
               style={{ marginRight: 8 }}
             >
-              {senderAvatar ? (
-                <Image
-                  source={{ uri: senderAvatar }}
-                  style={styles.groupMessageAvatar}
-                />
-              ) : (
-                <View
-                  style={[
-                    styles.groupMessageAvatar,
-                    {
-                      backgroundColor: theme.accent,
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                    },
-                  ]}
-                >
-                  <Text style={styles.groupMessageAvatarText}>
-                    {senderName.charAt(0).toUpperCase()}
-                  </Text>
-                </View>
-              )}
+              <Image
+                source={{ uri: senderAvatar }}
+                style={styles.groupMessageAvatar}
+              />
             </Pressable>
             <View style={{ flex: 1 }}>
               <Text style={styles.groupMessageUsername}>{senderName}</Text>
@@ -1996,11 +2067,28 @@ export default function MessageScreen() {
             />
           )}
 
-        <View
+        <TouchableOpacity
           style={[
             styles.messageBubble,
             isMe ? styles.myMessageBubble : styles.otherMessageBubble,
           ]}
+          activeOpacity={1}
+          onLongPress={
+            () => {
+              if(!isMe) return;
+
+              Alert.alert(
+                "Delete Message",
+                "Are you sure you want to delete this message?",
+                [
+                  { text: "Cancel", style: "cancel" },
+                  { text: "Delete", style: "destructive", onPress: () => {
+                    handleDeleteMessage(item._id)
+                  }}
+                ]
+              );
+            }
+          }
         >
           {item.type === 'text' && item.text ? (
             <Text style={[styles.messageText, isMe && styles.myMessageText]}>
@@ -2140,7 +2228,7 @@ export default function MessageScreen() {
               </>
             )}
           </View>
-        </View>
+        </TouchableOpacity>
       </View>
     );
   };
