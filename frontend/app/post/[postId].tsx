@@ -15,6 +15,7 @@ import {
   ActivityIndicator,
   Keyboard,
   TouchableWithoutFeedback,
+  FlatList,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -33,14 +34,19 @@ import { useAuth } from '@/hooks/useAuth';
 import { Comment } from '@/types/Comment';
 import { Post } from '@/types/Post';
 import { Theme } from '@/types/Theme';
+import { User } from '@/types/User';
 import { useTheme } from '@/contexts/ThemeContext';
 import ImageSlashIcon from '@/icon/ImageSlashIcon';
-import axios from 'axios';
+import axios, { isAxiosError } from 'axios';
 import { config } from '@/config';
 import { format } from 'timeago.js';
-import { postService } from '@/services/postService';
-import { commentService } from '@/services/commentService';
-import { reportService } from '@/services/reportService';
+import {
+  postService,
+  commentService,
+  messageService,
+  searchService,
+} from '@/services';
+import Color from 'color';
 
 const createStyles = (theme: Theme) => {
   return StyleSheet.create({
@@ -422,6 +428,136 @@ const createStyles = (theme: Theme) => {
     reportButtonTextSubmit: {
       color: theme.background,
     },
+    modal: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: 20,
+    },
+    modalContainer: {
+      backgroundColor: theme.card,
+      borderRadius: 12,
+      padding: 20,
+      width: '100%',
+      maxWidth: 400,
+      maxHeight: '85%',
+    },
+    modalHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 20,
+    },
+    modalSearchInput: {
+      borderWidth: 1,
+      borderColor: theme.border,
+      borderRadius: 8,
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      fontSize: 16,
+      fontFamily: 'Inter-Regular',
+      color: theme.text,
+      marginBottom: 16,
+      backgroundColor: theme.background,
+    },
+    modalTitle: {
+      fontSize: 18,
+      fontFamily: 'Inter-SemiBold',
+      color: theme.text,
+    },
+    modalSubtitle: {
+      fontSize: 16,
+      fontFamily: 'Inter-Regular',
+      marginBottom: 16,
+    },
+    modalOption: {
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: theme.border,
+      marginBottom: 8,
+    },
+    modalOptionSelected: {
+      borderColor: theme.text,
+      backgroundColor: theme.background,
+    },
+    modalOptionText: {
+      fontSize: 16,
+      fontFamily: 'Inter-Regular',
+    },
+    modalInput: {
+      borderWidth: 1,
+      borderRadius: 8,
+      padding: 12,
+      marginTop: 12,
+      marginBottom: 20,
+      height: 80,
+      textAlignVertical: 'top',
+      fontSize: 14,
+      fontFamily: 'Inter-Regular',
+    },
+    modalButtons: {
+      flexDirection: 'row',
+      justifyContent: 'flex-end',
+      gap: 12,
+    },
+    modalFooter: {
+      backgroundColor: theme.accent,
+      borderRadius: 12,
+      paddingVertical: 4,
+      alignItems: 'center',
+    },
+    modalButton: {
+      paddingVertical: 10,
+      paddingHorizontal: 20,
+      borderRadius: 8,
+    },
+    modalButtonCancel: {
+      borderWidth: 1,
+    },
+    modalButtonSubmit: {},
+    modalButtonText: {
+      fontSize: 14,
+      fontFamily: 'Inter-SemiBold',
+    },
+    emptySearchState: {
+      padding: 40,
+      alignItems: 'center',
+    },
+    emptySearchText: {
+      fontSize: 16,
+      fontFamily: 'Inter-Regular',
+      color: theme.textSecondary,
+      textAlign: 'center',
+    },
+    usersList: {
+      flexGrow: 1,
+    },
+    userItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: 16,
+      borderBottomWidth: 0.5,
+      borderBottomColor: theme.border,
+    },
+    userItemSelected: {
+      backgroundColor: Color(theme.accent).alpha(0.1).toString(),
+      borderRadius: 16,
+    },
+
+    userName: {
+      fontSize: 16,
+      fontFamily: 'Inter-SemiBold',
+      color: theme.text,
+    },
+    userUsername: {
+      fontSize: 14,
+      fontFamily: 'Inter-Regular',
+      color: theme.textSecondary,
+      marginTop: 2,
+    },
   });
 };
 
@@ -441,40 +577,40 @@ export default function PostDetailScreen() {
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportReason, setReportReason] = useState('');
   const [reportDescription, setReportDescription] = useState('');
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [userSearchQuery, setUserSearchQuery] = useState('');
+  const [selectedUsers, setSelectedUsers] = useState<User[]>([]);
+  const [searchedUsers, setSearchedUsers] = useState<User[]>([]);
 
   useEffect(() => {
+    if (!token || !postId) return;
+
     const fetchPostAndComment = async () => {
-      if (!token) return;
-      
       setIsLoading(true);
-      const response = await postService.getPostById(postId, token);
+      try {
+        const response = await postService.getPostById(postId, token);
+        const post = response.post;
+        if (!post) return;
 
-      const post = response.post;
+        setPost(post);
 
-      if (!post) {
-        setIsLoading(false);
-        return;
-      }
-      setPost(post);
-
-      const commentsResponse = await commentService.getPostComments(postId, token);
-
-      if (!commentsResponse.status) {
-        console.error(
-          'Failed to fetch comments:',
-          commentsResponse.message
+        const commentsResponse = await commentService.getPostComments(
+          postId,
+          token
         );
-        setIsLoading(false);
-        return;
-      }
-      setComments(commentsResponse.data.comments);
+        if (commentsResponse.status) setComments(commentsResponse.comments);
 
-      setIsLoading(false);
-      setIsStarred(user?.likedPosts?.includes(post._id) || false);
+        setIsStarred(user?.likedPosts?.includes(post._id) || false);
+      } catch (err) {
+        console.log('error here line: 603');
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
     fetchPostAndComment();
-  }, [postId, token]);
+  }, [postId, token, user?.likedPosts]);
 
   useEffect(() => {
     if (post) {
@@ -493,6 +629,43 @@ export default function PostDetailScreen() {
       );
     }
   }, [post]);
+
+  const searchUsers = async (query: string) => {
+    if (!token) {
+      setSearchedUsers([]);
+      return;
+    }
+
+    try {
+      const [userRes, shopRes] = await Promise.all([
+        searchService.searchUsers(query, token),
+        searchService.searchShops(query, token),
+      ]);
+      let merged: any[] = [];
+      if (userRes.status) {
+        merged = merged.concat(
+          userRes.users.filter((u: any) => u._id !== user?._id)
+        );
+      }
+      if (shopRes.status) {
+        merged = merged.concat(
+          shopRes.users.filter((s: any) => s._id !== user?._id)
+        );
+      }
+      setSearchedUsers(merged);
+    } catch (err) {
+      console.error('Error searching users/shops:', err);
+      setSearchedUsers([]);
+    }
+  };
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      searchUsers(userSearchQuery);
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [userSearchQuery]);
 
   if (isLoading) {
     return (
@@ -592,34 +765,91 @@ export default function PostDetailScreen() {
     }
   };
 
-  const handleShare = () => {
-    Alert.alert('Share', `Share ${post.user.username}'s post`);
+  const handleShare = async () => {
+    if (!post || !token) return;
+
+    setShowShareModal(false);
+    await Promise.all(
+      selectedUsers.map(async (user) => {
+        const conversation = await messageService.getConversationId(
+          user._id,
+          token
+        );
+        await messageService.sendMessage(
+          conversation.conversationId,
+          `Check out this post`,
+          'post',
+          token,
+          undefined,
+          undefined,
+          undefined,
+          post._id,
+          undefined
+        );
+      })
+    );
+  };
+
+  const handleUserSelect = (selectedUser: any) => {
+    setSelectedUsers((prev) => {
+      if (prev.find((u) => u._id === selectedUser._id)) {
+        return prev.filter((u) => u._id !== selectedUser._id);
+      }
+      return [...prev, selectedUser];
+    });
+  };
+
+  const renderUserList = (item: any) => {
+    const isSelected = selectedUsers.find((u) => u._id === item._id);
+    return (
+      <TouchableOpacity
+        style={[styles.userItem, isSelected && styles.userItemSelected]}
+        onPress={() => handleUserSelect(item)}
+        activeOpacity={0.7}
+      >
+        <Image source={{ uri: item.avatar }} style={styles.userAvatar} />
+        <View style={styles.userInfo}>
+          <Text style={styles.userName}>
+            {item.fullName || item.username || 'Unknown User'}
+          </Text>
+          {item.username && (
+            <Text style={styles.userUsername}>@{item.username}</Text>
+          )}
+        </View>
+        {isSelected && <Check size={20} color={theme.accent} />}
+      </TouchableOpacity>
+    );
   };
 
   const handleReport = async () => {
     if (!reportReason.trim() || !user) return;
 
     const reasonMap: { [key: string]: string } = {
-      'Spam': 'spam',
+      Spam: 'spam',
       'Inappropriate Content': 'inappropriate_content',
       'False Information': 'other',
       'Copyright Violation': 'copyright_violation',
-      'Other': 'other'
+      Other: 'other',
     };
 
     try {
       const payload = {
         reportedItem: {
           itemType: 'post',
-          itemId: post._id
+          itemId: post._id,
         },
         type: reasonMap[reportReason] || 'other',
-        description: reportDescription.trim() || 'No additional details provided'
+        description:
+          reportDescription.trim() || 'No additional details provided',
       };
 
-      const response = await axios.post(`${config.apiUrl}/api/report`, payload, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await axios.post(
+        `${config.apiUrl}/api/report`,
+        payload,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
 
       console.log('Report response:', response.data);
 
@@ -627,12 +857,15 @@ export default function PostDetailScreen() {
         setShowReportModal(false);
         setReportReason('');
         setReportDescription('');
-        Alert.alert('Report Submitted', 'Thank you for your report. We will review it shortly.');
+        Alert.alert(
+          'Report Submitted',
+          'Thank you for your report. We will review it shortly.'
+        );
         console.log('Report submitted successfully');
       }
     } catch (err) {
       console.error('Error submitting report:', err);
-      if (axios.isAxiosError(err) && err.response) {
+      if (isAxiosError(err) && err.response) {
         console.error('Response data:', err.response.data);
         console.error('Response status:', err.response.status);
       }
@@ -645,7 +878,9 @@ export default function PostDetailScreen() {
       style={[styles.commentItem, isReply && styles.replyItem]}
     >
       <TouchableOpacity
-        onPress={() => router.push(`/${comment.user.type}/${comment.user._id}` as any)}
+        onPress={() =>
+          router.push(`/${comment.user.type}/${comment.user._id}` as any)
+        }
       >
         <Image
           source={{ uri: comment.user.avatar }}
@@ -655,7 +890,9 @@ export default function PostDetailScreen() {
       <View style={styles.commentContent}>
         <View style={styles.commentHeader}>
           <TouchableOpacity
-            onPress={() => router.push(`/${comment.user.type}/${comment.user._id}` as any)}
+            onPress={() =>
+              router.push(`/${comment.user.type}/${comment.user._id}` as any)
+            }
           >
             <View style={styles.userNameRow}>
               <Text style={styles.username}>{comment.user.username}</Text>
@@ -709,7 +946,9 @@ export default function PostDetailScreen() {
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.userSection}>
           <TouchableOpacity
-            onPress={() => router.push(`/${post.user.type}/${post.user._id}` as any)}
+            onPress={() =>
+              router.push(`/${post.user.type}/${post.user._id}` as any)
+            }
           >
             <Image
               source={{ uri: post.user.avatar }}
@@ -718,7 +957,9 @@ export default function PostDetailScreen() {
           </TouchableOpacity>
           <View style={styles.userInfo}>
             <TouchableOpacity
-              onPress={() => router.push(`/${post.user.type}/${post.user._id}` as any)}
+              onPress={() =>
+                router.push(`/${post.user.type}/${post.user._id}` as any)
+              }
             >
               <View style={styles.userNameRow}>
                 <Text style={styles.username}>{post.user.username}</Text>
@@ -850,7 +1091,13 @@ export default function PostDetailScreen() {
               </TouchableOpacity>
             </View>
 
-            <TouchableOpacity style={styles.moreMenuItem} onPress={handleShare}>
+            <TouchableOpacity
+              style={styles.moreMenuItem}
+              onPress={() => {
+                setShowMoreMenu(false);
+                setShowShareModal(true);
+              }}
+            >
               <Share size={20} color={theme.text} />
               <Text style={styles.moreMenuItemText}>Share Post</Text>
             </TouchableOpacity>
@@ -889,11 +1136,22 @@ export default function PostDetailScreen() {
                 </TouchableOpacity>
               </View>
 
-              <Text style={[styles.reportOptionText, { marginBottom: 12, color: theme.textSecondary }]}>
+              <Text
+                style={[
+                  styles.reportOptionText,
+                  { marginBottom: 12, color: theme.textSecondary },
+                ]}
+              >
                 Why are you reporting this post?
               </Text>
 
-              {['Spam', 'Inappropriate Content', 'False Information', 'Copyright Violation', 'Other'].map((reason) => (
+              {[
+                'Spam',
+                'Inappropriate Content',
+                'False Information',
+                'Copyright Violation',
+                'Other',
+              ].map((reason) => (
                 <TouchableOpacity
                   key={reason}
                   style={[
@@ -920,7 +1178,12 @@ export default function PostDetailScreen() {
                   style={[styles.reportButton, styles.reportButtonCancel]}
                   onPress={() => setShowReportModal(false)}
                 >
-                  <Text style={[styles.reportButtonText, styles.reportButtonTextCancel]}>
+                  <Text
+                    style={[
+                      styles.reportButtonText,
+                      styles.reportButtonTextCancel,
+                    ]}
+                  >
                     Cancel
                   </Text>
                 </TouchableOpacity>
@@ -929,7 +1192,12 @@ export default function PostDetailScreen() {
                   onPress={handleReport}
                   disabled={!reportReason.trim()}
                 >
-                  <Text style={[styles.reportButtonText, styles.reportButtonTextSubmit]}>
+                  <Text
+                    style={[
+                      styles.reportButtonText,
+                      styles.reportButtonTextSubmit,
+                    ]}
+                  >
                     Submit
                   </Text>
                 </TouchableOpacity>
@@ -939,6 +1207,64 @@ export default function PostDetailScreen() {
         </TouchableWithoutFeedback>
       </Modal>
 
+      {/* Share Modal */}
+      <Modal
+        visible={showShareModal}
+        animationType="fade"
+        transparent
+        onRequestClose={() => setShowShareModal(false)}
+      >
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={0}
+        >
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <View style={styles.modal}>
+              <View style={styles.modalContainer}>
+                <View style={styles.modalHeader}>
+                  <Text style={styles.modalTitle}>Share User Profile</Text>
+                  <TouchableOpacity onPress={() => setShowShareModal(false)}>
+                    <X size={24} color={theme.text} />
+                  </TouchableOpacity>
+                </View>
+
+                <TextInput
+                  style={styles.modalSearchInput}
+                  placeholder={'Search user...'}
+                  value={userSearchQuery}
+                  onChangeText={setUserSearchQuery}
+                  placeholderTextColor={theme.textSecondary}
+                  autoFocus
+                />
+
+                <FlatList
+                  data={searchedUsers}
+                  renderItem={({ item }) => {
+                    return renderUserList(item);
+                  }}
+                  keyExtractor={(item) => item._id}
+                  contentContainerStyle={styles.usersList}
+                  ListEmptyComponent={
+                    <View style={styles.emptySearchState}>
+                      <Text style={styles.emptySearchText}>No users found</Text>
+                    </View>
+                  }
+                />
+
+                <View style={styles.modalFooter}>
+                  <TouchableOpacity
+                    style={styles.modalButton}
+                    onPress={handleShare}
+                  >
+                    <Text style={styles.modalButtonText}>Share</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
+      </Modal>
     </SafeAreaView>
   );
 }

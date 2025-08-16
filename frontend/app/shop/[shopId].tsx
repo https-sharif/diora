@@ -63,6 +63,7 @@ import StarSlashIcon from '@/icon/StarSlashIcon';
 import RatingStars from '@/components/RatingStar';
 import ReviewInput from '@/components/ReviewInput';
 import * as ImagePicker from 'expo-image-picker';
+import { messageService, searchService } from '@/services/';
 
 const { width, height } = Dimensions.get('window');
 const isSmallScreen = width < 360;
@@ -708,6 +709,140 @@ const createStyles = (theme: Theme) => {
       fontSize: 14,
       fontFamily: 'Inter-Medium',
     },
+    modal: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: 20,
+    },
+    modalContainer: {
+      backgroundColor: theme.card,
+      borderRadius: 12,
+      padding: 20,
+      width: '100%',
+      maxWidth: 400,
+      maxHeight: '85%',
+    },
+    modalHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 20,
+    },
+    modalSearchInput: {
+      borderWidth: 1,
+      borderColor: theme.border,
+      borderRadius: 8,
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      fontSize: 16,
+      fontFamily: 'Inter-Regular',
+      color: theme.text,
+      marginBottom: 16,
+      backgroundColor: theme.background,
+    },
+    modalTitle: {
+      fontSize: 18,
+      fontFamily: 'Inter-SemiBold',
+      color: theme.text,
+    },
+    modalSubtitle: {
+      fontSize: 16,
+      fontFamily: 'Inter-Regular',
+      marginBottom: 16,
+    },
+    modalOption: {
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: theme.border,
+      marginBottom: 8,
+    },
+    modalOptionSelected: {
+      borderColor: theme.text,
+      backgroundColor: theme.background,
+    },
+    modalOptionText: {
+      fontSize: 16,
+      fontFamily: 'Inter-Regular',
+    },
+    modalInput: {
+      borderWidth: 1,
+      borderRadius: 8,
+      padding: 12,
+      marginTop: 12,
+      marginBottom: 20,
+      height: 80,
+      textAlignVertical: 'top',
+      fontSize: 14,
+      fontFamily: 'Inter-Regular',
+    },
+    modalButtons: {
+      flexDirection: 'row',
+      justifyContent: 'flex-end',
+      gap: 12,
+    },
+    modalFooter: {
+      backgroundColor: theme.accent,
+      borderRadius: 12,
+      paddingVertical: 4,
+      alignItems: 'center',
+    },
+    modalButton: {
+      paddingVertical: 10,
+      paddingHorizontal: 20,
+      borderRadius: 8,
+    },
+    modalButtonText: {
+      fontSize: 14,
+      fontFamily: 'Inter-SemiBold',
+    },
+    emptySearchState: {
+      padding: 40,
+      alignItems: 'center',
+    },
+    emptySearchText: {
+      fontSize: 16,
+      fontFamily: 'Inter-Regular',
+      color: theme.textSecondary,
+      textAlign: 'center',
+    },
+    usersList: {
+      flexGrow: 1,
+    },
+    userItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: 16,
+      borderBottomWidth: 0.5,
+      borderBottomColor: theme.border,
+    },
+    userItemSelected: {
+      backgroundColor: Color(theme.accent).alpha(0.1).toString(),
+      borderRadius: 16,
+    },
+    userAvatar: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      marginRight: 12,
+    },
+    userInfo: {
+      flex: 1,
+    },
+    userName: {
+      fontSize: 16,
+      fontFamily: 'Inter-SemiBold',
+      color: theme.text,
+    },
+    userUsername: {
+      fontSize: 14,
+      fontFamily: 'Inter-Regular',
+      color: theme.textSecondary,
+      marginTop: 2,
+    },
   });
 };
 
@@ -742,6 +877,10 @@ export default function ShopProfileScreen() {
   const [editingReview, setEditingReview] = useState(false);
   const reviewInputRef = useRef<TextInput>(null);
   const [reviewImages, setReviewImages] = useState<string[]>([]);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [userSearchQuery, setUserSearchQuery] = useState('');
+  const [selectedUsers, setSelectedUsers] = useState<User[]>([]);
+  const [searchedUsers, setSearchedUsers] = useState<User[]>([]);
 
   useEffect(() => {
     const fetchShopProfile = async () => {
@@ -749,14 +888,16 @@ export default function ShopProfileScreen() {
         setLoading(true);
 
         console.log('Fetching shop profile for:', shopId);
-        const response = await axios.get(`${config.apiUrl}/api/user/${shopId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const response = await axios.get(
+          `${config.apiUrl}/api/user/${shopId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
 
         if (response.data.status === false) {
-          // Shop not found (could be banned/suspended)
           router.back();
           return;
         }
@@ -769,7 +910,6 @@ export default function ShopProfileScreen() {
         }
       } catch (error) {
         console.error('Error fetching shop profile:', error);
-        // If there's an error fetching the shop, go back
         router.back();
       } finally {
         setLoading(false);
@@ -800,11 +940,14 @@ export default function ShopProfileScreen() {
 
     const fetchPosts = async () => {
       try {
-        const response = await axios.get(`${config.apiUrl}/api/post/user/${shopId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const response = await axios.get(
+          `${config.apiUrl}/api/post/user/${shopId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
 
         if (response.data.status === false) {
           return;
@@ -1057,32 +1200,134 @@ export default function ShopProfileScreen() {
     if (!shopProfile || !user) return;
 
     // Check if there's already a private conversation between current user and shop
-    const existingConversation = conversations.find(conversation => {
+    const existingConversation = conversations.find((conversation) => {
       // Only check private conversations
       if (conversation.type !== 'private') return false;
-      
+
       // Check if both users are participants in this conversation
-      const participantIds = conversation.participants.map((participant: any) => {
-        return typeof participant === 'string' ? participant : participant._id;
-      });
-      
-      return participantIds.includes(user._id) && participantIds.includes(shopProfile._id);
+      const participantIds = conversation.participants.map(
+        (participant: any) => {
+          return typeof participant === 'string'
+            ? participant
+            : participant._id;
+        }
+      );
+
+      return (
+        participantIds.includes(user._id) &&
+        participantIds.includes(shopProfile._id)
+      );
     });
 
     if (existingConversation) {
       // Navigate to existing conversation
-      console.log('Found existing conversation with shop:', existingConversation._id);
+      console.log(
+        'Found existing conversation with shop:',
+        existingConversation._id
+      );
       router.push(`/message/${existingConversation._id}`);
     } else {
       // Navigate with shop user ID - will show empty conversation until first message
-      console.log('No existing conversation with shop, navigating with shop ID:', shopProfile._id);
+      console.log(
+        'No existing conversation with shop, navigating with shop ID:',
+        shopProfile._id
+      );
       router.push(`/message/${shopProfile._id}`);
     }
   };
 
-  const handleShare = () => {
-    Alert.alert('Share Shop', `Share ${shopProfile?.fullName}'s shop`);
+  const handleShare = async () => {
+    if (!shopProfile || !token) return;
+
+    setShowShareModal(false);
+    await Promise.all(
+      selectedUsers.map(async (user) => {
+        const conversation = await messageService.getConversationId(
+          user._id,
+          token
+        );
+        await messageService.sendMessage(
+          conversation.conversationId,
+          `Check out ${shopProfile?.fullName}'s shop`,
+          'profile',
+          token,
+          undefined,
+          undefined,
+          shopProfile._id,
+          undefined,
+          undefined
+        );
+      })
+    );
   };
+
+  const renderUserList = (item: any) => {
+    const isSelected = selectedUsers.find((u) => u._id === item._id);
+    return (
+      <TouchableOpacity
+        style={[styles.userItem, isSelected && styles.userItemSelected]}
+        onPress={() => handleUserSelect(item)}
+        activeOpacity={0.7}
+      >
+        <Image source={{ uri: item.avatar }} style={styles.userAvatar} />
+        <View style={styles.userInfo}>
+          <Text style={styles.userName}>
+            {item.fullName || item.username || 'Unknown User'}
+          </Text>
+          {item.username && (
+            <Text style={styles.userUsername}>@{item.username}</Text>
+          )}
+        </View>
+        {isSelected && <Check size={20} color={theme.accent} />}
+      </TouchableOpacity>
+    );
+  };
+
+  const handleUserSelect = (selectedUser: any) => {
+    setSelectedUsers((prev) => {
+      if (prev.find((u) => u._id === selectedUser._id)) {
+        return prev.filter((u) => u._id !== selectedUser._id);
+      }
+      return [...prev, selectedUser];
+    });
+  };
+
+  const searchUsers = async (query: string) => {
+    if (!token) {
+      setSearchedUsers([]);
+      return;
+    }
+
+    try {
+      const [userRes, shopRes] = await Promise.all([
+        searchService.searchUsers(query, token),
+        searchService.searchShops(query, token),
+      ]);
+      let merged: any[] = [];
+      if (userRes.status) {
+        merged = merged.concat(
+          userRes.users.filter((u: any) => u._id !== user?._id)
+        );
+      }
+      if (shopRes.status) {
+        merged = merged.concat(
+          shopRes.users.filter((s: any) => s._id !== user?._id)
+        );
+      }
+      setSearchedUsers(merged);
+    } catch (err) {
+      console.error('Error searching users/shops:', err);
+      setSearchedUsers([]);
+    }
+  };
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      searchUsers(userSearchQuery);
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [userSearchQuery]);
 
   const handleReport = async () => {
     if (!reportReason.trim() || !user || !shopProfile) return;
@@ -1107,9 +1352,13 @@ export default function ShopProfileScreen() {
           reportDescription.trim() || 'No additional details provided',
       };
 
-      const response = await axios.post(`${config.apiUrl}/api/report`, payload, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await axios.post(
+        `${config.apiUrl}/api/report`,
+        payload,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
 
       if (response.data.status) {
         setShowReportModal(false);
@@ -1508,9 +1757,7 @@ export default function ShopProfileScreen() {
                   </View>
                 )}
               </View>
-              <Text style={styles.shopUsername}>
-                @{shopProfile.username}
-              </Text>
+              <Text style={styles.shopUsername}>@{shopProfile.username}</Text>
 
               {shopProfile.bio && (
                 <Text style={styles.shopDescription}>{shopProfile.bio}</Text>
@@ -1518,7 +1765,6 @@ export default function ShopProfileScreen() {
 
               {/* Contact Info */}
               <View style={styles.contactInfo}>
-
                 {shopProfile.shop.location && (
                   <View style={styles.contactItem}>
                     <MapPin size={16} color={theme.textSecondary} />
@@ -1726,7 +1972,13 @@ export default function ShopProfileScreen() {
               </TouchableOpacity>
             </View>
 
-            <TouchableOpacity style={styles.moreMenuItem} onPress={handleShare}>
+            <TouchableOpacity
+              style={styles.moreMenuItem}
+              onPress={() => {
+                setShowMoreMenu(false);
+                setShowShareModal(true);
+              }}
+            >
               <Share size={20} color={theme.text} />
               <Text style={styles.moreMenuItemText}>Share Shop</Text>
             </TouchableOpacity>
@@ -1915,6 +2167,64 @@ export default function ShopProfileScreen() {
             </View>
           </View>
         </TouchableWithoutFeedback>
+      </Modal>
+
+      <Modal
+        visible={showShareModal}
+        animationType="fade"
+        transparent
+        onRequestClose={() => setShowShareModal(false)}
+      >
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={0}
+        >
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <View style={styles.modal}>
+              <View style={styles.modalContainer}>
+                <View style={styles.modalHeader}>
+                  <Text style={styles.modalTitle}>Share User Profile</Text>
+                  <TouchableOpacity onPress={() => setShowShareModal(false)}>
+                    <X size={24} color={theme.text} />
+                  </TouchableOpacity>
+                </View>
+
+                <TextInput
+                  style={styles.modalSearchInput}
+                  placeholder={'Search user...'}
+                  value={userSearchQuery}
+                  onChangeText={setUserSearchQuery}
+                  placeholderTextColor={theme.textSecondary}
+                  autoFocus
+                />
+
+                <FlatList
+                  data={searchedUsers}
+                  renderItem={({ item }) => {
+                    return renderUserList(item);
+                  }}
+                  keyExtractor={(item) => item._id}
+                  contentContainerStyle={styles.usersList}
+                  ListEmptyComponent={
+                    <View style={styles.emptySearchState}>
+                      <Text style={styles.emptySearchText}>No users found</Text>
+                    </View>
+                  }
+                />
+
+                <View style={styles.modalFooter}>
+                  <TouchableOpacity
+                    style={styles.modalButton}
+                    onPress={handleShare}
+                  >
+                    <Text style={styles.modalButtonText}>Share</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
       </Modal>
     </SafeAreaView>
   );

@@ -137,7 +137,7 @@ export const getMessages = async (req, res) => {
         select: 'caption imageUrl user',
         populate: { path: 'user', select: 'username' },
       })
-      .populate('profileId', 'username fullName avatar')
+      .populate('profileId', 'username fullName avatar type')
       .sort({ createdAt: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit);

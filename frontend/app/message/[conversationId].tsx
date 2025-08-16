@@ -15,7 +15,6 @@ import {
   TouchableWithoutFeedback,
   ActivityIndicator,
   Alert,
-  ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -38,7 +37,6 @@ import {
   Edit2,
   DoorOpen,
   Users,
-  User2,
 } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useMessage } from '@/hooks/useMessage';
@@ -1035,7 +1033,6 @@ export default function MessageScreen() {
     }
     try {
       const res = await searchService.searchUsers(text, token);
-      console.log(res.users);
       if (res.status && Array.isArray(res.users)) {
         const existingIds = (conversation?.participants || []).map((p: any) => typeof p === 'string' ? p : p._id);
         setAddUserResults(res.users.filter((u: User) => !existingIds.includes(u._id)));
