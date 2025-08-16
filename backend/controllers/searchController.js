@@ -63,7 +63,6 @@ export const getSearchResults = async (req, res) => {
       return {};
     };
 
-    // Build base queries - admins see all, others only see active
     const userQuery = {
       type: 'user',
       ...(hasQuery && {
@@ -83,7 +82,6 @@ export const getSearchResults = async (req, res) => {
       ...(followers !== 'All' && parseFollowers(followers)),
     };
 
-    // Add status filter for non-admins
     if (!isAdmin) {
       userQuery.status = 'active';
       shopQuery.status = 'active';
@@ -106,7 +104,7 @@ export const getSearchResults = async (req, res) => {
           }).populate({
             path: 'user',
             select: 'username profilePicture status',
-            match: isAdmin ? {} : { status: 'active' } // Admins see all, others only active
+            match: isAdmin ? {} : { status: 'active' }, // Admins see all, others only active
           })
         : [],
       contentType === 'All' || contentType === 'Products'
@@ -130,14 +128,19 @@ export const getSearchResults = async (req, res) => {
           }).populate({
             path: 'shopId',
             select: 'name username status',
-            match: isAdmin ? {} : { status: 'active' } // Admins see all, others only active shops
+            match: isAdmin ? {} : { status: 'active' },
           })
         : [],
     ]);
 
-    // Filter out posts and products with inactive users/shops (only for non-admins)
-    const filteredPosts = isAdmin ? posts : posts.filter(post => post.user && post.user.status === 'active');
-    const filteredProducts = isAdmin ? products : products.filter(product => product.shopId && product.shopId.status === 'active');
+    const filteredPosts = isAdmin
+      ? posts
+      : posts.filter((post) => post.user && post.user.status === 'active');
+    const filteredProducts = isAdmin
+      ? products
+      : products.filter(
+          (product) => product.shopId && product.shopId.status === 'active'
+        );
 
     res.json({
       status: true,
@@ -149,5 +152,114 @@ export const getSearchResults = async (req, res) => {
   } catch (err) {
     console.error('Search error:', err);
     res.status(500).json({ status: false, message: 'Something went wrong' });
+  }
+};
+
+export const searchUsers = async (req, res) => {
+  try {
+    const { q: query } = req.query;
+    const userId = req.userDetails?._id;
+
+    console.log('User search query:', query);
+
+    if (!query || query.trim() === '') {
+      const user = await User.findById(userId).select('following type');
+      const followingIds = user.following.map((follow) => follow._id);
+      const users = await User.find({
+        _id: { $in: followingIds },
+        type: 'user',
+        status: 'active',
+      });
+      return res.status(200).json({ status: true, users });
+    }
+
+    const searchQuery = query.trim();
+
+    const users = await User.find({
+      $and: [
+        {
+          $or: [
+            { username: { $regex: searchQuery, $options: 'i' } },
+            { fullName: { $regex: searchQuery, $options: 'i' } },
+            { email: { $regex: searchQuery, $options: 'i' } },
+          ],
+        },
+        { status: 'active' },
+        { type: 'user' },
+        { _id: { $ne: userId } },
+      ],
+    })
+      .select('username fullName avatar email createdAt')
+      .limit(20);
+
+    console.log(`Found ${users.length} users for query: ${searchQuery}`);
+
+    res.status(200).json({
+      status: true,
+      users: users,
+      count: users.length,
+    });
+  } catch (error) {
+    console.error('Error searching users:', error);
+    res.status(500).json({
+      status: false,
+      message: 'Failed to search users',
+      error: error.message,
+    });
+  }
+};
+
+export const searchShops = async (req, res) => {
+  try {
+    const { q: query } = req.query;
+    const userId = req.userDetails?._id;
+
+    console.log('Shop search query:', query);
+
+    if (!query || query.trim() === '') {
+      const user = await User.findById(userId).select('following');
+      const followingIds = user.following.map((follow) => follow._id);
+      const users = await User.find({
+        _id: { $in: followingIds },
+        type: 'shop',
+        status: 'active',
+      });
+      return res.status(200).json({ status: true, users });
+    }
+
+    const searchQuery = query.trim();
+
+    const shops = await User.find({
+      $and: [
+        {
+          $or: [
+            { username: { $regex: searchQuery, $options: 'i' } },
+            { fullName: { $regex: searchQuery, $options: 'i' } },
+            { email: { $regex: searchQuery, $options: 'i' } },
+            { shopName: { $regex: searchQuery, $options: 'i' } },
+          ],
+        },
+        { status: 'active' },
+        { type: 'shop' },
+        { _id: { $ne: userId } },
+      ],
+    })
+      .select('username fullName shopName avatar email createdAt')
+      .limit(20);
+
+    console.log(`Found ${shops.length} shops for query: ${searchQuery}`);
+
+    res.status(200).json({
+      status: true,
+      users: shops,
+      count: shops.length,
+    });
+  } catch (error) {
+    console.error('Error searching shops:', error);
+    res.status(500).json({
+      status: false,
+      message: 'Failed to search shops',
+      error: error.message,
+    });
   }
 };

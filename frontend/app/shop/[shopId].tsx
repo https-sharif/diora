@@ -44,6 +44,7 @@ import {
 import ImageSlashIcon from '@/icon/ImageSlashIcon';
 import { useShopping } from '@/hooks/useShopping';
 import { useAuth } from '@/hooks/useAuth';
+import { useMessage } from '@/hooks/useMessage';
 import { Product } from '@/types/Product';
 import { Review } from '@/types/Review';
 import { User } from '@/types/User';
@@ -51,7 +52,7 @@ import { Post } from '@/types/Post';
 import { Theme } from '@/types/Theme';
 import { useTheme } from '@/contexts/ThemeContext';
 import axios from 'axios';
-import { API_URL } from '@/constants/api';
+import { config } from '@/config';
 import Color from 'color';
 import { BlurView } from 'expo-blur';
 import { format as timeago } from 'timeago.js';
@@ -62,7 +63,6 @@ import StarSlashIcon from '@/icon/StarSlashIcon';
 import RatingStars from '@/components/RatingStar';
 import ReviewInput from '@/components/ReviewInput';
 import * as ImagePicker from 'expo-image-picker';
-import { set } from 'zod';
 
 const { width, height } = Dimensions.get('window');
 const isSmallScreen = width < 360;
@@ -714,6 +714,7 @@ const createStyles = (theme: Theme) => {
 export default function ShopProfileScreen() {
   const { shopId } = useLocalSearchParams<{ shopId: string }>();
   const { addToWishlist, isInWishlist } = useShopping();
+  const { conversations } = useMessage();
 
   const [shopProfile, setShopProfile] = useState<User | null>(null);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
@@ -748,7 +749,7 @@ export default function ShopProfileScreen() {
         setLoading(true);
 
         console.log('Fetching shop profile for:', shopId);
-        const response = await axios.get(`${API_URL}/api/user/${shopId}`, {
+        const response = await axios.get(`${config.apiUrl}/api/user/${shopId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -778,7 +779,7 @@ export default function ShopProfileScreen() {
     const fetchReviews = async () => {
       try {
         const response = await axios.get(
-          `${API_URL}/api/review/shop/${shopId}`,
+          `${config.apiUrl}/api/review/shop/${shopId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -799,7 +800,7 @@ export default function ShopProfileScreen() {
 
     const fetchPosts = async () => {
       try {
-        const response = await axios.get(`${API_URL}/api/post/user/${shopId}`, {
+        const response = await axios.get(`${config.apiUrl}/api/post/user/${shopId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -820,7 +821,7 @@ export default function ShopProfileScreen() {
 
       try {
         const response = await axios.get(
-          `${API_URL}/api/review/reviewed/${user._id}/shop/${shopId}`,
+          `${config.apiUrl}/api/review/reviewed/${user._id}/shop/${shopId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -843,7 +844,7 @@ export default function ShopProfileScreen() {
     fetchReviews();
     fetchPosts();
     fetchReviewedStatus();
-  }, [shopId]);
+  }, [shopId, user, token]);
 
   const panResponder = PanResponder.create({
     onMoveShouldSetPanResponder: (evt, gestureState) => {
@@ -940,7 +941,7 @@ export default function ShopProfileScreen() {
     if (!selectedReview || !user) return;
     try {
       const response = await axios.delete(
-        `${API_URL}/api/review/shop/${selectedReview._id}`,
+        `${config.apiUrl}/api/review/shop/${selectedReview._id}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -994,7 +995,7 @@ export default function ShopProfileScreen() {
       let response;
       if (editingReview && selectedReview) {
         response = await axios.put(
-          `${API_URL}/api/review/shop/${selectedReview._id}`,
+          `${config.apiUrl}/api/review/shop/${selectedReview._id}`,
           form,
           {
             headers: {
@@ -1004,7 +1005,7 @@ export default function ShopProfileScreen() {
           }
         );
       } else {
-        response = await axios.post(`${API_URL}/api/review`, form, {
+        response = await axios.post(`${config.apiUrl}/api/review`, form, {
           headers: {
             Authorization: `Bearer ${token}`,
             'Content-Type': 'multipart/form-data',
@@ -1053,8 +1054,30 @@ export default function ShopProfileScreen() {
   };
 
   const handleContact = () => {
-    if (!shopProfile) return;
-    router.push(`/message/${shopProfile._id}`);
+    if (!shopProfile || !user) return;
+
+    // Check if there's already a private conversation between current user and shop
+    const existingConversation = conversations.find(conversation => {
+      // Only check private conversations
+      if (conversation.type !== 'private') return false;
+      
+      // Check if both users are participants in this conversation
+      const participantIds = conversation.participants.map((participant: any) => {
+        return typeof participant === 'string' ? participant : participant._id;
+      });
+      
+      return participantIds.includes(user._id) && participantIds.includes(shopProfile._id);
+    });
+
+    if (existingConversation) {
+      // Navigate to existing conversation
+      console.log('Found existing conversation with shop:', existingConversation._id);
+      router.push(`/message/${existingConversation._id}`);
+    } else {
+      // Navigate with shop user ID - will show empty conversation until first message
+      console.log('No existing conversation with shop, navigating with shop ID:', shopProfile._id);
+      router.push(`/message/${shopProfile._id}`);
+    }
   };
 
   const handleShare = () => {
@@ -1084,7 +1107,7 @@ export default function ShopProfileScreen() {
           reportDescription.trim() || 'No additional details provided',
       };
 
-      const response = await axios.post(`${API_URL}/api/report`, payload, {
+      const response = await axios.post(`${config.apiUrl}/api/report`, payload, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -1135,7 +1158,7 @@ export default function ShopProfileScreen() {
             <Text style={styles.discountText}>-{item.discount}%</Text>
           </View>
         )}
-        {item.stock == 0 && (
+        {item.stock === 0 && (
           <View style={styles.outOfStockOverlay}>
             <Text style={styles.outOfStockText}>Out of Stock</Text>
           </View>

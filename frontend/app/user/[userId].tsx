@@ -12,6 +12,8 @@ import {
   TextInput,
   Keyboard,
   TouchableWithoutFeedback,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -26,17 +28,21 @@ import {
   Flag,
   X,
   Star,
+  Check,
 } from 'lucide-react-native';
 import { useAuth } from '@/hooks/useAuth';
-import { useNotification } from '@/hooks/useNotification';
+import { useMessage } from '@/hooks/useMessage';
 import { User } from '@/types/User';
 import { Post } from '@/types/Post';
 import { Theme } from '@/types/Theme';
 import { useTheme } from '@/contexts/ThemeContext';
 import UserSlashIcon from '@/icon/UserSlashIcon';
 import ImageSlashIcon from '@/icon/ImageSlashIcon';
-import axios from 'axios';
-import { API_URL } from '@/constants/api';
+import { userService } from '@/services/userService';
+import { reportService } from '@/services/reportService';
+import { searchService } from '@/services/searchService';
+import { messageService } from '@/services';
+import Color from 'color';
 
 const createStyles = (theme: Theme) => {
   return StyleSheet.create({
@@ -321,37 +327,50 @@ const createStyles = (theme: Theme) => {
       fontFamily: 'Inter-Medium',
       color: theme.text,
     },
-    reportModal: {
+    modal: {
       flex: 1,
       backgroundColor: 'rgba(0, 0, 0, 0.5)',
       justifyContent: 'center',
       alignItems: 'center',
       padding: 20,
     },
-    reportContainer: {
+    modalContainer: {
       backgroundColor: theme.card,
       borderRadius: 12,
       padding: 20,
       width: '100%',
       maxWidth: 400,
+      maxHeight: '85%',
     },
-    reportHeader: {
+    modalHeader: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
       marginBottom: 20,
     },
-    reportTitle: {
+    modalSearchInput: {
+      borderWidth: 1,
+      borderColor: theme.border,
+      borderRadius: 8,
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      fontSize: 16,
+      fontFamily: 'Inter-Regular',
+      color: theme.text,
+      marginBottom: 16,
+      backgroundColor: theme.background,
+    },
+    modalTitle: {
       fontSize: 18,
       fontFamily: 'Inter-SemiBold',
       color: theme.text,
     },
-    reportSubtitle: {
+    modalSubtitle: {
       fontSize: 16,
       fontFamily: 'Inter-Regular',
       marginBottom: 16,
     },
-    reportOption: {
+    modalOption: {
       paddingVertical: 12,
       paddingHorizontal: 16,
       borderRadius: 8,
@@ -359,15 +378,15 @@ const createStyles = (theme: Theme) => {
       borderColor: theme.border,
       marginBottom: 8,
     },
-    reportOptionSelected: {
+    modalOptionSelected: {
       borderColor: theme.text,
       backgroundColor: theme.background,
     },
-    reportOptionText: {
+    modalOptionText: {
       fontSize: 16,
       fontFamily: 'Inter-Regular',
     },
-    reportInput: {
+    modalInput: {
       borderWidth: 1,
       borderRadius: 8,
       padding: 12,
@@ -378,25 +397,74 @@ const createStyles = (theme: Theme) => {
       fontSize: 14,
       fontFamily: 'Inter-Regular',
     },
-    reportButtons: {
+    modalButtons: {
       flexDirection: 'row',
       justifyContent: 'flex-end',
       gap: 12,
     },
-    reportButton: {
+    modalFooter: {
+      backgroundColor: theme.accent,
+      borderRadius: 12,
+      paddingVertical: 4,
+      alignItems: 'center',
+    },
+    modalButton: {
       paddingVertical: 10,
       paddingHorizontal: 20,
       borderRadius: 8,
     },
-    reportButtonCancel: {
+    modalButtonCancel: {
       borderWidth: 1,
     },
-    reportButtonSubmit: {
-      // backgroundColor handled inline
+    modalButtonSubmit: {
     },
-    reportButtonText: {
+    modalButtonText: {
       fontSize: 14,
-      fontFamily: 'Inter-Medium',
+      fontFamily: 'Inter-SemiBold',
+    },
+    emptySearchState: {
+      padding: 40,
+      alignItems: 'center',
+    },
+    emptySearchText: {
+      fontSize: 16,
+      fontFamily: 'Inter-Regular',
+      color: theme.textSecondary,
+      textAlign: 'center',
+    },
+    usersList: {
+      flexGrow: 1,
+    },
+    userItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: 16,
+      borderBottomWidth: 0.5,
+      borderBottomColor: theme.border,
+    },
+    userItemSelected: {
+      backgroundColor: Color(theme.accent).alpha(0.1).toString(),
+      borderRadius: 16,
+    },
+    userAvatar: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      marginRight: 12,
+    },
+    userInfo: {
+      flex: 1,
+    },
+    userName: {
+      fontSize: 16,
+      fontFamily: 'Inter-SemiBold',
+      color: theme.text,
+    },
+    userUsername: {
+      fontSize: 14,
+      fontFamily: 'Inter-Regular',
+      color: theme.textSecondary,
+      marginTop: 2,
     },
   });
 };
@@ -404,6 +472,7 @@ const createStyles = (theme: Theme) => {
 export default function UserProfileScreen() {
   const { userId } = useLocalSearchParams<{ userId: string }>();
   const { user, followUser, token } = useAuth();
+  const { conversations } = useMessage();
 
   const [userProfile, setUserProfile] = useState<User | null>(null);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
@@ -415,6 +484,10 @@ export default function UserProfileScreen() {
   const [selectedTab, setSelectedTab] = useState<'posts' | 'liked'>('posts');
   const [posts, setPosts] = useState<Post[]>([]);
   const [likedPosts, setLikedPosts] = useState<Post[]>([]);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [userSearchQuery, setUserSearchQuery] = useState('');
+  const [selectedUsers, setSelectedUsers] = useState<User[]>([]);
+  const [searchedUsers, setSearchedUsers] = useState<User[]>([]);
 
   const { theme } = useTheme();
 
@@ -422,33 +495,27 @@ export default function UserProfileScreen() {
 
   useEffect(() => {
     const fetchData = async () => {
+      if (!token) return;
+
       setLoading(true);
       try {
         const [profileRes, postsRes, likedRes] = await Promise.all([
-          axios.get(`${API_URL}/api/user/${userId}`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          axios.get(`${API_URL}/api/post/user/${userId}`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          axios.get(`${API_URL}/api/post/user/${userId}/liked`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
+          userService.getUserById(userId, token),
+          userService.getUserPosts(userId, token),
+          userService.getUserLikedPosts(userId, token),
         ]);
 
-        if (!profileRes.data.status) {
-          // User not found (could be banned/suspended)
+        if (!profileRes) {
           router.back();
           return;
         }
 
-        setUserProfile(profileRes.data.user);
+        setUserProfile(profileRes);
         setIsFollowing(user?.following.includes(user._id) || false);
-        setPosts(postsRes.data.posts);
-        setLikedPosts(likedRes.data.posts);
+        setPosts(postsRes.posts);
+        setLikedPosts(likedRes.posts);
       } catch (error) {
         console.error('Error fetching data:', error);
-        // If there's an error fetching the user, go back
         router.back();
       } finally {
         setSelectedTab('posts');
@@ -457,7 +524,7 @@ export default function UserProfileScreen() {
     };
 
     fetchData();
-  }, [userId]);
+  }, [userId, token, user]);
 
   const handleFollow = () => {
     if (!userProfile) return;
@@ -467,55 +534,145 @@ export default function UserProfileScreen() {
   };
 
   const handleMessage = () => {
-    router.push(`/message/${userProfile?._id}`);
+    if (!userProfile || !user) return;
+    const existingConversation = conversations.find((conversation) => {
+      if (conversation.type !== 'private') return false;
+
+      const participantIds = conversation.participants.map(
+        (participant: any) => {
+          return typeof participant === 'string'
+            ? participant
+            : participant._id;
+        }
+      );
+
+      return (
+        participantIds.includes(user._id) &&
+        participantIds.includes(userProfile._id)
+      );
+    });
+
+    if (existingConversation) {
+      router.push(`/message/${existingConversation._id}`);
+    } else {
+      router.push(`/message/${userProfile._id}`);
+    }
   };
 
-  const handleShare = () => {
-    Alert.alert('Share Profile', `Share ${userProfile?.fullName}'s profile`);
+  const handleShare = async () => {
+    if (!userProfile || !token) return;
+
+    setShowShareModal(false);
+    await Promise.all(selectedUsers.map(async user => {
+      const conversation = await messageService.getConversationId(user._id, token);
+      await messageService.sendMessage(conversation.conversationId, `Check out ${userProfile?.fullName}'s profile`, 'profile', token, undefined, undefined, userProfile._id, undefined, undefined);
+    }));
+  };
+
+  const handleUserSelect = (selectedUser: any) => {
+    setSelectedUsers((prev) => {
+      if (prev.find((u) => u._id === selectedUser._id)) {
+        return prev.filter((u) => u._id !== selectedUser._id);
+      }
+      return [...prev, selectedUser];
+    });
+  };
+
+  const searchUsers = async (query: string) => {
+    if (!token) {
+      setSearchedUsers([]);
+      return;
+    }
+
+    try {
+      const [userRes, shopRes] = await Promise.all([
+        searchService.searchUsers(query, token),
+        searchService.searchShops(query, token),
+      ]);
+      let merged: any[] = [];
+      if (userRes.status) {
+        merged = merged.concat(
+          userRes.users.filter((u: any) => u._id !== user?._id)
+        );
+      }
+      if (shopRes.status) {
+        merged = merged.concat(
+          shopRes.users.filter((s: any) => s._id !== user?._id)
+        );
+      }
+      setSearchedUsers(merged);
+    } catch (err) {
+      console.error('Error searching users/shops:', err);
+      setSearchedUsers([]);
+    }
+  };
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      searchUsers(userSearchQuery);
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [userSearchQuery]);
+
+  const renderUserList = (item: any) => {
+    const isSelected = selectedUsers.find((u) => u._id === item._id);
+    return (
+      <TouchableOpacity
+        style={[styles.userItem, isSelected && styles.userItemSelected]}
+        onPress={() => handleUserSelect(item)}
+        activeOpacity={0.7}
+      >
+        <Image source={{ uri: item.avatar }} style={styles.userAvatar} />
+        <View style={styles.userInfo}>
+          <Text style={styles.userName}>
+            {item.fullName || item.username || 'Unknown User'}
+          </Text>
+          {item.username && (
+            <Text style={styles.userUsername}>@{item.username}</Text>
+          )}
+        </View>
+        {isSelected && <Check size={20} color={theme.accent} />}
+      </TouchableOpacity>
+    );
   };
 
   const handleReport = async () => {
-    if (!reportReason.trim() || !user || !userProfile) return;
+    if (!reportReason.trim() || !user || !userProfile || !token) return;
 
-    // Map display text to backend enum values
     const reasonMap: { [key: string]: string } = {
-      'Harassment': 'harassment',
-      'Spam': 'spam',
+      Harassment: 'harassment',
+      Spam: 'spam',
       'Inappropriate Behavior': 'inappropriate_content',
       'Fake Account': 'fraud',
-      'Other': 'other'
+      Other: 'other',
     };
 
     try {
-      const payload = {
-        reportedItem: {
-          itemType: 'user',
-          itemId: userProfile._id
-        },
-        type: reasonMap[reportReason] || 'other',
-        description: reportDescription.trim() || 'No additional details provided'
+      const reportData = {
+        targetType: 'user' as const,
+        targetId: userProfile._id,
+        reason: reasonMap[reportReason] || 'other',
+        description:
+          reportDescription.trim() || 'No additional details provided',
       };
 
-      console.log('Submitting report:', payload);
+      console.log('Submitting report:', reportData);
 
-      const response = await axios.post(`${API_URL}/api/report`, payload, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await reportService.createReport(reportData, token);
 
-      if (response.data.status) {
+      if (response.status) {
         setShowReportModal(false);
         setShowMoreMenu(false);
         setReportReason('');
         setReportDescription('');
         Alert.alert(
-          'Report Submitted', 
+          'Report Submitted',
           `Thank you for reporting this user. We will review it shortly.`
         );
+      } else {
+        console.log('Report submission failed:', response.message);
       }
-      else {
-        console.log('Report submission failed:', response.data.message);
-      }
-
     } catch (err) {
       console.error('Error submitting report:', err);
       Alert.alert('Error', 'Failed to submit report. Please try again.');
@@ -523,7 +680,13 @@ export default function UserProfileScreen() {
   };
 
   const getReportReasons = () => {
-    return ['Harassment', 'Spam', 'Inappropriate Behavior', 'Fake Account', 'Other'];
+    return [
+      'Harassment',
+      'Spam',
+      'Inappropriate Behavior',
+      'Fake Account',
+      'Other',
+    ];
   };
 
   const handlePostPress = (postId: string) => {
@@ -541,7 +704,7 @@ export default function UserProfileScreen() {
   );
 
   const renderGrid = (data: Post[], emptyText: string) => {
-    if(!data) {
+    if (!data) {
       return (
         <View style={styles.emptyState}>
           <View style={styles.emptyIconContainer}>
@@ -715,7 +878,7 @@ export default function UserProfileScreen() {
             </View>
           )}
         </View>
-        
+
         {/* Posts Tab */}
         <View style={styles.tabsSection}>
           <TouchableOpacity
@@ -751,7 +914,10 @@ export default function UserProfileScreen() {
           </TouchableOpacity>
         </View>
         {/* Posts Grid */}
-        {renderGrid(selectedTab === 'posts' ? posts : likedPosts, selectedTab === 'posts' ? 'No posts yet' : 'No liked posts yet')}
+        {renderGrid(
+          selectedTab === 'posts' ? posts : likedPosts,
+          selectedTab === 'posts' ? 'No posts yet' : 'No liked posts yet'
+        )}
       </ScrollView>
 
       {/* More Menu Modal */}
@@ -774,7 +940,13 @@ export default function UserProfileScreen() {
               </TouchableOpacity>
             </View>
 
-            <TouchableOpacity style={styles.moreMenuItem} onPress={handleShare}>
+            <TouchableOpacity
+              style={styles.moreMenuItem}
+              onPress={() => {
+                setShowMoreMenu(false);
+                setShowShareModal(true);
+              }}
+            >
               <Share size={20} color={theme.text} />
               <Text style={styles.moreMenuItemText}>Share Profile</Text>
             </TouchableOpacity>
@@ -818,16 +990,18 @@ export default function UserProfileScreen() {
         onRequestClose={() => setShowReportModal(false)}
       >
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <View style={styles.reportModal}>
-            <View style={styles.reportContainer}>
-              <View style={styles.reportHeader}>
-                <Text style={styles.reportTitle}>Report User</Text>
+          <View style={styles.modal}>
+            <View style={styles.modalContainer}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Report User</Text>
                 <TouchableOpacity onPress={() => setShowReportModal(false)}>
                   <X size={24} color={theme.text} />
                 </TouchableOpacity>
               </View>
 
-              <Text style={[styles.reportSubtitle, { color: theme.textSecondary }]}>
+              <Text
+                style={[styles.modalSubtitle, { color: theme.textSecondary }]}
+              >
                 Why are you reporting this user?
               </Text>
 
@@ -835,25 +1009,25 @@ export default function UserProfileScreen() {
                 <TouchableOpacity
                   key={reason}
                   style={[
-                    styles.reportOption,
-                    reportReason === reason && styles.reportOptionSelected,
+                    styles.modalOption,
+                    reportReason === reason && styles.modalOptionSelected,
                   ]}
                   onPress={() => setReportReason(reason)}
                 >
-                  <Text style={[
-                    styles.reportOptionText,
-                    { color: theme.text }
-                  ]}>
+                  <Text style={[styles.modalOptionText, { color: theme.text }]}>
                     {reason}
                   </Text>
                 </TouchableOpacity>
               ))}
 
               <TextInput
-                style={[styles.reportInput, { 
-                  color: theme.text,
-                  borderColor: theme.border 
-                }]}
+                style={[
+                  styles.modalInput,
+                  {
+                    color: theme.text,
+                    borderColor: theme.border,
+                  },
+                ]}
                 placeholder="Additional details (optional)"
                 placeholderTextColor={theme.textSecondary}
                 value={reportDescription}
@@ -861,26 +1035,34 @@ export default function UserProfileScreen() {
                 multiline
               />
 
-              <View style={styles.reportButtons}>
+              <View style={styles.modalButtons}>
                 <TouchableOpacity
-                  style={[styles.reportButton, styles.reportButtonCancel, {
-                    backgroundColor: theme.background,
-                    borderColor: theme.border
-                  }]}
+                  style={[
+                    styles.modalButton,
+                    styles.modalButtonSubmit,
+                    {
+                      backgroundColor: theme.error,
+                    },
+                  ]}
                   onPress={() => setShowReportModal(false)}
+                  disabled={!reportReason.trim()}
                 >
-                  <Text style={[styles.reportButtonText, { color: theme.text }]}>
+                  <Text style={[styles.modalButtonText, { color: '#000' }]}>
                     Cancel
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[styles.reportButton, styles.reportButtonSubmit, {
-                    backgroundColor: theme.error
-                  }]}
+                  style={[
+                    styles.modalButton,
+                    styles.modalButtonCancel,
+                    {
+                      backgroundColor: theme.background,
+                      borderColor: theme.border,
+                    },
+                  ]}
                   onPress={handleReport}
-                  disabled={!reportReason.trim()}
                 >
-                  <Text style={[styles.reportButtonText, { color: '#000' }]}>
+                  <Text style={[styles.modalButtonText, { color: theme.text }]}>
                     Submit
                   </Text>
                 </TouchableOpacity>
@@ -888,6 +1070,65 @@ export default function UserProfileScreen() {
             </View>
           </View>
         </TouchableWithoutFeedback>
+      </Modal>
+
+      {/* Share Modal */}
+      <Modal
+        visible={showShareModal}
+        animationType="fade"
+        transparent
+        onRequestClose={() => setShowShareModal(false)}
+      >
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={0}
+        >
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <View style={styles.modal}>
+              <View style={styles.modalContainer}>
+                <View style={styles.modalHeader}>
+                  <Text style={styles.modalTitle}>Share User Profile</Text>
+                  <TouchableOpacity onPress={() => setShowShareModal(false)}>
+                    <X size={24} color={theme.text} />
+                  </TouchableOpacity>
+                </View>
+
+                <TextInput
+                  style={styles.modalSearchInput}
+                  placeholder={'Search user...'}
+                  value={userSearchQuery}
+                  onChangeText={setUserSearchQuery}
+                  placeholderTextColor={theme.textSecondary}
+                  autoFocus
+                />
+
+                <FlatList
+                  data={searchedUsers}
+                  renderItem={({ item }) => {
+                    return renderUserList(item);
+                  }}
+                  keyExtractor={(item) => item._id}
+                  contentContainerStyle={styles.usersList}
+                  ListEmptyComponent={
+                    <View style={styles.emptySearchState}>
+                      <Text style={styles.emptySearchText}>No users found</Text>
+                    </View>
+                  }
+                />
+
+                <View style={styles.modalFooter}>
+                  <TouchableOpacity
+                    style={styles.modalButton}
+                    onPress={handleShare}
+                  >
+                    <Text style={styles.modalButtonText}>Share</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
       </Modal>
     </SafeAreaView>
   );

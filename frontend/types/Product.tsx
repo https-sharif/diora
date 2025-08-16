@@ -16,7 +16,6 @@ export interface Product {
     discount?: number;
 }
 
-// Product service types
 export interface ProductData {
   name: string;
   description: string;

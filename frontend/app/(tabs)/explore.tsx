@@ -38,8 +38,7 @@ import { Product } from '@/types/Product';
 import { Post } from '@/types/Post';
 import { Theme } from '@/types/Theme';
 import { useAuth } from '@/hooks/useAuth';
-import axios from 'axios';
-import { API_URL } from '@/constants/api';
+import { trendingService, searchService } from '@/services';
 import LoadingView from '@/components/Loading';
 import debounce from 'lodash.debounce';
 
@@ -625,17 +624,16 @@ export default function ExploreScreen() {
     setRefreshing(true);
 
     const fetchTrendingUser = async () => {
+      if (!token) return;
       setLoading((prevState) => ({ ...prevState, trendingUsers: true }));
 
       try {
-        const response = await axios.get(`${API_URL}/api/user/trending`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const response = await trendingService.getTrendingUsers(token);
 
-        if (response.data.status) {
+        if (response.status) {
           setExploreData((prevState) => ({
             ...prevState,
-            trendingUsers: response.data.trendingUsers,
+            trendingUsers: response.trendingUsers,
           }));
         }
       } catch (err: any) {
@@ -649,17 +647,16 @@ export default function ExploreScreen() {
     };
 
     const fetchTrendingShops = async () => {
+      if (!token) return;
       setLoading((prevState) => ({ ...prevState, trendingShops: true }));
 
       try {
-        const response = await axios.get(`${API_URL}/api/shop/trending`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const response = await trendingService.getTrendingShops(token);
 
-        if (response.data.status) {
+        if (response.status) {
           setExploreData((prevState) => ({
             ...prevState,
-            trendingShops: response.data.trendingShops,
+            trendingShops: response.trendingShops,
           }));
         }
       } catch (err: any) {
@@ -673,17 +670,16 @@ export default function ExploreScreen() {
     };
 
     const fetchTrendingProducts = async () => {
+      if (!token) return;
       setLoading((prevState) => ({ ...prevState, trendingProducts: true }));
 
       try {
-        const response = await axios.get(`${API_URL}/api/product/trending`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const response = await trendingService.getTrendingProducts(token);
 
-        if (response.data.status) {
+        if (response.status) {
           setExploreData((prevState) => ({
             ...prevState,
-            trendingProducts: response.data.trendingProducts,
+            trendingProducts: response.trendingProducts,
           }));
         }
       } catch (err: any) {
@@ -697,17 +693,16 @@ export default function ExploreScreen() {
     };
 
     const fetchTrendingPosts = async () => {
+      if (!token) return;
       setLoading((prevState) => ({ ...prevState, trendingPosts: true }));
 
       try {
-        const response = await axios.get(`${API_URL}/api/post/trending`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const response = await trendingService.getTrendingPosts(token);
 
-        if (response.data.status) {
+        if (response.status) {
           setExploreData((prevState) => ({
             ...prevState,
-            trendingPosts: response.data.trendingPosts,
+            trendingPosts: response.trendingPosts,
           }));
         }
       } catch (err: any) {
@@ -732,21 +727,19 @@ export default function ExploreScreen() {
   }, []);
 
   const fetchSearchResults = async (query: string, filterSnapshot: any) => {
+    if (!token) return;
     try {
-      const response = await axios.get(`${API_URL}/api/search`, {
-        params: {
-          query,
-          ...filterSnapshot,
-        },
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await searchService.generalSearch({
+        query,
+        ...filterSnapshot,
+      }, token);
 
-      if (response.data.status) {
+      if (response.status) {
         setSearchResults({
-          users: response.data.users,
-          shops: response.data.shops,
-          products: response.data.products,
-          posts: response.data.posts,
+          users: response.users,
+          shops: response.shops,
+          products: response.products,
+          posts: response.posts,
         });
       }
     } catch (err: any) {
@@ -1307,8 +1300,8 @@ export default function ExploreScreen() {
                           }))
                       )}
 
-                      {(filters.contentType == 'All' ||
-                        filters.contentType == 'Products') &&
+                      {(filters.contentType === 'All' ||
+                        filters.contentType === 'Products') &&
                         renderFilterOption(
                           'Price Range',
                           filterOptions.priceRange,
@@ -1320,8 +1313,8 @@ export default function ExploreScreen() {
                             }))
                         )}
 
-                      {(filters.contentType == 'All' ||
-                        filters.contentType == 'Products') &&
+                      {(filters.contentType === 'All' ||
+                        filters.contentType === 'Products') &&
                         renderFilterOption(
                           'Rating',
                           filterOptions.rating,
@@ -1330,8 +1323,8 @@ export default function ExploreScreen() {
                             setFilters((prev) => ({ ...prev, rating: value }))
                         )}
 
-                      {(filters.contentType == 'All' ||
-                        filters.contentType == 'Products') &&
+                      {(filters.contentType === 'All' ||
+                        filters.contentType === 'Products') &&
                         renderFilterOption(
                           'Availability',
                           filterOptions.availability,
@@ -1343,8 +1336,8 @@ export default function ExploreScreen() {
                             }))
                         )}
 
-                      {(filters.contentType == 'All' ||
-                        filters.contentType == 'Products') &&
+                      {(filters.contentType === 'All' ||
+                        filters.contentType === 'Products') &&
                         renderFilterOption(
                           'Categories',
                           filterOptions.categories,
@@ -1353,9 +1346,9 @@ export default function ExploreScreen() {
                             setFilters((prev) => ({ ...prev, style: value }))
                         )}
 
-                      {(filters.contentType == 'All' ||
-                        filters.contentType == 'Users' ||
-                        filters.contentType == 'Shops') &&
+                      {(filters.contentType === 'All' ||
+                        filters.contentType === 'Users' ||
+                        filters.contentType === 'Shops') &&
                         renderFilterOption(
                           'Verification',
                           filterOptions.verification,
@@ -1367,9 +1360,9 @@ export default function ExploreScreen() {
                             }))
                         )}
 
-                      {(filters.contentType == 'All' ||
-                        filters.contentType == 'Users' ||
-                        filters.contentType == 'Shops') &&
+                      {(filters.contentType === 'All' ||
+                        filters.contentType === 'Users' ||
+                        filters.contentType === 'Shops') &&
                         renderFilterOption(
                           'Followers',
                           filterOptions.followers,
@@ -1381,8 +1374,8 @@ export default function ExploreScreen() {
                             }))
                         )}
 
-                      {(filters.contentType == 'All' ||
-                        filters.contentType == 'Posts') &&
+                      {(filters.contentType === 'All' ||
+                        filters.contentType === 'Posts') &&
                         renderFilterOption(
                           'Likes',
                           filterOptions.likes,

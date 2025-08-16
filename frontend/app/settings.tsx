@@ -37,7 +37,7 @@ import { useToast } from '@/hooks/useToast';
 import { Toast } from '@/components/Toast';
 import { PromotionRequestModal } from '@/components/PromotionRequestModal';
 import axios from 'axios';
-import { API_URL } from '@/constants/api';
+import { config } from '@/config';
 import * as ImagePicker from 'expo-image-picker';
 
 interface SocialAccount {
@@ -430,7 +430,7 @@ export default function SettingsScreen() {
 
   const saveSettings = useCallback(async (updatedSettings: any) => {
     try {
-      await axios.put(`${API_URL}/api/user/settings`, {
+      await axios.put(`${config.apiUrl}/api/user/settings`, {
         theme: updatedSettings.theme,
         notifications: updatedSettings.notifications
       }, {
@@ -542,7 +542,7 @@ export default function SettingsScreen() {
     formData.append('username', username);
     formData.append('bio', bio);
 
-    const response = await axios.put(`${API_URL}/api/user/update/profile`, formData, {
+    const response = await axios.put(`${config.apiUrl}/api/user/update/profile`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
         Authorization: `Bearer ${token}`,
@@ -575,7 +575,7 @@ export default function SettingsScreen() {
       return;
     }
 
-    const response = await axios.put(`${API_URL}/api/user/update/security`, {
+    const response = await axios.put(`${config.apiUrl}/api/user/update/security`, {
       currentPassword,
       newPassword,
     }, {
@@ -600,7 +600,7 @@ export default function SettingsScreen() {
       return;
     }
 
-    const response = await axios.put(`${API_URL}/api/user/update/email`, { email: newEmail }, {
+    const response = await axios.put(`${config.apiUrl}/api/user/update/email`, { email: newEmail }, {
       headers: { Authorization: `Bearer ${token}` },
     });
 

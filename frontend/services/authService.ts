@@ -1,24 +1,31 @@
 import axios from 'axios';
-import { API_URL } from '@/constants/api';
+import { config } from '@/config';
 import { LoginData, SignupData, AuthResponse } from '@/types/Auth';
 
 export const authService = {
   async login(data: LoginData): Promise<AuthResponse> {
-    const response = await axios.post(`${API_URL}/api/auth/login`, data, {
+    const loginPayload = {
+      username: data.email,
+      password: data.password
+    };
+    
+    console.log('Login payload being sent to backend:', loginPayload);
+    
+    const response = await axios.post(`${config.apiUrl}/api/auth/login`, loginPayload, {
       headers: { 'Content-Type': 'application/json' }
     });
     return response.data;
   },
 
   async signup(data: SignupData): Promise<AuthResponse> {
-    const response = await axios.post(`${API_URL}/api/auth/signup`, data, {
+    const response = await axios.post(`${config.apiUrl}/api/auth/signup`, data, {
       headers: { 'Content-Type': 'application/json' }
     });
     return response.data;
   },
 
   async getMe(token: string): Promise<any> {
-    const response = await axios.get(`${API_URL}/api/user/me`, {
+    const response = await axios.get(`${config.apiUrl}/api/user/me`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     return response.data;
@@ -26,7 +33,7 @@ export const authService = {
 
   async followUser(targetUserId: string, targetType: string, token: string): Promise<any> {
     const response = await axios.put(
-      `${API_URL}/api/${targetType}/follow/${targetUserId}`,
+      `${config.apiUrl}/api/${targetType}/follow/${targetUserId}`,
       {},
       {
         headers: { Authorization: `Bearer ${token}` }
@@ -37,7 +44,7 @@ export const authService = {
 
   async likePost(postId: string, token: string): Promise<any> {
     const response = await axios.put(
-      `${API_URL}/api/post/like/${postId}`,
+      `${config.apiUrl}/api/post/like/${postId}`,
       {},
       {
         headers: { Authorization: `Bearer ${token}` }

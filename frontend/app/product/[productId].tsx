@@ -41,9 +41,8 @@ import { Review } from '@/types/Review';
 import { Theme } from '@/types/Theme';
 import { useTheme } from '@/contexts/ThemeContext';
 import ProductSlashIcon from '@/icon/ProductSlashIcon';
-import axios from 'axios';
 import { BlurView } from 'expo-blur';
-import { API_URL } from '@/constants/api';
+import { productService, reviewService, reportService } from '@/services';
 import RatingStars from '@/components/RatingStar';
 import ReviewInput from '@/components/ReviewInput';
 import * as ImagePicker from 'expo-image-picker';
@@ -619,24 +618,20 @@ export default function ProductDetailScreen() {
     const fetchProduct = async () => {
       setLoading(true);
       try {
-        const response = await axios.get(
-          `${API_URL}/api/product/${productId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
+        const response = await productService.getProductById(
+          productId,
+          token || undefined
         );
 
-        if (!response.data.status) {
-          Alert.alert('Error', response.data.message);
+        if (!response.status) {
+          Alert.alert('Error', response.message);
           return;
         }
 
-        console.log('Product fetched successfully:', response.data.product);
+        console.log('Product fetched successfully:', response.product);
 
-        setProduct(response.data.product);
-        setShopProfile(response.data.product.shopId);
+        setProduct(response.product);
+        setShopProfile(response.product.shopId);
       } catch (error) {
         console.error('Error fetching product:', error);
       } finally {
@@ -646,19 +641,15 @@ export default function ProductDetailScreen() {
 
     const fetchReviews = async () => {
       try {
-        const response = await axios.get(
-          `${API_URL}/api/review/product/${productId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
+        const response = await reviewService.getProductReviews(
+          productId,
+          token || undefined
         );
 
-        if (response.data.status) {
-          setReviews(response.data.reviews);
+        if (response.status) {
+          setReviews(response.reviews);
         } else {
-          Alert.alert('Error', response.data.message);
+          Alert.alert('Error', response.message);
         }
       } catch (error) {
         console.error('Error fetching reviews:', error);
@@ -666,24 +657,21 @@ export default function ProductDetailScreen() {
     };
 
     const fetchReviewedStatus = async () => {
-      if (!user) return;
+      if (!user || !token) return;
 
       try {
-        const response = await axios.get(
-          `${API_URL}/api/review/reviewed/${user._id}/product/${productId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
+        const hasReviewedResult = await reviewService.hasUserReviewedProduct(
+          user._id,
+          productId,
+          token
         );
 
-        if (response.data.status === false) {
+        if (!hasReviewedResult) {
           setHasReviewed(false);
           return;
         }
 
-        setHasReviewed(response.data.reviewed);
+        setHasReviewed(hasReviewedResult);
       } catch (error) {
         console.error('Error fetching reviewed status:', error);
       }
@@ -692,7 +680,7 @@ export default function ProductDetailScreen() {
     fetchProduct();
     fetchReviews();
     fetchReviewedStatus();
-  }, [productId]);
+  }, [productId, user, token]);
 
   const panResponder = PanResponder.create({
     onMoveShouldSetPanResponder: (evt, gestureState) => {
@@ -745,7 +733,7 @@ export default function ProductDetailScreen() {
     if (product && selectedImageIndex >= product.imageUrl.length) {
       setSelectedImageIndex(0);
     }
-  }, [selectedImageIndex]);
+  }, [selectedImageIndex, product]);
 
   if (loading) {
     return (
@@ -806,13 +794,7 @@ export default function ProductDetailScreen() {
     ]).start();
   };
 
-  const renderImageItem = ({
-    item,
-    index,
-  }: {
-    item: string;
-    index: number;
-  }) => (
+  const renderImageItem = ({ item, index }: { item: string; index: number }) => (
     <TouchableOpacity onPress={() => setSelectedImageIndex(index)}>
       <Image source={{ uri: item }} style={styles.thumbnailImage} />
     </TouchableOpacity>
@@ -840,19 +822,15 @@ export default function ProductDetailScreen() {
   };
 
   const handleDeleteReview = async () => {
-    if (!selectedReview || !user) return;
+    if (!selectedReview || !user || !token) return;
     try {
-      const response = await axios.delete(
-        `${API_URL}/api/review/product/${selectedReview._id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+      const response = await reviewService.deleteReview(
+        selectedReview._id,
+        token
       );
 
-      if (response.data.status === false) {
-        Alert.alert('Error', response.data.message);
+      if (response.status === false) {
+        Alert.alert('Error', response.message);
         return;
       }
       setReviews(reviews.filter((review) => review._id !== selectedReview._id));
@@ -871,56 +849,34 @@ export default function ProductDetailScreen() {
   };
 
   const handleSubmitReview = async () => {
-    if (!shopProfile || !user) return;
+    if (!shopProfile || !user || !token) return;
     if (rating === 0) return;
 
     try {
-      const form = new FormData();
-
-      form.append('comment', newReview.trim());
-      form.append('rating', String(rating));
-      form.append('targetId', product._id);
-      form.append('targetType', 'product');
-
-      reviewImages.forEach((uri, index) => {
-        const filename = uri.split('/').pop() || `review_${index}.jpg`;
-        const match = /\.(\w+)$/.exec(filename);
-        const type = match ? `image/${match[1]}` : 'image/jpeg';
-
-        form.append('images', {
-          uri,
-          name: filename,
-          type,
-        } as any);
-      });
+      const reviewData = {
+        productId: product._id,
+        rating: rating,
+        comment: newReview.trim(),
+        images: reviewImages,
+      };
 
       let response;
       if (editingReview && selectedReview) {
-        response = await axios.put(
-          `${API_URL}/api/review/product/${selectedReview._id}`,
-          form,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              'Content-Type': 'multipart/form-data',
-            },
-          }
+        response = await reviewService.updateReview(
+          selectedReview._id,
+          reviewData,
+          token
         );
       } else {
-        response = await axios.post(`${API_URL}/api/review`, form, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'multipart/form-data',
-          },
-        });
+        response = await reviewService.createReview(reviewData, token);
       }
 
-      if (response.data.status === false) {
-        Alert.alert('Error', response.data.message);
+      if (response.status === false) {
+        Alert.alert('Error', response.message);
         return;
       }
 
-      const review = response.data.review;
+      const review = response.review;
 
       setReviews([...reviews, review]);
       setEditingReview(false);
@@ -960,7 +916,7 @@ export default function ProductDetailScreen() {
   };
 
   const handleReport = async () => {
-    if (!reportReason.trim() || !user || !product) return;
+    if (!reportReason.trim() || !user || !product || !token) return;
 
     const reasonMap: { [key: string]: string } = {
       'Counterfeit Product': 'fraud',
@@ -968,29 +924,25 @@ export default function ProductDetailScreen() {
       'Misleading Information': 'other',
       'Copyright Violation': 'copyright_violation',
       'Prohibited Item': 'other',
-      'Other': 'other',
+      Other: 'other',
     };
 
     try {
-      const payload = {
-        reportedItem: {
-          itemType: 'product',
-          itemId: product._id,
-        },
-        type: reasonMap[reportReason] || 'other',
+      const reportData = {
+        targetType: 'product' as const,
+        targetId: product._id,
+        reason: reasonMap[reportReason] || 'other',
         description:
           reportDescription.trim() || 'No additional details provided',
       };
 
-      console.log('Submitting report with payload:', payload);
+      console.log('Submitting report with payload:', reportData);
 
-      const response = await axios.post(`${API_URL}/api/report`, payload, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await reportService.createReport(reportData, token);
 
-      console.log('Report response:', response.data);
+      console.log('Report response:', response);
 
-      if (response.data.status) {
+      if (response.status) {
         setShowReportModal(false);
         setReportReason('');
         setReportDescription('');
@@ -1002,10 +954,6 @@ export default function ProductDetailScreen() {
       }
     } catch (err) {
       console.error('Error submitting report:', err);
-      if (axios.isAxiosError(err) && err.response) {
-        console.error('Response data:', err.response.data);
-        console.error('Response status:', err.response.status);
-      }
       Alert.alert('Error', 'Failed to submit report. Please try again.');
     }
   };

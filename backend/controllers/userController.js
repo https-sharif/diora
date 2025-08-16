@@ -161,17 +161,30 @@ export const getUserProfile = async (req, res) => {
       return res.status(200).json({ status: false, message: 'User not found' });
     }
 
-    // Check if user is accessible (not banned/suspended) unless requester is admin
-    if (!isUserAccessible(user, isAdmin)) {
-      return res.status(200).json({ status: false, message: 'User not found' });
-    }
-
     // Update expired suspension if applicable
     if (user.status === 'suspended' && user.suspendedUntil && new Date() >= new Date(user.suspendedUntil)) {
       user.status = 'active';
       user.suspendedUntil = null;
       user.suspensionReason = null;
       await user.save();
+    }
+
+    // Check if user is accessible (not banned/suspended) unless requester is admin
+    if (!isUserAccessible(user, isAdmin)) {
+      // Return limited user info for banned/suspended users so messaging UI can show appropriate status
+      const limitedUser = {
+        _id: user._id,
+        username: user.username,
+        fullName: user.fullName,
+        avatar: user.avatar,
+        type: user.type,
+        status: user.status,
+        bannedAt: user.bannedAt,
+        banReason: user.banReason,
+        suspendedUntil: user.suspendedUntil,
+        suspensionReason: user.suspensionReason
+      };
+      return res.json({ status: true, user: limitedUser });
     }
 
     if(user.type === 'shop') {

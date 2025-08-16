@@ -36,8 +36,11 @@ import { Theme } from '@/types/Theme';
 import { useTheme } from '@/contexts/ThemeContext';
 import ImageSlashIcon from '@/icon/ImageSlashIcon';
 import axios from 'axios';
-import { API_URL } from '@/constants/api';
+import { config } from '@/config';
 import { format } from 'timeago.js';
+import { postService } from '@/services/postService';
+import { commentService } from '@/services/commentService';
+import { reportService } from '@/services/reportService';
 
 const createStyles = (theme: Theme) => {
   return StyleSheet.create({
@@ -441,12 +444,12 @@ export default function PostDetailScreen() {
 
   useEffect(() => {
     const fetchPostAndComment = async () => {
+      if (!token) return;
+      
       setIsLoading(true);
-      const response = await axios.get(`${API_URL}/api/post/${postId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await postService.getPostById(postId, token);
 
-      const post = response.data.post;
+      const post = response.post;
 
       if (!post) {
         setIsLoading(false);
@@ -454,17 +457,12 @@ export default function PostDetailScreen() {
       }
       setPost(post);
 
-      const commentsResponse = await axios.get(
-        `${API_URL}/api/comment/post/${postId}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const commentsResponse = await commentService.getPostComments(postId, token);
 
-      if (!commentsResponse.data.status) {
+      if (!commentsResponse.status) {
         console.error(
           'Failed to fetch comments:',
-          commentsResponse.data.message
+          commentsResponse.message
         );
         setIsLoading(false);
         return;
@@ -556,8 +554,8 @@ export default function PostDetailScreen() {
 
     try {
       const url = replyingTo
-        ? `${API_URL}/api/comment/reply/${replyingTo}`
-        : `${API_URL}/api/comment/create`;
+        ? `${config.apiUrl}/api/comment/reply/${replyingTo}`
+        : `${config.apiUrl}/api/comment/create`;
 
       const payload = { userId: user._id, postId: post._id, text: newComment };
 
@@ -619,7 +617,7 @@ export default function PostDetailScreen() {
         description: reportDescription.trim() || 'No additional details provided'
       };
 
-      const response = await axios.post(`${API_URL}/api/report`, payload, {
+      const response = await axios.post(`${config.apiUrl}/api/report`, payload, {
         headers: { Authorization: `Bearer ${token}` },
       });
 

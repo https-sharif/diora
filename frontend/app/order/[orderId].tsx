@@ -23,7 +23,7 @@ import {
 } from 'lucide-react-native';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/contexts/ThemeContext';
-import { API_URL } from '@/constants/api';
+import { config } from '@/config';
 import { Theme } from '@/types/Theme';
 import axios from 'axios';
 
@@ -343,7 +343,7 @@ const OrderDetailsScreen = () => {
 
     try {
       setLoading(true);
-      const response = await axios.get(`${API_URL}/api/order/${orderId}`, {
+      const response = await axios.get(`${config.apiUrl}/api/order/${orderId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -375,7 +375,7 @@ const OrderDetailsScreen = () => {
           onPress: async () => {
             try {
               const response = await axios.patch(
-                `${API_URL}/api/order/${order._id}/cancel`,
+                `${config.apiUrl}/api/order/${order._id}/cancel`,
                 {},
                 { headers: { Authorization: `Bearer ${token}` } }
               );

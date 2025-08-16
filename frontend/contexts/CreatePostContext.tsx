@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { API_URL } from '@/constants/api';
+import { config } from '@/config';
 import { User } from '@/types/User';
 import axios from 'axios';
 
@@ -76,7 +76,7 @@ export const CreatePostProvider = ({ children }: { children: React.ReactNode }) 
       form.append('caption', formData.description);
       
 
-      const res = await axios.post(`${API_URL}/api/post/create`, form, {
+      const res = await axios.post(`${config.apiUrl}/api/post/create`, form, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -131,7 +131,7 @@ export const CreatePostProvider = ({ children }: { children: React.ReactNode }) 
       form.append('discount', formData.discount?.toString() || '0');
 
 
-      const res = await axios.post(`${API_URL}/api/product`, form, {
+      const res = await axios.post(`${config.apiUrl}/api/product`, form, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

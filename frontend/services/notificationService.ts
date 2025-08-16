@@ -1,9 +1,9 @@
 import axios from 'axios';
-import { API_URL } from '@/constants/api';
+import { config } from '@/config';
 
 export const notificationService = {
   async getNotifications(token: string): Promise<any> {
-    const response = await axios.get(`${API_URL}/api/notification`, {
+    const response = await axios.get(`${config.apiUrl}/api/notification`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     return response.data;
@@ -11,7 +11,7 @@ export const notificationService = {
 
   async markAsRead(id: string, token: string): Promise<any> {
     const response = await axios.patch(
-      `${API_URL}/api/notification/mark-as-read/${id}`,
+      `${config.apiUrl}/api/notification/mark-as-read/${id}`,
       {},
       {
         headers: { Authorization: `Bearer ${token}` }
@@ -22,7 +22,7 @@ export const notificationService = {
 
   async markAllAsRead(token: string): Promise<any> {
     const response = await axios.patch(
-      `${API_URL}/api/notification/mark-all-as-read`,
+      `${config.apiUrl}/api/notification/mark-all-as-read`,
       {},
       {
         headers: { Authorization: `Bearer ${token}` }
@@ -32,7 +32,7 @@ export const notificationService = {
   },
 
   async deleteNotification(id: string, token: string): Promise<any> {
-    const response = await axios.delete(`${API_URL}/api/notification/delete/${id}`, {
+    const response = await axios.delete(`${config.apiUrl}/api/notification/delete/${id}`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     return response.data;
@@ -40,7 +40,7 @@ export const notificationService = {
 
   async getUserSettings(toUserId: string, token: string): Promise<any> {
     const response = await axios.get(
-      `${API_URL}/api/user/settings/${toUserId}`,
+      `${config.apiUrl}/api/user/settings/${toUserId}`,
       {
         headers: { Authorization: `Bearer ${token}` }
       }
@@ -56,7 +56,7 @@ export const notificationService = {
     data?: any
   ): Promise<any> {
     const response = await axios.post(
-      `${API_URL}/api/notification/add`,
+      `${config.apiUrl}/api/notification/add`,
       {
         type,
         toUserId,

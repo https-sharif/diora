@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { Stack } from 'expo-router';
+import React, { useEffect } from 'react';
+import { SplashScreen, Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import {
   useFonts,
@@ -8,13 +8,10 @@ import {
   Inter_600SemiBold,
   Inter_700Bold,
 } from '@expo-google-fonts/inter';
-import { SplashScreen } from 'expo-router';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
-import { ThemeProvider } from '@/contexts/ThemeContext';
-import React from 'react';
+import { ThemeProvider, useTheme } from '@/contexts/ThemeContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { View } from 'react-native';
-import { useTheme } from '@/contexts/ThemeContext';
 import type { EdgeInsets } from 'react-native-safe-area-context';
 import { SafeAreaProvider } from '@/contexts/SafeAreaContext';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -47,12 +44,10 @@ function AppReadyWrapper({ insets }: { insets: EdgeInsets }) {
   const { sendMessage } = useMessage();
   const { initializeUserData } = useShopping();
 
-  // Initialize shopping data when user is authenticated and has completed onboarding
   useEffect(() => {
     if (user?._id && user?.onboarding?.isComplete) {
       console.log('🛒 Initializing shopping data for user:', user._id);
       initializeUserData();
-      // Sync user data to ensure it's up to date with backend
       syncUser();
     }
   }, [user?._id, user?.onboarding?.isComplete, initializeUserData, syncUser]);
@@ -75,7 +70,7 @@ function AppReadyWrapper({ insets }: { insets: EdgeInsets }) {
         socket.disconnect();
       };
     }
-  }, [user?._id]);
+  }, [user?._id, handleIncomingNotification, sendMessage]);
 
 
   const [fontsLoaded] = useFonts({

@@ -34,8 +34,9 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Theme } from '@/types/Theme';
-import { API_URL } from '@/constants/api';
+import { config } from '@/config';
 import axios from 'axios';
+import { orderService } from '@/services/orderService';
 
 interface Order {
   _id: string;
@@ -332,7 +333,7 @@ export default function PastOrderScreen() {
   }, []);
 
   const fetchOrders = async () => {
-    if (!token) {
+    if (!token || !user) {
       setLoading(false);
       return;
     }
@@ -340,15 +341,12 @@ export default function PastOrderScreen() {
     try {
       setLoading(true);
       
-      // Check if user is a shop owner
-      const endpoint = user?.type === 'shop' ? `${API_URL}/api/order/shop` : `${API_URL}/api/order`;
-      
-      const response = await axios.get(endpoint, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = user.type === 'shop' 
+        ? await orderService.getShopOrders(token)
+        : await orderService.getOrders(1, token);
 
-      if (response.data.status) {
-        setOrders(response.data.orders);
+      if (response.status) {
+        setOrders(response.orders);
       }
     } catch (error) {
       console.error('Error fetching orders:', error);
@@ -425,14 +423,12 @@ export default function PastOrderScreen() {
   };
 
   const updateOrderStatus = async (orderId: string, newStatus: string) => {
+    if (!token) return;
+    
     try {
-      const response = await axios.patch(
-        `${API_URL}/api/order/${orderId}/status`,
-        { status: newStatus },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const response = await orderService.updateOrderStatus(orderId, newStatus, token);
 
-      if (response.data.status) {
+      if (response.status) {
         // Update the local state
         setOrders(prev => 
           prev.map(order => 

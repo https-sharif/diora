@@ -1,10 +1,10 @@
 import axios from 'axios';
-import { API_URL } from '@/constants/api';
+import { config } from '@/config';
 import { ProductData, ProductFilters, ProductSearchParams } from '@/types/Product';
 
 export const productService = {
   async getProductById(productId: string, token?: string): Promise<any> {
-    const response = await axios.get(`${API_URL}/api/product/${productId}`, {
+    const response = await axios.get(`${config.apiUrl}/api/product/${productId}`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {}
     });
     return response.data;
@@ -20,35 +20,35 @@ export const productService = {
       });
     }
 
-    const response = await axios.get(`${API_URL}/api/product?${params.toString()}`, {
+    const response = await axios.get(`${config.apiUrl}/api/product?${params.toString()}`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {}
     });
     return response.data.products || [];
   },
 
   async getShopProducts(shopId: string, token?: string): Promise<any> {
-    const response = await axios.get(`${API_URL}/api/product/shop/${shopId}`, {
+    const response = await axios.get(`${config.apiUrl}/api/product/shop/${shopId}`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {}
     });
     return response.data.products || [];
   },
 
   async createProduct(productData: ProductData, token: string): Promise<any> {
-    const response = await axios.post(`${API_URL}/api/product`, productData, {
+    const response = await axios.post(`${config.apiUrl}/api/product`, productData, {
       headers: { Authorization: `Bearer ${token}` }
     });
     return response.data;
   },
 
   async updateProduct(productId: string, productData: ProductData, token: string): Promise<any> {
-    const response = await axios.put(`${API_URL}/api/product/${productId}`, productData, {
+    const response = await axios.put(`${config.apiUrl}/api/product/${productId}`, productData, {
       headers: { Authorization: `Bearer ${token}` }
     });
     return response.data;
   },
 
   async deleteProduct(productId: string, token: string): Promise<any> {
-    const response = await axios.delete(`${API_URL}/api/product/${productId}`, {
+    const response = await axios.delete(`${config.apiUrl}/api/product/${productId}`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     return response.data;
@@ -64,7 +64,7 @@ export const productService = {
       });
     }
 
-    const response = await axios.get(`${API_URL}/api/search/products?${params.toString()}`, {
+    const response = await axios.get(`${config.apiUrl}/api/search/products?${params.toString()}`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {}
     });
     return response.data;

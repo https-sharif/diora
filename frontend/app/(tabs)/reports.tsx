@@ -36,7 +36,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { Theme } from '@/types/Theme';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import { API_URL } from '@/constants/api';
+import { config } from '@/config';
+import { reportService } from '@/services';
 import { Report, ReportStats } from '@/types/Report';
 
 const createStyles = (theme: Theme) =>
@@ -434,7 +435,7 @@ export default function ReportsManagement() {
         setReportsLoading(true);
       }
       
-      const response = await axios.get(`${API_URL}/api/report`, {
+      const response = await axios.get(`${config.apiUrl}/api/report`, {
         headers: { Authorization: `Bearer ${token}` },
         params: {
           status: filterStatus !== 'all' ? filterStatus : undefined,
@@ -461,7 +462,7 @@ export default function ReportsManagement() {
   const fetchStats = async () => {
     try {
       setStatsLoading(true);
-      const response = await axios.get(`${API_URL}/api/report/stats`, {
+      const response = await axios.get(`${config.apiUrl}/api/report/stats`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -491,7 +492,7 @@ export default function ReportsManagement() {
   ) => {
     try {
       const response = await axios.put(
-        `${API_URL}/api/report/${reportId}`,
+        `${config.apiUrl}/api/report/${reportId}`,
         { status, adminNotes },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -519,7 +520,7 @@ export default function ReportsManagement() {
   ) => {
     try {
       const response = await axios.post(
-        `${API_URL}/api/report/${reportId}/moderate`,
+        `${config.apiUrl}/api/report/${reportId}/moderate`,
         { action, reason },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -548,16 +549,14 @@ export default function ReportsManagement() {
             style: 'destructive',
             onPress: async () => {
               try {
+                if (!token) return;
                 setShowActionsMenu(false);
-                const response = await axios.delete(
-                  `${API_URL}/api/report/cleanup`,
-                  { headers: { Authorization: `Bearer ${token}` } }
-                );
+                const response = await reportService.clearOldReports(token);
 
-                if (response.data.status) {
+                if (response.status) {
                   Alert.alert(
                     'Success',
-                    `Cleared ${response.data.deletedCount} old reports`
+                    `Cleared ${response.deletedCount} old reports`
                   );
                   fetchReports();
                 } else {
@@ -589,16 +588,14 @@ export default function ReportsManagement() {
             style: 'destructive',
             onPress: async () => {
               try {
+                if (!token) return;
                 setShowActionsMenu(false);
-                const response = await axios.delete(
-                  `${API_URL}/api/report/cleanup-resolved`,
-                  { headers: { Authorization: `Bearer ${token}` } }
-                );
+                const response = await reportService.clearResolvedReports(token);
 
-                if (response.data.status) {
+                if (response.status) {
                   Alert.alert(
                     'Success',
-                    `Cleared ${response.data.deletedCount} resolved/dismissed reports`
+                    `Cleared ${response.deletedCount} resolved/dismissed reports`
                   );
                   fetchReports();
                 } else {

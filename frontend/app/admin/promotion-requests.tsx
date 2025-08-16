@@ -31,7 +31,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { Theme } from '@/types/Theme';
 import { PromotionRequest } from '@/types/PromotionRequest';
 import axios from 'axios';
-import { API_URL } from '@/constants/api';
+import { config } from '@/config';
 
 const createStyles = (theme: Theme) =>
   StyleSheet.create({
@@ -327,7 +327,7 @@ export default function PromotionRequestsScreen() {
     try {
       setLoading(true);
       const params = selectedFilter !== 'all' ? `?status=${selectedFilter}` : '';
-      const response = await axios.get(`${API_URL}/api/admin/promotion-requests${params}`, {
+      const response = await axios.get(`${config.apiUrl}/api/admin/promotion-requests${params}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -352,7 +352,7 @@ export default function PromotionRequestsScreen() {
     try {
       setProcessing(true);
       const response = await axios.put(
-        `${API_URL}/api/admin/promotion-requests/${request._id}`,
+        `${config.apiUrl}/api/admin/promotion-requests/${request._id}`,
         { action, comments },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -587,7 +587,7 @@ export default function PromotionRequestsScreen() {
                           style={styles.documentItem}
                           onPress={() => {
                             // Check if path is already a full URL (Cloudinary) or relative path
-                            const documentUrl = doc.path.startsWith('http') ? doc.path : `${API_URL}/${doc.path}`;
+                            const documentUrl = doc.path.startsWith('http') ? doc.path : `${config.apiUrl}/${doc.path}`;
                             console.log('Opening document:', documentUrl);
                             Linking.openURL(documentUrl).catch(err => {
                               console.error('Error opening document:', err);
@@ -608,7 +608,7 @@ export default function PromotionRequestsScreen() {
                           <View style={{ marginTop: 8, marginBottom: 12 }}>
                             <Image
                               source={{ 
-                                uri: doc.path.startsWith('http') ? doc.path : `${API_URL}/${doc.path}`
+                                uri: doc.path.startsWith('http') ? doc.path : `${config.apiUrl}/${doc.path}`
                               }}
                               style={{
                                 width: '100%',

@@ -1,9 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, Image } from 'react-native';
 import { useAuth } from '@/hooks/useAuth';
 import { router } from 'expo-router';
 import { useTheme } from '@/contexts/ThemeContext';
-import { useNotificationStore } from '@/stores/useNotificationStore';
 
 const createStyles = (theme: any) =>
   StyleSheet.create({
@@ -37,13 +36,17 @@ export default function Index() {
       if (loading) {
         setTimeout(() => {
           if (isAuthenticated && user) {
-            // Check if user needs onboarding (simplified logic)
-            const needsOnboarding = !user.onboarding?.isComplete;
-            
-            if (needsOnboarding) {
-              router.replace('/onboarding');
-            } else {
+            // Admin users bypass onboarding
+            if (user.type === 'admin') {
               router.replace('/(tabs)');
+            } else {
+              const needsOnboarding = !user.onboarding?.isComplete;
+              
+              if (needsOnboarding) {
+                router.replace('/onboarding');
+              } else {
+                router.replace('/(tabs)');
+              }
             }
           } else {
             router.replace('/auth');
@@ -51,33 +54,26 @@ export default function Index() {
         }, 500);
       } else {
         if (isAuthenticated && user) {
-          // Check if user needs onboarding (simplified logic)
-          const needsOnboarding = !user.onboarding?.isComplete;
-          
-          console.log('🔍 Index page - User loaded:', {
-            userId: user._id,
-            type: user.type,
-            onboardingComplete: user.onboarding?.isComplete,
-            fullOnboarding: JSON.stringify(user.onboarding, null, 2),
-            needsOnboarding
-          });
-          
-          if (needsOnboarding) {
-            console.log('📍 Index page - Redirecting to onboarding');
-            router.replace('/onboarding');
-          } else {
-            console.log('📍 Index page - Redirecting to main app');
+          // Admin users bypass onboarding
+          if (user.type === 'admin') {
             router.replace('/(tabs)');
+          } else {
+            const needsOnboarding = !user.onboarding?.isComplete;
+            
+            if (needsOnboarding) {
+              router.replace('/onboarding');
+            } else {
+              router.replace('/(tabs)');
+            }
           }
         } else {
-          console.log('📍 Index page - Not authenticated, redirecting to auth');
           router.replace('/auth');
         }
       }
     }, 1000);
   
     return () => clearTimeout(timeout);
-  }, [isAuthenticated, loading, user]);
+  }, [isAuthenticated, loading, user, fadeAnim]);
 
   return (
     <Animated.View style={[styles.container, { opacity: fadeAnim }]}>

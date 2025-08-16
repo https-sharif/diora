@@ -86,6 +86,8 @@ export const signup = async (req, res) => {
       createdAt: newUser.createdAt,
       settings: newUser.settings,
       avatarId: newUser.avatarId,
+      onboarding: newUser.onboarding,
+      shop: newUser.shop,
     };
 
     res.status(201).json({ status: true, user: safeUser, token });
@@ -183,6 +185,8 @@ export const login = async (req, res) => {
       createdAt: user.createdAt,
       settings: user.settings,
       avatarId: user.avatarId,
+      onboarding: user.onboarding,
+      shop: user.shop,
     };
 
     res.json({

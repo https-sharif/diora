@@ -1,16 +1,16 @@
 import axios from 'axios';
-import { API_URL } from '@/constants/api';
+import { config } from '@/config';
 
 export const adminService = {
   async getStats(token: string): Promise<any> {
-    const response = await axios.get(`${API_URL}/api/admin/stats`, {
+    const response = await axios.get(`${config.apiUrl}/api/admin/stats`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     return response.data;
   },
 
   async getHealth(token: string): Promise<any> {
-    const response = await axios.get(`${API_URL}/api/admin/health`, {
+    const response = await axios.get(`${config.apiUrl}/api/admin/health`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     return response.data;
@@ -25,7 +25,7 @@ export const adminService = {
     const queryString = params.toString();
     const endpoint = queryString ? `?${queryString}` : '';
 
-    const response = await axios.get(`${API_URL}/api/admin/promotion-requests${endpoint}`, {
+    const response = await axios.get(`${config.apiUrl}/api/admin/promotion-requests${endpoint}`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {}
     });
     return response.data;
@@ -33,7 +33,7 @@ export const adminService = {
 
   async approvePromotionRequest(requestId: string, token: string): Promise<any> {
     const response = await axios.post(
-      `${API_URL}/api/admin/promotion-requests/${requestId}`,
+      `${config.apiUrl}/api/admin/promotion-requests/${requestId}`,
       { action: 'approve' },
       {
         headers: { Authorization: `Bearer ${token}` }
@@ -44,11 +44,90 @@ export const adminService = {
 
   async rejectPromotionRequest(requestId: string, reason: string, token: string): Promise<any> {
     const response = await axios.post(
-      `${API_URL}/api/admin/promotion-requests/${requestId}`,
+      `${config.apiUrl}/api/admin/promotion-requests/${requestId}`,
       { action: 'reject', reason },
       {
         headers: { Authorization: `Bearer ${token}` }
       }
+    );
+    return response.data;
+  },
+
+  async searchUsers(searchQuery: string, filter: string, token: string): Promise<any> {
+    const params = new URLSearchParams({ q: searchQuery });
+    if (filter !== 'All') {
+      if (filter === 'Verified') params.append('verified', 'true');
+      if (filter === 'Shops') params.append('accountType', 'shop');
+      if (filter === 'Suspended') params.append('suspended', 'true');
+      if (filter === 'Recent') params.append('sort', 'recent');
+    }
+    
+    const response = await axios.get(`${config.apiUrl}/api/admin/users/search?${params.toString()}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  },
+
+  async searchPosts(searchQuery: string, filter: string, token: string): Promise<any> {
+    const params = new URLSearchParams({ q: searchQuery });
+    if (filter !== 'All') {
+      if (filter === 'Recent') params.append('sort', 'recent');
+      if (filter === 'Reported') params.append('reported', 'true');
+      if (filter === 'Hidden') params.append('hidden', 'true');
+    }
+    
+    const response = await axios.get(`${config.apiUrl}/api/admin/posts/search?${params.toString()}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  },
+
+  async searchProducts(searchQuery: string, filter: string, token: string): Promise<any> {
+    const params = new URLSearchParams({ q: searchQuery });
+    if (filter !== 'All') {
+      if (filter === 'Recent') params.append('sort', 'recent');
+      if (filter === 'Reported') params.append('reported', 'true');
+      if (filter === 'Out of Stock') params.append('outOfStock', 'true');
+    }
+    
+    const response = await axios.get(`${config.apiUrl}/api/admin/products/search?${params.toString()}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  },
+
+  async suspendUser(userId: string, duration: number, token: string): Promise<any> {
+    const response = await axios.post(
+      `${config.apiUrl}/api/admin/users/${userId}/suspend`,
+      { duration },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    return response.data;
+  },
+
+  async banUser(userId: string, token: string): Promise<any> {
+    const response = await axios.post(
+      `${config.apiUrl}/api/admin/users/${userId}/ban`,
+      {},
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    return response.data;
+  },
+
+  async unbanUser(userId: string, token: string): Promise<any> {
+    const response = await axios.post(
+      `${config.apiUrl}/api/admin/users/${userId}/unban`,
+      {},
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    return response.data;
+  },
+
+  async warnUser(userId: string, message: string, token: string): Promise<any> {
+    const response = await axios.post(
+      `${config.apiUrl}/api/admin/users/${userId}/warn`,
+      { message },
+      { headers: { Authorization: `Bearer ${token}` } }
     );
     return response.data;
   }

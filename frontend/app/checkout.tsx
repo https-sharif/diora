@@ -17,9 +17,7 @@ import {
   CreditCard,
   Check,
   Truck,
-  User,
   Phone,
-  Mail,
 } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useShopping } from '@/hooks/useShopping';
@@ -319,7 +317,7 @@ const CheckoutPage = () => {
   };
 
   const calculateSubtotal = () => {
-    return cart.reduce((total, item) => {
+    return cart.reduce((total: number, item: CartItem) => {
       const product = item.productId as Product;
       const itemPrice = product.discount && product.discount > 0 
         ? product.price - (product.price * product.discount / 100)
@@ -329,7 +327,7 @@ const CheckoutPage = () => {
   };
 
   const subtotal = calculateSubtotal();
-  const shippingFee = subtotal > 100 ? 0 : 10; // Free shipping over $100
+  const shippingFee = subtotal > 100 ? 0 : 10;
   const total = subtotal + shippingFee;
 
   const getDiscountedPrice = (price: number, discount?: number) => {
@@ -428,7 +426,7 @@ const CheckoutPage = () => {
         <Text style={styles.sectionTitle}>Order Summary</Text>
       </View>
       <View style={styles.orderSummary}>
-        {cart.map((item) => {
+        {cart.map((item: CartItem) => {
           const product = item.productId as Product;
           return (
             <View key={`${product._id}-${item.size}-${item.variant}`} style={styles.orderItem}>

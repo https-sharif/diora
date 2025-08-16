@@ -7,10 +7,9 @@ export interface LoginData {
 
 export interface SignupData {
   email: string;
+  username: string;
+  fullName: string;
   password: string;
-  firstName: string;
-  lastName: string;
-  type: 'user' | 'shop';
 }
 
 export interface AuthResponse {
