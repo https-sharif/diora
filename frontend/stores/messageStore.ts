@@ -3,6 +3,7 @@ import { Conversation } from '@/types/Conversation';
 import { Message } from '@/types/Message';
 import { MessageState } from '@/types/MessageStore';
 import { useAuthStore } from '@/stores/authStore';
+import { messageService } from '@/services/messageService';
 
 export const useMessageStore = create<MessageState>((set, get) => ({
   conversations: [],
@@ -48,6 +49,24 @@ export const useMessageStore = create<MessageState>((set, get) => ({
     setTimeout(() => {
       get().updateMessageStatus(conversationId, newMessage._id, 'delivered');
     }, 2000);
+  },
+
+  handleIncomingNotification: () => {
+    
+  },
+
+  handleIncomingMessage: (conversationId, message) => {
+    set((state) => ({
+      messages: [
+        ...state.messages,
+        message
+      ],
+      conversations: state.conversations.map((conv) =>
+        conv._id === conversationId
+          ? { ...conv, lastMessageId: message }
+          : conv
+      ),
+    }));
   },
 
   updateMessageStatus: (conversationId, messageId, status) => {
@@ -96,7 +115,7 @@ export const useMessageStore = create<MessageState>((set, get) => ({
       conversations: state.conversations.map(conv =>
         conv._id === conversationId ? { 
           ...conv, 
-          lastMessageId: message as any // Store the full message object
+          lastMessageId: message as any
         } : conv
       ),
     }));
@@ -116,5 +135,23 @@ export const useMessageStore = create<MessageState>((set, get) => ({
         } : msg
       ),
     }));
+  },
+
+  loadMessagesForConversation: async (conversationId: string) => {
+    const token = useAuthStore.getState().token;
+    if (!token) return;
+    try {
+      const response = await messageService.getMessages(conversationId, 1, 50, token);
+      if (response.status) {
+        set((state) => ({
+          messages: [
+            ...state.messages.filter(m => m.conversationId !== conversationId),
+            ...response.messages
+          ]
+        }));
+      }
+    } catch (err) {
+      console.error('Failed to load messages:', err);
+    }
   },
 }));

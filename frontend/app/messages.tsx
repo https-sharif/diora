@@ -34,7 +34,6 @@ import { Conversation } from '@/types/Conversation';
 import { useAuth } from '@/hooks/useAuth';
 import Color from 'color';
 import { config } from '@/config';
-import { Message } from '@/types/Message';
 
 const createStyles = (theme: any) => {
   return StyleSheet.create({
@@ -432,7 +431,7 @@ export default function MessagesScreen() {
         } else {
           setError('Failed to load conversations');
         }
-      } catch (err) {
+      } catch {
         setError('Failed to load conversations');
       } finally {
         setLoading(false);

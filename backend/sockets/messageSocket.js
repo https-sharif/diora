@@ -4,7 +4,7 @@ export const emitNewMessage = (conversationId, message, participants) => {
   const io = getIO();
   
   participants.forEach(participantId => {
-    const socketId = onlineUsers.get(participantId.toString());
+    const socketId = onlineUsers.get(participantId);
     if (socketId) {
       io.to(socketId).emit('newMessage', {
         conversationId,

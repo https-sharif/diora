@@ -1,5 +1,6 @@
 import { io, Socket } from 'socket.io-client';
 import { config } from '@/config';
+import { Message } from '@/types/Message';
 
 let socket: Socket | null = null;
 
@@ -27,6 +28,7 @@ export function registerUser(userId: string) {
 
 export function setupListeners(
   onNotification: (notif: any) => void,
+  onMessage: (data: { conversationId: string; message: any }) => void,
   onConnect?: () => void,
   onDisconnect?: () => void
 ) {
@@ -42,6 +44,11 @@ export function setupListeners(
     onNotification(notif);
   });
 
+  s.on('message', (data) => {
+    console.log('📨 Received message via socket:', data);
+    onMessage(data);
+  });
+
   s.on('disconnect', () => {
     console.log('Socket disconnected');
     if (onDisconnect) onDisconnect();
@@ -51,6 +58,7 @@ export function setupListeners(
 export default function initSocket(
   userId: string,
   onNotification: (notif: any) => void,
+  onMessage: (data: {conversationId: string; message: Message}) => void,
   onConnect?: () => void,
   onDisconnect?: () => void
 ) {
@@ -63,6 +71,11 @@ export default function initSocket(
     s.emit('register', userId);
   });
 
-  setupListeners(onNotification, onConnect, onDisconnect);
+  s.on('message', (data) => {
+    console.log('📨 Socket received message:', data);
+    onMessage(data);
+  });
+
+  setupListeners(onNotification, onMessage, onConnect, onDisconnect);
 }
 

@@ -3,6 +3,8 @@ import { Animated, StyleSheet, Image } from 'react-native';
 import { useAuth } from '@/hooks/useAuth';
 import { router } from 'expo-router';
 import { useTheme } from '@/contexts/ThemeContext';
+import { messageService } from '@/services';
+import { useMessage } from '@/hooks/useMessage';
 
 const createStyles = (theme: any) =>
   StyleSheet.create({
@@ -21,7 +23,8 @@ const createStyles = (theme: any) =>
 export default function Index() {
   const { theme } = useTheme();
   const styles = createStyles(theme);
-  const { isAuthenticated, loading, user } = useAuth();
+  const { isAuthenticated, loading, user, token } = useAuth();
+  const { setConversations } = useMessage();
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
@@ -36,7 +39,6 @@ export default function Index() {
       if (loading) {
         setTimeout(() => {
           if (isAuthenticated && user) {
-            // Admin users bypass onboarding
             if (user.type === 'admin') {
               router.replace('/(tabs)');
             } else {
@@ -54,7 +56,6 @@ export default function Index() {
         }, 500);
       } else {
         if (isAuthenticated && user) {
-          // Admin users bypass onboarding
           if (user.type === 'admin') {
             router.replace('/(tabs)');
           } else {
@@ -74,6 +75,19 @@ export default function Index() {
   
     return () => clearTimeout(timeout);
   }, [isAuthenticated, loading, user, fadeAnim]);
+
+  useEffect(() => {
+      const fetchConversations = async () => {
+        if (!token) return;
+        const response = await messageService.getConversations(token);
+
+        if (response.status) {
+          setConversations(response.conversations);
+        }
+      };
+  
+      fetchConversations();
+    }, [token, user]);
 
   return (
     <Animated.View style={[styles.container, { opacity: fadeAnim }]}>

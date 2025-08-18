@@ -6,6 +6,7 @@ export const useMessage = () => {
   const messages = useMessageStore((state: MessageState) => state.messages);
   const setConversations = useMessageStore((state: MessageState) => state.setConversations);
   const sendMessage = useMessageStore((state: MessageState) => state.sendMessage);
+  const handleIncomingMessage = useMessageStore((state: MessageState) => state.handleIncomingMessage);
   const updateMessageStatus = useMessageStore((state: MessageState) => state.updateMessageStatus);
   const handleReaction = useMessageStore((state: MessageState) => state.handleReaction);
   const markConversationAsRead = useMessageStore((state: MessageState) => state.markConversationAsRead);
@@ -17,9 +18,10 @@ export const useMessage = () => {
     conversations, 
     messages, 
     setConversations,
-    sendMessage, 
-    updateMessageStatus, 
-    handleReaction, 
+    sendMessage,
+    handleIncomingMessage,
+    updateMessageStatus,
+    handleReaction,
     markConversationAsRead,
     updateLastMessage,
     deleteMessage,
