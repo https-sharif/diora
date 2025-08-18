@@ -12,6 +12,7 @@ const userSchema = new mongoose.Schema({
   followers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   following: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   createdAt: { type: Date, default: Date.now },
+  stripeCustomerId: { type: String, default: null },
   posts: { type: Number, default: 0 },
   likedPosts: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Post' }],
   type: { type: String, enum: ['user', 'shop', 'admin'], default: 'user' },
@@ -59,6 +60,7 @@ const userSchema = new mongoose.Schema({
     businessType: { type: String, default: '' },
     yearsInBusiness: { type: String, default: '' },
     expectedProducts: { type: String, default: '' },
+    stripeAccountId: { type: String, default: null },
   },
   settings: {
     theme: { type: String, enum: ['light', 'dark'], default: 'light' },
