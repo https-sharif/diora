@@ -3,6 +3,9 @@ import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import path from 'path';
+import rateLimit from 'express-rate-limit';
+import helmet from 'helmet';
+import mongoSanitize from 'express-mongo-sanitize';
 import { fileURLToPath } from 'url';
 import connectDB from './config/db.js';
 import authRoutes from './routes/auth.js';
@@ -24,6 +27,7 @@ import uploadRoutes from './routes/upload.js';
 import stripeRoutes from './routes/stripe.js';
 import webhookRoutes from './routes/webhook.js';
 import { initSocket } from './sockets/socketSetup.js';
+import { autoCleanupReports } from './controllers/reportController.js';
 
 dotenv.config();
 
@@ -35,8 +39,19 @@ const PORT = process.env.PORT || 5000;
 
 connectDB();
 
-app.use('/api/stripe/webhook', webhookRoutes);
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 1000,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: 'Too many requests from this IP, try again later',
+});
 
+app.use('/api/stripe/webhook', webhookRoutes);
+app.use(limiter);
+
+app.use(helmet());
+app.use(mongoSanitize());
 app.use(cors());
 app.use(express.json());
 
@@ -63,8 +78,6 @@ app.use('/api/report', reportRoutes);
 app.use('/api/message', messageRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/stripe', stripeRoutes);
-
-import { autoCleanupReports } from './controllers/reportController.js';
 
 const server = http.createServer(app);
 const io = initSocket(server);

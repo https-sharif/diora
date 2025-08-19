@@ -3,7 +3,6 @@ import User from '../models/User.js';
 
 export const verifyAdmin = async (req, res, next) => {
   try {
-    // Check if user is authenticated first
     const token = req.header('Authorization')?.replace('Bearer ', '');
     
     if (!token) {
@@ -13,10 +12,8 @@ export const verifyAdmin = async (req, res, next) => {
       });
     }
 
-    // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     
-    // Get user from database
     const user = await User.findById(decoded.id);
     
     if (!user) {
@@ -26,7 +23,6 @@ export const verifyAdmin = async (req, res, next) => {
       });
     }
 
-    // Check if user is admin
     if (user.type !== 'admin') {
       return res.status(403).json({ 
         status: false, 
@@ -34,7 +30,6 @@ export const verifyAdmin = async (req, res, next) => {
       });
     }
 
-    // Add user to request object
     req.user = user;
     next();
   } catch (error) {
@@ -48,7 +43,6 @@ export const verifyAdmin = async (req, res, next) => {
 
 export const verifyAdminOrOwner = async (req, res, next) => {
   try {
-    // Check if user is authenticated first
     const token = req.header('Authorization')?.replace('Bearer ', '');
     
     if (!token) {
@@ -58,10 +52,8 @@ export const verifyAdminOrOwner = async (req, res, next) => {
       });
     }
 
-    // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     
-    // Get user from database
     const user = await User.findById(decoded.id);
     
     if (!user) {
@@ -71,7 +63,6 @@ export const verifyAdminOrOwner = async (req, res, next) => {
       });
     }
 
-    // Check if user is admin or accessing their own resource
     const isAdmin = user.type === 'admin';
     const isOwner = req.params.userId === user._id.toString();
     
@@ -82,7 +73,6 @@ export const verifyAdminOrOwner = async (req, res, next) => {
       });
     }
 
-    // Add user to request object
     req.user = user;
     req.isAdmin = isAdmin;
     next();
@@ -95,5 +85,4 @@ export const verifyAdminOrOwner = async (req, res, next) => {
   }
 };
 
-// Alias for backward compatibility
 export const adminAuth = verifyAdmin;

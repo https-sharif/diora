@@ -7,11 +7,9 @@ export const getAllProducts = async (req, res) => {
     
     let products;
     if (isAdmin) {
-      // Admins see all products
       products = await Product.aggregate([{ $sample: { size: 10 } }]);
       await Product.populate(products, { path: 'shopId', select: 'name status' });
     } else {
-      // Regular users only see products from active shops
       products = await Product.aggregate([
         {
           $lookup: {
@@ -156,10 +154,8 @@ export const getTrendingProducts = async (req, res) => {
     
     let trendingProducts;
     if (isAdmin) {
-      // Admins see all products
       trendingProducts = await Product.aggregate([{ $sample: { size: 6 } }]);
     } else {
-      // Regular users only see products from active shops
       trendingProducts = await Product.aggregate([
         {
           $lookup: {
@@ -171,7 +167,7 @@ export const getTrendingProducts = async (req, res) => {
         },
         {
           $match: {
-            'shop.status': 'active' // Only include products from active shops
+            'shop.status': 'active'
           }
         },
         { $sample: { size: 6 } }
@@ -203,7 +199,6 @@ export const getProductsByShop = async (req, res) => {
     
     const products = await Product.find({ shopId }).populate('shopId', 'fullName avatar status');
 
-    // Check if shop is accessible (not banned/suspended) unless requester is admin
     if (!isAdmin && products.length > 0 && products[0].shopId && products[0].shopId.status !== 'active') {
       return res.json({ status: true, products: [] });
     }

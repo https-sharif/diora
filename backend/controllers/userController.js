@@ -6,23 +6,17 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken'
 import mongoose from 'mongoose';
 
-// Helper function to check if user is accessible (not banned/suspended)
-// Admins can view all users regardless of status
 const isUserAccessible = (user, requesterIsAdmin = false) => {
   if (!user) return false;
   
-  // Admins can view all users
   if (requesterIsAdmin) return true;
   
-  // Check if banned
   if (user.status === 'banned') return false;
   
-  // Check if suspended and suspension hasn't expired
   if (user.status === 'suspended') {
     if (!user.suspendedUntil || new Date() < new Date(user.suspendedUntil)) {
       return false;
     }
-    // If suspension expired, update status to active (will be handled in individual functions)
   }
   
   return true;
@@ -38,11 +32,9 @@ export const getCurrentUser = async (req, res) => {
       return res.status(404).json({ status: false, message: 'User not found' });
     }
 
-    // Update last active timestamp
     user.lastActiveAt = new Date();
     await user.save();
 
-    // Check if suspended user's suspension has expired
     if (user.status === 'suspended' && user.suspendedUntil && new Date() >= new Date(user.suspendedUntil)) {
       user.status = 'active';
       user.suspendedUntil = null;
@@ -50,11 +42,10 @@ export const getCurrentUser = async (req, res) => {
       await user.save();
     }
 
-    // Ensure user has onboarding object (migration for existing users)
     if (!user.onboarding) {
       console.log('User missing onboarding object, creating default...');
       user.onboarding = {
-        isComplete: user.type === 'user', // Regular users default to complete, shops need onboarding
+        isComplete: user.type === 'user',
         step: user.type === 'user' ? 3 : 0,
         profile: {
           completed: user.type === 'user',
@@ -125,7 +116,6 @@ export const followUser = async (req, res) => {
       return res.status(404).json({ status: false, message: 'User not found' });
     }
 
-    // Check if target user is accessible (not banned/suspended) unless requester is admin
     if (!isUserAccessible(targetUser, isAdmin)) {
       return res.status(404).json({ status: false, message: 'User not found' });
     }
@@ -161,7 +151,6 @@ export const getUserProfile = async (req, res) => {
       return res.status(200).json({ status: false, message: 'User not found' });
     }
 
-    // Update expired suspension if applicable
     if (user.status === 'suspended' && user.suspendedUntil && new Date() >= new Date(user.suspendedUntil)) {
       user.status = 'active';
       user.suspendedUntil = null;
@@ -169,9 +158,7 @@ export const getUserProfile = async (req, res) => {
       await user.save();
     }
 
-    // Check if user is accessible (not banned/suspended) unless requester is admin
     if (!isUserAccessible(user, isAdmin)) {
-      // Return limited user info for banned/suspended users so messaging UI can show appropriate status
       const limitedUser = {
         _id: user._id,
         username: user.username,
@@ -210,14 +197,13 @@ export const getTrendingUsers = async (req, res) => {
     const currentUserId = req.user.id;
     const isAdmin = req.userDetails && req.userDetails.type === 'admin';
     
-    // Build match criteria - admins see all users, others only see active users
     const matchCriteria = { 
       _id: { $ne: new mongoose.Types.ObjectId(currentUserId) }, 
       type: 'user'
     };
     
     if (!isAdmin) {
-      matchCriteria.status = 'active'; // Only include active users for non-admins
+      matchCriteria.status = 'active';
     }
     
     const users = await User.aggregate([
@@ -239,7 +225,7 @@ export const getTrendingUsers = async (req, res) => {
       followers: user.followers.length,
       following: user.following.length,
       isVerified: user.isVerified,
-      status: user.status, // Include status for admin visibility
+      status: user.status,
     }));
 
     res.json({ status: true, trendingUsers });
@@ -379,12 +365,10 @@ export const updateUserSettings = async (req, res) => {
       return res.status(404).json({ status: false, message: 'User not found' });
     }
 
-    // Update theme if provided
     if (theme && ['light', 'dark'].includes(theme)) {
       user.settings.theme = theme;
     }
 
-    // Update notification settings if provided
     if (notifications) {
       const validBooleanFields = ['likes', 'comments', 'follow', 'mention', 'order', 'promotion', 'system', 'warning', 'reportUpdate', 'messages'];
       
@@ -394,7 +378,6 @@ export const updateUserSettings = async (req, res) => {
         }
       });
 
-      // Update email frequency if provided
       if (notifications.emailFrequency && ['instant', 'daily', 'weekly'].includes(notifications.emailFrequency)) {
         user.settings.notifications.emailFrequency = notifications.emailFrequency;
       }
@@ -439,7 +422,6 @@ export const requestPromotion = async (req, res) => {
       additionalInfo
     });
 
-    // Validate required fields
     if (!businessName || !businessDescription || !businessType) {
       console.log('Missing required fields');
       return res.status(400).json({ 
@@ -470,7 +452,6 @@ export const requestPromotion = async (req, res) => {
       });
     }
 
-    // Handle file uploads
     const proofDocuments = [];
     console.log('Files check - req.files:', req.files);
     console.log('Files type:', typeof req.files);
@@ -503,7 +484,6 @@ export const requestPromotion = async (req, res) => {
     console.log('Received files:', req.files ? req.files.length : 0);
     console.log('Processed documents:', proofDocuments.length);
 
-    // Create promotion request
     const promotionRequest = new PromotionRequest({
       userId,
       businessName,
@@ -519,7 +499,6 @@ export const requestPromotion = async (req, res) => {
 
     await promotionRequest.save();
 
-    // Create notification for admins
     const admins = await User.find({ type: 'admin' });
     for (const admin of admins) {
       const notification = new Notification({
@@ -557,11 +536,8 @@ export const approvePromotionRequest = async (req, res) => {
   try {
     const adminId = req.user.id;
     const { requestId } = req.params;
-    const { action, comments } = req.body; // action: 'approve' or 'reject'
+    const { action, comments } = req.body;
 
-    // Admin verification is handled by middleware
-
-    // Find the promotion request
     const promotionRequest = await PromotionRequest.findById(requestId).populate('userId');
     if (!promotionRequest) {
       return res.status(404).json({ status: false, message: 'Promotion request not found' });
@@ -574,18 +550,15 @@ export const approvePromotionRequest = async (req, res) => {
     const user = promotionRequest.userId;
 
     if (action === 'approve') {
-      // Update the user to shop type
       user.type = 'shop';
       
-      // Update user's fullName and bio with business information
       user.fullName = promotionRequest.businessName;
       user.bio = promotionRequest.businessDescription;
       
-      // Initialize shop object with promotion request data
       user.shop = {
         coverImageUrl: '',
         location: '',
-        contactEmail: user.email, // Use user's email as initial contact email
+        contactEmail: user.email,
         contactPhone: '',
         website: '',
         socialLinks: {
@@ -603,7 +576,6 @@ export const approvePromotionRequest = async (req, res) => {
         expectedProducts: promotionRequest.expectedProducts
       };
 
-      // Reset onboarding to incomplete for shop onboarding
       if (!user.onboarding) {
         user.onboarding = {
           isComplete: false,
@@ -618,11 +590,9 @@ export const approvePromotionRequest = async (req, res) => {
           }
         };
       } else {
-        // Reset isComplete to false so user goes through shop onboarding
         user.onboarding.isComplete = false;
         user.onboarding.step = 0;
         
-        // Ensure profile and preferences exist
         if (!user.onboarding.profile) {
           user.onboarding.profile = {
             completed: false,
@@ -639,14 +609,12 @@ export const approvePromotionRequest = async (req, res) => {
 
       await user.save();
 
-      // Update promotion request status
       promotionRequest.status = 'approved';
       promotionRequest.reviewedAt = new Date();
       promotionRequest.reviewedBy = adminId;
       promotionRequest.reviewComments = comments || '';
       await promotionRequest.save();
 
-      // Create notification for the user
       const notification = new Notification({
         userId: user._id,
         type: 'system',
@@ -666,14 +634,12 @@ export const approvePromotionRequest = async (req, res) => {
       });
 
     } else if (action === 'reject') {
-      // Update promotion request status
       promotionRequest.status = 'rejected';
       promotionRequest.reviewedAt = new Date();
       promotionRequest.reviewedBy = adminId;
       promotionRequest.reviewComments = comments || '';
       await promotionRequest.save();
 
-      // Create notification for the user
       const notification = new Notification({
         userId: user._id,
         type: 'system',
@@ -707,8 +673,6 @@ export const getPromotionRequests = async (req, res) => {
   console.log('Get promotion requests route/controller hit');
   try {
     const adminId = req.user.id;
-
-    // Admin verification is handled by middleware
 
     const { status, page = 1, limit = 10 } = req.query;
     const query = status ? { status } : {};
@@ -752,16 +716,13 @@ export const completeOnboarding = async (req, res) => {
       return res.status(404).json({ status: false, message: 'User not found' });
     }
 
-    // Update specific onboarding fields without overwriting the entire object
     if (onboarding.profile) {
-      // Clean up profile data - convert empty strings to null for enum fields
       const cleanedProfile = {
         ...user.onboarding.profile,
         ...onboarding.profile,
         completed: true,
       };
       
-      // Convert empty strings to null for enum fields
       if (cleanedProfile.gender === '') {
         cleanedProfile.gender = null;
       }
@@ -770,14 +731,12 @@ export const completeOnboarding = async (req, res) => {
     }
 
     if (onboarding.preferences) {
-      // Clean up preferences data - convert empty strings to null for enum fields
       const cleanedPreferences = {
         ...user.onboarding.preferences,
         ...onboarding.preferences,
         completed: true,
       };
       
-      // Convert empty strings to null for enum fields
       if (cleanedPreferences.shoppingFrequency === '') {
         cleanedPreferences.shoppingFrequency = null;
       }
@@ -788,12 +747,10 @@ export const completeOnboarding = async (req, res) => {
       user.onboarding.preferences = cleanedPreferences;
     }
 
-    // Set completion status
     user.onboarding.isComplete = true;
     user.onboarding.completedAt = new Date();
     user.onboarding.step = onboarding.step || 4;
 
-    // Mark the onboarding field as modified
     user.markModified('onboarding');
 
     await user.save();
@@ -866,7 +823,6 @@ export const completeShopOnboarding = async (req, res) => {
       });
     }
 
-    // Update user onboarding data - preserve existing profile and preferences
     if (!user.onboarding) {
       user.onboarding = {
         isComplete: false,
@@ -882,7 +838,6 @@ export const completeShopOnboarding = async (req, res) => {
       };
     }
 
-    // Ensure profile and preferences exist
     if (!user.onboarding.profile) {
       user.onboarding.profile = {
         completed: false,
@@ -896,7 +851,6 @@ export const completeShopOnboarding = async (req, res) => {
       };
     }
 
-    // Update only the completion status and timestamp
     user.onboarding.isComplete = onboarding.isComplete;
     user.onboarding.step = onboarding.step || user.onboarding.step;
     if (onboarding.isComplete) {
@@ -910,7 +864,6 @@ export const completeShopOnboarding = async (req, res) => {
       completedAt: user.onboarding.completedAt
     });
 
-    // Update shop data if provided
     if (shop) {
       if (!user.shop) {
         user.shop = {};
@@ -947,7 +900,6 @@ export const completeShopOnboarding = async (req, res) => {
     console.log('Final onboarding data to be saved:', user.onboarding);
     console.log('Final shop data to be saved:', user.shop);
 
-    // Update avatar if provided
     if (avatar) {
       user.avatar = avatar;
     }
@@ -1003,7 +955,6 @@ export const updateShopDetails = async (req, res) => {
       });
     }
 
-    // Update shop details
     if (!user.shop) {
       user.shop = {};
     }

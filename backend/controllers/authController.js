@@ -131,7 +131,6 @@ export const login = async (req, res) => {
         .json({ status: false, message: 'Password didnt match' });
     }
 
-    // Check if user is banned
     if (user.status === 'banned') {
       return res.status(403).json({
         status: false,
@@ -144,7 +143,6 @@ export const login = async (req, res) => {
       });
     }
 
-    // Check if user is suspended
     if (user.status === 'suspended') {
       const isStillSuspended =
         user.suspendedUntil && new Date() < new Date(user.suspendedUntil);
@@ -163,7 +161,6 @@ export const login = async (req, res) => {
           suspensionReason: user.suspensionReason,
         });
       } else {
-        // Suspension period has ended, reactivate the account
         user.status = 'active';
         user.suspendedUntil = null;
         user.suspensionReason = null;
@@ -171,7 +168,6 @@ export const login = async (req, res) => {
       }
     }
 
-    // Update last active timestamp
     user.lastActiveAt = new Date();
     await user.save();
 

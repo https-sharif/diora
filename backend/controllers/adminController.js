@@ -10,24 +10,18 @@ import { getIO, onlineUsers } from '../sockets/socketSetup.js';
 export const getAdminStats = async (req, res) => {
   console.log('Get admin stats route/controller hit');
   try {
-    // Admin verification is handled by middleware
-
-    // Get user statistics
     const totalUsers = await User.countDocuments({ type: 'user' });
     const totalShops = await User.countDocuments({ type: 'shop' });
     const totalAdmins = await User.countDocuments({ type: 'admin' });
 
-    // Get content statistics
     const totalPosts = await Post.countDocuments();
     const totalProducts = await Product.countDocuments();
     const totalComments = await Comment.countDocuments();
 
-    // Get promotion requests statistics
     const pendingRequests = await PromotionRequest.countDocuments({ status: 'pending' });
     const approvedRequests = await PromotionRequest.countDocuments({ status: 'approved' });
     const rejectedRequests = await PromotionRequest.countDocuments({ status: 'rejected' });
 
-    // Get recent activity (last 30 days)
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
@@ -46,7 +40,6 @@ export const getAdminStats = async (req, res) => {
       createdAt: { $gte: thirtyDaysAgo }
     });
 
-    // Get orders statistics (if Order model exists)
     let totalOrders = 0;
     let ordersThisMonth = 0;
     try {
@@ -55,7 +48,6 @@ export const getAdminStats = async (req, res) => {
         createdAt: { $gte: thirtyDaysAgo }
       });
     } catch (error) {
-      // Order model might not exist yet
       console.log('Order model not found, skipping order stats');
     }
 
@@ -105,11 +97,8 @@ export const getAdminStats = async (req, res) => {
 export const getSystemHealth = async (req, res) => {
   console.log('Get system health route/controller hit');
   try {
-    // Admin verification is handled by middleware
-
-    // Check database connection and get basic health metrics
     const dbStats = {
-      connected: true, // If we reach here, DB is connected
+      connected: true,
       collections: {
         users: await User.countDocuments(),
         posts: await Post.countDocuments(),
@@ -118,7 +107,6 @@ export const getSystemHealth = async (req, res) => {
       }
     };
 
-    // Get recent activity indicators
     const lastHour = new Date();
     lastHour.setHours(lastHour.getHours() - 1);
 
@@ -155,7 +143,6 @@ export const getSystemHealth = async (req, res) => {
   }
 };
 
-// Search users for admin monitoring
 export const searchUsers = async (req, res) => {
   console.log('Admin search users route/controller hit');
   try {
@@ -163,7 +150,6 @@ export const searchUsers = async (req, res) => {
     
     const filter = {};
     
-    // Text search
     if (query && query.trim()) {
       const searchRegex = { $regex: query.trim(), $options: 'i' };
       filter.$or = [
@@ -173,12 +159,10 @@ export const searchUsers = async (req, res) => {
       ];
     }
     
-    // Filter by user type
     if (type && type !== 'all') {
       filter.type = type;
     }
     
-    // Filter by status
     if (status && status !== 'all') {
       filter.status = status;
     }
@@ -210,7 +194,6 @@ export const searchUsers = async (req, res) => {
   }
 };
 
-// Suspend user
 export const suspendUser = async (req, res) => {
   console.log('Admin suspend user route/controller hit');
   try {
@@ -235,7 +218,6 @@ export const suspendUser = async (req, res) => {
     
     await user.save();
     
-    // Create notification for suspended user
     const notification = new Notification({
       userId: user._id,
       type: 'warning',
@@ -266,7 +248,6 @@ export const suspendUser = async (req, res) => {
   }
 };
 
-// Ban user permanently
 export const banUser = async (req, res) => {
   console.log('Admin ban user route/controller hit');
   try {
@@ -288,7 +269,6 @@ export const banUser = async (req, res) => {
     
     await user.save();
     
-    // Create notification for banned user
     const notification = new Notification({
       userId: user._id,
       type: 'warning',
@@ -318,7 +298,6 @@ export const banUser = async (req, res) => {
   }
 };
 
-// Unban/restore user
 export const unbanUser = async (req, res) => {
   console.log('Admin unban user route/controller hit');
   try {
@@ -339,7 +318,6 @@ export const unbanUser = async (req, res) => {
     
     await user.save();
     
-    // Create notification for restored user
     const notification = new Notification({
       userId: user._id,
       type: 'system',
@@ -368,7 +346,6 @@ export const unbanUser = async (req, res) => {
   }
 };
 
-// Warn user
 export const warnUser = async (req, res) => {
   console.log('Admin warn user route/controller hit');
   try {
@@ -380,7 +357,6 @@ export const warnUser = async (req, res) => {
       return res.status(404).json({ status: false, message: 'User not found' });
     }
     
-    // Create warning notification
     const notification = new Notification({
       userId: user._id,
       type: 'warning',
@@ -393,7 +369,6 @@ export const warnUser = async (req, res) => {
     });
     await notification.save();
     
-    // Emit socket notification if user is online
     const io = getIO();
     const targetSocketId = onlineUsers.get(userId);
     if (targetSocketId) {
@@ -414,37 +389,32 @@ export const warnUser = async (req, res) => {
   }
 };
 
-// Search posts for admin monitoring
 export const searchPosts = async (req, res) => {
   console.log('Admin search posts route/controller hit');
   try {
     const { query, sort, reported, hidden } = req.query;
     console.log('Search posts params:', { query, sort, reported, hidden });
     
-    // First, let's check what posts exist in the database
     const totalPosts = await Post.countDocuments();
     console.log('Total posts in database:', totalPosts);
     
     let searchCriteria = {};
     
-    // Search by caption if query provided
     if (query) {
       searchCriteria.caption = { $regex: query, $options: 'i' };
     }
     
-    // Filter by reported posts
     if (reported === 'true') {
       searchCriteria.reports = { $gt: 0 };
     }
     
-    // Filter by hidden posts
     if (hidden === 'true') {
       searchCriteria.isHidden = true;
     }
     
     console.log('Search criteria:', searchCriteria);
     
-    let sortCriteria = { createdAt: -1 }; // Default: newest first
+    let sortCriteria = { createdAt: -1 };
     
     if (sort === 'recent') {
       sortCriteria = { createdAt: -1 };
@@ -480,7 +450,6 @@ export const searchPosts = async (req, res) => {
   }
 };
 
-// Search products for admin monitoring
 export const searchProducts = async (req, res) => {
   console.log('Admin search products route/controller hit');
   try {
@@ -489,7 +458,6 @@ export const searchProducts = async (req, res) => {
     
     let searchCriteria = {};
     
-    // Search by name or description if query provided
     if (query) {
       searchCriteria.$or = [
         { name: { $regex: query, $options: 'i' } },
@@ -497,17 +465,15 @@ export const searchProducts = async (req, res) => {
       ];
     }
     
-    // Filter by reported products
     if (reported === 'true') {
       searchCriteria.reports = { $gt: 0 };
     }
     
-    // Filter by stock level
     if (stock === '0') {
       searchCriteria.stock = 0;
     }
     
-    let sortCriteria = { createdAt: -1 }; // Default: newest first
+    let sortCriteria = { createdAt: -1 };
     
     if (sort === 'recent') {
       sortCriteria = { createdAt: -1 };
@@ -535,7 +501,6 @@ export const searchProducts = async (req, res) => {
   }
 };
 
-// Hide post
 export const hidePost = async (req, res) => {
   try {
     const { postId } = req.params;
@@ -561,7 +526,6 @@ export const hidePost = async (req, res) => {
   }
 };
 
-// Show post
 export const showPost = async (req, res) => {
   try {
     const { postId } = req.params;
@@ -587,7 +551,6 @@ export const showPost = async (req, res) => {
   }
 };
 
-// Hide product
 export const hideProduct = async (req, res) => {
   try {
     const { productId } = req.params;
@@ -613,7 +576,6 @@ export const hideProduct = async (req, res) => {
   }
 };
 
-// Show product
 export const showProduct = async (req, res) => {
   try {
     const { productId } = req.params;

@@ -14,7 +14,6 @@ export const createOrder = async (req, res) => {
     const userId = req.user.id;
     const { shippingAddress, paymentMethod, notes } = req.body;
 
-    // Get user's cart
     const cart = await Cart.findOne({ userId }).populate('products.productId');
 
     if (!cart || cart.products.length === 0) {
@@ -24,15 +23,13 @@ export const createOrder = async (req, res) => {
       });
     }
 
-    // Calculate totals and prepare order items
     let subtotal = 0;
     const orderItems = [];
-    const stockUpdates = []; // Track stock updates for rollback if needed
+    const stockUpdates = [];
 
     for (const cartItem of cart.products) {
       const product = cartItem.productId;
 
-      // Check if product has sufficient stock
       if (product.stock < cartItem.quantity) {
         return res.status(400).json({
           status: false,
@@ -40,7 +37,6 @@ export const createOrder = async (req, res) => {
         });
       }
 
-      // Calculate price (with discount if applicable)
       let itemPrice = product.price;
       if (product.discount && product.discount > 0) {
         itemPrice = product.price - (product.price * product.discount) / 100;
@@ -59,7 +55,6 @@ export const createOrder = async (req, res) => {
         variant: cartItem.variant,
       });
 
-      // Track stock update for this product
       stockUpdates.push({
         productId: product._id,
         originalStock: product.stock,
@@ -68,11 +63,9 @@ export const createOrder = async (req, res) => {
       });
     }
 
-    // Calculate shipping fee (free shipping over $100)
     const shippingFee = subtotal > 100 ? 0 : 10;
     const total = subtotal + shippingFee;
 
-    // Generate order number
     const date = new Date();
     const year = date.getFullYear().toString().slice(-2);
     const month = (date.getMonth() + 1).toString().padStart(2, '0');
@@ -82,7 +75,6 @@ export const createOrder = async (req, res) => {
       .padStart(4, '0');
     const orderNumber = `ORD${year}${month}${day}${random}`;
 
-    // Create the order
     const newOrder = new Order({
       orderNumber,
       userId,
@@ -97,7 +89,6 @@ export const createOrder = async (req, res) => {
 
     await newOrder.save();
 
-    // Update product stock quantities
     try {
       for (const stockUpdate of stockUpdates) {
         await Product.findByIdAndUpdate(
@@ -108,19 +99,14 @@ export const createOrder = async (req, res) => {
       }
     } catch (stockError) {
       console.error('Error updating stock:', stockError);
-      // If stock update fails, we should ideally rollback the order
-      // For now, we'll log the error but continue with the order
-      // In production, consider implementing a transaction or compensation logic
     }
 
-    // Clear the user's cart after successful order
     await Cart.findOneAndUpdate(
       { userId },
       { $set: { products: [] } },
       { new: true }
     );
 
-    // Populate the order for response
     const populatedOrder = await Order.findById(newOrder._id)
       .populate('userId', 'fullName email')
       .populate('items.productId', 'name imageUrl shopId');
@@ -293,7 +279,6 @@ export const cancelOrder = async (req, res) => {
       });
     }
 
-    // Only allow cancellation if order is in processing or confirmed status
     if (!['processing', 'confirmed'].includes(order.status)) {
       return res.status(400).json({
         status: false,
@@ -324,7 +309,6 @@ export const getShopOrders = async (req, res) => {
     const shopId = req.user.id;
     const { page = 1, limit = 10, status } = req.query;
 
-    // Build query to find orders containing products from this shop
     const matchQuery = {
       'items.productId': { $exists: true },
     };
@@ -386,7 +370,6 @@ export const getShopOrders = async (req, res) => {
       { $limit: parseInt(limit) },
     ]);
 
-    // Get total count for pagination
     const totalOrders = await Order.aggregate([
       {
         $lookup: {

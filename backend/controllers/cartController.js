@@ -1,7 +1,6 @@
 import Cart from '../models/Cart.js';
 import Product from '../models/Product.js';
 
-// Get user's cart
 export const getCart = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -22,13 +21,11 @@ export const getCart = async (req, res) => {
   }
 };
 
-// Add item to cart
 export const addToCart = async (req, res) => {
   try {
     const userId = req.user.id;
     const { productId, quantity = 1, size, variant } = req.body;
 
-    // Validate product exists
     const product = await Product.findById(productId);
     if (!product) {
       return res.status(404).json({ status: false, message: 'Product not found' });
@@ -40,7 +37,6 @@ export const addToCart = async (req, res) => {
       cart = await Cart.create({ userId, products: [] });
     }
 
-    // Check if item already exists in cart
     const existingItemIndex = cart.products.findIndex(
       item => 
         item.productId.toString() === productId && 
@@ -49,16 +45,13 @@ export const addToCart = async (req, res) => {
     );
 
     if (existingItemIndex > -1) {
-      // Update existing item quantity
       cart.products[existingItemIndex].quantity += quantity;
     } else {
-      // Add new item to cart
       cart.products.push({ productId, quantity, size, variant });
     }
 
     await cart.save();
     
-    // Populate the cart with product details
     await cart.populate({
       path: 'products.productId',
       select: 'name price imageUrl description category'
@@ -71,7 +64,6 @@ export const addToCart = async (req, res) => {
   }
 };
 
-// Update cart item quantity
 export const updateCartQuantity = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -98,16 +90,13 @@ export const updateCartQuantity = async (req, res) => {
     }
 
     if (quantity === 0) {
-      // Remove item from cart
       cart.products.splice(itemIndex, 1);
     } else {
-      // Update quantity
       cart.products[itemIndex].quantity = quantity;
     }
 
     await cart.save();
     
-    // Populate the cart with product details
     await cart.populate({
       path: 'products.productId',
       select: 'name price imageUrl description category'
@@ -120,7 +109,6 @@ export const updateCartQuantity = async (req, res) => {
   }
 };
 
-// Remove item from cart
 export const removeFromCart = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -141,7 +129,6 @@ export const removeFromCart = async (req, res) => {
 
     await cart.save();
     
-    // Populate the cart with product details
     await cart.populate({
       path: 'products.productId',
       select: 'name price imageUrl description category'
@@ -154,7 +141,6 @@ export const removeFromCart = async (req, res) => {
   }
 };
 
-// Clear cart
 export const clearCart = async (req, res) => {
   try {
     const userId = req.user.id;

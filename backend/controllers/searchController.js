@@ -104,7 +104,7 @@ export const getSearchResults = async (req, res) => {
           }).populate({
             path: 'user',
             select: 'username profilePicture status',
-            match: isAdmin ? {} : { status: 'active' }, // Admins see all, others only active
+            match: isAdmin ? {} : { status: 'active' },
           })
         : [],
       contentType === 'All' || contentType === 'Products'

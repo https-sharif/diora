@@ -82,14 +82,12 @@ const reportSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Indexes for efficient querying
 reportSchema.index({ status: 1, priority: 1 });
 reportSchema.index({ 'reportedItem.itemType': 1, 'reportedItem.itemId': 1 });
 reportSchema.index({ reporter: 1 });
 reportSchema.index({ reviewedBy: 1 });
 reportSchema.index({ createdAt: -1 });
 
-// Virtual to populate reported item details
 reportSchema.virtual('reportedItemDetails', {
   refPath: 'reportedItem.itemType',
   localField: 'reportedItem.itemId',
@@ -97,7 +95,6 @@ reportSchema.virtual('reportedItemDetails', {
   justOne: true
 });
 
-// Method to determine reference model based on item type
 reportSchema.methods.getRefModel = function() {
   const modelMap = {
     'user': 'User',
