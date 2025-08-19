@@ -76,7 +76,9 @@ export const useAuthStore = create<AuthState>()(
           const signupData = await authService.signup(data);
 
           if (signupData.status) {
-            await AsyncStorage.setItem('token', signupData.token);            const newUser: User = {
+            await AsyncStorage.setItem('token', signupData.token);            
+
+            const newUser: User = {
               _id: signupData.user._id,
               username: signupData.user.username,
               fullName: signupData.user.fullName,
@@ -91,6 +93,7 @@ export const useAuthStore = create<AuthState>()(
               createdAt: signupData.user.createdAt,
               type: signupData.user.type,
               onboarding: signupData.user.onboarding,
+              stripeCustomerId: signupData.user.stripeCustomerId,
               settings: {
                 theme: signupData.user.settings.theme,
                 notifications: {

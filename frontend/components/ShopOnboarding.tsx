@@ -11,21 +11,34 @@ import {
   Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ArrowLeft, ArrowRight, Store, Package, Settings, Camera, Image as ImageIcon } from 'lucide-react-native';
+import {
+  ArrowLeft,
+  ArrowRight,
+  Store,
+  Camera,
+  Image as ImageIcon,
+} from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
 import { Theme } from '@/types/Theme';
 import { userService } from '@/services';
+import axios from 'axios';
+import { config } from '@/config';
 
 interface ShopOnboardingProps {
   onComplete: () => void;
 }
 
 const BUSINESS_CATEGORIES = [
-  'Women\'s Clothing', 'Men\'s Clothing', 'Shoes & Footwear', 'Bags & Accessories', 
-  'Jewelry & Watches', 'Activewear & Sports', 'Other Fashion'
+  "Women's Clothing",
+  "Men's Clothing",
+  'Shoes & Footwear',
+  'Bags & Accessories',
+  'Jewelry & Watches',
+  'Activewear & Sports',
+  'Other Fashion',
 ];
 
 const createStyles = (theme: Theme) =>
@@ -252,6 +265,19 @@ const createStyles = (theme: Theme) =>
       color: theme.text,
       fontSize: 14,
     },
+    stripeButton: {
+      backgroundColor: theme.accent,
+      borderRadius: 12,
+      paddingVertical: 16,
+      alignItems: 'center',
+      flexDirection: 'row',
+      justifyContent: 'center',
+      gap: 8,
+    },
+    stripeButtonText: {
+      color: theme.text,
+      fontSize: 14,
+    },
     imageContainer: {
       position: 'relative',
     },
@@ -282,6 +308,7 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
   const styles = createStyles(theme);
   const [currentStep, setCurrentStep] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [stripeConnected, setStripeConnected] = useState(false);
 
   const [shopData, setShopData] = useState({
     location: user?.shop?.location || '',
@@ -298,20 +325,24 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
   });
 
   const [photoData, setPhotoData] = useState({
-    coverPhoto: user?.shop?.coverImageUrl || null as string | null,
-    coverPhotoId: user?.shop?.coverImageId || null as string | null,
-    profilePicture: user?.avatar || null as string | null,
+    coverPhoto: user?.shop?.coverImageUrl || (null as string | null),
+    coverPhotoId: user?.shop?.coverImageId || (null as string | null),
+    profilePicture: user?.avatar || (null as string | null),
     uploadingCover: false,
     uploadingProfile: false,
   });
 
-  const totalSteps = 4;
+  const totalSteps = 5;
 
   const pickImage = async (type: 'cover' | 'profile') => {
     try {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      const { status } =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permission needed', 'Please grant camera roll permissions to upload images.');
+        Alert.alert(
+          'Permission needed',
+          'Please grant camera roll permissions to upload images.'
+        );
         return;
       }
 
@@ -331,7 +362,10 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
     }
   };
 
-    const uploadPhoto = async (type: string, result: ImagePicker.ImagePickerResult) => {
+  const uploadPhoto = async (
+    type: string,
+    result: ImagePicker.ImagePickerResult
+  ) => {
     if (result.canceled) {
       console.log('Photo upload cancelled by user');
       return;
@@ -339,21 +373,25 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
 
     const asset = result.assets[0];
     console.log('Starting photo upload - Type:', type, 'Asset URI:', asset.uri);
-    
+
     // Map the type to the correct property name
     const propertyName = type === 'cover' ? 'coverPhoto' : 'profilePicture';
-    const uploadingProperty = type === 'cover' ? 'uploadingCover' : 'uploadingProfile';
+    const uploadingProperty =
+      type === 'cover' ? 'uploadingCover' : 'uploadingProfile';
 
     // Optimistic update - immediately show the image in UI
-    setPhotoData(prev => ({
+    setPhotoData((prev) => ({
       ...prev,
       [propertyName]: asset.uri, // Use local URI for immediate display
-      [uploadingProperty]: true
+      [uploadingProperty]: true,
     }));
 
     console.log('Optimistic update applied - showing local image immediately');
-    showToast('success', `${type.replace(/([A-Z])/g, ' $1').toLowerCase()} selected! Uploading...`);
-    
+    showToast(
+      'success',
+      `${type.replace(/([A-Z])/g, ' $1').toLowerCase()} selected! Uploading...`
+    );
+
     const formData = new FormData();
     formData.append('image', {
       uri: asset.uri,
@@ -366,7 +404,7 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
       if (!token) {
         throw new Error('No authentication token available');
       }
-      
+
       const response = await userService.uploadImage(formData, token);
 
       console.log('Photo upload response:', response);
@@ -374,48 +412,64 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
       if (response.status) {
         // Update with the actual cloud URL and ID after successful upload
         if (type === 'cover') {
-          setPhotoData(prev => ({
+          setPhotoData((prev) => ({
             ...prev,
             coverPhoto: response.data.url,
             coverPhotoId: response.data.id,
-            uploadingCover: false
+            uploadingCover: false,
           }));
         } else {
-          setPhotoData(prev => ({
+          setPhotoData((prev) => ({
             ...prev,
             [propertyName]: response.data.url,
-            [uploadingProperty]: false
+            [uploadingProperty]: false,
           }));
         }
-        console.log('Upload completed - URL:', response.data.url, 'ID:', response.data.id);
-        showToast('success', `${type.replace(/([A-Z])/g, ' $1').toLowerCase()} uploaded successfully!`);
+        console.log(
+          'Upload completed - URL:',
+          response.data.url,
+          'ID:',
+          response.data.id
+        );
+        showToast(
+          'success',
+          `${type
+            .replace(/([A-Z])/g, ' $1')
+            .toLowerCase()} uploaded successfully!`
+        );
       } else {
         // Revert optimistic update on failure
-        setPhotoData(prev => ({
+        setPhotoData((prev) => ({
           ...prev,
           [propertyName]: null,
-          [uploadingProperty]: false
+          [uploadingProperty]: false,
         }));
         console.error('Upload failed - Response:', response.data);
-        showToast('error', `Failed to upload ${type.replace(/([A-Z])/g, ' $1').toLowerCase()}`);
+        showToast(
+          'error',
+          `Failed to upload ${type.replace(/([A-Z])/g, ' $1').toLowerCase()}`
+        );
       }
     } catch (error: any) {
       // Revert optimistic update on error
-      setPhotoData(prev => ({
+      setPhotoData((prev) => ({
         ...prev,
         [propertyName]: null,
-        [uploadingProperty]: false
+        [uploadingProperty]: false,
       }));
       console.error('Photo upload error:', error);
       console.error('Error response:', error.response?.data);
       console.error('Error status:', error.response?.status);
-      showToast('error', `Failed to upload ${type.replace(/([A-Z])/g, ' $1').toLowerCase()}`);
+      showToast(
+        'error',
+        `Failed to upload ${type.replace(/([A-Z])/g, ' $1').toLowerCase()}`
+      );
     }
   };
 
   const handleNext = async () => {
     if (currentStep < totalSteps - 1) {
-      setCurrentStep(prev => prev + 1);
+      setCurrentStep((prev) => prev + 1);
     } else {
       await completeOnboarding();
     }
@@ -423,7 +477,7 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
 
   const handleBack = () => {
     if (currentStep > 0) {
-      setCurrentStep(prev => prev - 1);
+      setCurrentStep((prev) => prev - 1);
     }
   };
 
@@ -449,7 +503,10 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
       }
 
       if (shopData.categories.length === 0) {
-        Alert.alert('Error', 'Please select at least one category for your shop');
+        Alert.alert(
+          'Error',
+          'Please select at least one category for your shop'
+        );
         setLoading(false);
         return;
       }
@@ -460,7 +517,7 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
       };
 
       // Update data including cover image in shop object
-      const updateData: any = { 
+      const updateData: any = {
         onboarding: shopOnboardingData,
         shop: {
           location: shopData.location,
@@ -470,10 +527,13 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
           socialLinks: shopData.socialLinks,
           categories: shopData.categories,
           coverImageUrl: photoData.coverPhoto,
-          coverImageId: photoData.coverPhotoId
-        }
+          coverImageId: photoData.coverPhotoId,
+        },
       };
-      if (photoData.profilePicture && photoData.profilePicture !== user?.avatar) {
+      if (
+        photoData.profilePicture &&
+        photoData.profilePicture !== user?.avatar
+      ) {
         updateData.avatar = photoData.profilePicture;
       }
 
@@ -483,7 +543,10 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
         throw new Error('No authentication token available');
       }
 
-      const response = await userService.completeShopOnboarding(updateData, token);
+      const response = await userService.completeShopOnboarding(
+        updateData,
+        token
+      );
 
       console.log('Shop onboarding response:', response);
       console.log('Response status:', response?.status);
@@ -491,55 +554,80 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
 
       if (response.status) {
         console.log('Shop onboarding completed successfully');
-        console.log('Backend response user data:', JSON.stringify(response?.user?.onboarding, null, 2));
-        
+        console.log(
+          'Backend response user data:',
+          JSON.stringify(response?.user?.onboarding, null, 2)
+        );
+
         // First refresh to sync latest data
         console.log('🔄 First refresh attempt...');
         await refreshUser();
-        
+
         // Wait for state to propagate
-        await new Promise(resolve => setTimeout(resolve, 300));
-        
-        console.log('User state after first refresh:', JSON.stringify(user?.onboarding, null, 2));
-        console.log('Shop onboarding isComplete after first refresh:', user?.onboarding?.isComplete);
-        
+        await new Promise((resolve) => setTimeout(resolve, 300));
+
+        console.log(
+          'User state after first refresh:',
+          JSON.stringify(user?.onboarding, null, 2)
+        );
+        console.log(
+          'Shop onboarding isComplete after first refresh:',
+          user?.onboarding?.isComplete
+        );
+
         // Double check with another refresh if not complete yet
         if (!user?.onboarding?.isComplete) {
           console.log('🔄 Not complete yet, trying second refresh...');
           await refreshUser();
-          await new Promise(resolve => setTimeout(resolve, 300));
-          console.log('User state after second refresh:', JSON.stringify(user?.onboarding, null, 2));
+          await new Promise((resolve) => setTimeout(resolve, 300));
+          console.log(
+            'User state after second refresh:',
+            JSON.stringify(user?.onboarding, null, 2)
+          );
         }
-        
+
         // Verify completion before calling onComplete
         const isCompleteInResponse = response?.user?.onboarding?.isComplete;
         const isCompleteInStore = user?.onboarding?.isComplete;
-        
+
         console.log('🔍 Final verification:');
-        console.log('  - Backend response says complete:', isCompleteInResponse);
+        console.log(
+          '  - Backend response says complete:',
+          isCompleteInResponse
+        );
         console.log('  - Store state says complete:', isCompleteInStore);
-        
+
         if (isCompleteInResponse || isCompleteInStore) {
-          console.log('✅ Shop onboarding verified as complete, calling onComplete...');
+          console.log(
+            '✅ Shop onboarding verified as complete, calling onComplete...'
+          );
           onComplete();
         } else {
-          console.log('❌ Shop onboarding not marked as complete anywhere, forcing completion...');
+          console.log(
+            '❌ Shop onboarding not marked as complete anywhere, forcing completion...'
+          );
           // Force another sync attempt
           await refreshUser();
-          await new Promise(resolve => setTimeout(resolve, 500));
-          
+          await new Promise((resolve) => setTimeout(resolve, 500));
+
           // Call onComplete anyway since backend succeeded
           console.log('🔧 Forcing completion despite state mismatch...');
           onComplete();
         }
       } else {
         console.error('Shop onboarding failed:', response.message);
-        Alert.alert('Error', response.message || 'Failed to complete shop onboarding');
+        Alert.alert(
+          'Error',
+          response.message || 'Failed to complete shop onboarding'
+        );
       }
     } catch (error: any) {
       console.error('Error completing shop onboarding:', error);
       console.error('Error response:', error.response?.data);
-      const errorMessage = error.response?.data?.message || error.message || 'Failed to complete shop onboarding';
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        'Failed to complete shop onboarding';
       Alert.alert('Error', errorMessage);
     } finally {
       setLoading(false);
@@ -549,17 +637,18 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
   const canProceed = () => {
     switch (currentStep) {
       case 0:
-        return true; // Welcome step
+        return true;
       case 1:
-        // Shop details step - require location
         return shopData.location.trim().length > 0;
       case 2:
-        // Images step - require cover photo
-        const hasCoverPhoto = photoData.coverPhoto !== null && photoData.coverPhoto.trim().length > 0;
+        const hasCoverPhoto =
+          photoData.coverPhoto !== null &&
+          photoData.coverPhoto.trim().length > 0;
         return hasCoverPhoto;
       case 3:
-        // Categories step - require at least one category
         return shopData.categories.length > 0;
+      case 4:
+        return stripeConnected;
       default:
         return false;
     }
@@ -572,112 +661,28 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
       </View>
       <Text style={styles.title}>Welcome to Your Shop!</Text>
       <Text style={styles.subtitle}>
-        Congratulations on your promotion! Let&apos;s set up your shop to start selling and connecting with customers.
+        Congratulations on your promotion! Let&apos;s set up your shop to start
+        selling and connecting with customers.
       </Text>
     </View>
-  );
-
-  const renderPhotoStep = () => (
-    <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-      <Text style={styles.title}>Shop Visuals</Text>
-      <Text style={styles.subtitle}>
-        Upload your shop&apos;s cover photo and update your profile picture
-      </Text>
-
-      <View style={styles.coverPhotoSection}>
-        <Text style={styles.label}>Cover Photo *</Text>
-        <Text style={[styles.subtitle, { marginBottom: 12, fontSize: 14 }]}>
-          This will be displayed at the top of your shop profile
-        </Text>
-        
-        {photoData.coverPhoto ? (
-          <View style={styles.imageContainer}>
-            <Image source={{ uri: photoData.coverPhoto }} style={styles.coverPhoto} />
-            {photoData.uploadingCover && (
-              <View style={styles.uploadingOverlay}>
-                <ActivityIndicator color="#fff" size="small" />
-                <Text style={styles.uploadingText}>Uploading...</Text>
-              </View>
-            )}
-          </View>
-        ) : (
-          <View style={styles.coverPhotoPlaceholder}>
-            <ImageIcon size={40} color={theme.textSecondary} />
-            <Text style={[styles.subtitle, { marginTop: 8 }]}>No cover photo</Text>
-          </View>
-        )}
-        
-        <TouchableOpacity 
-          style={styles.uploadButton} 
-          onPress={() => pickImage('cover')}
-          disabled={photoData.uploadingCover}
-        >
-          {photoData.uploadingCover ? (
-            <ActivityIndicator color="#000" size="small" />
-          ) : (
-            <>
-              <Camera size={20} color="#000" />
-              <Text style={styles.uploadButtonText}>
-                {photoData.coverPhoto ? 'Change Cover Photo' : 'Upload Cover Photo'}
-              </Text>
-            </>
-          )}
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.profileSection}>
-        <Text style={styles.label}>Profile Picture</Text>
-        <Text style={[styles.subtitle, { marginBottom: 12, fontSize: 14 }]}>
-          Update your profile picture or keep the current one
-        </Text>
-        
-        <View style={styles.profileImageContainer}>
-          {photoData.profilePicture ? (
-            <View style={styles.imageContainer}>
-              <Image source={{ uri: photoData.profilePicture }} style={styles.profileImage} />
-              {photoData.uploadingProfile && (
-                <View style={[styles.uploadingOverlay, { borderRadius: 60 }]}>
-                  <ActivityIndicator color="#fff" size="small" />
-                  <Text style={styles.uploadingText}>Uploading...</Text>
-                </View>
-              )}
-            </View>
-          ) : (
-            <View style={styles.profileImagePlaceholder}>
-              <ImageIcon size={40} color={theme.textSecondary} />
-            </View>
-          )}
-        </View>
-        
-        <TouchableOpacity 
-          style={styles.changeProfileButton} 
-          onPress={() => pickImage('profile')}
-          disabled={photoData.uploadingProfile}
-        >
-          {photoData.uploadingProfile ? (
-            <ActivityIndicator color={theme.text} size="small" />
-          ) : (
-            <Text style={styles.changeProfileButtonText}>
-              {photoData.profilePicture ? 'Change Profile Picture' : 'Upload Profile Picture'}
-            </Text>
-          )}
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
   );
 
   const renderShopDetailsStep = () => (
     <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
       <Text style={[styles.title, { color: '#000' }]}>Shop Details</Text>
-      <Text style={[styles.subtitle, { color: '#000' }]}>Tell customers about your shop</Text>
-      
+      <Text style={[styles.subtitle, { color: '#000' }]}>
+        Tell customers about your shop
+      </Text>
+
       <View style={styles.inputGroup}>
         <Text style={styles.label}>Shop Location *</Text>
         <TextInput
           style={styles.input}
           placeholder="Enter your shop address or area"
           value={shopData.location}
-          onChangeText={(text) => setShopData(prev => ({ ...prev, location: text }))}
+          onChangeText={(text) =>
+            setShopData((prev) => ({ ...prev, location: text }))
+          }
         />
       </View>
 
@@ -687,7 +692,9 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
           style={styles.input}
           placeholder="shop@example.com"
           value={shopData.contactEmail}
-          onChangeText={(text) => setShopData(prev => ({ ...prev, contactEmail: text }))}
+          onChangeText={(text) =>
+            setShopData((prev) => ({ ...prev, contactEmail: text }))
+          }
           keyboardType="email-address"
         />
       </View>
@@ -698,7 +705,9 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
           style={styles.input}
           placeholder="+1 (555) 123-4567"
           value={shopData.contactPhone}
-          onChangeText={(text) => setShopData(prev => ({ ...prev, contactPhone: text }))}
+          onChangeText={(text) =>
+            setShopData((prev) => ({ ...prev, contactPhone: text }))
+          }
           keyboardType="phone-pad"
         />
       </View>
@@ -709,7 +718,9 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
           style={styles.input}
           placeholder="https://yourshop.com"
           value={shopData.website}
-          onChangeText={(text) => setShopData(prev => ({ ...prev, website: text }))}
+          onChangeText={(text) =>
+            setShopData((prev) => ({ ...prev, website: text }))
+          }
           keyboardType="url"
         />
       </View>
@@ -720,10 +731,12 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
           style={styles.input}
           placeholder="@yourshop"
           value={shopData.socialLinks.instagram}
-          onChangeText={(text) => setShopData(prev => ({ 
-            ...prev, 
-            socialLinks: { ...prev.socialLinks, instagram: text }
-          }))}
+          onChangeText={(text) =>
+            setShopData((prev) => ({
+              ...prev,
+              socialLinks: { ...prev.socialLinks, instagram: text },
+            }))
+          }
         />
       </View>
 
@@ -733,10 +746,12 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
           style={styles.input}
           placeholder="facebook.com/yourshop"
           value={shopData.socialLinks.facebook}
-          onChangeText={(text) => setShopData(prev => ({ 
-            ...prev, 
-            socialLinks: { ...prev.socialLinks, facebook: text }
-          }))}
+          onChangeText={(text) =>
+            setShopData((prev) => ({
+              ...prev,
+              socialLinks: { ...prev.socialLinks, facebook: text },
+            }))
+          }
         />
       </View>
     </ScrollView>
@@ -745,17 +760,22 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
   const renderImagesStep = () => (
     <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
       <Text style={[styles.title, { color: '#000' }]}>Shop Images</Text>
-      <Text style={[styles.subtitle, { color: '#000' }]}>Upload your shop&apos;s cover photo and profile picture</Text>
+      <Text style={[styles.subtitle, { color: '#000' }]}>
+        Upload your shop&apos;s cover photo and profile picture
+      </Text>
 
       <View style={styles.coverPhotoSection}>
         <Text style={styles.label}>Cover Photo *</Text>
         <Text style={[styles.subtitle, { marginBottom: 12, fontSize: 14 }]}>
           This will be displayed at the top of your shop profile
         </Text>
-        
+
         {photoData.coverPhoto ? (
           <View style={styles.imageContainer}>
-            <Image source={{ uri: photoData.coverPhoto }} style={styles.coverPhoto} />
+            <Image
+              source={{ uri: photoData.coverPhoto }}
+              style={styles.coverPhoto}
+            />
             {photoData.uploadingCover && (
               <View style={styles.uploadingOverlay}>
                 <ActivityIndicator color="#fff" size="small" />
@@ -766,12 +786,14 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
         ) : (
           <View style={styles.coverPhotoPlaceholder}>
             <ImageIcon size={40} color={theme.textSecondary} />
-            <Text style={[styles.subtitle, { marginTop: 8 }]}>No cover photo</Text>
+            <Text style={[styles.subtitle, { marginTop: 8 }]}>
+              No cover photo
+            </Text>
           </View>
         )}
-        
-        <TouchableOpacity 
-          style={styles.uploadButton} 
+
+        <TouchableOpacity
+          style={styles.uploadButton}
           onPress={() => pickImage('cover')}
           disabled={photoData.uploadingCover}
         >
@@ -781,7 +803,9 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
             <>
               <Camera size={20} color="#000" />
               <Text style={styles.uploadButtonText}>
-                {photoData.coverPhoto ? 'Change Cover Photo' : 'Upload Cover Photo'}
+                {photoData.coverPhoto
+                  ? 'Change Cover Photo'
+                  : 'Upload Cover Photo'}
               </Text>
             </>
           )}
@@ -793,11 +817,14 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
         <Text style={[styles.subtitle, { marginBottom: 12, fontSize: 14 }]}>
           This will be your shop&apos;s avatar
         </Text>
-        
+
         <View style={styles.profileImageContainer}>
           {photoData.profilePicture ? (
             <View style={styles.imageContainer}>
-              <Image source={{ uri: photoData.profilePicture }} style={styles.profileImage} />
+              <Image
+                source={{ uri: photoData.profilePicture }}
+                style={styles.profileImage}
+              />
               {photoData.uploadingProfile && (
                 <View style={styles.uploadingOverlay}>
                   <ActivityIndicator color="#fff" size="small" />
@@ -811,9 +838,9 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
             </View>
           )}
         </View>
-        
-        <TouchableOpacity 
-          style={styles.changeProfileButton} 
+
+        <TouchableOpacity
+          style={styles.changeProfileButton}
           onPress={() => pickImage('profile')}
           disabled={photoData.uploadingProfile}
         >
@@ -821,7 +848,9 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
             <ActivityIndicator color={theme.text} size="small" />
           ) : (
             <Text style={styles.changeProfileButtonText}>
-              {photoData.profilePicture ? 'Change Profile Picture' : 'Upload Profile Picture'}
+              {photoData.profilePicture
+                ? 'Change Profile Picture'
+                : 'Upload Profile Picture'}
             </Text>
           )}
         </TouchableOpacity>
@@ -832,29 +861,34 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
   const renderCategoriesStep = () => (
     <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
       <Text style={[styles.title, { color: '#000' }]}>Shop Categories</Text>
-      <Text style={[styles.subtitle, { color: '#000' }]}>What type of products do you sell? Select all that apply.</Text>
-      
+      <Text style={[styles.subtitle, { color: '#000' }]}>
+        What type of products do you sell? Select all that apply.
+      </Text>
+
       <View style={styles.optionsGrid}>
         {BUSINESS_CATEGORIES.map((category) => (
           <TouchableOpacity
             key={category}
             style={[
               styles.option,
-              shopData.categories.includes(category) && styles.optionSelected
+              shopData.categories.includes(category) && styles.optionSelected,
             ]}
             onPress={() => {
-              setShopData(prev => ({
+              setShopData((prev) => ({
                 ...prev,
                 categories: prev.categories.includes(category)
                   ? prev.categories.filter((c: string) => c !== category)
-                  : [...prev.categories, category]
+                  : [...prev.categories, category],
               }));
             }}
           >
-            <Text style={[
-              styles.optionText,
-              shopData.categories.includes(category) && styles.optionTextSelected
-            ]}>
+            <Text
+              style={[
+                styles.optionText,
+                shopData.categories.includes(category) &&
+                  styles.optionTextSelected,
+              ]}
+            >
               {category}
             </Text>
           </TouchableOpacity>
@@ -862,8 +896,17 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
       </View>
 
       {shopData.categories.length > 0 && (
-        <View style={{ marginTop: 20, paddingTop: 20, borderTopWidth: 1, borderTopColor: theme.border }}>
-          <Text style={[styles.label, { marginBottom: 8 }]}>Selected Categories:</Text>
+        <View
+          style={{
+            marginTop: 20,
+            paddingTop: 20,
+            borderTopWidth: 1,
+            borderTopColor: theme.border,
+          }}
+        >
+          <Text style={[styles.label, { marginBottom: 8 }]}>
+            Selected Categories:
+          </Text>
           <Text style={[styles.subtitle, { fontSize: 14 }]}>
             {shopData.categories.join(', ')}
           </Text>
@@ -872,13 +915,73 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
     </ScrollView>
   );
 
+  const handleStripeOnboarding = async () => {
+  try {
+    setLoading(true);
+    const statusRes = await axios.get(
+      `${config.apiUrl}/api/stripe/check-onboarding-status`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    if (statusRes.data.onboarded) {
+      setStripeConnected(true);
+      handleNext();
+      return;
+    }
+
+    const { data } = await axios.post(
+      `${config.apiUrl}/api/stripe/create-account-link`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    if (data.url) {
+      setStripeConnected(true);
+      handleNext();
+    } else {
+      alert('Failed to get Stripe onboarding link.');
+    }
+  } catch (err) {
+    console.error('Stripe onboarding failed', err);
+    alert('Failed to connect Stripe. Try again.');
+  } finally {
+    setLoading(false);
+  }
+};
+
+  const renderStripeOnboardingStep = () => (
+    <View style={styles.stepContent}>
+      <Text style={styles.title}>Connect Your Stripe Account</Text>
+      <Text style={styles.subtitle}>
+        You need a Stripe account to receive payments from customers.
+      </Text>
+
+      <TouchableOpacity
+        style={styles.stripeButton}
+        onPress={handleStripeOnboarding}
+      >
+        <Text style={styles.stripeButtonText}>Connect with Stripe</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
   const renderCurrentStep = () => {
     switch (currentStep) {
-      case 0: return renderWelcomeStep();
-      case 1: return renderShopDetailsStep();
-      case 2: return renderImagesStep();
-      case 3: return renderCategoriesStep();
-      default: return null;
+      case 0:
+        return renderWelcomeStep();
+      case 1:
+        return renderShopDetailsStep();
+      case 2:
+        return renderImagesStep();
+      case 3:
+        return renderCategoriesStep();
+      case 4:
+        return renderStripeOnboardingStep();
+      default:
+        return null;
     }
   };
 
@@ -899,7 +1002,7 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
               key={index}
               style={[
                 styles.stepDot,
-                index <= currentStep && styles.stepDotActive
+                index <= currentStep && styles.stepDotActive,
               ]}
             />
           ))}
@@ -909,11 +1012,11 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
       </View>
 
       <View style={styles.progressBar}>
-        <View 
+        <View
           style={[
-            styles.progressFill, 
-            { width: `${((currentStep + 1) / totalSteps) * 100}%` }
-          ]} 
+            styles.progressFill,
+            { width: `${((currentStep + 1) / totalSteps) * 100}%` },
+          ]}
         />
       </View>
 
@@ -923,7 +1026,7 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
         <TouchableOpacity
           style={[
             styles.nextButton,
-            (!canProceed() || loading) && styles.nextButtonDisabled
+            (!canProceed() || loading) && styles.nextButtonDisabled,
           ]}
           onPress={handleNext}
           disabled={!canProceed() || loading}
@@ -942,4 +1045,4 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
       </View>
     </SafeAreaView>
   );
-};
+}
