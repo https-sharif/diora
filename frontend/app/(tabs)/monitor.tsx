@@ -25,7 +25,6 @@ import {
   XCircle,
   FileText,
   Package,
-  Grid3x3,
 } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/hooks/useAuth';

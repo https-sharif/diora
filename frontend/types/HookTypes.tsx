@@ -1,4 +1,4 @@
-import { Order, OrderItem } from './Order';
+import { Order } from './Order';
 
 export interface AdminStats {
   totalUsers: number;

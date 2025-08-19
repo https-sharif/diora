@@ -37,7 +37,7 @@ interface Order {
   shippingFee: number;
   paymentMethod: 'cod' | 'card' | 'bkash';
   paymentStatus: 'pending' | 'paid' | 'failed';
-  items: Array<{
+  items: {
     _id: string;
     productId: {
       _id: string;
@@ -50,7 +50,7 @@ interface Order {
     price: number;
     size?: string;
     variant?: string;
-  }>;
+  }[];
   shippingAddress: {
     name: string;
     address: string;
@@ -324,7 +324,7 @@ const OrderDetailsScreen = () => {
   const { theme } = useTheme();
   const styles = createStyles(theme);
   const { orderId } = useLocalSearchParams<{ orderId: string }>();
-  const { user, token } = useAuth();
+  const { token } = useAuth();
   
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);

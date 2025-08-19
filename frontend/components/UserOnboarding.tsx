@@ -239,7 +239,6 @@ export const UserOnboarding: React.FC<UserOnboardingProps> = ({ onComplete }) =>
       <Text style={styles.subtitle}>
         Show your style! Upload a profile picture to personalize your fashion journey.
       </Text>
-      
       <TouchableOpacity style={styles.profileImageContainer} onPress={pickProfileImage}>
         {profileImage ? (
           <Image source={{ uri: profileImage.uri }} style={styles.profileImagePreview} />

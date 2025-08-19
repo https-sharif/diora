@@ -7,11 +7,10 @@ import {
   TouchableOpacity,
   Image,
   RefreshControl,
-  FlatList,
   Dimensions
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ArrowLeft, TrendingUp, Package, Users, Heart, DollarSign, Calendar, Star } from 'lucide-react-native';
+import { ArrowLeft, TrendingUp, Package, Users, Heart, DollarSign } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -29,12 +28,12 @@ interface AnalyticsData {
     wishlistCount: number;
     followers: number;
   };
-  orderTrends: Array<{
+  orderTrends: {
     _id: string;
     orderCount: number;
     revenue: number;
-  }>;
-  recentOrders: Array<{
+  }[];
+  recentOrders: {
     _id: string;
     userId: {
       fullName: string;
@@ -43,16 +42,16 @@ interface AnalyticsData {
     totalAmount: number;
     status: string;
     createdAt: string;
-    items: Array<any>;
-  }>;
-  topProducts: Array<{
+    items: any[];
+  }[];
+  topProducts: {
     _id: string;
     name: string;
     imageUrl: string[];
     totalSold: number;
     revenue: number;
     price: number;
-  }>;
+  }[];
 }
 
 const createStyles = (theme: Theme) =>
@@ -263,7 +262,7 @@ const createStyles = (theme: Theme) =>
   });
 
 export default function ShopAnalytics() {
-  const { user, token } = useAuth();
+  const { token } = useAuth();
   const { theme } = useTheme();
   const styles = createStyles(theme);
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);

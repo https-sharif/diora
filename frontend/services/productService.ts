@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { config } from '@/config';
-import { ProductData, ProductFilters, ProductSearchParams } from '@/types/Product';
+import { ProductData } from '@/types/Product';
 
 export const productService = {
   async getProductById(productId: string, token?: string): Promise<any> {

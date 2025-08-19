@@ -1,5 +1,4 @@
 import {
-  ArrowLeft,
   Menu,
   AlertTriangle,
   Eye,

@@ -500,19 +500,13 @@ const initialFilter = {
 };
 
 export default function ShoppingScreen() {
-  const { user } = useAuth();
-
   const {
-    cart,
     wishlist,
     addToCart,
     addToWishlist,
     removeFromWishlist,
     isInWishlist,
     getCartItemCount,
-    getCartTotal,
-    updateCartQuantity,
-    removeFromCart,
   } = useShopping();
 
   const { theme } = useTheme();
