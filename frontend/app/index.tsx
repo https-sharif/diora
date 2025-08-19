@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, Image } from 'react-native';
 import { useAuth } from '@/hooks/useAuth';
 import { router } from 'expo-router';
 import { useTheme } from '@/contexts/ThemeContext';
-import { useNotificationStore } from '@/stores/useNotificationStore';
+import { messageService } from '@/services';
+import { useMessage } from '@/hooks/useMessage';
 
 const createStyles = (theme: any) =>
   StyleSheet.create({
@@ -22,7 +23,8 @@ const createStyles = (theme: any) =>
 export default function Index() {
   const { theme } = useTheme();
   const styles = createStyles(theme);
-  const { isAuthenticated, loading, user } = useAuth();
+  const { isAuthenticated, loading, user, token } = useAuth();
+  const { setConversations } = useMessage();
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
@@ -37,13 +39,16 @@ export default function Index() {
       if (loading) {
         setTimeout(() => {
           if (isAuthenticated && user) {
-            // Check if user needs onboarding (simplified logic)
-            const needsOnboarding = !user.onboarding?.isComplete;
-            
-            if (needsOnboarding) {
-              router.replace('/onboarding');
-            } else {
+            if (user.type === 'admin') {
               router.replace('/(tabs)');
+            } else {
+              const needsOnboarding = !user.onboarding?.isComplete;
+              
+              if (needsOnboarding) {
+                router.replace('/onboarding');
+              } else {
+                router.replace('/(tabs)');
+              }
             }
           } else {
             router.replace('/auth');
@@ -51,33 +56,38 @@ export default function Index() {
         }, 500);
       } else {
         if (isAuthenticated && user) {
-          // Check if user needs onboarding (simplified logic)
-          const needsOnboarding = !user.onboarding?.isComplete;
-          
-          console.log('🔍 Index page - User loaded:', {
-            userId: user._id,
-            type: user.type,
-            onboardingComplete: user.onboarding?.isComplete,
-            fullOnboarding: JSON.stringify(user.onboarding, null, 2),
-            needsOnboarding
-          });
-          
-          if (needsOnboarding) {
-            console.log('📍 Index page - Redirecting to onboarding');
-            router.replace('/onboarding');
-          } else {
-            console.log('📍 Index page - Redirecting to main app');
+          if (user.type === 'admin') {
             router.replace('/(tabs)');
+          } else {
+            const needsOnboarding = !user.onboarding?.isComplete;
+            
+            if (needsOnboarding) {
+              router.replace('/onboarding');
+            } else {
+              router.replace('/(tabs)');
+            }
           }
         } else {
-          console.log('📍 Index page - Not authenticated, redirecting to auth');
           router.replace('/auth');
         }
       }
     }, 1000);
   
     return () => clearTimeout(timeout);
-  }, [isAuthenticated, loading, user]);
+  }, [isAuthenticated, loading, user, fadeAnim]);
+
+  useEffect(() => {
+      const fetchConversations = async () => {
+        if (!token) return;
+        const response = await messageService.getConversations(token);
+
+        if (response.status) {
+          setConversations(response.conversations);
+        }
+      };
+  
+      fetchConversations();
+    }, [token, user]);
 
   return (
     <Animated.View style={[styles.container, { opacity: fadeAnim }]}>

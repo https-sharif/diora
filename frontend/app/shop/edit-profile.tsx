@@ -17,7 +17,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Theme } from '@/types/Theme';
 import axios from 'axios';
-import { API_URL } from '@/constants/api';
+import { config } from '@/config';
 import * as ImagePicker from 'expo-image-picker';
 
 const createStyles = (theme: Theme) =>
@@ -339,7 +339,7 @@ export default function EditShopProfile() {
         requestFormData.append('coverImage', selectedFiles.coverImage as any);
       }
 
-      const response = await axios.put(`${API_URL}/api/shop/profile`, requestFormData, {
+      const response = await axios.put(`${config.apiUrl}/api/shop/profile`, requestFormData, {
         headers: {
           Authorization: `Bearer ${token}`,
           // Don't set Content-Type for FormData, let axios handle it

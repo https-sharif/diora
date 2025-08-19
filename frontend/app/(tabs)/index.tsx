@@ -12,12 +12,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Bell, MessageCircle } from 'lucide-react-native';
 import { useAuth } from '@/hooks/useAuth';
 import { useNotification } from '@/hooks/useNotification';
+import { useMessage } from '@/hooks/useMessage';
 import { router } from 'expo-router';
 import PostCard from '@/components/PostCard';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Theme } from '@/types/Theme';
 import axios from 'axios';
-import { API_URL } from '@/constants/api';
+import { config } from '@/config';
 
 const createStyles = (theme: Theme) => {
   return StyleSheet.create({
@@ -81,6 +82,7 @@ const createStyles = (theme: Theme) => {
 export default function FeedScreen() {
   const { isAuthenticated, user, token } = useAuth();
   const { unreadCount } = useNotification();
+  const { conversations } = useMessage();
   const [posts, setPosts] = useState();
   const [refreshing, setRefreshing] = useState(false);
   const { theme } = useTheme();
@@ -88,10 +90,12 @@ export default function FeedScreen() {
 
   const styles = createStyles(theme);
 
-  if (!isAuthenticated) {
-    return null;
-  }
+  // Calculate unread conversations count
+  const unreadConversationsCount = conversations?.filter(conv => 
+    conv.unreadCount && user?._id && conv.unreadCount[user._id] > 0
+  ).length || 0;
 
+  // Move all useEffects before early returns
   useEffect(() => {
     if (user?.type === 'admin') {
       router.replace('/(tabs)/analytics');
@@ -99,11 +103,11 @@ export default function FeedScreen() {
   }, [user]);
 
   useEffect(() => {
-    if(!user) return;
+    if(!user || !token) return;
     const fetchPosts = async () => {
       setLoading(true);
       try {
-        const response = await axios.get(`${API_URL}/api/post`, {
+        const response = await axios.get(`${config.apiUrl}/api/post`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         
@@ -117,14 +121,18 @@ export default function FeedScreen() {
     };
 
     fetchPosts();
-  }, []);
+  }, [user, token]);
+
+  if (!isAuthenticated) {
+    return null;
+  }
 
   const onRefresh = async () => {
     if(!user) return;
     setRefreshing(true);
 
     try {
-      const response = await axios.get(`${API_URL}/api/post`, {
+      const response = await axios.get(`${config.apiUrl}/api/post`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -175,6 +183,13 @@ export default function FeedScreen() {
               onPress={handleMessagePress}
             >
               <MessageCircle size={24} color={theme.text} strokeWidth={2} />
+              {unreadConversationsCount > 0 && (
+                <View style={styles.notificationBadge}>
+                  <Text style={styles.notificationBadgeText}>
+                    {unreadConversationsCount > 99 ? '99+' : unreadConversationsCount}
+                  </Text>
+                </View>
+              )}
             </TouchableOpacity>
           </View>
         </View>

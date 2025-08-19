@@ -12,6 +12,8 @@ export { commentService } from './commentService';
 export { reportService } from './reportService';
 export { searchService } from './searchService';
 export { adminService } from './adminService';
+export { trendingService } from './trendingService';
+export { messageService } from './messageService';
 
 // Types - export from centralized types folder
 export type { LoginData, SignupData, AuthResponse } from '@/types/Auth';

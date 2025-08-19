@@ -6,8 +6,7 @@ import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { loginSchema, signupSchema } from '@/validation/authSchema';
 import { authService } from '@/services';
-import { useNotificationStore } from '@/stores/useNotificationStore';
-import { useShoppingStore } from '@/stores/useShoppingStore';
+
 
 export const useAuthStore = create<AuthState>()(
   persist(

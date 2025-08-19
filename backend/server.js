@@ -19,6 +19,8 @@ import cartRoutes from './routes/cart.js';
 import wishlistRoutes from './routes/wishlist.js';
 import orderRoutes from './routes/order.js';
 import reportRoutes from './routes/report.js';
+import messageRoutes from './routes/message.js';
+import uploadRoutes from './routes/upload.js';
 import { initSocket } from './sockets/socketSetup.js';
 
 dotenv.config();
@@ -54,6 +56,8 @@ app.use('/api/cart', cartRoutes);
 app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/order', orderRoutes);
 app.use('/api/report', reportRoutes);
+app.use('/api/message', messageRoutes);
+app.use('/api/upload', uploadRoutes);
 
 import { autoCleanupReports } from './controllers/reportController.js';
 

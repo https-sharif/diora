@@ -150,9 +150,8 @@ export default function AuthScreen() {
         result = await signup({ 
           email, 
           password, 
-          firstName: username, 
-          lastName: fullName, 
-          type: 'user' 
+          username,
+          fullName
         });
       }
 
@@ -161,7 +160,6 @@ export default function AuthScreen() {
           router.replace('/');
         }, 100);
       } else {
-        // Check for suspension/ban details
         if ((result as any)?.details) {
           Alert.alert(result?.error || 'Login Failed', (result as any).details);
         } else {

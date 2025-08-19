@@ -15,7 +15,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/hooks/useAuth';
 import { Theme } from '@/types/Theme';
 import axios from 'axios';
-import { API_URL } from '@/constants/api';
+import { config } from '@/config';
 import { ArrowLeft, CheckCircle, XCircle, AlertTriangle, User, FileText, Package, Store } from 'lucide-react-native';
 
 const createStyles = (theme: Theme) =>
@@ -271,7 +271,7 @@ export default function ReportDetail() {
   const fetchReportDetail = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${API_URL}/api/report/${reportId}`, {
+      const response = await axios.get(`${config.apiUrl}/api/report/${reportId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -290,7 +290,7 @@ export default function ReportDetail() {
   const updateReportStatus = async (status: 'resolved' | 'dismissed') => {
     try {
       const response = await axios.put(
-        `${API_URL}/api/report/${reportId}`,
+        `${config.apiUrl}/api/report/${reportId}`,
         { status },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -327,7 +327,7 @@ export default function ReportDetail() {
           onPress: async () => {
             try {
               const response = await axios.post(
-                `${API_URL}/api/report/${reportId}/moderate`,
+                `${config.apiUrl}/api/report/${reportId}/moderate`,
                 { 
                   action,
                   reason: `Admin action taken: ${action.replace('_', ' ')}`,

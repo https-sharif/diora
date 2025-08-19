@@ -16,6 +16,8 @@ import {
   PanResponder,
   Keyboard,
   TouchableWithoutFeedback,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -41,14 +43,15 @@ import { Review } from '@/types/Review';
 import { Theme } from '@/types/Theme';
 import { useTheme } from '@/contexts/ThemeContext';
 import ProductSlashIcon from '@/icon/ProductSlashIcon';
-import axios from 'axios';
 import { BlurView } from 'expo-blur';
-import { API_URL } from '@/constants/api';
+import { productService, reviewService, reportService, searchService, messageService } from '@/services';
 import RatingStars from '@/components/RatingStar';
 import ReviewInput from '@/components/ReviewInput';
 import * as ImagePicker from 'expo-image-picker';
 import { format as timeago } from 'timeago.js';
 import LoadingView from '@/components/Loading';
+import Color from 'color';
+
 
 const { width, height } = Dimensions.get('window');
 
@@ -582,6 +585,145 @@ const createStyles = (theme: Theme) => {
     reportButtonTextSubmit: {
       color: theme.background,
     },
+    modal: {
+          flex: 1,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          justifyContent: 'center',
+          alignItems: 'center',
+          padding: 20,
+        },
+        modalContainer: {
+          backgroundColor: theme.card,
+          borderRadius: 12,
+          padding: 20,
+          width: '100%',
+          maxWidth: 400,
+          maxHeight: '85%',
+        },
+        modalHeader: {
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: 20,
+        },
+        modalSearchInput: {
+          borderWidth: 1,
+          borderColor: theme.border,
+          borderRadius: 8,
+          paddingHorizontal: 12,
+          paddingVertical: 8,
+          fontSize: 16,
+          fontFamily: 'Inter-Regular',
+          color: theme.text,
+          marginBottom: 16,
+          backgroundColor: theme.background,
+        },
+        modalTitle: {
+          fontSize: 18,
+          fontFamily: 'Inter-SemiBold',
+          color: theme.text,
+        },
+        modalSubtitle: {
+          fontSize: 16,
+          fontFamily: 'Inter-Regular',
+          marginBottom: 16,
+        },
+        modalOption: {
+          paddingVertical: 12,
+          paddingHorizontal: 16,
+          borderRadius: 8,
+          borderWidth: 1,
+          borderColor: theme.border,
+          marginBottom: 8,
+        },
+        modalOptionSelected: {
+          borderColor: theme.text,
+          backgroundColor: theme.background,
+        },
+        modalOptionText: {
+          fontSize: 16,
+          fontFamily: 'Inter-Regular',
+        },
+        modalInput: {
+          borderWidth: 1,
+          borderRadius: 8,
+          padding: 12,
+          marginTop: 12,
+          marginBottom: 20,
+          height: 80,
+          textAlignVertical: 'top',
+          fontSize: 14,
+          fontFamily: 'Inter-Regular',
+        },
+        modalButtons: {
+          flexDirection: 'row',
+          justifyContent: 'flex-end',
+          gap: 12,
+        },
+        modalFooter: {
+          backgroundColor: theme.accent,
+          borderRadius: 12,
+          paddingVertical: 4,
+          alignItems: 'center',
+        },
+        modalButton: {
+          paddingVertical: 10,
+          paddingHorizontal: 20,
+          borderRadius: 8,
+        },
+        modalButtonCancel: {
+          borderWidth: 1,
+        },
+        modalButtonSubmit: {
+        },
+        modalButtonText: {
+          fontSize: 14,
+          fontFamily: 'Inter-SemiBold',
+        },
+        emptySearchState: {
+          padding: 40,
+          alignItems: 'center',
+        },
+        emptySearchText: {
+          fontSize: 16,
+          fontFamily: 'Inter-Regular',
+          color: theme.textSecondary,
+          textAlign: 'center',
+        },
+        usersList: {
+          flexGrow: 1,
+        },
+        userItem: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          padding: 16,
+          borderBottomWidth: 0.5,
+          borderBottomColor: theme.border,
+        },
+        userItemSelected: {
+          backgroundColor: Color(theme.accent).alpha(0.1).toString(),
+          borderRadius: 16,
+        },
+        userAvatar: {
+          width: 40,
+          height: 40,
+          borderRadius: 20,
+          marginRight: 12,
+        },
+        userInfo: {
+          flex: 1,
+        },
+        userName: {
+          fontSize: 16,
+          fontFamily: 'Inter-SemiBold',
+          color: theme.text,
+        },
+        userUsername: {
+          fontSize: 14,
+          fontFamily: 'Inter-Regular',
+          color: theme.textSecondary,
+          marginTop: 2,
+        },
   });
 };
 
@@ -614,29 +756,29 @@ export default function ProductDetailScreen() {
   const [reportReason, setReportReason] = useState('');
   const [reportDescription, setReportDescription] = useState('');
   const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [userSearchQuery, setUserSearchQuery] = useState('');
+  const [selectedUsers, setSelectedUsers] = useState<User[]>([]);
+  const [searchedUsers, setSearchedUsers] = useState<User[]>([]);
 
   useEffect(() => {
     const fetchProduct = async () => {
       setLoading(true);
       try {
-        const response = await axios.get(
-          `${API_URL}/api/product/${productId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
+        const response = await productService.getProductById(
+          productId,
+          token || undefined
         );
 
-        if (!response.data.status) {
-          Alert.alert('Error', response.data.message);
+        if (!response.status) {
+          Alert.alert('Error', response.message);
           return;
         }
 
-        console.log('Product fetched successfully:', response.data.product);
+        console.log('Product fetched successfully:', response.product);
 
-        setProduct(response.data.product);
-        setShopProfile(response.data.product.shopId);
+        setProduct(response.product);
+        setShopProfile(response.product.shopId);
       } catch (error) {
         console.error('Error fetching product:', error);
       } finally {
@@ -646,19 +788,15 @@ export default function ProductDetailScreen() {
 
     const fetchReviews = async () => {
       try {
-        const response = await axios.get(
-          `${API_URL}/api/review/product/${productId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
+        const response = await reviewService.getProductReviews(
+          productId,
+          token || undefined
         );
 
-        if (response.data.status) {
-          setReviews(response.data.reviews);
+        if (response.status) {
+          setReviews(response.reviews);
         } else {
-          Alert.alert('Error', response.data.message);
+          Alert.alert('Error', response.message);
         }
       } catch (error) {
         console.error('Error fetching reviews:', error);
@@ -666,24 +804,21 @@ export default function ProductDetailScreen() {
     };
 
     const fetchReviewedStatus = async () => {
-      if (!user) return;
+      if (!user || !token) return;
 
       try {
-        const response = await axios.get(
-          `${API_URL}/api/review/reviewed/${user._id}/product/${productId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
+        const hasReviewedResult = await reviewService.hasUserReviewedProduct(
+          user._id,
+          productId,
+          token
         );
 
-        if (response.data.status === false) {
+        if (!hasReviewedResult) {
           setHasReviewed(false);
           return;
         }
 
-        setHasReviewed(response.data.reviewed);
+        setHasReviewed(hasReviewedResult);
       } catch (error) {
         console.error('Error fetching reviewed status:', error);
       }
@@ -692,7 +827,7 @@ export default function ProductDetailScreen() {
     fetchProduct();
     fetchReviews();
     fetchReviewedStatus();
-  }, [productId]);
+  }, [productId, user, token]);
 
   const panResponder = PanResponder.create({
     onMoveShouldSetPanResponder: (evt, gestureState) => {
@@ -745,7 +880,85 @@ export default function ProductDetailScreen() {
     if (product && selectedImageIndex >= product.imageUrl.length) {
       setSelectedImageIndex(0);
     }
-  }, [selectedImageIndex]);
+  }, [selectedImageIndex, product]);
+
+  const handleShare = async () => {
+      if (!product || !token) return;
+  
+      setShowShareModal(false);
+      await Promise.all(selectedUsers.map(async user => {
+        const conversation = await messageService.getConversationId(user._id, token);
+        await messageService.sendMessage(conversation.conversationId, `Check out this product`, 'product', token, undefined, product._id, undefined, undefined, undefined);
+      }));
+    };
+  
+    const handleUserSelect = (selectedUser: any) => {
+      setSelectedUsers((prev) => {
+        if (prev.find((u) => u._id === selectedUser._id)) {
+          return prev.filter((u) => u._id !== selectedUser._id);
+        }
+        return [...prev, selectedUser];
+      });
+    };
+  
+    const searchUsers = async (query: string) => {
+      if (!token) {
+        setSearchedUsers([]);
+        return;
+      }
+  
+      try {
+        const [userRes, shopRes] = await Promise.all([
+          searchService.searchUsers(query, token),
+          searchService.searchShops(query, token),
+        ]);
+        let merged: any[] = [];
+        if (userRes.status) {
+          merged = merged.concat(
+            userRes.users.filter((u: any) => u._id !== user?._id)
+          );
+        }
+        if (shopRes.status) {
+          merged = merged.concat(
+            shopRes.users.filter((s: any) => s._id !== user?._id)
+          );
+        }
+        setSearchedUsers(merged);
+      } catch (err) {
+        console.error('Error searching users/shops:', err);
+        setSearchedUsers([]);
+      }
+    };
+  
+    useEffect(() => {
+      const timeoutId = setTimeout(() => {
+        searchUsers(userSearchQuery);
+      }, 300);
+  
+      return () => clearTimeout(timeoutId);
+    }, [userSearchQuery]);
+  
+    const renderUserList = (item: any) => {
+      const isSelected = selectedUsers.find((u) => u._id === item._id);
+      return (
+        <TouchableOpacity
+          style={[styles.userItem, isSelected && styles.userItemSelected]}
+          onPress={() => handleUserSelect(item)}
+          activeOpacity={0.7}
+        >
+          <Image source={{ uri: item.avatar }} style={styles.userAvatar} />
+          <View style={styles.userInfo}>
+            <Text style={styles.userName}>
+              {item.fullName || item.username || 'Unknown User'}
+            </Text>
+            {item.username && (
+              <Text style={styles.userUsername}>@{item.username}</Text>
+            )}
+          </View>
+          {isSelected && <Check size={20} color={theme.accent} />}
+        </TouchableOpacity>
+      );
+    };
 
   if (loading) {
     return (
@@ -806,13 +1019,7 @@ export default function ProductDetailScreen() {
     ]).start();
   };
 
-  const renderImageItem = ({
-    item,
-    index,
-  }: {
-    item: string;
-    index: number;
-  }) => (
+  const renderImageItem = ({ item, index }: { item: string; index: number }) => (
     <TouchableOpacity onPress={() => setSelectedImageIndex(index)}>
       <Image source={{ uri: item }} style={styles.thumbnailImage} />
     </TouchableOpacity>
@@ -840,19 +1047,15 @@ export default function ProductDetailScreen() {
   };
 
   const handleDeleteReview = async () => {
-    if (!selectedReview || !user) return;
+    if (!selectedReview || !user || !token) return;
     try {
-      const response = await axios.delete(
-        `${API_URL}/api/review/product/${selectedReview._id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+      const response = await reviewService.deleteReview(
+        selectedReview._id,
+        token
       );
 
-      if (response.data.status === false) {
-        Alert.alert('Error', response.data.message);
+      if (response.status === false) {
+        Alert.alert('Error', response.message);
         return;
       }
       setReviews(reviews.filter((review) => review._id !== selectedReview._id));
@@ -871,56 +1074,34 @@ export default function ProductDetailScreen() {
   };
 
   const handleSubmitReview = async () => {
-    if (!shopProfile || !user) return;
+    if (!shopProfile || !user || !token) return;
     if (rating === 0) return;
 
     try {
-      const form = new FormData();
-
-      form.append('comment', newReview.trim());
-      form.append('rating', String(rating));
-      form.append('targetId', product._id);
-      form.append('targetType', 'product');
-
-      reviewImages.forEach((uri, index) => {
-        const filename = uri.split('/').pop() || `review_${index}.jpg`;
-        const match = /\.(\w+)$/.exec(filename);
-        const type = match ? `image/${match[1]}` : 'image/jpeg';
-
-        form.append('images', {
-          uri,
-          name: filename,
-          type,
-        } as any);
-      });
+      const reviewData = {
+        productId: product._id,
+        rating: rating,
+        comment: newReview.trim(),
+        images: reviewImages,
+      };
 
       let response;
       if (editingReview && selectedReview) {
-        response = await axios.put(
-          `${API_URL}/api/review/product/${selectedReview._id}`,
-          form,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              'Content-Type': 'multipart/form-data',
-            },
-          }
+        response = await reviewService.updateReview(
+          selectedReview._id,
+          reviewData,
+          token
         );
       } else {
-        response = await axios.post(`${API_URL}/api/review`, form, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'multipart/form-data',
-          },
-        });
+        response = await reviewService.createReview(reviewData, token);
       }
 
-      if (response.data.status === false) {
-        Alert.alert('Error', response.data.message);
+      if (response.status === false) {
+        Alert.alert('Error', response.message);
         return;
       }
 
-      const review = response.data.review;
+      const review = response.review;
 
       setReviews([...reviews, review]);
       setEditingReview(false);
@@ -955,12 +1136,8 @@ export default function ProductDetailScreen() {
     }
   };
 
-  const handleShare = () => {
-    Alert.alert('Share Product', `Share ${product?.name}`);
-  };
-
   const handleReport = async () => {
-    if (!reportReason.trim() || !user || !product) return;
+    if (!reportReason.trim() || !user || !product || !token) return;
 
     const reasonMap: { [key: string]: string } = {
       'Counterfeit Product': 'fraud',
@@ -968,29 +1145,25 @@ export default function ProductDetailScreen() {
       'Misleading Information': 'other',
       'Copyright Violation': 'copyright_violation',
       'Prohibited Item': 'other',
-      'Other': 'other',
+      Other: 'other',
     };
 
     try {
-      const payload = {
-        reportedItem: {
-          itemType: 'product',
-          itemId: product._id,
-        },
-        type: reasonMap[reportReason] || 'other',
+      const reportData = {
+        targetType: 'product' as const,
+        targetId: product._id,
+        reason: reasonMap[reportReason] || 'other',
         description:
           reportDescription.trim() || 'No additional details provided',
       };
 
-      console.log('Submitting report with payload:', payload);
+      console.log('Submitting report with payload:', reportData);
 
-      const response = await axios.post(`${API_URL}/api/report`, payload, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await reportService.createReport(reportData, token);
 
-      console.log('Report response:', response.data);
+      console.log('Report response:', response);
 
-      if (response.data.status) {
+      if (response.status) {
         setShowReportModal(false);
         setReportReason('');
         setReportDescription('');
@@ -1002,10 +1175,6 @@ export default function ProductDetailScreen() {
       }
     } catch (err) {
       console.error('Error submitting report:', err);
-      if (axios.isAxiosError(err) && err.response) {
-        console.error('Response data:', err.response.data);
-        console.error('Response status:', err.response.status);
-      }
       Alert.alert('Error', 'Failed to submit report. Please try again.');
     }
   };
@@ -1099,9 +1268,6 @@ export default function ProductDetailScreen() {
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{product.name}</Text>
         <View style={styles.headerActions}>
-          <TouchableOpacity style={styles.headerButton} onPress={handleShare}>
-            <Share size={24} color={theme.text} />
-          </TouchableOpacity>
           <TouchableOpacity
             style={styles.headerButton}
             onPress={() => addToWishlist(product)}
@@ -1479,7 +1645,13 @@ export default function ProductDetailScreen() {
               </TouchableOpacity>
             </View>
 
-            <TouchableOpacity style={styles.moreMenuItem} onPress={handleShare}>
+            <TouchableOpacity
+              style={styles.moreMenuItem}
+              onPress={() => {
+                setShowMoreMenu(false);
+                setShowShareModal(true);
+              }}
+            >
               <Share size={20} color={theme.text} />
               <Text style={styles.moreMenuItemText}>Share Product</Text>
             </TouchableOpacity>
@@ -1588,6 +1760,64 @@ export default function ProductDetailScreen() {
             </View>
           </View>
         </TouchableWithoutFeedback>
+      </Modal>
+
+      <Modal
+        visible={showShareModal}
+        animationType="fade"
+        transparent
+        onRequestClose={() => setShowShareModal(false)}
+      > 
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={0}
+        >
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <View style={styles.modal}>
+              <View style={styles.modalContainer}>
+                <View style={styles.modalHeader}>
+                  <Text style={styles.modalTitle}>Share User Profile</Text>
+                  <TouchableOpacity onPress={() => setShowShareModal(false)}>
+                    <X size={24} color={theme.text} />
+                  </TouchableOpacity>
+                </View>
+
+                <TextInput
+                  style={styles.modalSearchInput}
+                  placeholder={'Search user...'}
+                  value={userSearchQuery}
+                  onChangeText={setUserSearchQuery}
+                  placeholderTextColor={theme.textSecondary}
+                  autoFocus
+                />
+
+                <FlatList
+                  data={searchedUsers}
+                  renderItem={({ item }) => {
+                    return renderUserList(item);
+                  }}
+                  keyExtractor={(item) => item._id}
+                  contentContainerStyle={styles.usersList}
+                  ListEmptyComponent={
+                    <View style={styles.emptySearchState}>
+                      <Text style={styles.emptySearchText}>No users found</Text>
+                    </View>
+                  }
+                />
+
+                <View style={styles.modalFooter}>
+                  <TouchableOpacity
+                    style={styles.modalButton}
+                    onPress={handleShare}
+                  >
+                    <Text style={styles.modalButtonText}>Share</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
       </Modal>
     </SafeAreaView>
   );

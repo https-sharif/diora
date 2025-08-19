@@ -17,8 +17,9 @@ import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Theme } from '@/types/Theme';
 import axios from 'axios';
-import { API_URL } from '@/constants/api';
+import { config } from '@/config';
 import * as ImagePicker from 'expo-image-picker';
+import { userService } from '@/services/userService';
 
 const createStyles = (theme: Theme) =>
   StyleSheet.create({
@@ -205,6 +206,8 @@ export default function EditUserProfile() {
   };
 
   const handleSave = async () => {
+    if (!token) return;
+    
     try {
       setSaving(true);
 
@@ -220,19 +223,14 @@ export default function EditUserProfile() {
         requestFormData.append('avatar', selectedFile as any);
       }
 
-      const response = await axios.put(`${API_URL}/api/user/profile`, requestFormData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          // Don't set Content-Type for FormData, let axios handle it
-        },
-      });
+      const response = await userService.updateProfile(requestFormData, token);
 
-      if (response.data.status) {
+      if (response.status) {
         Alert.alert('Success', 'Profile updated successfully!');
-        setUser(response.data.user); // Update user data
+        setUser(response.user); // Update user data
         router.back();
       } else {
-        Alert.alert('Error', response.data.message || 'Failed to update profile');
+        Alert.alert('Error', response.message || 'Failed to update profile');
       }
     } catch (error) {
       console.error('Error updating profile:', error);

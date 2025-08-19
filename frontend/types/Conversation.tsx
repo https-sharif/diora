@@ -1,11 +1,12 @@
+import { Message } from './Message';
 export interface Conversation {
-    id: string;
+    _id: string;
+    type: 'private' | 'group';
     name?: string;
     avatar?: string;
-    isGroup: boolean;
-    participants: Array<string>;
-    lastMessageId?: string;
-    unreadCount: number;
-    isOnline: boolean;
-    isTyping: boolean;
+    participants: string[];
+    lastMessageId?: Message;
+    unreadCount: Record<string, number>;
+    createdAt: Date;
+    updatedAt: Date;
   }

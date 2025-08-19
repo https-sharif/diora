@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { Stack } from 'expo-router';
+import React, { useEffect } from 'react';
+import { SplashScreen, Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import {
   useFonts,
@@ -8,13 +8,10 @@ import {
   Inter_600SemiBold,
   Inter_700Bold,
 } from '@expo-google-fonts/inter';
-import { SplashScreen } from 'expo-router';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
-import { ThemeProvider } from '@/contexts/ThemeContext';
-import React from 'react';
+import { ThemeProvider, useTheme } from '@/contexts/ThemeContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { View } from 'react-native';
-import { useTheme } from '@/contexts/ThemeContext';
 import type { EdgeInsets } from 'react-native-safe-area-context';
 import { SafeAreaProvider } from '@/contexts/SafeAreaContext';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -23,20 +20,20 @@ import { useNotification } from '@/hooks/useNotification';
 import { useMessage } from '@/hooks/useMessage';
 import { useShopping } from '@/hooks/useShopping';
 import initSocket, { getSocket } from './utils/useSocket';
+import { Message } from '@/types/Message';
 
 SplashScreen.preventAutoHideAsync();
-
 
 export default function RootLayout() {
   useFrameworkReady();
   const insets = useSafeAreaInsets();
 
   return (
-      <ThemeProvider>
-        <SafeAreaProvider>
-          <AppReadyWrapper insets={insets} />
-        </SafeAreaProvider>
-      </ThemeProvider>
+    <ThemeProvider>
+      <SafeAreaProvider>
+        <AppReadyWrapper insets={insets} />
+      </SafeAreaProvider>
+    </ThemeProvider>
   );
 }
 
@@ -44,26 +41,32 @@ function AppReadyWrapper({ insets }: { insets: EdgeInsets }) {
   const { theme, isDarkMode } = useTheme();
   const { user, loading, syncUser } = useAuth();
   const { handleIncomingNotification } = useNotification();
+  const { handleIncomingMessage } = useMessage();
   const { sendMessage } = useMessage();
   const { initializeUserData } = useShopping();
 
-  // Initialize shopping data when user is authenticated and has completed onboarding
   useEffect(() => {
     if (user?._id && user?.onboarding?.isComplete) {
       console.log('🛒 Initializing shopping data for user:', user._id);
       initializeUserData();
-      // Sync user data to ensure it's up to date with backend
       syncUser();
     }
   }, [user?._id, user?.onboarding?.isComplete, initializeUserData, syncUser]);
-
   useEffect(() => {
     if (user?._id) {
       console.log('🚀 Setting up socket for user:', user._id);
-      initSocket(user._id, (notif) => {
+      
+      const onNotification = (notif: any) => {
         console.log('📨 Socket notification callback triggered:', notif);
         handleIncomingNotification(notif);
-      });
+      };
+
+      const onMessage = (data: {conversationId : string; message : Message}) => {
+        console.log('📩 Socket message callback triggered:', data.message);
+        handleIncomingMessage(data.conversationId, data.message);
+      }
+
+      initSocket(user._id, onNotification, onMessage);
 
       const socket = getSocket();
 
@@ -75,8 +78,7 @@ function AppReadyWrapper({ insets }: { insets: EdgeInsets }) {
         socket.disconnect();
       };
     }
-  }, [user?._id]);
-
+  }, [user?._id, handleIncomingNotification, handleIncomingMessage, sendMessage]);
 
   const [fontsLoaded] = useFonts({
     'Inter-Regular': Inter_400Regular,
@@ -100,23 +102,38 @@ function AppReadyWrapper({ insets }: { insets: EdgeInsets }) {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <View style={{ flex: 1, backgroundColor: theme.background, paddingBottom: insets.bottom, paddingTop: insets.top }} >
-      <Stack screenOptions={{ headerShown: false }} >
-        <Stack.Screen name='auth' options={{ headerShown: false }} />
-        <Stack.Screen name='index' options={{ headerShown: false }} />
-        <Stack.Screen name='empty' options={{ headerShown: false }} />
-        <Stack.Screen name='onboarding' options={{ headerShown: false }} />
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="notifications" options={{ headerShown: false }} />
-        <Stack.Screen name="product/[productId]" options={{ headerShown: false }} />
-        <Stack.Screen name="post/[postId]" options={{ headerShown: false }} />
-        <Stack.Screen name="user/[userId]" options={{ headerShown: false }} />
-        <Stack.Screen name="shop/[shopId]" options={{ headerShown: false }} />
-        <Stack.Screen name="settings" options={{ headerShown: false }} />
-        <Stack.Screen name="pastOrder" options={{ headerShown: false }} />
-      </Stack>
-    </View>
-    <StatusBar style={isDarkMode ? 'light' : 'dark'} animated translucent backgroundColor="transparent" />
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: theme.background,
+          paddingBottom: insets.bottom,
+          paddingTop: insets.top,
+        }}
+      >
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="auth" options={{ headerShown: false }} />
+          <Stack.Screen name="index" options={{ headerShown: false }} />
+          <Stack.Screen name="empty" options={{ headerShown: false }} />
+          <Stack.Screen name="onboarding" options={{ headerShown: false }} />
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="notifications" options={{ headerShown: false }} />
+          <Stack.Screen
+            name="product/[productId]"
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen name="post/[postId]" options={{ headerShown: false }} />
+          <Stack.Screen name="user/[userId]" options={{ headerShown: false }} />
+          <Stack.Screen name="shop/[shopId]" options={{ headerShown: false }} />
+          <Stack.Screen name="settings" options={{ headerShown: false }} />
+          <Stack.Screen name="pastOrder" options={{ headerShown: false }} />
+        </Stack>
+      </View>
+      <StatusBar
+        style={isDarkMode ? 'light' : 'dark'}
+        animated
+        translucent
+        backgroundColor="transparent"
+      />
     </GestureHandlerRootView>
   );
 }

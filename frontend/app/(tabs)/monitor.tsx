@@ -31,7 +31,8 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/hooks/useAuth';
 import { Theme } from '@/types/Theme';
 import axios from 'axios';
-import { API_URL } from '@/constants/api';
+import { config } from '@/config';
+import { adminService } from '@/services';
 import { router } from 'expo-router';
 import LoadingView from '@/components/Loading';
 import debounce from 'lodash.debounce';
@@ -408,68 +409,45 @@ export default function Monitor() {
 
   const debouncedSearch = useCallback(
     debounce(async (query: string, filter: string, type: 'users' | 'posts' | 'products' = contentType) => {
+      if (!token) return;
       setLoading(true);
       setContentTypeLoading(prev => ({ ...prev, [type]: true }));
       
       try {
-        let endpoint = '';
-        const params = new URLSearchParams();
-        
-        if (query.trim()) params.append('query', query.trim());
+        let response;
 
         switch (type) {
           case 'users':
-            endpoint = `${API_URL}/api/admin/users/search`;
-            if (filter !== 'All') {
-              if (filter === 'Users') params.append('type', 'user');
-              if (filter === 'Shops') params.append('type', 'shop');
-              if (filter === 'Suspended') params.append('status', 'suspended');
-              if (filter === 'Banned') params.append('status', 'banned');
-            }
+            response = await adminService.searchUsers(query.trim(), filter, token);
             break;
           case 'posts':
-            endpoint = `${API_URL}/api/admin/posts/search`;
-            if (filter !== 'All') {
-              if (filter === 'Recent') params.append('sort', 'recent');
-              if (filter === 'Reported') params.append('reported', 'true');
-              if (filter === 'Hidden') params.append('hidden', 'true');
-            }
+            response = await adminService.searchPosts(query.trim(), filter, token);
             break;
           case 'products':
-            endpoint = `${API_URL}/api/admin/products/search`;
-            if (filter !== 'All') {
-              if (filter === 'Recent') params.append('sort', 'recent');
-              if (filter === 'Reported') params.append('reported', 'true');
-              if (filter === 'Out of Stock') params.append('outOfStock', 'true');
-            }
+            response = await adminService.searchProducts(query.trim(), filter, token);
             break;
         }
         
-        console.log(`Searching ${type} - API endpoint:`, `${endpoint}?${params.toString()}`);
-        const response = await axios.get(`${endpoint}?${params.toString()}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        console.log(`${type} response:`, response);
 
-        console.log(`${type} response:`, response.data);
-
-        if (response.data.status) {
+        if (response.status) {
           switch (type) {
             case 'users':
-              const users = Array.isArray(response.data.users) ? response.data.users : [];
+              const users = Array.isArray(response.users) ? response.users : [];
               console.log('Users data received:', users.length, 'items');
               setSearchResults(users);
               setPostResults([]);
               setProductResults([]);
               break;
             case 'posts':
-              const posts = Array.isArray(response.data.posts) ? response.data.posts : [];
+              const posts = Array.isArray(response.posts) ? response.posts : [];
               console.log('Posts data received:', posts.length, 'items');
               setPostResults(posts);
               setSearchResults([]);
               setProductResults([]);
               break;
             case 'products':
-              const products = Array.isArray(response.data.products) ? response.data.products : [];
+              const products = Array.isArray(response.products) ? response.products : [];
               console.log('Products data received:', products.length, 'items');
               setProductResults(products);
               setSearchResults([]);
@@ -477,7 +455,7 @@ export default function Monitor() {
               break;
           }
         } else {
-          console.log('API response status false:', response.data);
+          console.log('API response status false:', response);
           // Clear results on failed response
           setSearchResults([]);
           setPostResults([]);
@@ -531,32 +509,26 @@ export default function Monitor() {
   }, [searchQuery, activeFilter, contentType, debouncedSearch]);
 
   const handleUserAction = async (userId: string, action: string, duration?: number) => {
+    if (!token) return;
     try {
-      let endpoint = '';
-      let payload: any = { action };
+      let response;
 
       switch (action) {
         case 'suspend':
-          endpoint = `${API_URL}/api/admin/users/${userId}/suspend`;
-          payload.duration = duration || 7;
+          response = await adminService.suspendUser(userId, duration || 7, token);
           break;
         case 'ban':
-          endpoint = `${API_URL}/api/admin/users/${userId}/ban`;
+          response = await adminService.banUser(userId, token);
           break;
         case 'unban':
-          endpoint = `${API_URL}/api/admin/users/${userId}/unban`;
+          response = await adminService.unbanUser(userId, token);
           break;
         case 'warn':
-          endpoint = `${API_URL}/api/admin/users/${userId}/warn`;
-          payload.message = 'Please review community guidelines';
+          response = await adminService.warnUser(userId, 'Please review community guidelines', token);
           break;
       }
 
-      const response = await axios.post(endpoint, payload, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (response.data.status) {
+      if (response.status) {
         Alert.alert('Success', `User ${action} completed successfully`);
         handleRefresh();
       }
@@ -848,7 +820,7 @@ export default function Monitor() {
 
   const handlePostAction = async (postId: string, action: string) => {
     try {
-      const endpoint = `${API_URL}/api/admin/posts/${postId}/${action}`;
+      const endpoint = `${config.apiUrl}/api/admin/posts/${postId}/${action}`;
       console.log('Post action endpoint:', endpoint);
       
       const response = await axios.post(endpoint, {}, {
@@ -869,7 +841,7 @@ export default function Monitor() {
 
   const handleProductAction = async (productId: string, action: string) => {
     try {
-      const endpoint = `${API_URL}/api/admin/products/${productId}/${action}`;
+      const endpoint = `${config.apiUrl}/api/admin/products/${productId}/${action}`;
       console.log('Product action endpoint:', endpoint);
       
       const response = await axios.post(endpoint, {}, {

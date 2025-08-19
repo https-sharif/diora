@@ -17,7 +17,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Theme } from '@/types/Theme';
 import axios from 'axios';
-import { API_URL } from '@/constants/api';
+import { config } from '@/config';
 
 const { width } = Dimensions.get('window');
 
@@ -272,7 +272,7 @@ export default function ShopAnalytics() {
 
   const fetchAnalytics = async () => {
     try {
-      const response = await axios.get(`${API_URL}/api/shop/analytics`, {
+      const response = await axios.get(`${config.apiUrl}/api/shop/analytics`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

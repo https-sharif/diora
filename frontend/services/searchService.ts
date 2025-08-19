@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { API_URL } from '@/constants/api';
+import { config } from '@/config';
 
 export const searchService = {
   async searchProducts(query: string, filters?: any, token?: string): Promise<any> {
@@ -12,21 +12,21 @@ export const searchService = {
       });
     }
 
-    const response = await axios.get(`${API_URL}/api/search?${params.toString()}`, {
+    const response = await axios.get(`${config.apiUrl}/api/search?${params.toString()}`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {}
     });
     return response.data;
   },
 
   async searchUsers(query: string, token?: string): Promise<any> {
-    const response = await axios.get(`${API_URL}/api/search?q=${query}&type=users`, {
+    const response = await axios.get(`${config.apiUrl}/api/search/users?q=${query}`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {}
     });
     return response.data;
   },
 
   async searchShops(query: string, token?: string): Promise<any> {
-    const response = await axios.get(`${API_URL}/api/search?q=${query}&type=shops`, {
+    const response = await axios.get(`${config.apiUrl}/api/search/shops?q=${query}`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {}
     });
     return response.data;
@@ -42,7 +42,7 @@ export const searchService = {
       });
     }
 
-    const response = await axios.get(`${API_URL}/api/search?${params.toString()}`, {
+    const response = await axios.get(`${config.apiUrl}/api/search?${params.toString()}`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {}
     });
     return response.data;
@@ -54,14 +54,14 @@ export const searchService = {
       params.append('type', type);
     }
 
-    const response = await axios.get(`${API_URL}/api/search?${params.toString()}`, {
+    const response = await axios.get(`${config.apiUrl}/api/search?${params.toString()}`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {}
     });
     return response.data;
   },
 
   async generalSearch(params: any, token?: string): Promise<any> {
-    const response = await axios.get(`${API_URL}/api/search`, {
+    const response = await axios.get(`${config.apiUrl}/api/search`, {
       params,
       headers: token ? { Authorization: `Bearer ${token}` } : {}
     });

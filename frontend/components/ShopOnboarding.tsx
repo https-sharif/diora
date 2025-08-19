@@ -433,6 +433,26 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
 
       console.log('Starting shop onboarding completion...');
       console.log('Cover photo:', photoData.coverPhoto);
+      console.log('Shop data:', shopData);
+
+      // Validate required fields
+      if (!shopData.location.trim()) {
+        Alert.alert('Error', 'Please provide a shop location');
+        setLoading(false);
+        return;
+      }
+
+      if (!photoData.coverPhoto || photoData.coverPhoto.trim().length === 0) {
+        Alert.alert('Error', 'Please upload a cover photo for your shop');
+        setLoading(false);
+        return;
+      }
+
+      if (shopData.categories.length === 0) {
+        Alert.alert('Error', 'Please select at least one category for your shop');
+        setLoading(false);
+        return;
+      }
 
       const shopOnboardingData = {
         isComplete: true,
@@ -466,10 +486,12 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
       const response = await userService.completeShopOnboarding(updateData, token);
 
       console.log('Shop onboarding response:', response);
+      console.log('Response status:', response?.status);
+      console.log('Response user data:', response?.user);
 
       if (response.status) {
         console.log('Shop onboarding completed successfully');
-        console.log('Backend response user data:', JSON.stringify(response?.onboarding, null, 2));
+        console.log('Backend response user data:', JSON.stringify(response?.user?.onboarding, null, 2));
         
         // First refresh to sync latest data
         console.log('🔄 First refresh attempt...');
@@ -490,7 +512,7 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
         }
         
         // Verify completion before calling onComplete
-        const isCompleteInResponse = response?.onboarding?.isComplete;
+        const isCompleteInResponse = response?.user?.onboarding?.isComplete;
         const isCompleteInStore = user?.onboarding?.isComplete;
         
         console.log('🔍 Final verification:');
@@ -511,13 +533,14 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
           onComplete();
         }
       } else {
-        console.error('Shop onboarding failed:', response.data.message);
-        Alert.alert('Error', response.data.message || 'Failed to complete shop onboarding');
+        console.error('Shop onboarding failed:', response.message);
+        Alert.alert('Error', response.message || 'Failed to complete shop onboarding');
       }
     } catch (error: any) {
       console.error('Error completing shop onboarding:', error);
       console.error('Error response:', error.response?.data);
-      Alert.alert('Error', error.response?.data?.message || 'Failed to complete shop onboarding');
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to complete shop onboarding';
+      Alert.alert('Error', errorMessage);
     } finally {
       setLoading(false);
     }
@@ -549,7 +572,7 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
       </View>
       <Text style={styles.title}>Welcome to Your Shop!</Text>
       <Text style={styles.subtitle}>
-        Congratulations on your promotion! Let's set up your shop to start selling and connecting with customers.
+        Congratulations on your promotion! Let&apos;s set up your shop to start selling and connecting with customers.
       </Text>
     </View>
   );
@@ -558,7 +581,7 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
     <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
       <Text style={styles.title}>Shop Visuals</Text>
       <Text style={styles.subtitle}>
-        Upload your shop's cover photo and update your profile picture
+        Upload your shop&apos;s cover photo and update your profile picture
       </Text>
 
       <View style={styles.coverPhotoSection}>
@@ -722,7 +745,7 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
   const renderImagesStep = () => (
     <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
       <Text style={[styles.title, { color: '#000' }]}>Shop Images</Text>
-      <Text style={[styles.subtitle, { color: '#000' }]}>Upload your shop's cover photo and profile picture</Text>
+      <Text style={[styles.subtitle, { color: '#000' }]}>Upload your shop&apos;s cover photo and profile picture</Text>
 
       <View style={styles.coverPhotoSection}>
         <Text style={styles.label}>Cover Photo *</Text>
@@ -768,7 +791,7 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
       <View style={styles.profileSection}>
         <Text style={styles.label}>Profile Picture</Text>
         <Text style={[styles.subtitle, { marginBottom: 12, fontSize: 14 }]}>
-          This will be your shop's avatar
+          This will be your shop&apos;s avatar
         </Text>
         
         <View style={styles.profileImageContainer}>

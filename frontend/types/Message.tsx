@@ -1,14 +1,19 @@
+import { Product } from "./Product";
+import { Post} from "./Post";
+import { User } from "./User";
+
 export interface Message {
-    id: string;
-    text: string;
-    timestamp: string;
-    conversationId: string;
-    senderId: string;
-    type: 'text' | 'image' | 'product' | 'notification';
-    status: 'sending' | 'sent' | 'delivered' | 'read';
-    replyTo?: string;
-    reactions?: string;
-    productId?: string;
-    imageUrl?: string;
-    voiceDuration?: number;
-  }
+  _id: string;
+  conversationId: string;
+  senderId?: string;
+  text?: string;
+  type: 'text' | 'image' | 'product' | 'profile' | 'post' | 'deleted' | 'info';
+  status: 'sending' | 'sent' | 'delivered' | 'read';
+  createdAt: Date;
+  replyTo?: string;
+  reactions?: Record<string, string[]>;
+  productId?: Product;
+  postId?: Post;
+  profileId?: User;
+  imageUrl?: string;
+}

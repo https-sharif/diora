@@ -29,6 +29,9 @@
     "plugins": ["expo-router", "expo-font", "expo-web-browser"],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "apiUrl": "http://192.168.0.210:5010"
     }
   }
 }
