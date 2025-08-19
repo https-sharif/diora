@@ -1,6 +1,9 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
+import Stripe from 'stripe';
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export const signup = async (req, res) => {
   console.log('Signup route/controller hit');
@@ -28,6 +31,11 @@ export const signup = async (req, res) => {
         .status(400)
         .json({ status: false, message: 'Email already used' });
 
+    const customer = await stripe.customers.create({
+      email: emailLower,
+      name: fullName,
+    });
+
     const hashedPassword = await bcrypt.hash(password, 12);
 
     const newUser = new User({
@@ -45,6 +53,7 @@ export const signup = async (req, res) => {
       avatarId: '',
       bio: '',
       shop: null,
+      stripeCustomerId: customer.id,
       settings: {
         theme: 'light',
         notifications: {
@@ -61,7 +70,6 @@ export const signup = async (req, res) => {
           emailFrequency: 'instant',
         },
       },
-
     });
 
     await newUser.save();
@@ -88,6 +96,7 @@ export const signup = async (req, res) => {
       avatarId: newUser.avatarId,
       onboarding: newUser.onboarding,
       shop: newUser.shop,
+      stripeCustomerId: newUser.stripeCustomerId,
     };
 
     res.status(201).json({ status: true, user: safeUser, token });
@@ -112,7 +121,7 @@ export const login = async (req, res) => {
       $or: [{ email: usernameLower }, { username: usernameLower }],
     });
 
-    if(!user) {
+    if (!user) {
       return res.status(400).json({ status: false, message: 'User not found' });
     }
 
@@ -124,27 +133,34 @@ export const login = async (req, res) => {
 
     // Check if user is banned
     if (user.status === 'banned') {
-      return res.status(403).json({ 
-        status: false, 
+      return res.status(403).json({
+        status: false,
         message: 'Account Banned',
-        details: `Your account has been permanently banned. Reason: ${user.banReason || 'Violation of community guidelines'}. If you believe this is an error, please contact support.`,
+        details: `Your account has been permanently banned. Reason: ${
+          user.banReason || 'Violation of community guidelines'
+        }. If you believe this is an error, please contact support.`,
         banReason: user.banReason,
-        bannedAt: user.bannedAt
+        bannedAt: user.bannedAt,
       });
     }
 
     // Check if user is suspended
     if (user.status === 'suspended') {
-      const isStillSuspended = user.suspendedUntil && new Date() < new Date(user.suspendedUntil);
-      
+      const isStillSuspended =
+        user.suspendedUntil && new Date() < new Date(user.suspendedUntil);
+
       if (isStillSuspended) {
-        const suspendedUntilDate = new Date(user.suspendedUntil).toLocaleDateString();
-        return res.status(403).json({ 
-          status: false, 
+        const suspendedUntilDate = new Date(
+          user.suspendedUntil
+        ).toLocaleDateString();
+        return res.status(403).json({
+          status: false,
           message: 'Account Suspended',
-          details: `Your account is suspended until ${suspendedUntilDate}. Reason: ${user.suspensionReason || 'Violation of community guidelines'}. You can log in again after the suspension period ends.`,
+          details: `Your account is suspended until ${suspendedUntilDate}. Reason: ${
+            user.suspensionReason || 'Violation of community guidelines'
+          }. You can log in again after the suspension period ends.`,
           suspendedUntil: user.suspendedUntil,
-          suspensionReason: user.suspensionReason
+          suspensionReason: user.suspensionReason,
         });
       } else {
         // Suspension period has ended, reactivate the account
@@ -187,6 +203,7 @@ export const login = async (req, res) => {
       avatarId: user.avatarId,
       onboarding: user.onboarding,
       shop: user.shop,
+      stripeCustomerId: user.stripeCustomerId,
     };
 
     res.json({
