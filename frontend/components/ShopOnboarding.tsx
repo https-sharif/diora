@@ -553,7 +553,6 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
 
         console.log('🔄 First refresh attempt...');
         await refreshUser();
-
         await new Promise((resolve) => setTimeout(resolve, 300));
 
         console.log(
@@ -596,7 +595,6 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
           );
           await refreshUser();
           await new Promise((resolve) => setTimeout(resolve, 500));
-
           console.log('🔧 Forcing completion despite state mismatch...');
           onComplete();
         }
