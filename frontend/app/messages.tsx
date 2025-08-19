@@ -539,16 +539,12 @@ export default function MessagesScreen() {
   const handleUserSelect = async (selectedUser: any) => {
     try {
       if (chatMode === 'group') {
-        // For group chat, add user or shop to selection
         if (selectedUsers.find((u) => u._id === selectedUser._id)) {
-          // Remove if already selected
           setSelectedUsers(
             selectedUsers.filter((u) => u._id !== selectedUser._id)
           );
         } else {
-          // Check if we've reached the 10 member limit
           if (selectedUsers.length >= 9) {
-            // 9 + current user = 10 total
             alert('Group chat is limited to 10 members maximum');
             return;
           }
@@ -557,11 +553,9 @@ export default function MessagesScreen() {
         return;
       }
 
-      // For direct chat
       setNewChatVisible(false);
       setUserSearchQuery('');
       setSearchedUsers([]);
-      // Check if conversation already exists
       const existingConversation = conversations.find((conv) =>
         conv.participants?.some((p: any) => {
           const participantId = typeof p === 'string' ? p : p._id;
@@ -593,7 +587,6 @@ export default function MessagesScreen() {
       return;
     }
     try {
-      // Create group conversation with both users and shops
       const participantIds = selectedUsers.map((member) => member._id);
       const response = await messageService.createGroupConversation(
         {
@@ -622,7 +615,6 @@ export default function MessagesScreen() {
     return () => clearTimeout(timeoutId);
   }, [userSearchQuery, token]);
 
-  // Debounce and filter conversations when searchQuery changes
   useEffect(() => {
     if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
     debounceTimeout.current = setTimeout(() => {
@@ -633,7 +625,6 @@ export default function MessagesScreen() {
       const lower = searchQuery.toLowerCase();
       setFilteredConversations(
         sortedConversations.filter((conv) => {
-          // Group: match name, Private: match user fullName/username
           if (conv.type === 'group') {
             return (conv.name || '').toLowerCase().includes(lower);
           } else {
@@ -667,26 +658,21 @@ export default function MessagesScreen() {
     weekAgoMidnight.setDate(midnight.getDate() - 6);
 
     if (date >= midnight) {
-      // Today: show time only
       return date.toLocaleTimeString([], {
         hour: '2-digit',
         minute: '2-digit',
       });
     } else if (date >= yesterdayMidnight && date < midnight) {
-      // Yesterday
       return 'Yesterday';
     } else if (date >= weekAgoMidnight) {
-      // Within the last 7 days: show weekday name
       return date.toLocaleDateString(undefined, { weekday: 'long' });
     } else {
-      // Else: show date
       return date.toLocaleDateString();
     }
   };
 
   const getMessagePreview = (message: any) => {
     if (!message) return 'No messages';
-    // If message exists but is type info and has no text, show a fallback
     if (message.type === 'info' && !message.text) return 'Group info';
 
     const isMyMessage =
@@ -951,7 +937,6 @@ export default function MessagesScreen() {
         />
       )}
 
-      {/* New Chat Modal */}
       <Modal
         visible={newChatVisible}
         transparent
@@ -972,7 +957,6 @@ export default function MessagesScreen() {
             <View style={styles.modalOverlay}>
               <TouchableWithoutFeedback onPress={() => {}}>
                 <View style={styles.modalContainer}>
-                  {/* Header */}
                   <View style={styles.modalHeader}>
                     <Text style={styles.modalTitle}>New Message</Text>
                     <TouchableOpacity
@@ -983,7 +967,6 @@ export default function MessagesScreen() {
                     </TouchableOpacity>
                   </View>
 
-                  {/* Chat Mode */}
                   <View style={styles.chatModeSelector}>
                     <TouchableOpacity
                       style={[
@@ -1033,7 +1016,6 @@ export default function MessagesScreen() {
                     </TouchableOpacity>
                   </View>
 
-                  {/* Group Name */}
                   {chatMode === 'group' && (
                     <TextInput
                       style={styles.groupNameInput}
@@ -1044,7 +1026,6 @@ export default function MessagesScreen() {
                     />
                   )}
 
-                  {/* Selected Users */}
                   {chatMode === 'group' && selectedUsers.length > 0 && (
                     <View style={styles.selectedUsersContainer}>
                       <Text style={styles.selectedUsersTitle}>
@@ -1073,7 +1054,6 @@ export default function MessagesScreen() {
                     </View>
                   )}
 
-                  {/* Search */}
                   <View style={styles.modalSearchContainer}>
                     <Search size={20} color={theme.textSecondary} />
                     <TextInput
@@ -1090,7 +1070,6 @@ export default function MessagesScreen() {
                     />
                   </View>
 
-                  {/* Users List */}
                   {searchLoading || followingLoading ? (
                     <View style={styles.loadingContainer}>
                       <ActivityIndicator size="large" color={theme.accent} />

@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   TextInput,
   Switch,
-  Image,
   Modal,
   ActivityIndicator,
   TouchableWithoutFeedback,
@@ -425,7 +424,6 @@ export default function SettingsScreen() {
   const [showPromotionModal, setShowPromotionModal] = useState(false);
   const [downloadLoading, setDownloadLoading] = useState(false);
 
-  // Debounced settings save
   const saveTimeoutRef = useRef<any>(null);
 
   const saveSettings = useCallback(async (updatedSettings: any) => {
@@ -446,12 +444,10 @@ export default function SettingsScreen() {
   }, [token, showToast]);
 
   const debouncedSaveSettings = useCallback((updatedUser: any) => {
-    // Clear existing timeout
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
     }
     
-    // Set new timeout to save after 1 second of no changes
     saveTimeoutRef.current = setTimeout(() => {
       saveSettings(updatedUser.settings);
     }, 1000);
@@ -464,7 +460,6 @@ export default function SettingsScreen() {
 
   const handleThemeToggle = useCallback(() => {
     toggleTheme();
-    // Update user settings with new theme
     if (user) {
       const newTheme = isDarkMode ? 'light' : 'dark';
       updateUserSettings({
@@ -732,7 +727,6 @@ export default function SettingsScreen() {
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Profile Management */}
         {renderSection(
           'Profile',
           <>
@@ -761,7 +755,6 @@ export default function SettingsScreen() {
           </>
         )}
 
-        {/* Account Security */}
         {renderSection(
           'Security',
           <>
@@ -880,7 +873,6 @@ export default function SettingsScreen() {
           </>
         )}
 
-        {/* Notification Preferences */}
         {renderSection(
           'Notifications',
           <>
@@ -1184,7 +1176,6 @@ export default function SettingsScreen() {
           </>
         )}
 
-        {/* Theme Customization */}
         {renderSection(
           'Appearance',
           <>
@@ -1202,7 +1193,6 @@ export default function SettingsScreen() {
           </>
         )}
 
-        {/* Connected Accounts */}
         {renderSection(
           'Connected Accounts',
           <>
@@ -1234,7 +1224,6 @@ export default function SettingsScreen() {
           </>
         )}
 
-        {/* Account Management */}
         {renderSection(
           'Account Management',
           <>
@@ -1268,7 +1257,6 @@ export default function SettingsScreen() {
         <View style={styles.bottomPadding} />
       </ScrollView>
 
-      {/* Delete Account Confirmation Modal */}
       <Modal
         visible={showDeleteConfirm}
         transparent
@@ -1321,7 +1309,6 @@ export default function SettingsScreen() {
         </TouchableWithoutFeedback>
       </Modal>
 
-      {/* Deactivate Account Confirmation Modal */}
       <Modal
         visible={showDeactivateConfirm}
         transparent
@@ -1376,7 +1363,6 @@ export default function SettingsScreen() {
         </TouchableWithoutFeedback>
       </Modal>
 
-      {/* Profile Image Picker Modal */}
       <Modal
         visible={showImagePicker}
         transparent
@@ -1392,7 +1378,6 @@ export default function SettingsScreen() {
                   { backgroundColor: theme.card },
                 ]}
               >
-                {/* Your modal content */}
                 <View style={styles.imagePickerHeader}>
                   <Text
                     style={[styles.imagePickerTitle, { color: theme.text }]}
@@ -1456,13 +1441,11 @@ export default function SettingsScreen() {
         </TouchableWithoutFeedback>
       </Modal>
 
-      {/* Promotion Request Modal */}
       <PromotionRequestModal
         visible={showPromotionModal}
         onClose={() => setShowPromotionModal(false)}
       />
 
-      {/* Toast Notifications */}
       {visible.error && (
         <Toast
           type="error"

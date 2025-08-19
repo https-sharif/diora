@@ -2,24 +2,25 @@ import Order from '../models/Order.js';
 import Cart from '../models/Cart.js';
 import Product from '../models/Product.js';
 import mongoose from 'mongoose';
+import Stripe from 'stripe';
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+  apiVersion: '2022-11-15',
+});
 
 export const createOrder = async (req, res) => {
   console.log('Create order route/controller hit');
   try {
     const userId = req.user.id;
-    const {
-      shippingAddress,
-      paymentMethod,
-      notes,
-    } = req.body;
+    const { shippingAddress, paymentMethod, notes } = req.body;
 
     // Get user's cart
     const cart = await Cart.findOne({ userId }).populate('products.productId');
-    
+
     if (!cart || cart.products.length === 0) {
-      return res.status(400).json({ 
-        status: false, 
-        message: 'Cart is empty' 
+      return res.status(400).json({
+        status: false,
+        message: 'Cart is empty',
       });
     }
 
@@ -30,19 +31,19 @@ export const createOrder = async (req, res) => {
 
     for (const cartItem of cart.products) {
       const product = cartItem.productId;
-      
+
       // Check if product has sufficient stock
       if (product.stock < cartItem.quantity) {
-        return res.status(400).json({ 
-          status: false, 
-          message: `Insufficient stock for ${product.name}. Available: ${product.stock}, Requested: ${cartItem.quantity}` 
+        return res.status(400).json({
+          status: false,
+          message: `Insufficient stock for ${product.name}. Available: ${product.stock}, Requested: ${cartItem.quantity}`,
         });
       }
 
       // Calculate price (with discount if applicable)
       let itemPrice = product.price;
       if (product.discount && product.discount > 0) {
-        itemPrice = product.price - (product.price * product.discount / 100);
+        itemPrice = product.price - (product.price * product.discount) / 100;
       }
 
       const itemTotal = itemPrice * cartItem.quantity;
@@ -76,7 +77,9 @@ export const createOrder = async (req, res) => {
     const year = date.getFullYear().toString().slice(-2);
     const month = (date.getMonth() + 1).toString().padStart(2, '0');
     const day = date.getDate().toString().padStart(2, '0');
-    const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+    const random = Math.floor(Math.random() * 10000)
+      .toString()
+      .padStart(4, '0');
     const orderNumber = `ORD${year}${month}${day}${random}`;
 
     // Create the order
@@ -127,13 +130,52 @@ export const createOrder = async (req, res) => {
       message: 'Order placed successfully',
       order: populatedOrder,
     });
-
   } catch (error) {
     console.error('Error creating order:', error);
-    res.status(500).json({ 
-      status: false, 
-      message: 'Something went wrong while placing the order' 
+    res.status(500).json({
+      status: false,
+      message: 'Something went wrong while placing the order',
     });
+  }
+};
+
+export const createStripeSession = async (req, res) => {
+  try {
+    const { orderId } = req.body;
+    const order = await Order.findById(orderId).populate('items.productId');
+
+    if (!order)
+      return res
+        .status(404)
+        .json({ status: false, message: 'Order not found' });
+
+    const lineItems = order.items.map((item) => ({
+      price_data: {
+        currency: 'usd',
+        product_data: {
+          name: item.name,
+          images: [item.image],
+        },
+        unit_amount: Math.round(item.price * 100),
+      },
+      quantity: item.quantity,
+    }));
+
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      line_items: lineItems,
+      mode: 'payment',
+      success_url: `diora://order-success?orderId=${order._id}`,
+      cancel_url: `diora://order-cancel?orderId=${order._id}`,
+      metadata: { orderId: order._id.toString() },
+    });
+
+    res.json({ sessionUrl: session.url });
+  } catch (err) {
+    console.error('Stripe checkout session error:', err);
+    res
+      .status(500)
+      .json({ status: false, message: 'Failed to create Stripe session' });
   }
 };
 
@@ -158,12 +200,11 @@ export const getUserOrders = async (req, res) => {
       currentPage: page,
       totalOrders,
     });
-
   } catch (error) {
     console.error('Error fetching user orders:', error);
-    res.status(500).json({ 
-      status: false, 
-      message: 'Something went wrong while fetching orders' 
+    res.status(500).json({
+      status: false,
+      message: 'Something went wrong while fetching orders',
     });
   }
 };
@@ -179,9 +220,9 @@ export const getOrderById = async (req, res) => {
       .populate('items.productId', 'name imageUrl shopId');
 
     if (!order) {
-      return res.status(404).json({ 
-        status: false, 
-        message: 'Order not found' 
+      return res.status(404).json({
+        status: false,
+        message: 'Order not found',
       });
     }
 
@@ -189,12 +230,11 @@ export const getOrderById = async (req, res) => {
       status: true,
       order,
     });
-
   } catch (error) {
     console.error('Error fetching order:', error);
-    res.status(500).json({ 
-      status: false, 
-      message: 'Something went wrong while fetching the order' 
+    res.status(500).json({
+      status: false,
+      message: 'Something went wrong while fetching the order',
     });
   }
 };
@@ -206,21 +246,21 @@ export const updateOrderStatus = async (req, res) => {
     const { status, trackingNumber, estimatedDelivery } = req.body;
 
     const updateData = { status };
-    
-    if (trackingNumber) updateData.trackingNumber = trackingNumber;
-    if (estimatedDelivery) updateData.estimatedDelivery = new Date(estimatedDelivery);
 
-    const order = await Order.findByIdAndUpdate(
-      orderId,
-      updateData,
-      { new: true }
-    ).populate('userId', 'fullName email')
-     .populate('items.productId', 'name imageUrl shopId');
+    if (trackingNumber) updateData.trackingNumber = trackingNumber;
+    if (estimatedDelivery)
+      updateData.estimatedDelivery = new Date(estimatedDelivery);
+
+    const order = await Order.findByIdAndUpdate(orderId, updateData, {
+      new: true,
+    })
+      .populate('userId', 'fullName email')
+      .populate('items.productId', 'name imageUrl shopId');
 
     if (!order) {
-      return res.status(404).json({ 
-        status: false, 
-        message: 'Order not found' 
+      return res.status(404).json({
+        status: false,
+        message: 'Order not found',
       });
     }
 
@@ -229,12 +269,11 @@ export const updateOrderStatus = async (req, res) => {
       message: 'Order status updated successfully',
       order,
     });
-
   } catch (error) {
     console.error('Error updating order status:', error);
-    res.status(500).json({ 
-      status: false, 
-      message: 'Something went wrong while updating order status' 
+    res.status(500).json({
+      status: false,
+      message: 'Something went wrong while updating order status',
     });
   }
 };
@@ -248,17 +287,17 @@ export const cancelOrder = async (req, res) => {
     const order = await Order.findOne({ _id: orderId, userId });
 
     if (!order) {
-      return res.status(404).json({ 
-        status: false, 
-        message: 'Order not found' 
+      return res.status(404).json({
+        status: false,
+        message: 'Order not found',
       });
     }
 
     // Only allow cancellation if order is in processing or confirmed status
     if (!['processing', 'confirmed'].includes(order.status)) {
-      return res.status(400).json({ 
-        status: false, 
-        message: 'Order cannot be cancelled at this stage' 
+      return res.status(400).json({
+        status: false,
+        message: 'Order cannot be cancelled at this stage',
       });
     }
 
@@ -270,12 +309,11 @@ export const cancelOrder = async (req, res) => {
       message: 'Order cancelled successfully',
       order,
     });
-
   } catch (error) {
     console.error('Error cancelling order:', error);
-    res.status(500).json({ 
-      status: false, 
-      message: 'Something went wrong while cancelling the order' 
+    res.status(500).json({
+      status: false,
+      message: 'Something went wrong while cancelling the order',
     });
   }
 };
@@ -288,7 +326,7 @@ export const getShopOrders = async (req, res) => {
 
     // Build query to find orders containing products from this shop
     const matchQuery = {
-      'items.productId': { $exists: true }
+      'items.productId': { $exists: true },
     };
 
     if (status && status !== 'all') {
@@ -301,21 +339,21 @@ export const getShopOrders = async (req, res) => {
           from: 'products',
           localField: 'items.productId',
           foreignField: '_id',
-          as: 'productDetails'
-        }
+          as: 'productDetails',
+        },
       },
       {
         $match: {
-          'productDetails.shopId': new mongoose.Types.ObjectId(shopId)
-        }
+          'productDetails.shopId': new mongoose.Types.ObjectId(shopId),
+        },
       },
       {
         $lookup: {
           from: 'users',
           localField: 'userId',
           foreignField: '_id',
-          as: 'customer'
-        }
+          as: 'customer',
+        },
       },
       {
         $project: {
@@ -337,15 +375,15 @@ export const getShopOrders = async (req, res) => {
             $filter: {
               input: '$items',
               cond: {
-                $in: ['$$this.productId', '$productDetails._id']
-              }
-            }
-          }
-        }
+                $in: ['$$this.productId', '$productDetails._id'],
+              },
+            },
+          },
+        },
       },
       { $sort: { createdAt: -1 } },
       { $skip: (page - 1) * limit },
-      { $limit: parseInt(limit) }
+      { $limit: parseInt(limit) },
     ]);
 
     // Get total count for pagination
@@ -355,15 +393,15 @@ export const getShopOrders = async (req, res) => {
           from: 'products',
           localField: 'items.productId',
           foreignField: '_id',
-          as: 'productDetails'
-        }
+          as: 'productDetails',
+        },
       },
       {
         $match: {
-          'productDetails.shopId': new mongoose.Types.ObjectId(shopId)
-        }
+          'productDetails.shopId': new mongoose.Types.ObjectId(shopId),
+        },
       },
-      { $count: 'total' }
+      { $count: 'total' },
     ]);
 
     const total = totalOrders.length > 0 ? totalOrders[0].total : 0;
@@ -375,12 +413,61 @@ export const getShopOrders = async (req, res) => {
       currentPage: parseInt(page),
       totalOrders: total,
     });
-
   } catch (error) {
     console.error('Error fetching shop orders:', error);
-    res.status(500).json({ 
-      status: false, 
-      message: 'Something went wrong while fetching shop orders' 
+    res.status(500).json({
+      status: false,
+      message: 'Something went wrong while fetching shop orders',
     });
   }
+};
+
+export const orderSuccess = async (req, res) => {
+  console.log('Order Success route/controller hit');
+  try {
+    const { orderId } = req.query;
+    if (!orderId) return res.status(400).send('Order ID is required');
+
+    const order = await Order.findById(orderId).populate('items.productId');
+    if (!order) return res.status(404).send('Order not found');
+
+    res.send(`
+      <html>
+        <head>
+          <title>Order Success</title>
+        </head>
+        <body>
+          <h1>✅ Thank you for your order!</h1>
+          <p>Order #: ${order.orderNumber}</p>
+          <p>Total: $${order.total.toFixed(2)}</p>
+          <h3>Items:</h3>
+          <ul>
+            ${order.items
+              .map((item) => `<li>${item.name} x ${item.quantity}</li>`)
+              .join('')}
+          </ul>
+        </body>
+      </html>
+    `);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Something went wrong');
+  }
+};
+
+export const orderCancel = async (req, res) => {
+  const { orderId } = req.query;
+
+  res.send(`
+    <html>
+      <head>
+        <title>Order Canceled</title>
+      </head>
+      <body>
+        <h1>❌ Your order was canceled</h1>
+        ${orderId ? `<p>Order ID: ${orderId}</p>` : ''}
+        <p>If this was a mistake, you can try placing your order again.</p>
+      </body>
+    </html>
+  `);
 };

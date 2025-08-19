@@ -11,7 +11,6 @@ export interface Review {
   imagesIds?: string[];
 }
 
-// Review service types
 export interface ReviewData {
   productId: string;
   rating: number;

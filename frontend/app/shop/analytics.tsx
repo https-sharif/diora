@@ -389,7 +389,6 @@ export default function ShopAnalytics() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
-        {/* Summary Cards */}
         <View style={styles.summarySection}>
           <View style={styles.summaryGrid}>
             {renderSummaryCard(
@@ -425,7 +424,6 @@ export default function ShopAnalytics() {
           </View>
         </View>
 
-        {/* Order Trends */}
         {analytics.orderTrends.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Order Trends (Last 30 Days)</Text>
@@ -443,7 +441,6 @@ export default function ShopAnalytics() {
           </View>
         )}
 
-        {/* Recent Orders */}
         {analytics.recentOrders.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Recent Orders</Text>
@@ -473,7 +470,6 @@ export default function ShopAnalytics() {
           </View>
         )}
 
-        {/* Top Products */}
         {analytics.topProducts.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Top Selling Products</Text>

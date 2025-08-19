@@ -21,6 +21,8 @@ import orderRoutes from './routes/order.js';
 import reportRoutes from './routes/report.js';
 import messageRoutes from './routes/message.js';
 import uploadRoutes from './routes/upload.js';
+import stripeRoutes from './routes/stripe.js';
+import webhookRoutes from './routes/webhook.js';
 import { initSocket } from './sockets/socketSetup.js';
 
 dotenv.config();
@@ -32,6 +34,8 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 connectDB();
+
+app.use('/api/stripe/webhook', webhookRoutes);
 
 app.use(cors());
 app.use(express.json());
@@ -58,6 +62,7 @@ app.use('/api/order', orderRoutes);
 app.use('/api/report', reportRoutes);
 app.use('/api/message', messageRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/stripe', stripeRoutes);
 
 import { autoCleanupReports } from './controllers/reportController.js';
 

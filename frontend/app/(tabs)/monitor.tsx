@@ -373,7 +373,6 @@ export default function Monitor() {
   const { user, token } = useAuth();
   const styles = createStyles(theme);
 
-  // Debug helper function
   const safeRender = (content: any, fallback: string = 'N/A') => {
     if (content === null || content === undefined) return fallback;
     if (typeof content === 'string') return content;
@@ -456,7 +455,6 @@ export default function Monitor() {
           }
         } else {
           console.log('API response status false:', response);
-          // Clear results on failed response
           setSearchResults([]);
           setPostResults([]);
           setProductResults([]);
@@ -465,7 +463,6 @@ export default function Monitor() {
         console.error(`Search ${type} error:`, error);
         console.error('Error details:', error.response?.data);
         Alert.alert('Error', `Failed to search ${type}: ${error.response?.data?.message || error.message}`);
-        // Clear results on error
         setSearchResults([]);
         setPostResults([]);
         setProductResults([]);
@@ -481,23 +478,18 @@ export default function Monitor() {
     debouncedSearch(searchQuery, activeFilter, contentType);
   }, [searchQuery, activeFilter, contentType, debouncedSearch]);
 
-  // Reset filter when content type changes
   useEffect(() => {
     setActiveFilter('All');
     setSearchQuery('');
   }, [contentType]);
 
-  // Initial load when component mounts
   useEffect(() => {
     if (token) {
-      // Clear current results
       setSearchResults([]);
       setPostResults([]);
       setProductResults([]);
       
-      // Reset filter
       setActiveFilter('All');
-      // Load current content type
       debouncedSearch('', 'All', contentType);
     }
   }, [token, contentType]);
@@ -656,13 +648,11 @@ export default function Monitor() {
   };
 
   const renderPostCard = ({ item: post }: { item: PostResult }) => {
-    // More robust null checking
     if (!post || !post._id || typeof post._id !== 'string') {
       console.warn('Invalid post item:', post);
       return null;
     }
 
-    // Safely extract user data
     const userData = post.user || {};
     const userName = safeRender(userData.username, 'Unknown User');
     const userAvatar = safeRender(userData.avatar, 'https://via.placeholder.com/50');
@@ -737,13 +727,11 @@ export default function Monitor() {
   };
 
   const renderProductCard = ({ item: product }: { item: ProductResult }) => {
-    // More robust null checking
     if (!product || !product._id || typeof product._id !== 'string') {
       console.warn('Invalid product item:', product);
       return null;
     }
 
-    // Safely extract shop data
     const shopData = product.shopId || {};
     const shopName = safeRender(shopData.username, 'Unknown Shop');
     const shopAvatar = safeRender(shopData.avatar, 'https://via.placeholder.com/50');
@@ -878,7 +866,6 @@ export default function Monitor() {
       <View style={styles.header}>
         <Text style={styles.title}>Monitor</Text>
         
-        {/* Content Type Selector */}
         <View style={styles.contentTypeContainer}>
           <TouchableOpacity
             style={[

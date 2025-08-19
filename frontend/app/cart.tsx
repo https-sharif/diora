@@ -15,7 +15,6 @@ import {
   FlatList,
   Image,
   Alert,
-  Animated,
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -244,29 +243,22 @@ export default function Cart() {
 
   const styles = createStyles(theme);
 
-  // State for tracking pending updates
   const [pendingUpdates, setPendingUpdates] = useState<Set<string>>(new Set());
 
-  // Debounce refs for cart updates
   const updateQuantityTimeoutRef = useRef<any>(null);
   const removeItemTimeoutRef = useRef<any>(null);
 
-  // Debounced cart update functions
   const debouncedUpdateQuantity = useCallback((productId: string, quantity: number, size?: string, variant?: string) => {
     const key = `${productId}-${size || ''}-${variant || ''}`;
     
-    // Add to pending updates
     setPendingUpdates(prev => new Set(prev.add(key)));
     
-    // Clear existing timeout
     if (updateQuantityTimeoutRef.current) {
       clearTimeout(updateQuantityTimeoutRef.current);
     }
     
-    // Set new timeout to update after 500ms of no changes
     updateQuantityTimeoutRef.current = setTimeout(() => {
       updateCartQuantity(productId, quantity, size, variant);
-      // Remove from pending updates
       setPendingUpdates(prev => {
         const newSet = new Set(prev);
         newSet.delete(key);
@@ -278,18 +270,14 @@ export default function Cart() {
   const debouncedRemoveFromCart = useCallback((productId: string, size?: string, variant?: string) => {
     const key = `${productId}-${size || ''}-${variant || ''}`;
     
-    // Add to pending updates
     setPendingUpdates(prev => new Set(prev.add(key)));
     
-    // Clear existing timeout
     if (removeItemTimeoutRef.current) {
       clearTimeout(removeItemTimeoutRef.current);
     }
     
-    // Set new timeout to remove after 300ms
     removeItemTimeoutRef.current = setTimeout(() => {
       removeFromCart(productId, size, variant);
-      // Remove from pending updates
       setPendingUpdates(prev => {
         const newSet = new Set(prev);
         newSet.delete(key);
@@ -298,7 +286,6 @@ export default function Cart() {
     }, 300);
   }, [removeFromCart]);
 
-  // Cleanup timeouts on unmount
   useEffect(() => {
     return () => {
       if (updateQuantityTimeoutRef.current) {
@@ -310,7 +297,6 @@ export default function Cart() {
     };
   }, []);
 
-  // Helper function to check if item has pending updates
   const hasPendingUpdate = useCallback((productId: string, size?: string, variant?: string) => {
     const key = `${productId}-${size || ''}-${variant || ''}`;
     return pendingUpdates.has(key);

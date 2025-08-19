@@ -9,7 +9,6 @@ import {
   Modal,
   Alert,
   ActivityIndicator,
-  Image,
 } from 'react-native';
 import { X, Upload, Store } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -155,7 +154,7 @@ export const PromotionRequestModal: React.FC<PromotionRequestModalProps> = ({
   onClose,
 }) => {
   const { theme } = useTheme();
-  const { user, token } = useAuth();
+  const { token } = useAuth();
   const styles = createStyles(theme);
   const [loading, setLoading] = useState(false);
 
@@ -215,12 +214,10 @@ export const PromotionRequestModal: React.FC<PromotionRequestModalProps> = ({
 
       const requestFormData = new FormData();
       
-      // Add form fields
       Object.keys(formData).forEach(key => {
         requestFormData.append(key, formData[key as keyof typeof formData]);
       });
       
-      // Add files with correct structure
       proofDocuments.forEach((doc, index) => {
         const fileExtension = doc.uri.split('.').pop() || 'jpg';
         const fileName = doc.fileName || `document_${index}.${fileExtension}`;
@@ -255,7 +252,6 @@ export const PromotionRequestModal: React.FC<PromotionRequestModalProps> = ({
           'Your promotion request has been submitted successfully! You will be notified once an admin reviews your request.',
           [{ text: 'OK', onPress: onClose }]
         );
-        // Reset form
         setFormData({
           businessName: '',
           businessDescription: '',
@@ -274,7 +270,6 @@ export const PromotionRequestModal: React.FC<PromotionRequestModalProps> = ({
         console.error('Response data:', error.response.data);
         console.error('Response status:', error.response.status);
         
-        // Handle specific error cases
         if (error.response.status === 400 && error.response.data?.message) {
           const message = error.response.data.message;
           
@@ -291,10 +286,8 @@ export const PromotionRequestModal: React.FC<PromotionRequestModalProps> = ({
           }
         }
         
-        // Generic error with server message
         Alert.alert('Error', error.response.data?.message || 'Failed to submit request. Please try again.');
       } else {
-        // Network or other errors
         Alert.alert('Error', 'Failed to submit request. Please check your connection and try again.');
       }
     } finally {

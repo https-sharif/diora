@@ -847,7 +847,6 @@ export default function ReportsManagement() {
             </View>
           </View>
         </View>
-        {/* Search and Filter */}
         <View style={styles.filterContainer}>
           <TextInput
             style={styles.searchInput}
@@ -861,7 +860,6 @@ export default function ReportsManagement() {
           </TouchableOpacity>
         </View>
 
-        {/* Stats - Keep visible during loading */}
         {stats && (
           <View style={styles.statsContainer}>
             <View style={styles.statItem}>
@@ -891,7 +889,6 @@ export default function ReportsManagement() {
           </View>
         )}
 
-        {/* Category Tabs */}
         <View style={styles.categoryTabs}>
           {categories.map((category) => (
             <TouchableOpacity
@@ -940,7 +937,6 @@ export default function ReportsManagement() {
         </View>
       </View>
 
-      {/* Search and Filter */}
       <View style={styles.filterContainer}>
         <TextInput
           style={styles.searchInput}
@@ -954,7 +950,6 @@ export default function ReportsManagement() {
         </TouchableOpacity>
       </View>
 
-      {/* Stats */}
       {stats && (
         <View style={styles.statsContainer}>
           <View style={styles.statItem}>
@@ -984,7 +979,6 @@ export default function ReportsManagement() {
         </View>
       )}
 
-      {/* Category Tabs */}
       <View style={styles.categoryTabs}>
         {categories.map((category) => (
           <TouchableOpacity
@@ -1007,7 +1001,6 @@ export default function ReportsManagement() {
         ))}
       </View>
 
-      {/* Reports List */}
       {reportsLoading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.primary} />
@@ -1045,7 +1038,6 @@ export default function ReportsManagement() {
         </View>
       )}
 
-      {/* Action Modal */}
       <Modal
         visible={showActionModal}
         transparent
@@ -1151,7 +1143,6 @@ export default function ReportsManagement() {
         </View>
       </Modal>
 
-      {/* Actions Menu Modal */}
       <Modal
         visible={showActionsMenu}
         animationType="slide"

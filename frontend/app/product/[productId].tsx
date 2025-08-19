@@ -1288,7 +1288,6 @@ export default function ProductDetailScreen() {
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Main Image */}
         <View style={styles.imageContainer}>
           <Image
             source={{ uri: product.imageUrl[selectedImageIndex] }}
@@ -1297,7 +1296,6 @@ export default function ProductDetailScreen() {
           />
         </View>
 
-        {/* Image Thumbnails */}
         <FlatList
           data={product.imageUrl}
           renderItem={renderImageItem}
@@ -1308,7 +1306,6 @@ export default function ProductDetailScreen() {
           contentContainerStyle={styles.thumbnailContent}
         />
 
-        {/* Product Info */}
         <View style={styles.productInfo}>
           <Text style={styles.productBrand}>{product.shopId.fullName}</Text>
           <Text style={styles.productName}>{product.name}</Text>
@@ -1349,7 +1346,6 @@ export default function ProductDetailScreen() {
           <Text style={styles.productDescription}>{product.description}</Text>
         </View>
 
-        {/* Store Info */}
         <View style={styles.storeSection}>
           <Text style={styles.sectionTitle}>Store</Text>
           <View style={styles.storeInfo}>
@@ -1393,7 +1389,6 @@ export default function ProductDetailScreen() {
           </View>
         </View>
 
-        {/* Size Selection */}
         <View style={styles.optionSection}>
           <Text style={styles.optionTitle}>Size</Text>
           <View style={styles.optionButtons}>
@@ -1419,7 +1414,6 @@ export default function ProductDetailScreen() {
           </View>
         </View>
 
-        {/* Color Selection */}
         <View style={styles.optionSection}>
           <Text style={styles.optionTitle}>Color</Text>
           <View style={styles.optionButtons}>
@@ -1445,7 +1439,6 @@ export default function ProductDetailScreen() {
           </View>
         </View>
 
-        {/* Quantity */}
         <View style={styles.quantitySection}>
           <Text style={styles.optionTitle}>Quantity</Text>
           <View style={styles.quantityControls}>
@@ -1475,7 +1468,6 @@ export default function ProductDetailScreen() {
           </View>
         </View>
 
-        {/* Reviews */}
         <View style={styles.reviewsSection}>
           <Text style={styles.sectionTitle}>Reviews ({reviews.length})</Text>
           {!hasReviewed && (
@@ -1526,7 +1518,6 @@ export default function ProductDetailScreen() {
         <View style={styles.bottomPadding} />
       </ScrollView>
 
-      {/* Add to Cart Button */}
       <View style={styles.footer}>
         <TouchableOpacity
           style={[
@@ -1625,7 +1616,6 @@ export default function ProductDetailScreen() {
         </TouchableOpacity>
       </Modal>
 
-      {/* Menu Modal */}
       <Modal
         visible={showMoreMenu}
         transparent

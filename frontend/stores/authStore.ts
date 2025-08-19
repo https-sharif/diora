@@ -76,7 +76,9 @@ export const useAuthStore = create<AuthState>()(
           const signupData = await authService.signup(data);
 
           if (signupData.status) {
-            await AsyncStorage.setItem('token', signupData.token);            const newUser: User = {
+            await AsyncStorage.setItem('token', signupData.token);            
+
+            const newUser: User = {
               _id: signupData.user._id,
               username: signupData.user.username,
               fullName: signupData.user.fullName,
@@ -91,6 +93,7 @@ export const useAuthStore = create<AuthState>()(
               createdAt: signupData.user.createdAt,
               type: signupData.user.type,
               onboarding: signupData.user.onboarding,
+              stripeCustomerId: signupData.user.stripeCustomerId,
               settings: {
                 theme: signupData.user.settings.theme,
                 notifications: {
@@ -198,9 +201,7 @@ export const useAuthStore = create<AuthState>()(
           if (response.status) {
             const updatedUser = response.user;
             
-            // Check if user is banned or suspended
             if (updatedUser.status === 'banned') {
-              // Force logout if user is banned
               await AsyncStorage.clear();
               set({ user: null, token: null, isAuthenticated: false });
               router.replace('/auth');
@@ -210,7 +211,6 @@ export const useAuthStore = create<AuthState>()(
             if (updatedUser.status === 'suspended' && updatedUser.suspendedUntil) {
               const suspendedUntil = new Date(updatedUser.suspendedUntil);
               if (new Date() < suspendedUntil) {
-                // Force logout if still suspended
                 await AsyncStorage.clear();
                 set({ user: null, token: null, isAuthenticated: false });
                 router.replace('/auth');
@@ -218,7 +218,6 @@ export const useAuthStore = create<AuthState>()(
               }
             }
 
-            // Update user data
             console.log('🔄 syncUser - Updated user from API:', {
               userId: updatedUser._id,
               onboarding: updatedUser.onboarding,
@@ -227,7 +226,6 @@ export const useAuthStore = create<AuthState>()(
             
             set({ user: updatedUser });
             
-            // Verify store state immediately after set
             const storeAfterSet = get();
             console.log('🔄 syncUser - Store state after set:', {
               userId: storeAfterSet.user?._id,
@@ -235,7 +233,6 @@ export const useAuthStore = create<AuthState>()(
               timestamp: new Date().toISOString()
             });
 
-            // Verify AsyncStorage persistence after a short delay
             setTimeout(() => {
               AsyncStorage.getItem('auth-store').then(stored => {
                 const parsed = stored ? JSON.parse(stored) : null;
@@ -247,13 +244,11 @@ export const useAuthStore = create<AuthState>()(
               }).catch(err => console.error('AsyncStorage check failed:', err));
             }, 100);
           } else {
-            // Invalid token or user not found
             await AsyncStorage.clear();
             set({ user: null, token: null, isAuthenticated: false });
             router.replace('/auth');
           }
         } catch (error: any) {
-          // If unauthorized, clear auth state
           if (error.response?.status === 401 || error.response?.status === 403) {
             await AsyncStorage.clear();
             set({ user: null, token: null, isAuthenticated: false });

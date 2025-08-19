@@ -38,7 +38,6 @@ export const usePromotionRequests = () => {
       const response = await adminService.approvePromotionRequest(requestId, token);
 
       if (response.status) {
-        // Update the local state
         setRequests(prev => 
           prev.map(req => 
             req._id === requestId 
@@ -68,7 +67,6 @@ export const usePromotionRequests = () => {
       const response = await adminService.rejectPromotionRequest(requestId, comments || '', token);
 
       if (response.status) {
-        // Update the local state
         setRequests(prev => 
           prev.map(req => 
             req._id === requestId 

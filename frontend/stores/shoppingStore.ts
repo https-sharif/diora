@@ -6,7 +6,6 @@ import { useAuthStore } from '@/stores/authStore';
 import { cartService, wishlistService } from '@/services';
 
 export const useShoppingStore = create<ShoppingStore>((set, get) => {
-  // Helper functions for operation tracking
   const addCartOperation = (key: string) => {
     const operations = new Set(get().cartOperations);
     operations.add(key);
@@ -44,7 +43,6 @@ export const useShoppingStore = create<ShoppingStore>((set, get) => {
         wishlistDebounceMap: new Map()
       });
     } else if (!prevState.user && state.user) {
-      // User logged in - initialize shopping data
       get().initializeUserData();
     }
   });

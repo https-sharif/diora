@@ -26,6 +26,9 @@ import { orderService } from '@/services';
 import { Theme } from '@/types/Theme';
 import { Product } from '@/types/Product';
 import { CartItem } from '@/types/Cart';
+import axios from 'axios';
+import { config } from '@/config';
+import * as WebBrowser from 'expo-web-browser';
 
 interface CheckoutForm {
   fullName: string;
@@ -290,7 +293,7 @@ const createStyles = (theme: Theme) =>
 const CheckoutPage = () => {
   const { theme } = useTheme();
   const styles = createStyles(theme);
-  const { cart, getCartTotal, fetchCart } = useShopping();
+  const { cart, fetchCart } = useShopping();
   const { user, token } = useAuth();
 
   const [form, setForm] = useState<CheckoutForm>({
@@ -389,35 +392,40 @@ const CheckoutPage = () => {
 
       const response = await orderService.createOrder(orderData, token);
 
-      if (response.status) {
+      if (!response.status) throw new Error(response.message);
+
+      if (form.paymentMethod === 'cod') {
         await fetchCart();
-        
         Alert.alert(
           'Order Placed Successfully!',
           `Order #${response.order.orderNumber} has been placed. You will receive updates via email.`,
           [
-            { 
-              text: 'View Order', 
-              onPress: () => router.push(`/order/${response.order._id}`) 
-            },
-            { 
-              text: 'Continue Shopping', 
-              onPress: () => router.push('/shopping')
-            }
+            { text: 'View Order', onPress: () => router.push(`/order/${response.order._id}`) },
+            { text: 'Continue Shopping', onPress: () => router.push('/shopping') },
           ]
         );
+      } else if (form.paymentMethod === 'card') {
+        const { sessionUrl } = await axios.post(
+          `${config.apiUrl}/api/order/create-stripe-session`,
+          { orderId: response.order._id },
+          { headers: { Authorization: `Bearer ${token}` } }
+        ).then(res => res.data);
+
+        if (sessionUrl) {
+          await WebBrowser.openBrowserAsync(sessionUrl);
+        } else {
+          alert('Failed to start Stripe payment.');
+        }
       }
+
     } catch (error) {
       console.error('Error placing order:', error);
-      Alert.alert(
-        'Order Failed',
-        'There was an error placing your order. Please try again.',
-        [{ text: 'OK' }]
-      );
+      Alert.alert('Order Failed', 'There was an error placing your order. Please try again.', [{ text: 'OK' }]);
     } finally {
       setIsPlacingOrder(false);
     }
   };
+
 
   const renderOrderSummary = () => (
     <View style={styles.section}>

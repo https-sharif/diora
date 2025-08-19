@@ -10,7 +10,7 @@ import {
   Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Settings, Grid2x2 as Grid, Star, LogOut, Check, Package, BarChart3, Edit3, MapPin, Phone, Mail, Globe, ExternalLink } from 'lucide-react-native';
+import { Settings, Grid2x2 as Grid, Star, LogOut, Check, Package, BarChart3, MapPin, Phone, Mail, Globe } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -362,11 +362,9 @@ export default function ShopProfile() {
     if (!user?._id || !token) return;
 
     try {
-      // Fetch liked posts
       const likedPosts = await postService.getUserLikedPosts(user._id, token);
       setMyLikedPosts(likedPosts);
 
-      // Fetch user's posts
       const userPosts = await postService.getUserPosts(user._id, token);
       setMyPosts(userPosts);
 
@@ -468,7 +466,6 @@ export default function ShopProfile() {
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Cover Image */}
         <Image 
           source={{ 
             uri: user.shop?.coverImageUrl || 'https://images.unsplash.com/photo-1557821552-17105176677c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1932&h=1087'
@@ -476,7 +473,6 @@ export default function ShopProfile() {
           style={styles.coverImage} 
         />
 
-        {/* Shop Info */}
         <View style={styles.shopSection}>
           <View style={styles.shopHeader}>
             <Image source={{ uri: user.avatar }} style={styles.shopAvatar} />
@@ -508,7 +504,6 @@ export default function ShopProfile() {
             <Text style={styles.shopUsername}>@{user.username}</Text>
             <Text style={styles.shopDescription}>{user.bio}</Text>
 
-            {/* Contact Info */}
             <View style={styles.contactInfo}>
               {user.shop?.location && (
                 <View style={styles.contactItem}>
@@ -549,7 +544,6 @@ export default function ShopProfile() {
             </View>
           </View>
 
-          {/* Categories */}
           {user.shop?.categories && user.shop.categories.length > 0 && (
             <View style={styles.categories}>
               <Text style={styles.categoriesTitle}>Categories</Text>
@@ -563,7 +557,6 @@ export default function ShopProfile() {
             </View>
           )}
 
-          {/* Action Buttons */}
           <View style={styles.actionButtons}>
             <TouchableOpacity
               style={styles.viewOrder}
@@ -583,7 +576,6 @@ export default function ShopProfile() {
           </View>
         </View>
 
-        {/* Tabs Section */}
         <View style={styles.tabsSection}>
           <TouchableOpacity
             style={[styles.tab, activeTab === 'posts' ? styles.activeTab : {}]}
@@ -638,7 +630,6 @@ export default function ShopProfile() {
           </TouchableOpacity>
         </View>
 
-        {/* Posts Grid */}
         {activeTab === 'posts' && (
           <FlatList
             data={myPosts}
@@ -651,7 +642,6 @@ export default function ShopProfile() {
           />
         )}
 
-        {/* Products Grid */}
         {activeTab === 'products' && (
           <FlatList
             data={myProducts}
@@ -663,7 +653,6 @@ export default function ShopProfile() {
           />
         )}
 
-        {/* Liked Posts */}
         {activeTab === 'liked' && (
           <FlatList
             data={myLikedPosts}

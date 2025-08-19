@@ -526,7 +526,6 @@ export default function PromotionRequestsScreen() {
         </ScrollView>
       )}
 
-      {/* Request Details Modal */}
       <Modal visible={showModal} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
@@ -586,7 +585,6 @@ export default function PromotionRequestsScreen() {
                         <TouchableOpacity
                           style={styles.documentItem}
                           onPress={() => {
-                            // Check if path is already a full URL (Cloudinary) or relative path
                             const documentUrl = doc.path.startsWith('http') ? doc.path : `${config.apiUrl}/${doc.path}`;
                             console.log('Opening document:', documentUrl);
                             Linking.openURL(documentUrl).catch(err => {

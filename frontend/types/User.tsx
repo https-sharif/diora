@@ -20,6 +20,7 @@ export interface User {
   banReason?: string;
   bannedAt?: string;
   lastActiveAt?: string;
+  stripeCustomerId: string;
   onboarding?: {
     isComplete: boolean;
     completedAt?: string;
@@ -58,6 +59,7 @@ export interface User {
     businessType?: string;
     yearsInBusiness?: string;
     expectedProducts?: string;
+    stripeAccountId?: string;
   };
   avatarId?: string;
   settings: {
@@ -78,7 +80,6 @@ export interface User {
   };
 }
 
-// User service types
 export interface UserProfileData {
   firstName?: string;
   lastName?: string;

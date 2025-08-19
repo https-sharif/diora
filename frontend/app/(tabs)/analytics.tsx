@@ -167,7 +167,6 @@ export default function AnalyticsScreen() {
     setRefreshing(false);
   };
 
-  // Only allow admin access
   if (!user || user.type !== 'admin') {
     return (
       <SafeAreaView style={styles.container}>
@@ -221,7 +220,6 @@ export default function AnalyticsScreen() {
         >
           {stats ? (
           <>
-            {/* Key Metrics */}
             <View style={styles.adminSection}>
               <View style={styles.adminSectionTitleContainer}>
                 <TrendingUp size={20} color={theme.accent} />
@@ -247,7 +245,6 @@ export default function AnalyticsScreen() {
               </View>
             </View>
 
-            {/* Growth Analytics */}
             <View style={styles.adminSection}>
               <View style={styles.adminSectionTitleContainer}>
                 <BarChart3 size={20} color={theme.accent} />
@@ -273,7 +270,6 @@ export default function AnalyticsScreen() {
               </View>
             </View>
 
-            {/* System Health */}
             {health && (
               <View style={styles.adminSection}>
                 <View style={styles.adminSectionTitleContainer}>

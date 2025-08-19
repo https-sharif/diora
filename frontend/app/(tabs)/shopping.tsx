@@ -875,7 +875,6 @@ export default function ShoppingScreen() {
           />
         )}
 
-        {/* Product Selection Modal */}
         <Modal
           visible={!!selectedProduct}
           animationType="slide"

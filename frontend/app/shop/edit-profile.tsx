@@ -219,7 +219,6 @@ export default function EditShopProfile() {
   const { user, token, setUser } = useAuth();
   const { theme } = useTheme();
   const styles = createStyles(theme);
-  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -240,13 +239,11 @@ export default function EditShopProfile() {
     categories: user?.shop?.categories || [],
   });
 
-  // Available categories
   const BUSINESS_CATEGORIES = [
     'Women\'s Clothing', 'Men\'s Clothing', 'Shoes & Footwear', 'Bags & Accessories', 
     'Jewelry & Watches', 'Activewear & Sports', 'Other Fashion'
   ];
 
-  // Store actual files for upload
   const [selectedFiles, setSelectedFiles] = useState<{
     avatar?: any;
     coverImage?: any;
@@ -320,7 +317,6 @@ export default function EditShopProfile() {
 
       const requestFormData = new FormData();
       
-      // Append text fields
       requestFormData.append('fullName', formData.fullName);
       requestFormData.append('bio', formData.bio);
       requestFormData.append('location', formData.location);
@@ -330,7 +326,6 @@ export default function EditShopProfile() {
       requestFormData.append('socialLinks', JSON.stringify(formData.socialLinks));
       requestFormData.append('categories', JSON.stringify(formData.categories));
       
-      // Append files if selected
       if (selectedFiles.avatar) {
         requestFormData.append('avatar', selectedFiles.avatar as any);
       }
@@ -342,13 +337,12 @@ export default function EditShopProfile() {
       const response = await axios.put(`${config.apiUrl}/api/shop/profile`, requestFormData, {
         headers: {
           Authorization: `Bearer ${token}`,
-          // Don't set Content-Type for FormData, let axios handle it
         },
       });
 
       if (response.data.status) {
         Alert.alert('Success', 'Profile updated successfully!');
-        setUser(response.data.user); // Update user data
+        setUser(response.data.user);
         router.back();
       } else {
         Alert.alert('Error', response.data.message || 'Failed to update profile');
@@ -395,7 +389,6 @@ export default function EditShopProfile() {
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Cover Image */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Cover Image</Text>
           <TouchableOpacity
@@ -416,7 +409,6 @@ export default function EditShopProfile() {
           </TouchableOpacity>
         </View>
 
-        {/* Profile Image */}
         <View style={styles.profileImageContainer}>
           <TouchableOpacity
             style={styles.profileImageWrapper}
@@ -431,7 +423,6 @@ export default function EditShopProfile() {
           </TouchableOpacity>
         </View>
 
-        {/* Basic Information */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Basic Information</Text>
           
@@ -459,7 +450,6 @@ export default function EditShopProfile() {
           </View>
         </View>
 
-        {/* Contact Information */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Contact Information</Text>
           
@@ -531,7 +521,6 @@ export default function EditShopProfile() {
           </View>
         </View>
 
-        {/* Categories */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Business Categories</Text>
           <Text style={[styles.label, { marginBottom: 12, color: theme.textSecondary }]}>
@@ -559,7 +548,6 @@ export default function EditShopProfile() {
           </View>
         </View>
 
-        {/* Social Links */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Social Media</Text>
           

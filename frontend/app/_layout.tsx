@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { SplashScreen, Stack } from 'expo-router';
+import { router, SplashScreen, Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import {
   useFonts,
@@ -11,7 +11,7 @@ import {
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import { ThemeProvider, useTheme } from '@/contexts/ThemeContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { View } from 'react-native';
+import { View, Alert } from 'react-native';
 import type { EdgeInsets } from 'react-native-safe-area-context';
 import { SafeAreaProvider } from '@/contexts/SafeAreaContext';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -21,6 +21,7 @@ import { useMessage } from '@/hooks/useMessage';
 import { useShopping } from '@/hooks/useShopping';
 import initSocket, { getSocket } from './utils/useSocket';
 import { Message } from '@/types/Message';
+import * as Linking from 'expo-linking';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -43,7 +44,35 @@ function AppReadyWrapper({ insets }: { insets: EdgeInsets }) {
   const { handleIncomingNotification } = useNotification();
   const { handleIncomingMessage } = useMessage();
   const { sendMessage } = useMessage();
-  const { initializeUserData } = useShopping();
+  const { initializeUserData, fetchCart } = useShopping();
+
+  useEffect(() => {
+    const handleUrl = async ({ url }: { url: string }) => {
+      const { path, queryParams } = Linking.parse(url);
+      const params = queryParams || {};
+
+      if (path === 'order-success') {
+        Alert.alert('Payment Completed!', `Order #${params.orderId ?? ''} is paid.`);
+        
+        await fetchCart();
+        Alert.alert(
+          'Order Placed Successfully!',
+          `Order #${params.orderId ?? ''} has been placed. You will receive updates via email.`,
+          [
+            { text: 'View Order', onPress: () => router.push(`/order/${params.orderId ?? ''}`) },
+            { text: 'Continue Shopping', onPress: () => router.push('/shopping') },
+          ]
+        );
+      } else if (path === 'order-cancel') {
+        Alert.alert('Payment Cancelled', 'Your payment was not completed.');
+      }
+    };
+
+    const subscription = Linking.addEventListener('url', handleUrl);
+
+    return () => subscription.remove();
+  }, []);
+
 
   useEffect(() => {
     if (user?._id && user?.onboarding?.isComplete) {

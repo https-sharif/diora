@@ -1,5 +1,3 @@
-// Authentication related types and interfaces
-
 export interface LoginData {
   email: string;
   password: string;

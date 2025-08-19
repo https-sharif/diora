@@ -14,13 +14,11 @@ export const verifyToken = async (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     
-    // Get user from database to check status
     const user = await User.findById(decoded.id);
     if (!user) {
       return res.status(401).json({ status: false, message: 'User not found' });
     }
 
-    // Check if user is banned
     if (user.status === 'banned') {
       return res.status(403).json({ 
         status: false, 
@@ -29,7 +27,6 @@ export const verifyToken = async (req, res, next) => {
       });
     }
 
-    // Check if user is suspended
     if (user.status === 'suspended') {
       const isStillSuspended = user.suspendedUntil && new Date() < new Date(user.suspendedUntil);
       
@@ -41,7 +38,6 @@ export const verifyToken = async (req, res, next) => {
           details: `Your account is suspended until ${suspendedUntilDate}. Reason: ${user.suspensionReason || 'Violation of community guidelines'}.`
         });
       } else {
-        // Suspension period has ended, reactivate the account
         user.status = 'active';
         user.suspendedUntil = null;
         user.suspensionReason = null;
@@ -50,12 +46,11 @@ export const verifyToken = async (req, res, next) => {
     }
 
     req.user = decoded;
-    req.userDetails = user; // Add full user details to request
+    req.userDetails = user;
     next();
   } catch (err) {
     return res.status(401).json({ status: false, message: 'Invalid or expired token' });
   }
 };
 
-// Alias for backward compatibility
 export const protect = verifyToken;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -16,8 +16,6 @@ import { router } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Theme } from '@/types/Theme';
-import axios from 'axios';
-import { config } from '@/config';
 import * as ImagePicker from 'expo-image-picker';
 import { userService } from '@/services/userService';
 
@@ -165,7 +163,6 @@ export default function EditUserProfile() {
     avatar: user?.avatar || '',
   });
 
-  // Store actual file for upload
   const [selectedFile, setSelectedFile] = useState<any>(null);
 
   const handleInputChange = (field: string, value: string) => {
@@ -193,14 +190,12 @@ export default function EditUserProfile() {
     if (!result.canceled && result.assets[0]) {
       const asset = result.assets[0];
       
-      // Store the file for upload
       setSelectedFile({
         uri: asset.uri,
         type: 'image/jpeg',
         name: `avatar_${Date.now()}.jpg`,
       });
 
-      // Update form data with URI for preview
       setFormData(prev => ({ ...prev, avatar: asset.uri }));
     }
   };
@@ -213,12 +208,10 @@ export default function EditUserProfile() {
 
       const requestFormData = new FormData();
       
-      // Append text fields
       requestFormData.append('fullName', formData.fullName);
       requestFormData.append('username', formData.username);
       requestFormData.append('bio', formData.bio);
       
-      // Append file if selected
       if (selectedFile) {
         requestFormData.append('avatar', selectedFile as any);
       }
@@ -227,7 +220,7 @@ export default function EditUserProfile() {
 
       if (response.status) {
         Alert.alert('Success', 'Profile updated successfully!');
-        setUser(response.user); // Update user data
+        setUser(response.user);
         router.back();
       } else {
         Alert.alert('Error', response.message || 'Failed to update profile');
@@ -274,7 +267,6 @@ export default function EditUserProfile() {
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Profile Image */}
         <View style={styles.profileImageContainer}>
           <TouchableOpacity
             style={styles.profileImageWrapper}
@@ -296,7 +288,6 @@ export default function EditUserProfile() {
           </TouchableOpacity>
         </View>
 
-        {/* Basic Information */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Basic Information</Text>
           

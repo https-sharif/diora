@@ -90,12 +90,10 @@ export default function FeedScreen() {
 
   const styles = createStyles(theme);
 
-  // Calculate unread conversations count
   const unreadConversationsCount = conversations?.filter(conv => 
     conv.unreadCount && user?._id && conv.unreadCount[user._id] > 0
   ).length || 0;
 
-  // Move all useEffects before early returns
   useEffect(() => {
     if (user?.type === 'admin') {
       router.replace('/(tabs)/analytics');

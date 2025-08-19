@@ -17,7 +17,6 @@ export const useAuth = () => {
   const reset = useAuthStore(state => state.reset);
   const token = useAuthStore(state => state.token);
 
-  // Create alias for refreshUser
   const refreshUser = syncUser;
 
   return { 

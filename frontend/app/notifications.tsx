@@ -290,7 +290,6 @@ export default function NotificationsScreen() {
         </View>
 
         <View style={styles.notificationRight}>
-          {/* Implement Later */}
           {item.imageUrl && (
             <Image source={{ uri: item.imageUrl }} style={styles.postThumbnail} />
           )}

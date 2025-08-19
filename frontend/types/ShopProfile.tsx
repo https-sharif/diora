@@ -27,7 +27,6 @@ export interface ShopProfile {
   createdAt: string;
 }
 
-// Shop service types  
 export interface ShopProfileData {
   name?: string;
   description?: string;

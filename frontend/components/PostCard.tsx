@@ -487,7 +487,6 @@ export default function PostCard({ post }: { post: Post }) {
         </View>
       </View>
 
-      {/* Comments Modal */}
       <Modal
         visible={showComments}
         animationType="slide"
