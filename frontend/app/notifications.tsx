@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -15,7 +15,6 @@ import { useNotification } from '@/hooks/useNotification';
 import { Notification } from '@/types/Notification';
 import { useTheme } from '@/contexts/ThemeContext';
 import { format } from 'timeago.js'
-import { useAuth } from '@/hooks/useAuth';
 
 const createStyle = (theme: any) => StyleSheet.create({
   container: {
@@ -290,7 +289,6 @@ export default function NotificationsScreen() {
         </View>
 
         <View style={styles.notificationRight}>
-          {/* Implement Later */}
           {item.imageUrl && (
             <Image source={{ uri: item.imageUrl }} style={styles.postThumbnail} />
           )}

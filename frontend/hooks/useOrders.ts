@@ -1,5 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
-import { useAuthStore } from '@/stores/authStore';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { orderService } from '@/services';
 
@@ -113,7 +112,6 @@ export const useOrders = (): UseOrdersResult => {
       const response = await orderService.cancelOrder(orderId, token);
 
       if (response.status) {
-        // Update the order in the local state
         setOrders(prevOrders =>
           prevOrders.map(order =>
             order._id === orderId
@@ -135,7 +133,6 @@ export const useOrders = (): UseOrdersResult => {
     await fetchOrders(currentPage);
   };
 
-  // Initial fetch when user/token changes
   useEffect(() => {
     fetchOrders();
   }, [user, token]);

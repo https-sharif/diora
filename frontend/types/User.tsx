@@ -80,7 +80,6 @@ export interface User {
   };
 }
 
-// User service types
 export interface UserProfileData {
   firstName?: string;
   lastName?: string;

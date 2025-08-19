@@ -37,7 +37,7 @@ interface Order {
   shippingFee: number;
   paymentMethod: 'cod' | 'card' | 'bkash';
   paymentStatus: 'pending' | 'paid' | 'failed';
-  items: Array<{
+  items: {
     _id: string;
     productId: {
       _id: string;
@@ -50,7 +50,7 @@ interface Order {
     price: number;
     size?: string;
     variant?: string;
-  }>;
+  }[];
   shippingAddress: {
     name: string;
     address: string;
@@ -324,7 +324,7 @@ const OrderDetailsScreen = () => {
   const { theme } = useTheme();
   const styles = createStyles(theme);
   const { orderId } = useLocalSearchParams<{ orderId: string }>();
-  const { user, token } = useAuth();
+  const { token } = useAuth();
   
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
@@ -485,7 +485,6 @@ const OrderDetailsScreen = () => {
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Order Number */}
         <View style={styles.section}>
           <View style={styles.orderNumberContainer}>
             <Text style={styles.orderNumber}>#{order.orderNumber}</Text>
@@ -495,7 +494,6 @@ const OrderDetailsScreen = () => {
           </View>
         </View>
 
-        {/* Order Status */}
         <View style={styles.section}>
           <View style={styles.statusContainer}>
             <View style={[styles.statusBadge, { backgroundColor: getStatusColor(order.status) + '20' }]}>
@@ -507,7 +505,6 @@ const OrderDetailsScreen = () => {
           </View>
         </View>
 
-        {/* Order Info */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>
             <Package size={20} color={theme.text} style={styles.sectionIcon} />
@@ -547,7 +544,6 @@ const OrderDetailsScreen = () => {
           </View>
         </View>
 
-        {/* Items */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Items ({order.items.length})</Text>
           <View style={styles.itemsContainer}>
@@ -575,7 +571,6 @@ const OrderDetailsScreen = () => {
           </View>
         </View>
 
-        {/* Shipping Address */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>
             <MapPin size={20} color={theme.text} style={styles.sectionIcon} />
@@ -595,7 +590,6 @@ const OrderDetailsScreen = () => {
           </View>
         </View>
 
-        {/* Order Summary */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Order Summary</Text>
           <View style={styles.summaryContainer}>
@@ -616,7 +610,6 @@ const OrderDetailsScreen = () => {
           </View>
         </View>
 
-        {/* Actions */}
         {canCancelOrder(order) && (
           <View style={styles.actionsContainer}>
             <TouchableOpacity style={styles.cancelButton} onPress={handleCancelOrder}>

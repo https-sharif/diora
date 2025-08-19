@@ -7,15 +7,13 @@ export interface Report {
     profilePicture?: string;
     email?: string;
   };
-  // Backend structure
   reportedItem?: {
     itemType: 'user' | 'post' | 'product' | 'shop';
     itemId: string;
   };
-  type?: string; // Backend field name
-  // Frontend-compatible fields (mapped from backend)
+  type?: string;
   itemType: 'user' | 'post' | 'product' | 'shop';
-  reason: string; // Mapped from backend 'type' field
+  reason: string;
   description?: string;
   status: 'pending' | 'under_review' | 'resolved' | 'dismissed';
   priority?: 'low' | 'medium' | 'high' | 'urgent';
@@ -30,7 +28,6 @@ export interface Report {
   createdAt: string;
   updatedAt: string;
   
-  // Populated fields based on itemType
   reportedUser?: {
     _id: string;
     displayName: string;
@@ -86,7 +83,6 @@ export interface ReportStats {
   byType: { _id: string; count: number }[];
 }
 
-// Report service types
 export interface ReportData {
   targetType: 'user' | 'post' | 'product' | 'comment';
   targetId: string;

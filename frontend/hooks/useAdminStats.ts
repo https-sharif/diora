@@ -104,7 +104,6 @@ export const useAdminStats = () => {
     await Promise.all([fetchStats(), fetchHealth()]);
   }, [fetchStats, fetchHealth]);
 
-  // Auto-fetch on mount and when user changes
   useEffect(() => {
     if (user?.type === 'admin') {
       refreshData();

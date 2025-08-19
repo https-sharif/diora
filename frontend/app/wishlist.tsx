@@ -1,5 +1,5 @@
 import { ArrowLeft, Bookmark, Menu, PackageMinus,  X } from 'lucide-react-native';
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -326,13 +326,11 @@ const Wishlist = () => {
     addToCart,
   } = useShopping();
 
-  // Helper function to calculate discounted price
   const getDiscountedPrice = (price: number, discount?: number) => {
     if (!discount || discount <= 0) return null;
     return price - (price * discount / 100);
   };
 
-  // Helper function to render price with discount
   const renderPrice = (item: Product, isModal = false) => {
     const hasDiscount = item.discount && item.discount > 0;
     const discountedPrice = hasDiscount ? getDiscountedPrice(item.price, item.discount) : null;
@@ -369,7 +367,7 @@ const Wishlist = () => {
         </View>
         <Text style={styles.emptyTitle}>No items in your wishlist</Text>
         <Text style={styles.emptyMessage}>
-          When you add items to your wishlist, they'll appear here
+          When you add items to your wishlist, they&apos;ll appear here
         </Text>
       </View>
     );

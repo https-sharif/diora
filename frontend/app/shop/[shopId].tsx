@@ -703,7 +703,6 @@ const createStyles = (theme: Theme) => {
       borderWidth: 1,
     },
     reportButtonSubmit: {
-      // backgroundColor handled inline
     },
     reportButtonText: {
       fontSize: 14,
@@ -1199,12 +1198,9 @@ export default function ShopProfileScreen() {
   const handleContact = () => {
     if (!shopProfile || !user) return;
 
-    // Check if there's already a private conversation between current user and shop
     const existingConversation = conversations.find((conversation) => {
-      // Only check private conversations
       if (conversation.type !== 'private') return false;
 
-      // Check if both users are participants in this conversation
       const participantIds = conversation.participants.map(
         (participant: any) => {
           return typeof participant === 'string'
@@ -1220,14 +1216,12 @@ export default function ShopProfileScreen() {
     });
 
     if (existingConversation) {
-      // Navigate to existing conversation
       console.log(
         'Found existing conversation with shop:',
         existingConversation._id
       );
       router.push(`/message/${existingConversation._id}`);
     } else {
-      // Navigate with shop user ID - will show empty conversation until first message
       console.log(
         'No existing conversation with shop, navigating with shop ID:',
         shopProfile._id
@@ -1707,13 +1701,11 @@ export default function ShopProfileScreen() {
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
       >
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-          {/* Cover Image */}
           <Image
             source={{ uri: shopProfile.shop.coverImageUrl }}
             style={styles.coverImage}
           />
 
-          {/* Shop Info */}
           <View style={styles.shopSection}>
             <View style={styles.shopHeader}>
               <Image
@@ -1763,7 +1755,6 @@ export default function ShopProfileScreen() {
                 <Text style={styles.shopDescription}>{shopProfile.bio}</Text>
               )}
 
-              {/* Contact Info */}
               <View style={styles.contactInfo}>
                 {shopProfile.shop.location && (
                   <View style={styles.contactItem}>
@@ -1820,7 +1811,6 @@ export default function ShopProfileScreen() {
               ) : null}
             </View>
 
-            {/* Categories */}
             <View style={styles.categories}>
               <Text style={styles.categoriesTitle}>Categories</Text>
               <View style={styles.categoryTags}>
@@ -1832,7 +1822,6 @@ export default function ShopProfileScreen() {
               </View>
             </View>
 
-            {/* Action Buttons */}
             {user && user._id !== shopProfile._id && (
               <View style={styles.actionButtons}>
                 <TouchableOpacity
@@ -1868,9 +1857,7 @@ export default function ShopProfileScreen() {
             )}
           </View>
 
-          {/* Tabs Section */}
           <View style={styles.tabsSection}>
-            {/* Posts */}
             <TouchableOpacity
               style={[styles.tab, selectedTab === 'posts' && styles.activeTab]}
               onPress={() => setSelectedTab('posts')}
@@ -1893,7 +1880,6 @@ export default function ShopProfileScreen() {
               )}
             </TouchableOpacity>
 
-            {/* Products */}
             <TouchableOpacity
               style={[
                 styles.tab,
@@ -1919,7 +1905,6 @@ export default function ShopProfileScreen() {
               )}
             </TouchableOpacity>
 
-            {/* Reviews */}
             <TouchableOpacity
               style={[
                 styles.tab,
@@ -1952,7 +1937,6 @@ export default function ShopProfileScreen() {
         </ScrollView>
       </KeyboardAvoidingView>
 
-      {/* More Menu Modal */}
       <Modal
         visible={showMoreMenu}
         transparent

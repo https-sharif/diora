@@ -14,7 +14,6 @@ export interface Post {
   createdAt: string;
 }
 
-// Post service types
 export interface PostData {
   content: string;
   media?: string[];

@@ -1,6 +1,5 @@
 import axios from 'axios';
 import { config } from '@/config';
-import { ShopProfileData } from '@/types/ShopProfile';
 
 export const shopService = {
   async getShopById(shopId: string, token: string): Promise<any> {

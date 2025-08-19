@@ -7,7 +7,6 @@ import Review from '../models/Review.js';
 import Notification from '../models/Notification.js';
 import { getIO, onlineUsers } from '../sockets/socketSetup.js';
 
-// Create a new report
 const createReport = async (req, res) => {
   try {
     console.log('Create report route hit');
@@ -39,7 +38,6 @@ const createReport = async (req, res) => {
       });
     }
 
-    // Additional validation for shop type
     if (reportedItem.itemType === 'shop' && itemExists.type !== 'shop') {
       return res.status(400).json({
         status: false,
@@ -47,7 +45,6 @@ const createReport = async (req, res) => {
       });
     }
 
-    // Check if user already reported this item
     const existingReport = await Report.findOne({
       reporter,
       'reportedItem.itemType': reportedItem.itemType,
@@ -74,7 +71,10 @@ const createReport = async (req, res) => {
 
     await report.save();
 
-    const populatedReport = await Report.findById(report._id).populate('reporter', 'username fullName avatar');
+    const populatedReport = await Report.findById(report._id).populate(
+      'reporter',
+      'username fullName avatar'
+    );
 
     res.status(201).json({
       status: true,
@@ -90,7 +90,6 @@ const createReport = async (req, res) => {
   }
 };
 
-// Get all reports (Admin only)
 const getAllReports = async (req, res) => {
   try {
     const {
@@ -108,7 +107,8 @@ const getAllReports = async (req, res) => {
     if (status) filter.status = status;
     if (type) filter.type = type;
     if (priority) filter.priority = priority;
-    if (itemType && itemType !== 'all') filter['reportedItem.itemType'] = itemType;
+    if (itemType && itemType !== 'all')
+      filter['reportedItem.itemType'] = itemType;
 
     const options = {
       skip: (page - 1) * limit,
@@ -120,16 +120,13 @@ const getAllReports = async (req, res) => {
       .populate('reporter', 'fullName username avatar email')
       .sort({ createdAt: -1 });
 
-    // Manually populate the reported items based on itemType
     const populatedReports = await Promise.all(
       reports.map(async (report) => {
         const reportObj = report.toObject();
-        
-        // Add itemType at root level for frontend compatibility
+
         reportObj.itemType = reportObj.reportedItem.itemType;
-        reportObj.reason = reportObj.type; // Map type to reason for frontend compatibility
-        
-        // Transform reporter object for frontend compatibility
+        reportObj.reason = reportObj.type;
+
         if (reportObj.reporter) {
           reportObj.reporter = {
             ...reportObj.reporter,
@@ -137,13 +134,13 @@ const getAllReports = async (req, res) => {
             profilePicture: reportObj.reporter.avatar,
           };
         }
-        
+
         try {
           switch (reportObj.reportedItem.itemType.toLowerCase()) {
             case 'user':
-              const reportedUser = await User.findById(reportObj.reportedItem.itemId)
-                .select('fullName username avatar email bio');
-              // Map fullName to displayName for frontend compatibility
+              const reportedUser = await User.findById(
+                reportObj.reportedItem.itemId
+              ).select('fullName username avatar email bio');
               if (reportedUser) {
                 reportObj.reportedUser = {
                   ...reportedUser.toObject(),
@@ -152,53 +149,61 @@ const getAllReports = async (req, res) => {
                 };
               }
               break;
-              
+
             case 'post':
-              const reportedPost = await Post.findById(reportObj.reportedItem.itemId)
+              const reportedPost = await Post.findById(
+                reportObj.reportedItem.itemId
+              )
                 .populate('user', 'fullName username avatar')
                 .select('caption imageUrl user');
-              // Map caption to title and transform user object
               if (reportedPost) {
                 reportObj.reportedPost = {
                   ...reportedPost.toObject(),
                   title: reportedPost.caption || 'Untitled Post',
                   content: reportedPost.caption || '',
                   images: reportedPost.imageUrl ? [reportedPost.imageUrl] : [],
-                  user: reportedPost.user ? {
-                    ...reportedPost.user.toObject(),
-                    displayName: reportedPost.user.fullName,
-                    profilePicture: reportedPost.user.avatar,
-                  } : null,
+                  user: reportedPost.user
+                    ? {
+                        ...reportedPost.user.toObject(),
+                        displayName: reportedPost.user.fullName,
+                        profilePicture: reportedPost.user.avatar,
+                      }
+                    : null,
                 };
               }
               break;
-              
+
             case 'product':
-              const reportedProduct = await Product.findById(reportObj.reportedItem.itemId)
+              const reportedProduct = await Product.findById(
+                reportObj.reportedItem.itemId
+              )
                 .populate('shopId', 'fullName username avatar bio type')
                 .select('name description price imageUrl shopId');
-              // Transform product object
               if (reportedProduct) {
                 reportObj.reportedProduct = {
                   ...reportedProduct.toObject(),
                   images: reportedProduct.imageUrl || [],
-                  shop: reportedProduct.shopId ? {
-                    _id: reportedProduct.shopId._id,
-                    name: reportedProduct.shopId.fullName,
-                    displayName: reportedProduct.shopId.fullName,
-                    username: reportedProduct.shopId.username,
-                    profilePicture: reportedProduct.shopId.avatar,
-                    description: reportedProduct.shopId.bio,
-                  } : null,
+                  shop: reportedProduct.shopId
+                    ? {
+                        _id: reportedProduct.shopId._id,
+                        name: reportedProduct.shopId.fullName,
+                        displayName: reportedProduct.shopId.fullName,
+                        username: reportedProduct.shopId.username,
+                        profilePicture: reportedProduct.shopId.avatar,
+                        description: reportedProduct.shopId.bio,
+                      }
+                    : null,
                 };
               }
               break;
-              
+
             case 'shop':
-              const reportedShop = await User.findById(reportObj.reportedItem.itemId)
+              const reportedShop = await User.findById(
+                reportObj.reportedItem.itemId
+              )
                 .select('fullName username avatar email bio type')
-                .where('type').equals('shop');
-              // Transform shop object
+                .where('type')
+                .equals('shop');
               if (reportedShop) {
                 reportObj.reportedShop = {
                   ...reportedShop.toObject(),
@@ -210,13 +215,16 @@ const getAllReports = async (req, res) => {
               break;
           }
         } catch (populateError) {
-          console.error(`Error populating ${reportObj.reportedItem.itemType}:`, populateError);
+          console.error(
+            `Error populating ${reportObj.reportedItem.itemType}:`,
+            populateError
+          );
         }
-        
+
         return reportObj;
       })
     );
-    
+
     const total = await Report.countDocuments(filter);
 
     res.json({
@@ -238,13 +246,14 @@ const getAllReports = async (req, res) => {
   }
 };
 
-// Get report by ID
 const getReportById = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const report = await Report.findById(id)
-      .populate('reporter', 'fullName username avatar email');
+    const report = await Report.findById(id).populate(
+      'reporter',
+      'fullName username avatar email'
+    );
 
     if (!report) {
       return res.status(404).json({
@@ -254,12 +263,10 @@ const getReportById = async (req, res) => {
     }
 
     const reportObj = report.toObject();
-    
-    // Add itemType at root level for frontend compatibility
+
     reportObj.itemType = reportObj.reportedItem.itemType;
-    reportObj.reason = reportObj.type; // Map type to reason for frontend compatibility
-    
-    // Transform reporter object for frontend compatibility
+    reportObj.reason = reportObj.type;
+
     if (reportObj.reporter) {
       reportObj.reporter = {
         ...reportObj.reporter,
@@ -267,13 +274,13 @@ const getReportById = async (req, res) => {
         profilePicture: reportObj.reporter.avatar,
       };
     }
-    
+
     try {
       switch (reportObj.reportedItem.itemType.toLowerCase()) {
         case 'user':
-          const reportedUser = await User.findById(reportObj.reportedItem.itemId)
-            .select('fullName username avatar email bio');
-          // Map fullName to displayName for frontend compatibility
+          const reportedUser = await User.findById(
+            reportObj.reportedItem.itemId
+          ).select('fullName username avatar email bio');
           if (reportedUser) {
             reportObj.reportedUser = {
               ...reportedUser.toObject(),
@@ -282,53 +289,61 @@ const getReportById = async (req, res) => {
             };
           }
           break;
-          
+
         case 'post':
-          const reportedPost = await Post.findById(reportObj.reportedItem.itemId)
+          const reportedPost = await Post.findById(
+            reportObj.reportedItem.itemId
+          )
             .populate('user', 'fullName username avatar')
             .select('caption imageUrl user');
-          // Map caption to title and transform user object
           if (reportedPost) {
             reportObj.reportedPost = {
               ...reportedPost.toObject(),
               title: reportedPost.caption || 'Untitled Post',
               content: reportedPost.caption || '',
               images: reportedPost.imageUrl ? [reportedPost.imageUrl] : [],
-              user: reportedPost.user ? {
-                ...reportedPost.user.toObject(),
-                displayName: reportedPost.user.fullName,
-                profilePicture: reportedPost.user.avatar,
-              } : null,
+              user: reportedPost.user
+                ? {
+                    ...reportedPost.user.toObject(),
+                    displayName: reportedPost.user.fullName,
+                    profilePicture: reportedPost.user.avatar,
+                  }
+                : null,
             };
           }
           break;
-          
+
         case 'product':
-          const reportedProduct = await Product.findById(reportObj.reportedItem.itemId)
+          const reportedProduct = await Product.findById(
+            reportObj.reportedItem.itemId
+          )
             .populate('shopId', 'fullName username avatar bio type')
             .select('name description price imageUrl shopId');
-          // Transform product object
           if (reportedProduct) {
             reportObj.reportedProduct = {
               ...reportedProduct.toObject(),
               images: reportedProduct.imageUrl || [],
-              shop: reportedProduct.shopId ? {
-                _id: reportedProduct.shopId._id,
-                name: reportedProduct.shopId.fullName,
-                displayName: reportedProduct.shopId.fullName,
-                username: reportedProduct.shopId.username,
-                profilePicture: reportedProduct.shopId.avatar,
-                description: reportedProduct.shopId.bio,
-              } : null,
+              shop: reportedProduct.shopId
+                ? {
+                    _id: reportedProduct.shopId._id,
+                    name: reportedProduct.shopId.fullName,
+                    displayName: reportedProduct.shopId.fullName,
+                    username: reportedProduct.shopId.username,
+                    profilePicture: reportedProduct.shopId.avatar,
+                    description: reportedProduct.shopId.bio,
+                  }
+                : null,
             };
           }
           break;
-          
+
         case 'shop':
-          const reportedShop = await User.findById(reportObj.reportedItem.itemId)
+          const reportedShop = await User.findById(
+            reportObj.reportedItem.itemId
+          )
             .select('fullName username avatar email bio type')
-            .where('type').equals('shop');
-          // Transform shop object
+            .where('type')
+            .equals('shop');
           if (reportedShop) {
             reportObj.reportedShop = {
               ...reportedShop.toObject(),
@@ -340,7 +355,10 @@ const getReportById = async (req, res) => {
           break;
       }
     } catch (populateError) {
-      console.error(`Error populating ${reportObj.reportedItem.itemType}:`, populateError);
+      console.error(
+        `Error populating ${reportObj.reportedItem.itemType}:`,
+        populateError
+      );
     }
 
     res.json({
@@ -471,61 +489,73 @@ const takeModerationAction = async (req, res) => {
         break;
 
       case 'warn_user':
-        // Create a content-specific warning notification for the reported user
         let targetUserId = null;
         let warningTitle = 'Community Guidelines Warning ⚠️';
         let warningMessage = '';
-        
-        // Determine target user and create context-specific message
+
         switch (report.reportedItem.itemType) {
           case 'user':
           case 'shop':
             targetUserId = report.reportedItem.itemId;
             warningTitle = 'Account Behavior Warning ⚠️';
-            warningMessage = `You have received a warning regarding your account behavior. Please ensure your interactions and profile comply with our community guidelines. Reason: ${reason || 'Community guidelines violation'}`;
+            warningMessage = `You have received a warning regarding your account behavior. Please ensure your interactions and profile comply with our community guidelines. Reason: ${
+              reason || 'Community guidelines violation'
+            }`;
             break;
-            
+
           case 'post':
-            // Get the user who created the post
-            const reportedPost = await Post.findById(report.reportedItem.itemId).populate('user');
+            const reportedPost = await Post.findById(
+              report.reportedItem.itemId
+            ).populate('user');
             if (reportedPost && reportedPost.user) {
               targetUserId = reportedPost.user._id;
               warningTitle = 'Post Content Warning ⚠️';
-              warningMessage = `You have received a warning about one of your posts. Please review our content guidelines and ensure your posts comply with our community standards. Reason: ${reason || 'Inappropriate content'}`;
+              warningMessage = `You have received a warning about one of your posts. Please review our content guidelines and ensure your posts comply with our community standards. Reason: ${
+                reason || 'Inappropriate content'
+              }`;
             }
             break;
-            
+
           case 'product':
-            // Get the shop owner who listed the product
-            const reportedProduct = await Product.findById(report.reportedItem.itemId).populate('shopId');
+            const reportedProduct = await Product.findById(
+              report.reportedItem.itemId
+            ).populate('shopId');
             if (reportedProduct && reportedProduct.shopId) {
               targetUserId = reportedProduct.shopId._id;
               warningTitle = 'Product Listing Warning ⚠️';
-              warningMessage = `You have received a warning about one of your product listings. Please review our marketplace guidelines and ensure your products comply with our policies. Reason: ${reason || 'Policy violation'}`;
+              warningMessage = `You have received a warning about one of your product listings. Please review our marketplace guidelines and ensure your products comply with our policies. Reason: ${
+                reason || 'Policy violation'
+              }`;
             }
             break;
-            
+
           case 'comment':
-            // Get the user who made the comment
-            const reportedComment = await Comment.findById(report.reportedItem.itemId).populate('user');
+            const reportedComment = await Comment.findById(
+              report.reportedItem.itemId
+            ).populate('user');
             if (reportedComment && reportedComment.user) {
               targetUserId = reportedComment.user._id;
               warningTitle = 'Comment Warning ⚠️';
-              warningMessage = `You have received a warning about one of your comments. Please keep your comments respectful and within our community guidelines. Reason: ${reason || 'Inappropriate comment'}`;
+              warningMessage = `You have received a warning about one of your comments. Please keep your comments respectful and within our community guidelines. Reason: ${
+                reason || 'Inappropriate comment'
+              }`;
             }
             break;
-            
+
           case 'review':
-            // Get the user who wrote the review
-            const reportedReview = await Review.findById(report.reportedItem.itemId).populate('user');
+            const reportedReview = await Review.findById(
+              report.reportedItem.itemId
+            ).populate('user');
             if (reportedReview && reportedReview.user) {
               targetUserId = reportedReview.user._id;
               warningTitle = 'Review Warning ⚠️';
-              warningMessage = `You have received a warning about one of your reviews. Please ensure your reviews are honest and follow our review guidelines. Reason: ${reason || 'Review policy violation'}`;
+              warningMessage = `You have received a warning about one of your reviews. Please ensure your reviews are honest and follow our review guidelines. Reason: ${
+                reason || 'Review policy violation'
+              }`;
             }
             break;
         }
-        
+
         if (targetUserId) {
           const notification = new Notification({
             userId: targetUserId,
@@ -537,21 +567,24 @@ const takeModerationAction = async (req, res) => {
               action: 'warning',
               reason: reason || 'Policy violation',
               itemType: report.reportedItem.itemType,
-              itemId: report.reportedItem.itemId
-            }
+              itemId: report.reportedItem.itemId,
+            },
           });
           await notification.save();
-          
-          // Emit socket notification to the target user if they're online
+
           const io = getIO();
           const targetSocketId = onlineUsers.get(targetUserId.toString());
           if (targetSocketId) {
             io.to(targetSocketId).emit('notification', notification);
           }
-          
-          actionResult = { action: `Content-specific warning sent to user about their ${report.reportedItem.itemType}` };
+
+          actionResult = {
+            action: `Content-specific warning sent to user about their ${report.reportedItem.itemType}`,
+          };
         } else {
-          actionResult = { action: 'Warning processed - target user not found' };
+          actionResult = {
+            action: 'Warning processed - target user not found',
+          };
         }
         break;
 
@@ -562,7 +595,6 @@ const takeModerationAction = async (req, res) => {
         });
     }
 
-    // Update report with action taken
     await Report.findByIdAndUpdate(id, {
       status: 'resolved',
       actionTaken: action,
@@ -585,7 +617,6 @@ const takeModerationAction = async (req, res) => {
   }
 };
 
-// Get report statistics
 const getReportStats = async (req, res) => {
   console.log('Get report stats route hit');
   try {
@@ -627,27 +658,24 @@ const getReportStats = async (req, res) => {
   }
 };
 
-// Clear reports older than 7 days
 const clearOldReports = async (req, res) => {
   try {
     console.log('Clear old reports route hit');
-    
-    // Calculate date 7 days ago
+
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    
-    // Find and delete reports older than 7 days
+
     const result = await Report.deleteMany({
       createdAt: { $lt: sevenDaysAgo },
-      status: { $in: ['resolved', 'dismissed'] }
+      status: { $in: ['resolved', 'dismissed'] },
     });
-    
+
     console.log(`Cleared ${result.deletedCount} reports older than 7 days`);
-    
+
     res.json({
       status: true,
       message: `Successfully cleared ${result.deletedCount} reports older than 7 days`,
-      deletedCount: result.deletedCount
+      deletedCount: result.deletedCount,
     });
   } catch (error) {
     console.error('Clear old reports error:', error);
@@ -658,22 +686,20 @@ const clearOldReports = async (req, res) => {
   }
 };
 
-// Clear resolved and dismissed reports
 const clearResolvedReports = async (req, res) => {
   try {
     console.log('Clear resolved/dismissed reports route hit');
-    
-    // Find and delete reports with resolved or dismissed status
+
     const result = await Report.deleteMany({
-      status: { $in: ['resolved', 'dismissed'] }
+      status: { $in: ['resolved', 'dismissed'] },
     });
-    
+
     console.log(`Cleared ${result.deletedCount} resolved/dismissed reports`);
-    
+
     res.json({
       status: true,
       message: `Successfully cleared ${result.deletedCount} resolved/dismissed reports`,
-      deletedCount: result.deletedCount
+      deletedCount: result.deletedCount,
     });
   } catch (error) {
     console.error('Clear resolved reports error:', error);
@@ -688,13 +714,15 @@ const autoCleanupReports = async () => {
   try {
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    
+
     const result = await Report.deleteMany({
-      createdAt: { $lt: sevenDaysAgo }, 
-      status: { $in: ['resolved', 'dismissed'] }
+      createdAt: { $lt: sevenDaysAgo },
+      status: { $in: ['resolved', 'dismissed'] },
     });
-    
-    console.log(`Auto-cleanup: Cleared ${result.deletedCount} reports older than 7 days`);
+
+    console.log(
+      `Auto-cleanup: Cleared ${result.deletedCount} reports older than 7 days`
+    );
     return result.deletedCount;
   } catch (error) {
     console.error('Auto-cleanup reports error:', error);

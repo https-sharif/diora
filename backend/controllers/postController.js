@@ -188,7 +188,6 @@ export const getAllPost = async (req, res) => {
 
     const filteredPosts = isAdmin ? posts : posts.filter(post => post.user && post.user.status === 'active');
 
-    // Transform posts to include comment count
     const transformedPosts = filteredPosts.map(post => ({
       ...post.toObject(),
       comments: post.comments ? post.comments.length : 0
@@ -240,7 +239,6 @@ export const getUserPosts = async (req, res) => {
     const userId = req.params.userId;
     const isAdmin = req.userDetails && req.userDetails.type === 'admin';
     
-    // First check if the user is accessible (unless requester is admin)
     if (!isAdmin) {
       const user = await User.findById(userId);
       if (!user || user.status !== 'active') {
@@ -260,7 +258,6 @@ export const getUserPosts = async (req, res) => {
         .json({ status: false, message: 'No posts found for this user' });
     }
 
-    // Transform posts to include comment count
     const transformedPosts = posts.map(post => ({
       ...post.toObject(),
       comments: post.comments ? post.comments.length : 0
@@ -285,7 +282,6 @@ export const getLikedPosts = async (req, res) => {
       .sort({ createdAt: -1 })
       .populate('user', 'username avatar');
 
-    // Transform posts to include comment count
     const transformedPosts = posts.map(post => ({
       ...post.toObject(),
       comments: post.comments ? post.comments.length : 0
@@ -324,10 +320,8 @@ export const getTrendingPosts = async (req, res) => {
 
     let trendingPosts;
     if (isAdmin) {
-      // Admins see all posts
       trendingPosts = await Post.aggregate([{ $sample: { size: 9 } }]);
     } else {
-      // Regular users only see posts from active users
       trendingPosts = await Post.aggregate([
         {
           $lookup: {
@@ -339,7 +333,7 @@ export const getTrendingPosts = async (req, res) => {
         },
         {
           $match: {
-            'userInfo.status': 'active' // Only include posts from active users
+            'userInfo.status': 'active'
           }
         },
         { $sample: { size: 9 } }
@@ -355,7 +349,6 @@ export const getTrendingPosts = async (req, res) => {
       return res.status(404).json({ status: false, message: 'No trending posts found' });
     }
 
-    // Transform posts to include comment count
     const transformedPosts = trendingPosts.map(post => ({
       ...post,
       comments: post.comments ? post.comments.length : 0

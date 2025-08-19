@@ -117,7 +117,6 @@ const orderSchema = new mongoose.Schema(
   }
 );
 
-// Generate order number before saving
 orderSchema.pre('save', async function (next) {
   if (!this.orderNumber) {
     const date = new Date();

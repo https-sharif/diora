@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,20 +6,16 @@ import {
   StyleSheet,
   ScrollView,
   Image,
-  TouchableWithoutFeedback,
-  Dimensions,
-  Pressable,
-  Button,
+
   SafeAreaView,
   FlatList,
 } from 'react-native';
-import { User, Plus, Heart, Grid3X3 as Grid, X, Star, Settings, LogOut, Check } from 'lucide-react-native';
+import { Grid3X3 as Grid, Star, Settings, LogOut, Check } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/hooks/useAuth';
 import { postService } from '@/services';
 import { Theme } from '@/types/Theme';
 import { Post } from '@/types/Post';
-import PostCard from '@/components/PostCard';
 import { router } from 'expo-router';
 
 const createStyles = (theme: Theme) =>
@@ -184,11 +180,9 @@ export default function UserProfile() {
     if (!user || !token) return;
     
     try {
-      // Fetch liked posts
       const likedPosts = await postService.getUserLikedPosts(user._id, token);
       setMyLikedPosts(likedPosts);
 
-      // Fetch user's posts
       const userPosts = await postService.getUserPosts(user._id, token);
       setMyPosts(userPosts);
 
@@ -248,7 +242,6 @@ export default function UserProfile() {
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Profile Info */}
         <View style={styles.profileSection}>
           <Image source={{ uri: user.avatar }} style={styles.profileImage} />
           <View style={styles.profileInfo}>
@@ -265,7 +258,6 @@ export default function UserProfile() {
           </View>
         </View>
 
-        {/* Stats */}
         <View style={styles.statsSection}>
           <View style={styles.statItem}>
             <Text style={styles.statNumber}>{user.posts}</Text>
@@ -283,7 +275,6 @@ export default function UserProfile() {
           </View>
         </View>
 
-        {/* Posts Tab */}
         <View style={styles.tabsSection}>
           <TouchableOpacity
             style={[styles.tab, activeTab === 'posts' ? styles.activeTab : {}]}
@@ -321,7 +312,6 @@ export default function UserProfile() {
           </TouchableOpacity>
         </View>
 
-        {/* Posts Grid */}
         {activeTab === 'posts' && (
           <FlatList
             data={myPosts}
@@ -334,7 +324,6 @@ export default function UserProfile() {
           />
         )}
 
-        {/* Liked Posts */}
         {activeTab === 'liked' && (
           <FlatList
             data={myLikedPosts}

@@ -4,23 +4,17 @@ import Order from '../models/Order.js';
 import Wishlist from '../models/Wishlist.js';
 import mongoose from 'mongoose';
 
-// Helper function to check if user is accessible (not banned/suspended)
-// Admins can view all users regardless of status
 const isUserAccessible = (user, requesterIsAdmin = false) => {
   if (!user) return false;
   
-  // Admins can view all users
   if (requesterIsAdmin) return true;
   
-  // Check if banned
   if (user.status === 'banned') return false;
   
-  // Check if suspended and suspension hasn't expired
   if (user.status === 'suspended') {
     if (!user.suspendedUntil || new Date() < new Date(user.suspendedUntil)) {
       return false;
     }
-    // If suspension expired, update status to active (will be handled in individual functions)
   }
   
   return true;
@@ -31,10 +25,9 @@ export const getAllShops = async (req, res) => {
   try {
     const isAdmin = req.userDetails && req.userDetails.type === 'admin';
     
-    // Build query - admins see all shops, others only see active shops
     const query = { type: 'shop' };
     if (!isAdmin) {
-      query.status = 'active'; // Only include active shops for non-admins
+      query.status = 'active'; 
     }
     
     const shops = await User.find(query).populate('userId', 'username avatar');
@@ -62,12 +55,10 @@ export const getShopById = async (req, res) => {
       return res.status(404).json({ status: false, message: 'Shop not found' });
     }
 
-    // Check if shop is accessible (not banned/suspended) unless requester is admin
     if (!isUserAccessible(shop, isAdmin)) {
       return res.status(404).json({ status: false, message: 'Shop not found' });
     }
 
-    // Update expired suspension if applicable
     if (shop.status === 'suspended' && shop.suspendedUntil && new Date() >= new Date(shop.suspendedUntil)) {
       shop.status = 'active';
       shop.suspendedUntil = null;
@@ -124,7 +115,6 @@ export const createShop = async (req, res) => {
       });
     }
 
-    // Check if username is already taken
     const usernameExists = await Shop.findOne({ username });
     if (usernameExists) {
       return res.status(400).json({
@@ -153,7 +143,6 @@ export const createShop = async (req, res) => {
   } catch (err) {
     console.error('Create shop error:', err);
 
-    // Handle duplicate key errors
     if (err.code === 11000) {
       const field = Object.keys(err.keyValue)[0];
       return res.status(400).json({
@@ -162,7 +151,6 @@ export const createShop = async (req, res) => {
       });
     }
 
-    // Handle validation errors
     if (err.name === 'ValidationError') {
       const errors = Object.values(err.errors).map((e) => e.message);
       return res.status(400).json({
@@ -192,7 +180,6 @@ export const updateShop = async (req, res) => {
       categories,
     } = req.body;
 
-    // Check if shop exists and belongs to user
     const existingShop = await Shop.findById(shopId);
     if (!existingShop) {
       return res.status(404).json({ status: false, message: 'Shop not found' });
@@ -204,7 +191,6 @@ export const updateShop = async (req, res) => {
         .json({ status: false, message: 'Not authorized to update this shop' });
     }
 
-    // Check if username is already taken by another shop
     if (username && username !== existingShop.username) {
       const usernameExists = await Shop.findOne({
         username,
@@ -238,7 +224,6 @@ export const updateShop = async (req, res) => {
   } catch (err) {
     console.error('Update shop error:', err);
 
-    // Handle duplicate key errors
     if (err.code === 11000) {
       const field = Object.keys(err.keyValue)[0];
       return res.status(400).json({
@@ -256,7 +241,6 @@ export const deleteShop = async (req, res) => {
   try {
     const shopId = req.params.shopId;
 
-    // Check if shop exists and belongs to user
     const existingShop = await Shop.findById(shopId);
     if (!existingShop) {
       return res.status(404).json({ status: false, message: 'Shop not found' });
@@ -267,8 +251,6 @@ export const deleteShop = async (req, res) => {
         .status(403)
         .json({ status: false, message: 'Not authorized to delete this shop' });
     }
-
-    const deletedShop = await Shop.findByIdAndDelete(shopId);
 
     res.json({ status: true, message: 'Shop deleted successfully' });
   } catch (err) {
@@ -283,14 +265,13 @@ export const getTrendingShops = async (req, res) => {
     const currentUserId = req.user.id;
     const isAdmin = req.userDetails && req.userDetails.type === 'admin';
     
-    // Build match criteria - admins see all shops, others only see active shops
     const matchCriteria = { 
       _id: { $ne: new mongoose.Types.ObjectId(currentUserId) }, 
       type: 'shop'
     };
     
     if (!isAdmin) {
-      matchCriteria.status = 'active'; // Only include active shops for non-admins
+      matchCriteria.status = 'active';
     }
     
     const trendingShops = await User.aggregate([
@@ -330,7 +311,6 @@ export const followShop = async (req, res) => {
       return res.status(404).json({ status: false, message: 'Shop or user not found' });
     }
 
-    // Check if shop is accessible (not banned/suspended) unless requester is admin
     if (!isUserAccessible(shop, isAdmin)) {
       return res.status(404).json({ status: false, message: 'Shop not found' });
     }
@@ -380,7 +360,6 @@ export const getShopAnalytics = async (req, res) => {
       'items.productId': { $in: await Product.find({ shopId: shopId }).distinct('_id') }
     });
 
-    // Get order trends over time (last 30 days)
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     
@@ -401,14 +380,12 @@ export const getShopAnalytics = async (req, res) => {
       { $sort: { _id: 1 } }
     ]);
 
-    // Get recent orders (last 10)
     const recentOrders = await Order.find({ shopId: shopId })
       .sort({ createdAt: -1 })
       .limit(10)
       .populate('userId', 'fullName avatar')
       .select('_id userId totalAmount status createdAt items');
 
-    // Get top selling products
     const topProducts = await Order.aggregate([
       { $match: { shopId: new mongoose.Types.ObjectId(shopId) } },
       { $unwind: '$items' },

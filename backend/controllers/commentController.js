@@ -48,10 +48,9 @@ export const createComment = async (req, res) => {
         }
 
         const users = await User.find({ _id: { $in: existingNotification.fromUserIds } }, 'username');
-        const usernames = users.map(u => u.username).filter(name => name); // Filter out null/undefined usernames
+        const usernames = users.map(u => u.username).filter(name => name);
 
         if (usernames.length === 0) {
-          // Fallback if no valid usernames found - use current user
           usernames.push(user.username);
         }
 

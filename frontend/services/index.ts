@@ -1,4 +1,3 @@
-// Service exports
 export { authService } from './authService';
 export { cartService, wishlistService } from './shoppingService';
 export { orderService } from './orderService';
@@ -15,7 +14,6 @@ export { adminService } from './adminService';
 export { trendingService } from './trendingService';
 export { messageService } from './messageService';
 
-// Types - export from centralized types folder
 export type { LoginData, SignupData, AuthResponse } from '@/types/Auth';
 export type { CartItem, WishlistItem } from './shoppingService';
 export type { OrderData } from '@/types/Order';

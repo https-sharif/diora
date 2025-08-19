@@ -16,7 +16,6 @@ export const searchUsers = async (req, res) => {
 
     const searchQuery = query.trim();
     
-    // Search users by username, fullName, or email
     const users = await User.find({
       $and: [
         {
@@ -26,9 +25,9 @@ export const searchUsers = async (req, res) => {
             { email: { $regex: searchQuery, $options: 'i' } }
           ]
         },
-        { status: 'active' }, // Only active users
-        { type: 'user' }, // Only regular users (not shops)
-        { _id: { $ne: userId } } // Exclude current user
+        { status: 'active' },
+        { type: 'user' },
+        { _id: { $ne: userId } }
       ]
     }).select('username fullName avatar email createdAt').limit(20);
 
@@ -66,7 +65,6 @@ export const searchShops = async (req, res) => {
 
     const searchQuery = query.trim();
     
-    // Search shops by username, fullName, or email
     const shops = await User.find({
       $and: [
         {
@@ -74,12 +72,12 @@ export const searchShops = async (req, res) => {
             { username: { $regex: searchQuery, $options: 'i' } },
             { fullName: { $regex: searchQuery, $options: 'i' } },
             { email: { $regex: searchQuery, $options: 'i' } },
-            { shopName: { $regex: searchQuery, $options: 'i' } } // Shop specific field
+            { shopName: { $regex: searchQuery, $options: 'i' } }
           ]
         },
-        { status: 'active' }, // Only active shops
-        { type: 'shop' }, // Only shops
-        { _id: { $ne: userId } } // Exclude current user
+        { status: 'active' },
+        { type: 'shop' },
+        { _id: { $ne: userId } }
       ]
     }).select('username fullName shopName avatar email createdAt').limit(20);
 
@@ -117,7 +115,6 @@ export const searchUsersAndShops = async (req, res) => {
 
     const searchQuery = query.trim();
     
-    // Search both users and shops
     const results = await User.find({
       $and: [
         {
@@ -125,12 +122,12 @@ export const searchUsersAndShops = async (req, res) => {
             { username: { $regex: searchQuery, $options: 'i' } },
             { fullName: { $regex: searchQuery, $options: 'i' } },
             { email: { $regex: searchQuery, $options: 'i' } },
-            { shopName: { $regex: searchQuery, $options: 'i' } } // For shops
+            { shopName: { $regex: searchQuery, $options: 'i' } }
           ]
         },
-        { status: 'active' }, // Only active accounts
-        { type: { $in: ['user', 'shop'] } }, // Both users and shops
-        { _id: { $ne: userId } } // Exclude current user
+        { status: 'active' },
+        { type: { $in: ['user', 'shop'] } },
+        { _id: { $ne: userId } }
       ]
     }).select('username fullName shopName avatar email type createdAt').limit(20);
 

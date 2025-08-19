@@ -7,9 +7,7 @@ import {
   TouchableOpacity,
   Image,
   FlatList,
-  Modal,
   Alert,
-  TouchableWithoutFeedback,
   RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -18,24 +16,14 @@ import {
   Truck,
   CircleCheck as CheckCircle,
   Clock,
-  Filter,
   Download,
   X,
-  CreditCard,
-  Wallet,
-  Banknote,
-  Menu,
   ArrowLeft,
   Package,
-  MapPin,
-  Phone,
-  Mail,
 } from 'lucide-react-native';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Theme } from '@/types/Theme';
-import { config } from '@/config';
-import axios from 'axios';
 import { orderService } from '@/services/orderService';
 
 interface Order {
@@ -48,7 +36,7 @@ interface Order {
   shippingFee: number;
   paymentMethod: 'cod' | 'card' | 'bkash';
   paymentStatus: 'pending' | 'paid' | 'failed';
-  items: Array<{
+  items: {
     _id: string;
     productId: {
       _id: string;
@@ -61,7 +49,7 @@ interface Order {
     price: number;
     size?: string;
     variant?: string;
-  }>;
+  }[];
   shippingAddress: {
     name: string;
     address: string;
@@ -309,7 +297,6 @@ const createStyles = (theme: Theme) => {
 
 export default function PastOrderScreen() {
   const [orders, setOrders] = useState<Order[]>([]);
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [orderFilter, setOrderFilter] = useState<
     'all' | 'processing' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled'
   >('all');
@@ -429,7 +416,6 @@ export default function PastOrderScreen() {
       const response = await orderService.updateOrderStatus(orderId, newStatus, token);
 
       if (response.status) {
-        // Update the local state
         setOrders(prev => 
           prev.map(order => 
             order._id === orderId 
@@ -453,7 +439,6 @@ export default function PastOrderScreen() {
           <Text style={styles.orderDate}>
             {new Date(item.createdAt).toLocaleDateString()}
           </Text>
-          {/* Show customer info for shop owners */}
           {user?.type === 'shop' && (item as any).customer && (
             <Text style={styles.customerInfo}>
               Customer: {(item as any).customer[0]?.fullName || 'N/A'}
@@ -585,7 +570,6 @@ export default function PastOrderScreen() {
         </View>
       </View>
 
-      {/* Filter Chips */}
       <View style={styles.filterContainer}>
         <ScrollView 
           horizontal 

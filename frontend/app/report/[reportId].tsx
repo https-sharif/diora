@@ -1,4 +1,4 @@
-import React, { use, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -561,7 +561,6 @@ export default function ReportDetail() {
       </View>
 
       <ScrollView style={styles.scrollContent}>
-        {/* Report Information */}
         <View style={[styles.reportCard, { borderLeftColor: getBorderColor(report.status) }]}>
           <View style={styles.reportHeader}>
             <View style={styles.reportType}>
@@ -599,7 +598,6 @@ export default function ReportDetail() {
           )}
         </View>
 
-        {/* Reporter Information */}
         {report.reporter && (
           <View style={styles.reporterCard}>
             <Text style={styles.sectionTitle}>Reporter</Text>
@@ -617,10 +615,8 @@ export default function ReportDetail() {
           </View>
         )}
 
-        {/* Reported Item */}
         {renderReportedItem()}
 
-        {/* Action Buttons */}
         {report.status === 'pending' && (
           <View style={styles.actionButtons}>
             <TouchableOpacity

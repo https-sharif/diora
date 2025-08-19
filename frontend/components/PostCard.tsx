@@ -14,7 +14,7 @@ import {
   Platform,
   Animated,
 } from 'react-native';
-import { Star, MessageCircle, X, Send, Check, Flag } from 'lucide-react-native';
+import { Star, MessageCircle, X, Send, Check } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Post } from '@/types/Post';
 import { Comment } from '@/types/Comment';
@@ -282,7 +282,7 @@ export default function PostCard({ post }: { post: Post }) {
         console.warn('Failed to get image size:', error);
       }
     );
-  }, [post._id, post.imageUrl, post.stars, post.user._id, user?.likedPosts]);
+  }, [post._id, post.imageUrl, post.stars, post.user._id, user?.likedPosts, animatedHeight, screenWidth, token]);
 
   const handleStar = () => {
     const newStarred = !isStarred;
@@ -487,7 +487,6 @@ export default function PostCard({ post }: { post: Post }) {
         </View>
       </View>
 
-      {/* Comments Modal */}
       <Modal
         visible={showComments}
         animationType="slide"

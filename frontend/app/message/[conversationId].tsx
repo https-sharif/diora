@@ -1822,16 +1822,6 @@ export default function MessageScreen() {
     handleOpenEditGroup();
   };
 
-  const handleAddUser = () => {
-    setShowMenu(false);
-
-    if (conversation?.type !== 'group') return;
-
-    Alert.alert('Add User', 'User selection interface coming soon', [
-      { text: 'OK' },
-    ]);
-  };
-
   const handleViewGroupMembers = () => {
     setShowMenu(false);
 
@@ -2518,7 +2508,6 @@ export default function MessageScreen() {
               </TouchableOpacity>
             </Modal>
 
-            {/* Menu Modal */}
             <Modal
               visible={showMenu}
               transparent

@@ -802,7 +802,6 @@ export default function UserProfileScreen() {
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Profile Info */}
         <View style={styles.profileSection}>
           <View style={styles.profileHeader}>
             <Image
@@ -843,7 +842,6 @@ export default function UserProfileScreen() {
             ) : null}
           </View>
 
-          {/* Action Buttons */}
           {userProfile._id !== user?._id && (
             <View style={styles.actionButtons}>
               <TouchableOpacity
@@ -879,7 +877,6 @@ export default function UserProfileScreen() {
           )}
         </View>
 
-        {/* Posts Tab */}
         <View style={styles.tabsSection}>
           <TouchableOpacity
             style={[styles.tab, selectedTab === 'posts' && styles.activeTab]}
@@ -913,14 +910,12 @@ export default function UserProfileScreen() {
             </Text>
           </TouchableOpacity>
         </View>
-        {/* Posts Grid */}
         {renderGrid(
           selectedTab === 'posts' ? posts : likedPosts,
           selectedTab === 'posts' ? 'No posts yet' : 'No liked posts yet'
         )}
       </ScrollView>
 
-      {/* More Menu Modal */}
       <Modal
         visible={showMoreMenu}
         transparent
@@ -982,7 +977,6 @@ export default function UserProfileScreen() {
         </TouchableOpacity>
       </Modal>
 
-      {/* Report Modal */}
       <Modal
         visible={showReportModal}
         animationType="fade"
@@ -1072,7 +1066,6 @@ export default function UserProfileScreen() {
         </TouchableWithoutFeedback>
       </Modal>
 
-      {/* Share Modal */}
       <Modal
         visible={showShareModal}
         animationType="fade"

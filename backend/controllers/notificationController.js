@@ -25,7 +25,6 @@ export const addNotification = async (req, res) => {
   }
 
   try {
-    // Check if the target user has this notification type enabled
     const targetUser = await User.findById(userId);
     if (!targetUser) {
       return res.status(404).json({
@@ -34,7 +33,6 @@ export const addNotification = async (req, res) => {
       });
     }
 
-    // Check user status - don't send notifications to banned/suspended users
     if (targetUser.status === 'banned' || targetUser.status === 'suspended') {
       console.log(`Not sending notification to ${targetUser.status} user ${userId}`);
       return res.status(200).json({
@@ -43,7 +41,6 @@ export const addNotification = async (req, res) => {
       });
     }
 
-    // Map notification types to user settings
     const notificationTypeMap = {
       'like': 'likes',
       'likes': 'likes',

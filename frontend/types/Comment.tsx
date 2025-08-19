@@ -13,7 +13,6 @@ export interface Comment {
   replies?: Comment[];
 }
 
-// Comment service types
 export interface CommentData {
   content: string;
   postId?: string;

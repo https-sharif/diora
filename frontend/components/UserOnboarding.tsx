@@ -11,10 +11,9 @@ import {
   Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ArrowLeft, ArrowRight, User, Camera, Upload } from 'lucide-react-native';
+import { ArrowLeft, ArrowRight, User, Camera } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/hooks/useAuth';
-import { Theme } from '@/types/Theme';
 import { userService } from '@/services';
 import * as ImagePicker from 'expo-image-picker';
 
@@ -134,8 +133,6 @@ export const UserOnboarding: React.FC<UserOnboardingProps> = ({ onComplete }) =>
     try {
       setLoading(true);
 
-      // First upload profile image if provided
-      let avatarUrl = user?.avatar;
       if (profileImage) {
         if (!token) {
           Alert.alert('Error', 'No authentication token available');
@@ -149,14 +146,9 @@ export const UserOnboarding: React.FC<UserOnboardingProps> = ({ onComplete }) =>
           name: profileImage.fileName || 'profile.jpg',
         } as any);
 
-        const uploadResponse = await userService.updateProfileWithImage(imageFormData, token);
-
-        if (uploadResponse.status) {
-          avatarUrl = uploadResponse.user.avatar;
-        }
+        await userService.updateProfileWithImage(imageFormData, token);
       }
 
-      // Update profile information
       const profileUpdateData = {
         fullName: profileData.fullName,
         bio: profileData.bio,
@@ -169,18 +161,15 @@ export const UserOnboarding: React.FC<UserOnboardingProps> = ({ onComplete }) =>
 
       await userService.updateProfileDetails(profileUpdateData, token);
 
-      // Complete onboarding
       const cleanedProfile = {
         ...profileData,
         completed: true,
-        // Convert empty strings to null for enum fields
         gender: profileData.gender || null,
       };
 
       const cleanedPreferences = {
         ...preferencesData,
         completed: true,
-        // Convert empty strings to null for enum fields
         shoppingFrequency: preferencesData.shoppingFrequency || null,
         budgetRange: preferencesData.budgetRange || null,
       };
@@ -218,9 +207,9 @@ export const UserOnboarding: React.FC<UserOnboardingProps> = ({ onComplete }) =>
   const canProceed = () => {
     switch (currentStep) {
       case 0:
-        return true; // Welcome step
+        return true;
       case 1:
-        return profileImage !== null; // Profile picture required
+        return profileImage !== null;
       case 2:
         return profileData.fullName.trim().length > 0 && 
                profileData.bio.trim().length > 0 &&
@@ -239,7 +228,7 @@ export const UserOnboarding: React.FC<UserOnboardingProps> = ({ onComplete }) =>
       </View>
       <Text style={styles.title}>Welcome to Diora!</Text>
       <Text style={styles.subtitle}>
-        Your ultimate fashion destination! Let's personalize your experience to help you discover amazing styles and connect with fashion-forward shops.
+        Your ultimate fashion destination! Let&apos;s personalize your experience to help you discover amazing styles and connect with fashion-forward shops.
       </Text>
     </View>
   );
@@ -250,7 +239,6 @@ export const UserOnboarding: React.FC<UserOnboardingProps> = ({ onComplete }) =>
       <Text style={styles.subtitle}>
         Show your style! Upload a profile picture to personalize your fashion journey.
       </Text>
-      
       <TouchableOpacity style={styles.profileImageContainer} onPress={pickProfileImage}>
         {profileImage ? (
           <Image source={{ uri: profileImage.uri }} style={styles.profileImagePreview} />

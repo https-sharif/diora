@@ -374,15 +374,13 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
     const asset = result.assets[0];
     console.log('Starting photo upload - Type:', type, 'Asset URI:', asset.uri);
 
-    // Map the type to the correct property name
     const propertyName = type === 'cover' ? 'coverPhoto' : 'profilePicture';
     const uploadingProperty =
       type === 'cover' ? 'uploadingCover' : 'uploadingProfile';
 
-    // Optimistic update - immediately show the image in UI
     setPhotoData((prev) => ({
       ...prev,
-      [propertyName]: asset.uri, // Use local URI for immediate display
+      [propertyName]: asset.uri, 
       [uploadingProperty]: true,
     }));
 
@@ -399,7 +397,6 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
       name: `${type}_${Date.now()}.${asset.uri.split('.').pop()}`,
     } as any);
 
-    // Background upload
     try {
       if (!token) {
         throw new Error('No authentication token available');
@@ -410,7 +407,6 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
       console.log('Photo upload response:', response);
 
       if (response.status) {
-        // Update with the actual cloud URL and ID after successful upload
         if (type === 'cover') {
           setPhotoData((prev) => ({
             ...prev,
@@ -438,7 +434,6 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
             .toLowerCase()} uploaded successfully!`
         );
       } else {
-        // Revert optimistic update on failure
         setPhotoData((prev) => ({
           ...prev,
           [propertyName]: null,
@@ -451,7 +446,6 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
         );
       }
     } catch (error: any) {
-      // Revert optimistic update on error
       setPhotoData((prev) => ({
         ...prev,
         [propertyName]: null,
@@ -489,7 +483,6 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
       console.log('Cover photo:', photoData.coverPhoto);
       console.log('Shop data:', shopData);
 
-      // Validate required fields
       if (!shopData.location.trim()) {
         Alert.alert('Error', 'Please provide a shop location');
         setLoading(false);
@@ -516,7 +509,6 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
         step: totalSteps,
       };
 
-      // Update data including cover image in shop object
       const updateData: any = {
         onboarding: shopOnboardingData,
         shop: {
@@ -559,11 +551,8 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
           JSON.stringify(response?.user?.onboarding, null, 2)
         );
 
-        // First refresh to sync latest data
         console.log('🔄 First refresh attempt...');
         await refreshUser();
-
-        // Wait for state to propagate
         await new Promise((resolve) => setTimeout(resolve, 300));
 
         console.log(
@@ -575,7 +564,6 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
           user?.onboarding?.isComplete
         );
 
-        // Double check with another refresh if not complete yet
         if (!user?.onboarding?.isComplete) {
           console.log('🔄 Not complete yet, trying second refresh...');
           await refreshUser();
@@ -586,7 +574,6 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
           );
         }
 
-        // Verify completion before calling onComplete
         const isCompleteInResponse = response?.user?.onboarding?.isComplete;
         const isCompleteInStore = user?.onboarding?.isComplete;
 
@@ -606,11 +593,8 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
           console.log(
             '❌ Shop onboarding not marked as complete anywhere, forcing completion...'
           );
-          // Force another sync attempt
           await refreshUser();
           await new Promise((resolve) => setTimeout(resolve, 500));
-
-          // Call onComplete anyway since backend succeeded
           console.log('🔧 Forcing completion despite state mismatch...');
           onComplete();
         }

@@ -1,5 +1,3 @@
-// Notification store types and interfaces
-
 import { Notification } from './Notification';
 
 export interface NotificationStore {

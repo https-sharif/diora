@@ -500,19 +500,13 @@ const initialFilter = {
 };
 
 export default function ShoppingScreen() {
-  const { user } = useAuth();
-
   const {
-    cart,
     wishlist,
     addToCart,
     addToWishlist,
     removeFromWishlist,
     isInWishlist,
     getCartItemCount,
-    getCartTotal,
-    updateCartQuantity,
-    removeFromCart,
   } = useShopping();
 
   const { theme } = useTheme();
@@ -875,7 +869,6 @@ export default function ShoppingScreen() {
           />
         )}
 
-        {/* Product Selection Modal */}
         <Modal
           visible={!!selectedProduct}
           animationType="slide"

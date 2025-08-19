@@ -1130,7 +1130,6 @@ export default function ExploreScreen() {
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
         >
-          {/* Trending Users */}
           {(searching ? searchResults.users : exploreData.trendingUsers)
             .length > 0 && (
             <View style={styles.section}>
@@ -1154,7 +1153,6 @@ export default function ExploreScreen() {
             </View>
           )}
 
-          {/* Trending Shops */}
           {(searching ? searchResults.shops : exploreData.trendingShops)
             .length > 0 && (
             <View style={styles.section}>
@@ -1203,7 +1201,6 @@ export default function ExploreScreen() {
             </View>
           )}
 
-          {/* Discover Posts */}
           {(searching ? searchResults.posts : exploreData.trendingPosts)
             .length > 0 && (
             <View style={styles.section}>
@@ -1229,7 +1226,6 @@ export default function ExploreScreen() {
             </View>
           )}
 
-          {/* No Results */}
           {searching
             ? searchResults.users.length === 0 &&
               searchResults.posts.length === 0 &&
@@ -1253,7 +1249,6 @@ export default function ExploreScreen() {
           <View style={styles.bottomPadding} />
         </ScrollView>
 
-        {/* Enhanced Filter Modal */}
         <Modal
           visible={showFilter}
           animationType="slide"
@@ -1420,12 +1415,10 @@ export default function ExploreScreen() {
             animationType="none"
             onRequestClose={handleCloseEnlarged}
           >
-            {/* Add BlurView for background blur */}
             <Animated.View
               style={[styles.enlargedContainer, { opacity: opacityAnim }]}
               {...panResponder.panHandlers}
             >
-              {/* BlurView background */}
               <BlurView
                 intensity={50}
                 tint="light"

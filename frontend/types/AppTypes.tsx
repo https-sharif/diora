@@ -1,5 +1,3 @@
-// App-specific types and interfaces
-
 export interface AnalyticsData {
   totalOrders: number;
   totalRevenue: number;

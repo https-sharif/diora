@@ -1,5 +1,3 @@
-// Component props interfaces
-
 import { PromotionRequest } from './PromotionRequest';
 
 export interface ShopOnboardingProps {

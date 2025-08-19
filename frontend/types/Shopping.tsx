@@ -1,7 +1,6 @@
 import { Product } from './Product';
 import { CartItem } from './Cart';
 
-// Shopping related types and interfaces
 
 export interface CartItemData {
   productId: string;

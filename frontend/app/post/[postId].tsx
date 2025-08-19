@@ -1006,7 +1006,6 @@ export default function PostDetailScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Caption */}
         {post.caption && (
           <View style={styles.captionSection}>
             <Text style={styles.caption}>
@@ -1015,7 +1014,6 @@ export default function PostDetailScreen() {
             </Text>
           </View>
         )}
-        {/* Comments */}
         <View style={styles.commentsSection}>
           <Text style={styles.commentsTitle}>Comments ({comments.length})</Text>
           <ScrollView
@@ -1031,7 +1029,6 @@ export default function PostDetailScreen() {
         <View style={styles.bottomPadding} />
       </ScrollView>
 
-      {/* Comment Input */}
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0}
@@ -1071,7 +1068,6 @@ export default function PostDetailScreen() {
         </View>
       </KeyboardAvoidingView>
 
-      {/* Menu Modal */}
       <Modal
         visible={showMoreMenu}
         transparent
@@ -1207,7 +1203,6 @@ export default function PostDetailScreen() {
         </TouchableWithoutFeedback>
       </Modal>
 
-      {/* Share Modal */}
       <Modal
         visible={showShareModal}
         animationType="fade"
