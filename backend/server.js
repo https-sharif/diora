@@ -51,7 +51,12 @@ app.use('/api/stripe/webhook', webhookRoutes);
 app.use(limiter);
 
 app.use(helmet());
-app.use(mongoSanitize());
+app.use(
+  mongoSanitize({
+    replaceWith: '_',
+    ignoreKeys: ['query'],
+  })
+);
 app.use(cors());
 app.use(express.json());
 
