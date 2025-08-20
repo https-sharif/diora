@@ -520,7 +520,6 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
 
       if (response.status) {
         await refreshUser();
-
         await new Promise((resolve) => setTimeout(resolve, 300));
 
         if (!user?.onboarding?.isComplete) {
