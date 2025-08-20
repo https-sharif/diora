@@ -12,20 +12,15 @@ export function initSocket(server) {
   });
 
   io.on('connection', (socket) => {
-    console.log(`Socket connected: ${socket.id}`);
-
     socket.on('register', (userId) => {
       socket.userId = userId;
       onlineUsers.set(userId, socket.id);
-      console.log(`User registered: ${userId} with socket ${socket.id}`);
     });
 
     socket.on('disconnect', () => {
       if (socket.userId) {
         onlineUsers.delete(socket.userId);
-        console.log(`User disconnected: ${socket.userId} socket ${socket.id}`);
       }
-      console.log(`Socket disconnected: ${socket.id}`);
     });
   });
 

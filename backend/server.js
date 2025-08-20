@@ -1,4 +1,4 @@
-import http from 'http'; 
+import http from 'http';
 import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
@@ -85,4 +85,6 @@ const io = initSocket(server);
 autoCleanupReports();
 setInterval(autoCleanupReports, 24 * 60 * 60 * 1000);
 
-server.listen(PORT, '0.0.0.0', () => console.log(`Server running on port ${PORT}`));
+server.listen(PORT, '0.0.0.0', () =>
+  console.log(`Server running on port ${PORT}`)
+);

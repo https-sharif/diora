@@ -35,11 +35,16 @@ const CreatePostContext = createContext<CreatePostContextType | null>(null);
 
 export const useCreatePost = () => {
   const ctx = useContext(CreatePostContext);
-  if (!ctx) throw new Error('useCreatePost must be used inside CreatePostProvider');
+  if (!ctx)
+    throw new Error('useCreatePost must be used inside CreatePostProvider');
   return ctx;
 };
 
-export const CreatePostProvider = ({ children }: { children: React.ReactNode }) => {
+export const CreatePostProvider = ({
+  children,
+}: {
+  children: React.ReactNode;
+}) => {
   const [contentType, setContentType] = useState<ContentType>('post');
   const [images, setImages] = useState<string[]>([]);
   const [imageUri, setImageUri] = useState<string | null>(null);
@@ -56,8 +61,9 @@ export const CreatePostProvider = ({ children }: { children: React.ReactNode }) 
   });
 
   const createPost = async () => {
-    if (images.length === 0) throw new Error('Post requires at least one image!');
-    if(!user) throw new Error('User not authenticated!');
+    if (images.length === 0)
+      throw new Error('Post requires at least one image!');
+    if (!user) throw new Error('User not authenticated!');
 
     try {
       const form = new FormData();
@@ -74,7 +80,6 @@ export const CreatePostProvider = ({ children }: { children: React.ReactNode }) 
       } as any);
 
       form.append('caption', formData.description);
-      
 
       const res = await axios.post(`${config.apiUrl}/api/post/create`, form, {
         headers: {
@@ -84,16 +89,15 @@ export const CreatePostProvider = ({ children }: { children: React.ReactNode }) 
 
       const data = res.data;
 
-      if (!data.status) throw new Error(data.message || 'Failed to create post');
+      if (!data.status)
+        throw new Error(data.message || 'Failed to create post');
       user.posts += 1;
       setUser(user as User);
     } catch (error) {
-      console.error('Upload failed:', error);
       throw error;
     }
   };
 
-  
   const createProduct = async () => {
     if (
       images.length === 0 ||
@@ -101,10 +105,11 @@ export const CreatePostProvider = ({ children }: { children: React.ReactNode }) 
       !formData.description.trim() ||
       !formData.price.trim() ||
       formData.category.length === 0
-    ) throw new Error('Product requires all fields and at least one category');
-    if(!user) throw new Error('User not authenticated!');
-    if(user.type !== 'shop') throw new Error('Only shop users can create products');
-
+    )
+      throw new Error('Product requires all fields and at least one category');
+    if (!user) throw new Error('User not authenticated!');
+    if (user.type !== 'shop')
+      throw new Error('Only shop users can create products');
 
     try {
       const form = new FormData();
@@ -130,25 +135,22 @@ export const CreatePostProvider = ({ children }: { children: React.ReactNode }) 
       form.append('stock', formData.stock?.toString() || '0');
       form.append('discount', formData.discount?.toString() || '0');
 
-
       const res = await axios.post(`${config.apiUrl}/api/product`, form, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
-      const data = res.data
-      if(!data.status) throw new Error(data.message || 'Failed to create product');
+      const data = res.data;
+      if (!data.status)
+        throw new Error(data.message || 'Failed to create product');
 
-      user.shop?.productIds.push(data.product._id)
+      user.shop?.productIds.push(data.product._id);
       setUser(user as User);
-    }
-    catch (error) {
-      console.error('Product creation failed', error);
+    } catch (error) {
       throw error;
     }
   };
-  
 
   const reset = () => {
     setContentType('post');
@@ -168,7 +170,19 @@ export const CreatePostProvider = ({ children }: { children: React.ReactNode }) 
 
   return (
     <CreatePostContext.Provider
-      value={{ contentType, setContentType, images, setImages, imageUri, setImageUri, formData, setFormData, reset, createPost, createProduct }}
+      value={{
+        contentType,
+        setContentType,
+        images,
+        setImages,
+        imageUri,
+        setImageUri,
+        formData,
+        setFormData,
+        reset,
+        createPost,
+        createProduct,
+      }}
     >
       {children}
     </CreatePostContext.Provider>

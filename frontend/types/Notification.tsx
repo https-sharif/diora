@@ -2,7 +2,16 @@ export interface Notification {
   _id: string;
   userId: string;
   fromUserId?: string;
-  type: 'like' | 'comment' | 'follow' | 'mention' | 'order' | 'promotion' | 'system' | 'warning' | 'reportUpdate';
+  type:
+    | 'like'
+    | 'comment'
+    | 'follow'
+    | 'mention'
+    | 'order'
+    | 'promotion'
+    | 'system'
+    | 'warning'
+    | 'reportUpdate';
   postId?: string;
   productId?: string;
   title: string;

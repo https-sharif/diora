@@ -8,8 +8,8 @@ import Notification from '../models/Notification.js';
 import { getIO, onlineUsers } from '../sockets/socketSetup.js';
 
 const createReport = async (req, res) => {
+  console.log('Create report route/controller hit');
   try {
-    console.log('Create report route hit');
     const { reportedItem, type, description, evidenceUrl } = req.body;
     const reporter = req.user.id;
 
@@ -52,8 +52,6 @@ const createReport = async (req, res) => {
       status: { $in: ['pending', 'under_review'] },
     });
 
-    console.log('Existing report check:', existingReport);
-
     if (existingReport) {
       return res.status(200).json({
         status: true,
@@ -91,6 +89,7 @@ const createReport = async (req, res) => {
 };
 
 const getAllReports = async (req, res) => {
+  console.log('Get all reports route/controller hit');
   try {
     const {
       status,
@@ -247,6 +246,7 @@ const getAllReports = async (req, res) => {
 };
 
 const getReportById = async (req, res) => {
+  console.log('Get report by ID route/controller hit');
   try {
     const { id } = req.params;
 
@@ -375,7 +375,7 @@ const getReportById = async (req, res) => {
 };
 
 const updateReport = async (req, res) => {
-  console.log('Update report route hit');
+  console.log('Update report route/controller hit');
   try {
     const { id } = req.params;
     const { status, priority, adminNotes, actionTaken } = req.body;
@@ -418,7 +418,7 @@ const updateReport = async (req, res) => {
 };
 
 const takeModerationAction = async (req, res) => {
-  console.log('Take moderation action route hit');
+  console.log('Take moderation action route/controller hit');
   try {
     const { id } = req.params;
     const { action, duration, reason } = req.body;
@@ -618,7 +618,7 @@ const takeModerationAction = async (req, res) => {
 };
 
 const getReportStats = async (req, res) => {
-  console.log('Get report stats route hit');
+  console.log('Get report stats route/controller hit');
   try {
     const stats = await Promise.all([
       Report.countDocuments({ status: 'pending' }),
@@ -659,9 +659,8 @@ const getReportStats = async (req, res) => {
 };
 
 const clearOldReports = async (req, res) => {
+  console.log('Clear old reports route/controller hit');
   try {
-    console.log('Clear old reports route hit');
-
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
@@ -669,8 +668,6 @@ const clearOldReports = async (req, res) => {
       createdAt: { $lt: sevenDaysAgo },
       status: { $in: ['resolved', 'dismissed'] },
     });
-
-    console.log(`Cleared ${result.deletedCount} reports older than 7 days`);
 
     res.json({
       status: true,
@@ -687,14 +684,11 @@ const clearOldReports = async (req, res) => {
 };
 
 const clearResolvedReports = async (req, res) => {
+  console.log('Clear resolved/dismissed reports route/controller hit');
   try {
-    console.log('Clear resolved/dismissed reports route hit');
-
     const result = await Report.deleteMany({
       status: { $in: ['resolved', 'dismissed'] },
     });
-
-    console.log(`Cleared ${result.deletedCount} resolved/dismissed reports`);
 
     res.json({
       status: true,
@@ -711,6 +705,7 @@ const clearResolvedReports = async (req, res) => {
 };
 
 const autoCleanupReports = async () => {
+  console.log('Auto-cleanup reports job started');
   try {
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
@@ -720,9 +715,6 @@ const autoCleanupReports = async () => {
       status: { $in: ['resolved', 'dismissed'] },
     });
 
-    console.log(
-      `Auto-cleanup: Cleared ${result.deletedCount} reports older than 7 days`
-    );
     return result.deletedCount;
   } catch (error) {
     console.error('Auto-cleanup reports error:', error);

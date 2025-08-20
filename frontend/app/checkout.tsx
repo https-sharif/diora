@@ -311,20 +311,23 @@ const CheckoutPage = () => {
 
   useEffect(() => {
     const requiredFields = ['fullName', 'email', 'phone', 'address', 'city'];
-    const allFieldsFilled = requiredFields.every(field => form[field as keyof CheckoutForm]?.trim() !== '');
+    const allFieldsFilled = requiredFields.every(
+      (field) => form[field as keyof CheckoutForm]?.trim() !== ''
+    );
     setIsValid(allFieldsFilled);
   }, [form]);
 
   const updateForm = (field: keyof CheckoutForm, value: string) => {
-    setForm(prev => ({ ...prev, [field]: value }));
+    setForm((prev) => ({ ...prev, [field]: value }));
   };
 
   const calculateSubtotal = () => {
     return cart.reduce((total: number, item: CartItem) => {
       const product = item.productId as Product;
-      const itemPrice = product.discount && product.discount > 0 
-        ? product.price - (product.price * product.discount / 100)
-        : product.price;
+      const itemPrice =
+        product.discount && product.discount > 0
+          ? product.price - (product.price * product.discount) / 100
+          : product.price;
       return total + itemPrice * item.quantity;
     }, 0);
   };
@@ -335,12 +338,14 @@ const CheckoutPage = () => {
 
   const getDiscountedPrice = (price: number, discount?: number) => {
     if (!discount || discount <= 0) return null;
-    return price - (price * discount / 100);
+    return price - (price * discount) / 100;
   };
 
   const renderPriceWithDiscount = (product: Product, quantity: number) => {
     const hasDiscount = product.discount && product.discount > 0;
-    const discountedPrice = hasDiscount ? getDiscountedPrice(product.price, product.discount) : null;
+    const discountedPrice = hasDiscount
+      ? getDiscountedPrice(product.price, product.discount)
+      : null;
 
     if (hasDiscount && discountedPrice) {
       return (
@@ -400,16 +405,24 @@ const CheckoutPage = () => {
           'Order Placed Successfully!',
           `Order #${response.order.orderNumber} has been placed. You will receive updates via email.`,
           [
-            { text: 'View Order', onPress: () => router.push(`/order/${response.order._id}`) },
-            { text: 'Continue Shopping', onPress: () => router.push('/shopping') },
+            {
+              text: 'View Order',
+              onPress: () => router.push(`/order/${response.order._id}`),
+            },
+            {
+              text: 'Continue Shopping',
+              onPress: () => router.push('/shopping'),
+            },
           ]
         );
       } else if (form.paymentMethod === 'card') {
-        const { sessionUrl } = await axios.post(
-          `${config.apiUrl}/api/order/create-stripe-session`,
-          { orderId: response.order._id },
-          { headers: { Authorization: `Bearer ${token}` } }
-        ).then(res => res.data);
+        const { sessionUrl } = await axios
+          .post(
+            `${config.apiUrl}/api/order/create-stripe-session`,
+            { orderId: response.order._id },
+            { headers: { Authorization: `Bearer ${token}` } }
+          )
+          .then((res) => res.data);
 
         if (sessionUrl) {
           await WebBrowser.openBrowserAsync(sessionUrl);
@@ -417,15 +430,16 @@ const CheckoutPage = () => {
           alert('Failed to start Stripe payment.');
         }
       }
-
-    } catch (error) {
-      console.error('Error placing order:', error);
-      Alert.alert('Order Failed', 'There was an error placing your order. Please try again.', [{ text: 'OK' }]);
+    } catch {
+      Alert.alert(
+        'Order Failed',
+        'There was an error placing your order. Please try again.',
+        [{ text: 'OK' }]
+      );
     } finally {
       setIsPlacingOrder(false);
     }
   };
-
 
   const renderOrderSummary = () => (
     <View style={styles.section}>
@@ -437,18 +451,25 @@ const CheckoutPage = () => {
         {cart.map((item: CartItem) => {
           const product = item.productId as Product;
           return (
-            <View key={`${product._id}-${item.size}-${item.variant}`} style={styles.orderItem}>
-              <Image source={{ uri: product.imageUrl[0] }} style={styles.orderItemImage} />
+            <View
+              key={`${product._id}-${item.size}-${item.variant}`}
+              style={styles.orderItem}
+            >
+              <Image
+                source={{ uri: product.imageUrl[0] }}
+                style={styles.orderItemImage}
+              />
               <View style={styles.orderItemInfo}>
                 <Text style={styles.orderItemName}>{product.name}</Text>
                 <Text style={styles.orderItemDetails}>
-                  {item.size && `${item.size}${item.variant ? ' • ' : ''}`}{item.variant}
+                  {item.size && `${item.size}${item.variant ? ' • ' : ''}`}
+                  {item.variant}
                 </Text>
-                <Text style={styles.orderItemQuantity}>Qty: {item.quantity}</Text>
+                <Text style={styles.orderItemQuantity}>
+                  Qty: {item.quantity}
+                </Text>
               </View>
-              <View>
-                {renderPriceWithDiscount(product, item.quantity)}
-              </View>
+              <View>{renderPriceWithDiscount(product, item.quantity)}</View>
             </View>
           );
         })}
@@ -566,7 +587,11 @@ const CheckoutPage = () => {
           ]}
           onPress={() => updateForm('paymentMethod', 'cod')}
         >
-          <Truck size={24} color={theme.text} style={styles.paymentMethodIcon} />
+          <Truck
+            size={24}
+            color={theme.text}
+            style={styles.paymentMethodIcon}
+          />
           <Text style={styles.paymentMethodText}>Cash on Delivery</Text>
           {form.paymentMethod === 'cod' && (
             <Check size={16} color={theme.accent} style={{ marginTop: 4 }} />
@@ -580,7 +605,11 @@ const CheckoutPage = () => {
           ]}
           onPress={() => updateForm('paymentMethod', 'card')}
         >
-          <CreditCard size={24} color={theme.text} style={styles.paymentMethodIcon} />
+          <CreditCard
+            size={24}
+            color={theme.text}
+            style={styles.paymentMethodIcon}
+          />
           <Text style={styles.paymentMethodText}>Credit/Debit Card</Text>
           {form.paymentMethod === 'card' && (
             <Check size={16} color={theme.accent} style={{ marginTop: 4 }} />
@@ -594,7 +623,11 @@ const CheckoutPage = () => {
           ]}
           onPress={() => updateForm('paymentMethod', 'bkash')}
         >
-          <Phone size={24} color={theme.text} style={styles.paymentMethodIcon} />
+          <Phone
+            size={24}
+            color={theme.text}
+            style={styles.paymentMethodIcon}
+          />
           <Text style={styles.paymentMethodText}>bKash</Text>
           {form.paymentMethod === 'bkash' && (
             <Check size={16} color={theme.accent} style={{ marginTop: 4 }} />
@@ -620,7 +653,7 @@ const CheckoutPage = () => {
       {cart.length === 0 ? (
         <View style={styles.emptyCartContainer}>
           <Text style={styles.emptyCartText}>Your cart is empty</Text>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.continueShoppingButton}
             onPress={() => router.push('/shopping')}
           >
@@ -629,7 +662,10 @@ const CheckoutPage = () => {
         </View>
       ) : (
         <>
-          <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
+          <ScrollView
+            style={styles.scrollContainer}
+            showsVerticalScrollIndicator={false}
+          >
             {renderOrderSummary()}
             {renderShippingForm()}
             {renderPaymentMethods()}
@@ -645,7 +681,9 @@ const CheckoutPage = () => {
               disabled={!isValid || isPlacingOrder}
             >
               <Text style={styles.placeOrderButtonText}>
-                {isPlacingOrder ? 'Placing Order...' : `Place Order • $${total.toFixed(2)}`}
+                {isPlacingOrder
+                  ? 'Placing Order...'
+                  : `Place Order • $${total.toFixed(2)}`}
               </Text>
             </TouchableOpacity>
           </View>

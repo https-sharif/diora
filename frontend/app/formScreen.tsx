@@ -1,5 +1,14 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+  StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
 import { useCreatePost } from '@/contexts/CreatePostContext';
 import CategorySelector from '@/components/CategorySelector';
 import { Theme } from '@/types/Theme';
@@ -118,10 +127,18 @@ const createStyles = (theme: Theme) => {
       color: '#fff',
     },
   });
-}
+};
 
 export default function CreateFormScreen() {
-  const { formData, setFormData, contentType, images, createPost, createProduct, reset } = useCreatePost();
+  const {
+    formData,
+    setFormData,
+    contentType,
+    images,
+    createPost,
+    createProduct,
+    reset,
+  } = useCreatePost();
   const isProduct = contentType === 'product';
   const { theme } = useTheme();
   const styles = createStyles(theme);
@@ -130,7 +147,6 @@ export default function CreateFormScreen() {
   const [tempSize, setTempSize] = useState('');
   const [tempVariant, setTempVariant] = useState('');
 
-
   const handleChange = (field: keyof typeof formData, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
@@ -138,7 +154,7 @@ export default function CreateFormScreen() {
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      if(isProduct) {
+      if (isProduct) {
         await createProduct();
       } else {
         await createPost();
@@ -146,10 +162,10 @@ export default function CreateFormScreen() {
       navigation.goBack();
       router.push('/(tabs)');
       reset();
-    } catch (error) {
-      console.error('Error creating post:', error);
-    } 
-    finally {
+    } catch {
+      setIsSubmitting(false);
+      return;
+    } finally {
       setIsSubmitting(false);
     }
   };
@@ -163,7 +179,10 @@ export default function CreateFormScreen() {
       <View style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.title}>Create</Text>
-          <TouchableOpacity onPress={handleSubmit} disabled={images.length === 0}>
+          <TouchableOpacity
+            onPress={handleSubmit}
+            disabled={images.length === 0}
+          >
             <Check size={24} color={theme.text} />
           </TouchableOpacity>
         </View>
@@ -187,8 +206,12 @@ export default function CreateFormScreen() {
 
           <View style={{ marginBottom: 16 }}>
             <View style={styles.labelContainer}>
-              <Text style={styles.label}>{isProduct ? 'Description' : 'Caption'}</Text>
-              {isProduct && <Text style={[styles.label, { color: theme.error }]}>*</Text>}
+              <Text style={styles.label}>
+                {isProduct ? 'Description' : 'Caption'}
+              </Text>
+              {isProduct && (
+                <Text style={[styles.label, { color: theme.error }]}>*</Text>
+              )}
             </View>
             <TextInput
               value={formData.description}
@@ -200,33 +223,32 @@ export default function CreateFormScreen() {
             />
           </View>
 
-          
           {isProduct && (
             <>
-            <View style={{ marginBottom: 16 }}>
-              <View style={styles.labelContainer}>
-                <Text style={styles.label}>Price (BDT)</Text>
-                <Text style={[styles.label, { color: theme.error }]}>*</Text>
+              <View style={{ marginBottom: 16 }}>
+                <View style={styles.labelContainer}>
+                  <Text style={styles.label}>Price (BDT)</Text>
+                  <Text style={[styles.label, { color: theme.error }]}>*</Text>
+                </View>
+                <TextInput
+                  value={formData.price}
+                  onChangeText={(text) => handleChange('price', text)}
+                  placeholder="Add a price"
+                  keyboardType="numeric"
+                  style={styles.input}
+                />
               </View>
-              <TextInput
-                value={formData.price}
-                onChangeText={(text) => handleChange('price', text)}
-                placeholder="Add a price"
-                keyboardType="numeric"
-                style={styles.input}
-              />
-            </View>
 
-            <View style={{ marginBottom: 16 }}>
-              <View style={styles.labelContainer}>
-                <Text style={styles.label}>Category</Text>
-                <Text style={[styles.label, { color: theme.error }]}>*</Text>
+              <View style={{ marginBottom: 16 }}>
+                <View style={styles.labelContainer}>
+                  <Text style={styles.label}>Category</Text>
+                  <Text style={[styles.label, { color: theme.error }]}>*</Text>
+                </View>
+                <CategorySelector
+                  selected={formData.category}
+                  onSelect={(updated) => handleChange('category', updated)}
+                />
               </View>
-              <CategorySelector
-                selected={formData.category}
-                onSelect={(updated) => handleChange('category', updated)}
-              />
-            </View>
 
               <View style={{ marginBottom: 16 }}>
                 <View style={styles.labelContainer}>
@@ -242,7 +264,10 @@ export default function CreateFormScreen() {
                   <TouchableOpacity
                     onPress={() => {
                       if (tempSize.trim()) {
-                        handleChange('sizes', [...formData.sizes, tempSize.trim()]);
+                        handleChange('sizes', [
+                          ...formData.sizes,
+                          tempSize.trim(),
+                        ]);
                         setTempSize('');
                       }
                     }}
@@ -252,13 +277,21 @@ export default function CreateFormScreen() {
                   </TouchableOpacity>
                 </View>
 
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 8 }}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    flexWrap: 'wrap',
+                    marginTop: 8,
+                  }}
+                >
                   {formData.sizes.map((size, index) => (
                     <View key={index} style={styles.tag}>
                       <Text style={styles.tagText}>{size}</Text>
                       <TouchableOpacity
                         onPress={() => {
-                          const updated = formData.sizes.filter((_, i) => i !== index);
+                          const updated = formData.sizes.filter(
+                            (_, i) => i !== index
+                          );
                           handleChange('sizes', updated);
                         }}
                       >
@@ -283,7 +316,10 @@ export default function CreateFormScreen() {
                   <TouchableOpacity
                     onPress={() => {
                       if (tempVariant.trim()) {
-                        handleChange('variants', [...formData.variants, tempVariant.trim()]);
+                        handleChange('variants', [
+                          ...formData.variants,
+                          tempVariant.trim(),
+                        ]);
                         setTempVariant('');
                       }
                     }}
@@ -293,13 +329,21 @@ export default function CreateFormScreen() {
                   </TouchableOpacity>
                 </View>
 
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 8 }}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    flexWrap: 'wrap',
+                    marginTop: 8,
+                  }}
+                >
                   {formData.variants.map((variant, index) => (
                     <View key={index} style={styles.tag}>
                       <Text style={styles.tagText}>{variant}</Text>
                       <TouchableOpacity
                         onPress={() => {
-                          const updated = formData.variants.filter((_, i) => i !== index);
+                          const updated = formData.variants.filter(
+                            (_, i) => i !== index
+                          );
                           handleChange('variants', updated);
                         }}
                       >
@@ -315,7 +359,11 @@ export default function CreateFormScreen() {
                   <Text style={styles.label}>Discount (%)</Text>
                 </View>
                 <TextInput
-                  value={formData.discount !== undefined ? String(formData.discount) : ''}
+                  value={
+                    formData.discount !== undefined
+                      ? String(formData.discount)
+                      : ''
+                  }
                   onChangeText={(text) => {
                     const num = parseInt(text);
                     handleChange('discount', isNaN(num) ? '' : num);
@@ -331,7 +379,9 @@ export default function CreateFormScreen() {
                   <Text style={styles.label}>Stock</Text>
                 </View>
                 <TextInput
-                  value={formData.stock !== undefined ? String(formData.stock) : ''}
+                  value={
+                    formData.stock !== undefined ? String(formData.stock) : ''
+                  }
                   onChangeText={(text) => {
                     const num = parseInt(text);
                     handleChange('stock', isNaN(num) ? '' : num);
@@ -343,7 +393,6 @@ export default function CreateFormScreen() {
               </View>
             </>
           )}
-
         </ScrollView>
         <View style={styles.buttonContainer}>
           <TouchableOpacity
@@ -354,8 +403,13 @@ export default function CreateFormScreen() {
             onPress={handleSubmit}
             disabled={isSubmitting}
           >
-            {isSubmitting ? null : <Plus size={20} color='#000' />}
-            <Text style={[styles.submitButtonText, isSubmitting && styles.submitButtonTextDisabled]}>
+            {isSubmitting ? null : <Plus size={20} color="#000" />}
+            <Text
+              style={[
+                styles.submitButtonText,
+                isSubmitting && styles.submitButtonTextDisabled,
+              ]}
+            >
               {isSubmitting
                 ? 'Creating...'
                 : `Create ${contentType === 'post' ? 'Post' : 'Product'}`}

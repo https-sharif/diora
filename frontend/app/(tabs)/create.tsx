@@ -16,9 +16,22 @@ export default function CreateScreen() {
         style={{ flex: 1, backgroundColor: theme.background }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <Stack.Navigator screenOptions={{ animation: 'slide_from_right', contentStyle: { backgroundColor: theme.background } }}>
-          <Stack.Screen name="CreateImage" component={imageScreen} options={{ headerShown: false }} />
-          <Stack.Screen name="CreateForm" component={formScreen} options={{ headerShown: false }} />
+        <Stack.Navigator
+          screenOptions={{
+            animation: 'slide_from_right',
+            contentStyle: { backgroundColor: theme.background },
+          }}
+        >
+          <Stack.Screen
+            name="CreateImage"
+            component={imageScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="CreateForm"
+            component={formScreen}
+            options={{ headerShown: false }}
+          />
         </Stack.Navigator>
       </KeyboardAvoidingView>
     </CreatePostProvider>

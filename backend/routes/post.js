@@ -1,7 +1,15 @@
 import express from 'express';
 import { verifyToken } from '../middleware/auth.js';
 import { parser } from '../utils/cloudinary.js';
-import { likePost, getAllPost, createPost, getLikedPosts, getUserPosts, getPost, getTrendingPosts } from '../controllers/postController.js';
+import {
+  likePost,
+  getAllPost,
+  createPost,
+  getLikedPosts,
+  getUserPosts,
+  getPost,
+  getTrendingPosts,
+} from '../controllers/postController.js';
 
 const router = express.Router();
 router.use(verifyToken);

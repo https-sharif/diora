@@ -9,11 +9,7 @@ import {
   RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { 
-  TrendingUp,
-  BarChart3,
-  Shield
-} from 'lucide-react-native';
+import { TrendingUp, BarChart3, Shield } from 'lucide-react-native';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAdminStats } from '@/hooks/useAdminStats';
@@ -157,7 +153,13 @@ const createStyles = (theme: Theme) =>
 export default function AnalyticsScreen() {
   const { user } = useAuth();
   const { theme } = useTheme();
-  const { stats, health, loading: statsLoading, error: statsError, refreshData } = useAdminStats();
+  const {
+    stats,
+    health,
+    loading: statsLoading,
+    error: statsError,
+    refreshData,
+  } = useAdminStats();
   const styles = createStyles(theme);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -172,9 +174,7 @@ export default function AnalyticsScreen() {
       <SafeAreaView style={styles.container}>
         <View style={styles.unauthorizedContainer}>
           <Shield size={48} color={theme.textSecondary} />
-          <Text style={styles.unauthorizedText}>
-            Admin access required
-          </Text>
+          <Text style={styles.unauthorizedText}>Admin access required</Text>
         </View>
       </SafeAreaView>
     );
@@ -189,25 +189,20 @@ export default function AnalyticsScreen() {
       {statsLoading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.accent} />
-          <Text style={styles.loadingText}>
-            Loading analytics...
-          </Text>
+          <Text style={styles.loadingText}>Loading analytics...</Text>
         </View>
       ) : statsError ? (
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>
             Error loading analytics: {statsError}
           </Text>
-          <TouchableOpacity 
-            style={styles.retryButton}
-            onPress={refreshData}
-          >
+          <TouchableOpacity style={styles.retryButton} onPress={refreshData}>
             <Text style={styles.retryButtonText}>Retry</Text>
           </TouchableOpacity>
         </View>
       ) : (
-        <ScrollView 
-          style={styles.content} 
+        <ScrollView
+          style={styles.content}
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl
@@ -219,85 +214,127 @@ export default function AnalyticsScreen() {
           }
         >
           {stats ? (
-          <>
-            <View style={styles.adminSection}>
-              <View style={styles.adminSectionTitleContainer}>
-                <TrendingUp size={20} color={theme.accent} />
-                <Text style={styles.adminSectionTitle}>Key Metrics</Text>
-              </View>
-              <View style={styles.quickStatsGrid}>
-                <View style={styles.quickStatCard}>
-                  <Text style={styles.quickStatTitle}>Total Users</Text>
-                  <Text style={styles.quickStatValue}>{stats.users.total.toLocaleString()}</Text>
-                </View>
-                <View style={styles.quickStatCard}>
-                  <Text style={styles.quickStatTitle}>Active Shops</Text>
-                  <Text style={styles.quickStatValue}>{stats.users.shops.toLocaleString()}</Text>
-                </View>
-                <View style={styles.quickStatCard}>
-                  <Text style={styles.quickStatTitle}>Total Posts</Text>
-                  <Text style={styles.quickStatValue}>{stats.content.posts.toLocaleString()}</Text>
-                </View>
-                <View style={styles.quickStatCard}>
-                  <Text style={styles.quickStatTitle}>Pending Requests</Text>
-                  <Text style={styles.quickStatValue}>{stats.promotionRequests.pending.toLocaleString()}</Text>
-                </View>
-              </View>
-            </View>
-
-            <View style={styles.adminSection}>
-              <View style={styles.adminSectionTitleContainer}>
-                <BarChart3 size={20} color={theme.accent} />
-                <Text style={styles.adminSectionTitle}>Growth Analytics (This Month)</Text>
-              </View>
-              <View style={styles.quickStatsGrid}>
-                <View style={styles.quickStatCard}>
-                  <Text style={styles.quickStatTitle}>New Users</Text>
-                  <Text style={styles.quickStatValue}>{stats.growth.newUsersThisMonth}</Text>
-                </View>
-                <View style={styles.quickStatCard}>
-                  <Text style={styles.quickStatTitle}>New Shops</Text>
-                  <Text style={styles.quickStatValue}>{stats.growth.newShopsThisMonth}</Text>
-                </View>
-                <View style={styles.quickStatCard}>
-                  <Text style={styles.quickStatTitle}>New Posts</Text>
-                  <Text style={styles.quickStatValue}>{stats.growth.newPostsThisMonth}</Text>
-                </View>
-                <View style={styles.quickStatCard}>
-                  <Text style={styles.quickStatTitle}>New Products</Text>
-                  <Text style={styles.quickStatValue}>{stats.growth.newProductsThisMonth}</Text>
-                </View>
-              </View>
-            </View>
-
-            {health && (
+            <>
               <View style={styles.adminSection}>
                 <View style={styles.adminSectionTitleContainer}>
-                  <Shield size={20} color={theme.accent} />
-                  <Text style={styles.adminSectionTitle}>System Health</Text>
+                  <TrendingUp size={20} color={theme.accent} />
+                  <Text style={styles.adminSectionTitle}>Key Metrics</Text>
                 </View>
-                <View style={styles.healthCard}>
-                  <View style={styles.healthItem}>
-                    <Text style={styles.healthLabel}>Database:</Text>
-                    <Text style={[styles.healthValue, { color: health.database.connected ? '#10B981' : '#EF4444' }]}>
-                      {health.database.connected ? 'Connected' : 'Disconnected'}
+                <View style={styles.quickStatsGrid}>
+                  <View style={styles.quickStatCard}>
+                    <Text style={styles.quickStatTitle}>Total Users</Text>
+                    <Text style={styles.quickStatValue}>
+                      {stats.users.total.toLocaleString()}
                     </Text>
                   </View>
-                  <View style={styles.healthItem}>
-                    <Text style={styles.healthLabel}>Status:</Text>
-                    <Text style={[styles.healthValue, { color: health.status === 'healthy' ? '#10B981' : '#EF4444' }]}>
-                      {health.status}
+                  <View style={styles.quickStatCard}>
+                    <Text style={styles.quickStatTitle}>Active Shops</Text>
+                    <Text style={styles.quickStatValue}>
+                      {stats.users.shops.toLocaleString()}
                     </Text>
                   </View>
-                  <View style={styles.healthItem}>
-                    <Text style={styles.healthLabel}>Uptime:</Text>
-                    <Text style={styles.healthValue}>{Math.floor(health.uptime / 3600)}h {Math.floor((health.uptime % 3600) / 60)}m</Text>
+                  <View style={styles.quickStatCard}>
+                    <Text style={styles.quickStatTitle}>Total Posts</Text>
+                    <Text style={styles.quickStatValue}>
+                      {stats.content.posts.toLocaleString()}
+                    </Text>
+                  </View>
+                  <View style={styles.quickStatCard}>
+                    <Text style={styles.quickStatTitle}>Pending Requests</Text>
+                    <Text style={styles.quickStatValue}>
+                      {stats.promotionRequests.pending.toLocaleString()}
+                    </Text>
                   </View>
                 </View>
               </View>
-            )}
-          </>
-        ) : null}
+
+              <View style={styles.adminSection}>
+                <View style={styles.adminSectionTitleContainer}>
+                  <BarChart3 size={20} color={theme.accent} />
+                  <Text style={styles.adminSectionTitle}>
+                    Growth Analytics (This Month)
+                  </Text>
+                </View>
+                <View style={styles.quickStatsGrid}>
+                  <View style={styles.quickStatCard}>
+                    <Text style={styles.quickStatTitle}>New Users</Text>
+                    <Text style={styles.quickStatValue}>
+                      {stats.growth.newUsersThisMonth}
+                    </Text>
+                  </View>
+                  <View style={styles.quickStatCard}>
+                    <Text style={styles.quickStatTitle}>New Shops</Text>
+                    <Text style={styles.quickStatValue}>
+                      {stats.growth.newShopsThisMonth}
+                    </Text>
+                  </View>
+                  <View style={styles.quickStatCard}>
+                    <Text style={styles.quickStatTitle}>New Posts</Text>
+                    <Text style={styles.quickStatValue}>
+                      {stats.growth.newPostsThisMonth}
+                    </Text>
+                  </View>
+                  <View style={styles.quickStatCard}>
+                    <Text style={styles.quickStatTitle}>New Products</Text>
+                    <Text style={styles.quickStatValue}>
+                      {stats.growth.newProductsThisMonth}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
+              {health && (
+                <View style={styles.adminSection}>
+                  <View style={styles.adminSectionTitleContainer}>
+                    <Shield size={20} color={theme.accent} />
+                    <Text style={styles.adminSectionTitle}>System Health</Text>
+                  </View>
+                  <View style={styles.healthCard}>
+                    <View style={styles.healthItem}>
+                      <Text style={styles.healthLabel}>Database:</Text>
+                      <Text
+                        style={[
+                          styles.healthValue,
+                          {
+                            color: health.database.connected
+                              ? '#10B981'
+                              : '#EF4444',
+                          },
+                        ]}
+                      >
+                        {health.database.connected
+                          ? 'Connected'
+                          : 'Disconnected'}
+                      </Text>
+                    </View>
+                    <View style={styles.healthItem}>
+                      <Text style={styles.healthLabel}>Status:</Text>
+                      <Text
+                        style={[
+                          styles.healthValue,
+                          {
+                            color:
+                              health.status === 'healthy'
+                                ? '#10B981'
+                                : '#EF4444',
+                          },
+                        ]}
+                      >
+                        {health.status}
+                      </Text>
+                    </View>
+                    <View style={styles.healthItem}>
+                      <Text style={styles.healthLabel}>Uptime:</Text>
+                      <Text style={styles.healthValue}>
+                        {Math.floor(health.uptime / 3600)}h{' '}
+                        {Math.floor((health.uptime % 3600) / 60)}m
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+              )}
+            </>
+          ) : null}
         </ScrollView>
       )}
     </SafeAreaView>

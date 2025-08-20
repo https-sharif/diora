@@ -702,8 +702,7 @@ const createStyles = (theme: Theme) => {
     reportButtonCancel: {
       borderWidth: 1,
     },
-    reportButtonSubmit: {
-    },
+    reportButtonSubmit: {},
     reportButtonText: {
       fontSize: 14,
       fontFamily: 'Inter-Medium',
@@ -885,8 +884,6 @@ export default function ShopProfileScreen() {
     const fetchShopProfile = async () => {
       try {
         setLoading(true);
-
-        console.log('Fetching shop profile for:', shopId);
         const response = await axios.get(
           `${config.apiUrl}/api/user/${shopId}`,
           {
@@ -907,8 +904,7 @@ export default function ShopProfileScreen() {
         if (user) {
           setIsFollowing(user.following.includes(shop._id));
         }
-      } catch (error) {
-        console.error('Error fetching shop profile:', error);
+      } catch {
         router.back();
       } finally {
         setLoading(false);
@@ -932,9 +928,7 @@ export default function ShopProfileScreen() {
         }
 
         setReviews(response.data.reviews);
-      } catch (error) {
-        console.error('Error fetching reviews:', error);
-      }
+      } catch {}
     };
 
     const fetchPosts = async () => {
@@ -953,9 +947,7 @@ export default function ShopProfileScreen() {
         }
 
         setPosts(response.data.posts);
-      } catch (error) {
-        console.error('Error fetching posts:', error);
-      }
+      } catch {}
     };
 
     const fetchReviewedStatus = async () => {
@@ -977,9 +969,7 @@ export default function ShopProfileScreen() {
         }
 
         setHasReviewed(response.data.reviewed);
-      } catch (error) {
-        console.error('Error fetching reviewed status:', error);
-      }
+      } catch {}
     };
 
     fetchShopProfile();
@@ -1104,8 +1094,7 @@ export default function ShopProfileScreen() {
         'Review Deleted',
         'Your review has been deleted successfully.'
       );
-    } catch (error) {
-      console.error('Error deleting review:', error);
+    } catch {
       Alert.alert('Error', 'Failed to delete review. Please try again later.');
     }
   };
@@ -1169,8 +1158,7 @@ export default function ShopProfileScreen() {
       setRating(0);
       setHasReviewed(true);
       setReviewImages([]);
-    } catch (error) {
-      console.error('Error submitting review:', error);
+    } catch {
       Alert.alert('Error', 'Failed to submit review. Try again.');
     }
   };
@@ -1216,16 +1204,8 @@ export default function ShopProfileScreen() {
     });
 
     if (existingConversation) {
-      console.log(
-        'Found existing conversation with shop:',
-        existingConversation._id
-      );
       router.push(`/message/${existingConversation._id}`);
     } else {
-      console.log(
-        'No existing conversation with shop, navigating with shop ID:',
-        shopProfile._id
-      );
       router.push(`/message/${shopProfile._id}`);
     }
   };
@@ -1309,8 +1289,7 @@ export default function ShopProfileScreen() {
         );
       }
       setSearchedUsers(merged);
-    } catch (err) {
-      console.error('Error searching users/shops:', err);
+    } catch {
       setSearchedUsers([]);
     }
   };
@@ -1364,8 +1343,7 @@ export default function ShopProfileScreen() {
           'Thank you for reporting this shop. We will review it shortly.'
         );
       }
-    } catch (err) {
-      console.error('Error submitting report:', err);
+    } catch {
       Alert.alert('Error', 'Failed to submit report. Please try again.');
     }
   };

@@ -13,6 +13,7 @@ import {
 import { deleteImage } from '../utils/cloudinary.js';
 
 export const getConversations = async (req, res) => {
+  console.log('Get conversations route/controller hit');
   try {
     const userId = req.user.id;
 
@@ -31,6 +32,7 @@ export const getConversations = async (req, res) => {
 };
 
 export const getOrCreateConversation = async (req, res) => {
+  console.log('Get or create conversation route/controller hit');
   try {
     const userId = req.user.id;
     const { participantId, type = 'private' } = req.body;
@@ -80,38 +82,45 @@ export const getOrCreateConversation = async (req, res) => {
 };
 
 export const getConversationId = async (req, res) => {
-    try {
-        const userId = req.user.id;
-        const { otherUserId } = req.params;
+  console.log('Get conversation ID route/controller hit');
+  try {
+    const userId = req.user.id;
+    const { otherUserId } = req.params;
 
-        const conversation = await Conversation.findOne({
-            type: 'private',
-            participants: { $all: [userId, otherUserId], $size: 2 },
+    const conversation = await Conversation.findOne({
+      type: 'private',
+      participants: { $all: [userId, otherUserId], $size: 2 },
+    });
+
+    if (!conversation) {
+      const newConversation = await Conversation.create({
+        type: 'private',
+        participants: [userId, otherUserId],
+      });
+
+      await newConversation.populate(
+        'participants',
+        'username fullName avatar type'
+      );
+
+      return res
+        .status(200)
+        .json({
+          status: true,
+          message: 'Conversation created successfully',
+          conversationId: newConversation._id,
         });
-
-
-        if (!conversation) {
-           const newConversation = await Conversation.create({
-                type: 'private',
-                participants: [userId, otherUserId],
-            });
-
-            await newConversation.populate(
-            'participants',
-            'username fullName avatar type'
-            );
-
-            return res.status(200).json({ status: true, message: 'Conversation created successfully', conversationId: newConversation._id });
-        }
-
-        res.json({ status: true, conversationId: conversation._id });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ status: false, message: 'Something went wrong' });
     }
-}
+
+    res.json({ status: true, conversationId: conversation._id });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ status: false, message: 'Something went wrong' });
+  }
+};
 
 export const getMessages = async (req, res) => {
+  console.log('Get messages route/controller hit');
   try {
     const userId = req.user.id;
     const { conversationId } = req.params;
@@ -150,7 +159,7 @@ export const getMessages = async (req, res) => {
 };
 
 export const sendMessage = async (req, res) => {
-    console.log('Sending message route/controller hit');
+  console.log('Send message route/controller hit');
   try {
     const userId = req.user.id;
     const {
@@ -163,7 +172,6 @@ export const sendMessage = async (req, res) => {
       profileId,
       imageUrl,
     } = req.body;
-    console.log('Sending message:', { conversationId, text, type });
 
     const conversation = await Conversation.findOne({
       _id: conversationId,
@@ -299,6 +307,7 @@ export const sendMessage = async (req, res) => {
 };
 
 export const markMessagesAsRead = async (req, res) => {
+  console.log('Mark messages as read route/controller hit');
   try {
     const userId = req.user.id;
     const { conversationId } = req.params;
@@ -336,6 +345,7 @@ export const markMessagesAsRead = async (req, res) => {
 };
 
 export const addReaction = async (req, res) => {
+  console.log('Add reaction route/controller hit');
   try {
     const userId = req.user.id;
     const { messageId } = req.params;
@@ -404,6 +414,7 @@ export const addReaction = async (req, res) => {
 };
 
 export const deleteMessage = async (req, res) => {
+  console.log('Delete message route/controller hit');
   try {
     const userId = req.user.id;
     const { messageId } = req.params;
@@ -453,6 +464,7 @@ export const deleteMessage = async (req, res) => {
 };
 
 export const createGroupConversation = async (req, res) => {
+  console.log('Create group conversation route/controller hit');
   try {
     const userId = req.user.id;
     const { name, participants } = req.body;
@@ -535,6 +547,7 @@ export const createGroupConversation = async (req, res) => {
 };
 
 export const leaveGroup = async (req, res) => {
+  console.log('Leave group route/controller hit');
   try {
     const userId = req.user.id;
     const { conversationId } = req.params;
@@ -606,6 +619,7 @@ export const leaveGroup = async (req, res) => {
 };
 
 export const updateGroup = async (req, res) => {
+  console.log('Update group route/controller hit');
   try {
     const userId = req.user.id;
     const { conversationId } = req.params;
@@ -684,36 +698,50 @@ export const updateGroup = async (req, res) => {
 };
 
 export const addUser = async (req, res) => {
+  console.log('Add user to group route/controller hit');
   try {
     const userId = req.user.id;
     const { conversationId } = req.params;
     const { users } = req.body;
 
     if (!users || !Array.isArray(users) || users.length === 0) {
-      return res.status(400).json({ status: false, message: 'No users provided' });
+      return res
+        .status(400)
+        .json({ status: false, message: 'No users provided' });
     }
 
     const conversation = await Conversation.findById(conversationId);
     if (!conversation) {
-      return res.status(404).json({ status: false, message: 'Conversation not found' });
+      return res
+        .status(404)
+        .json({ status: false, message: 'Conversation not found' });
     }
 
     if (conversation.type !== 'group') {
-      return res.status(400).json({ status: false, message: 'Can only add users to group conversations' });
+      return res
+        .status(400)
+        .json({
+          status: false,
+          message: 'Can only add users to group conversations',
+        });
     }
 
     if (!conversation.participants.includes(userId)) {
-      return res.status(403).json({ status: false, message: 'Not authorized to add users' });
+      return res
+        .status(403)
+        .json({ status: false, message: 'Not authorized to add users' });
     }
 
-    const newUsers = users.filter(u => !conversation.participants.includes(u));
+    const newUsers = users.filter(
+      (u) => !conversation.participants.includes(u)
+    );
     conversation.participants.push(...newUsers);
 
     const adder = await User.findById(userId);
     const addedUsers = await User.find({ _id: { $in: newUsers } });
 
     if (adder && addedUsers.length > 0) {
-      const names = addedUsers.map(u => u.username).join(', ');
+      const names = addedUsers.map((u) => u.username).join(', ');
       const infoText = `${adder.username} added ${names} to the group`;
 
       const message = await Message.create({
@@ -727,7 +755,10 @@ export const addUser = async (req, res) => {
     }
 
     await conversation.save();
-    await conversation.populate('participants', 'username fullName avatar type');
+    await conversation.populate(
+      'participants',
+      'username fullName avatar type'
+    );
 
     res.json({ status: true, conversation });
   } catch (err) {

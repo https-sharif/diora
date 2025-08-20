@@ -8,7 +8,7 @@ export default function StarSlashIcon({ size = 40 }: { size?: number }) {
 
   return (
     <View style={{ width: size, height: size, position: 'relative' }}>
-      <StarOff size={size } color={theme.text} />
+      <StarOff size={size} color={theme.text} />
     </View>
   );
 }

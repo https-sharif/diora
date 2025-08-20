@@ -28,7 +28,6 @@ export default function Index() {
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-   
     Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 500,
@@ -43,7 +42,7 @@ export default function Index() {
               router.replace('/(tabs)');
             } else {
               const needsOnboarding = !user.onboarding?.isComplete;
-              
+
               if (needsOnboarding) {
                 router.replace('/onboarding');
               } else {
@@ -60,7 +59,7 @@ export default function Index() {
             router.replace('/(tabs)');
           } else {
             const needsOnboarding = !user.onboarding?.isComplete;
-            
+
             if (needsOnboarding) {
               router.replace('/onboarding');
             } else {
@@ -72,22 +71,22 @@ export default function Index() {
         }
       }
     }, 1000);
-  
+
     return () => clearTimeout(timeout);
   }, [isAuthenticated, loading, user, fadeAnim]);
 
   useEffect(() => {
-      const fetchConversations = async () => {
-        if (!token) return;
-        const response = await messageService.getConversations(token);
+    const fetchConversations = async () => {
+      if (!token) return;
+      const response = await messageService.getConversations(token);
 
-        if (response.status) {
-          setConversations(response.conversations);
-        }
-      };
-  
-      fetchConversations();
-    }, [token, user]);
+      if (response.status) {
+        setConversations(response.conversations);
+      }
+    };
+
+    fetchConversations();
+  }, [token, user]);
 
   return (
     <Animated.View style={[styles.container, { opacity: fadeAnim }]}>

@@ -126,6 +126,7 @@ export const createOrder = async (req, res) => {
 };
 
 export const createStripeSession = async (req, res) => {
+  console.log('Create Stripe session route/controller hit');
   try {
     const { orderId } = req.body;
     const order = await Order.findById(orderId).populate('items.productId');
@@ -200,28 +201,45 @@ export const getOrderById = async (req, res) => {
   try {
     const { orderId } = req.params;
     const userId = req.user.id;
+    const userRole = req.user.role;
 
-    const order = await Order.findOne({ _id: orderId, userId })
+    let order = await Order.findOne({ _id: orderId })
       .populate('userId', 'fullName email')
       .populate('items.productId', 'name imageUrl shopId');
 
     if (!order) {
-      return res.status(404).json({
-        status: false,
-        message: 'Order not found',
-      });
+      return res
+        .status(404)
+        .json({ status: false, message: 'Order not found' });
     }
 
-    res.json({
-      status: true,
-      order,
-    });
+    if (userRole === 'shop') {
+      const shopItems = order.items.filter(
+        (item) => item.productId?.shopId?.toString() === userId
+      );
+
+      if (shopItems.length === 0) {
+        return res
+          .status(404)
+          .json({ status: false, message: 'Order not found' });
+      }
+
+      order = {
+        ...order.toObject(),
+        items: shopItems,
+      };
+    } else {
+      if (order.userId._id.toString() !== userId) {
+        return res
+          .status(403)
+          .json({ status: false, message: 'Not your order' });
+      }
+    }
+
+    res.json({ status: true, order });
   } catch (error) {
     console.error('Error fetching order:', error);
-    res.status(500).json({
-      status: false,
-      message: 'Something went wrong while fetching the order',
-    });
+    res.status(500).json({ status: false, message: 'Something went wrong' });
   }
 };
 
@@ -417,18 +435,70 @@ export const orderSuccess = async (req, res) => {
     res.send(`
       <html>
         <head>
-          <title>Order Success</title>
+          <title>Order Success - Diora</title>
+          <style>
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+              background: #fafafa;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              height: 100vh;
+              margin: 0;
+            }
+            .card {
+              background: white;
+              padding: 2rem;
+              border-radius: 16px;
+              box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+              max-width: 420px;
+              width: 100%;
+              text-align: center;
+            }
+            .logo {
+              width: 120px;
+              margin-bottom: 1rem;
+            }
+            h1 {
+              font-size: 1.5rem;
+              color: #222;
+              margin-bottom: 0.5rem;
+            }
+            p {
+              margin: 0.25rem 0;
+              color: #555;
+            }
+            .items {
+              list-style: none;
+              padding: 0;
+              margin: 1rem 0 0;
+              text-align: left;
+            }
+            .items li {
+              padding: 0.5rem 0;
+              border-bottom: 1px solid #eee;
+              color: #333;
+            }
+            .total {
+              font-weight: bold;
+              font-size: 1.1rem;
+              margin-top: 0.5rem;
+              color: #000;
+            }
+          </style>
         </head>
         <body>
-          <h1>✅ Thank you for your order!</h1>
-          <p>Order #: ${order.orderNumber}</p>
-          <p>Total: $${order.total.toFixed(2)}</p>
-          <h3>Items:</h3>
-          <ul>
-            ${order.items
-              .map((item) => `<li>${item.name} x ${item.quantity}</li>`)
-              .join('')}
-          </ul>
+          <div class="card">
+            <h1>✅ Thank you for your order!</h1>
+            <p>Order #: ${order.orderNumber}</p>
+            <p class="total">Total: $${order.total.toFixed(2)}</p>
+            <h3>Items:</h3>
+            <ul class="items">
+              ${order.items
+                .map((item) => `<li>${item.name} x ${item.quantity}</li>`)
+                .join('')}
+            </ul>
+          </div>
         </body>
       </html>
     `);
@@ -439,6 +509,7 @@ export const orderSuccess = async (req, res) => {
 };
 
 export const orderCancel = async (req, res) => {
+  console.log('Order Cancel route/controller hit');
   const { orderId } = req.query;
 
   res.send(`

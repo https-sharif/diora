@@ -44,14 +44,19 @@ import { Theme } from '@/types/Theme';
 import { useTheme } from '@/contexts/ThemeContext';
 import ProductSlashIcon from '@/icon/ProductSlashIcon';
 import { BlurView } from 'expo-blur';
-import { productService, reviewService, reportService, searchService, messageService } from '@/services';
+import {
+  productService,
+  reviewService,
+  reportService,
+  searchService,
+  messageService,
+} from '@/services';
 import RatingStars from '@/components/RatingStar';
 import ReviewInput from '@/components/ReviewInput';
 import * as ImagePicker from 'expo-image-picker';
 import { format as timeago } from 'timeago.js';
 import LoadingView from '@/components/Loading';
 import Color from 'color';
-
 
 const { width, height } = Dimensions.get('window');
 
@@ -586,144 +591,143 @@ const createStyles = (theme: Theme) => {
       color: theme.background,
     },
     modal: {
-          flex: 1,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          justifyContent: 'center',
-          alignItems: 'center',
-          padding: 20,
-        },
-        modalContainer: {
-          backgroundColor: theme.card,
-          borderRadius: 12,
-          padding: 20,
-          width: '100%',
-          maxWidth: 400,
-          maxHeight: '85%',
-        },
-        modalHeader: {
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: 20,
-        },
-        modalSearchInput: {
-          borderWidth: 1,
-          borderColor: theme.border,
-          borderRadius: 8,
-          paddingHorizontal: 12,
-          paddingVertical: 8,
-          fontSize: 16,
-          fontFamily: 'Inter-Regular',
-          color: theme.text,
-          marginBottom: 16,
-          backgroundColor: theme.background,
-        },
-        modalTitle: {
-          fontSize: 18,
-          fontFamily: 'Inter-SemiBold',
-          color: theme.text,
-        },
-        modalSubtitle: {
-          fontSize: 16,
-          fontFamily: 'Inter-Regular',
-          marginBottom: 16,
-        },
-        modalOption: {
-          paddingVertical: 12,
-          paddingHorizontal: 16,
-          borderRadius: 8,
-          borderWidth: 1,
-          borderColor: theme.border,
-          marginBottom: 8,
-        },
-        modalOptionSelected: {
-          borderColor: theme.text,
-          backgroundColor: theme.background,
-        },
-        modalOptionText: {
-          fontSize: 16,
-          fontFamily: 'Inter-Regular',
-        },
-        modalInput: {
-          borderWidth: 1,
-          borderRadius: 8,
-          padding: 12,
-          marginTop: 12,
-          marginBottom: 20,
-          height: 80,
-          textAlignVertical: 'top',
-          fontSize: 14,
-          fontFamily: 'Inter-Regular',
-        },
-        modalButtons: {
-          flexDirection: 'row',
-          justifyContent: 'flex-end',
-          gap: 12,
-        },
-        modalFooter: {
-          backgroundColor: theme.accent,
-          borderRadius: 12,
-          paddingVertical: 4,
-          alignItems: 'center',
-        },
-        modalButton: {
-          paddingVertical: 10,
-          paddingHorizontal: 20,
-          borderRadius: 8,
-        },
-        modalButtonCancel: {
-          borderWidth: 1,
-        },
-        modalButtonSubmit: {
-        },
-        modalButtonText: {
-          fontSize: 14,
-          fontFamily: 'Inter-SemiBold',
-        },
-        emptySearchState: {
-          padding: 40,
-          alignItems: 'center',
-        },
-        emptySearchText: {
-          fontSize: 16,
-          fontFamily: 'Inter-Regular',
-          color: theme.textSecondary,
-          textAlign: 'center',
-        },
-        usersList: {
-          flexGrow: 1,
-        },
-        userItem: {
-          flexDirection: 'row',
-          alignItems: 'center',
-          padding: 16,
-          borderBottomWidth: 0.5,
-          borderBottomColor: theme.border,
-        },
-        userItemSelected: {
-          backgroundColor: Color(theme.accent).alpha(0.1).toString(),
-          borderRadius: 16,
-        },
-        userAvatar: {
-          width: 40,
-          height: 40,
-          borderRadius: 20,
-          marginRight: 12,
-        },
-        userInfo: {
-          flex: 1,
-        },
-        userName: {
-          fontSize: 16,
-          fontFamily: 'Inter-SemiBold',
-          color: theme.text,
-        },
-        userUsername: {
-          fontSize: 14,
-          fontFamily: 'Inter-Regular',
-          color: theme.textSecondary,
-          marginTop: 2,
-        },
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: 20,
+    },
+    modalContainer: {
+      backgroundColor: theme.card,
+      borderRadius: 12,
+      padding: 20,
+      width: '100%',
+      maxWidth: 400,
+      maxHeight: '85%',
+    },
+    modalHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 20,
+    },
+    modalSearchInput: {
+      borderWidth: 1,
+      borderColor: theme.border,
+      borderRadius: 8,
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      fontSize: 16,
+      fontFamily: 'Inter-Regular',
+      color: theme.text,
+      marginBottom: 16,
+      backgroundColor: theme.background,
+    },
+    modalTitle: {
+      fontSize: 18,
+      fontFamily: 'Inter-SemiBold',
+      color: theme.text,
+    },
+    modalSubtitle: {
+      fontSize: 16,
+      fontFamily: 'Inter-Regular',
+      marginBottom: 16,
+    },
+    modalOption: {
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: theme.border,
+      marginBottom: 8,
+    },
+    modalOptionSelected: {
+      borderColor: theme.text,
+      backgroundColor: theme.background,
+    },
+    modalOptionText: {
+      fontSize: 16,
+      fontFamily: 'Inter-Regular',
+    },
+    modalInput: {
+      borderWidth: 1,
+      borderRadius: 8,
+      padding: 12,
+      marginTop: 12,
+      marginBottom: 20,
+      height: 80,
+      textAlignVertical: 'top',
+      fontSize: 14,
+      fontFamily: 'Inter-Regular',
+    },
+    modalButtons: {
+      flexDirection: 'row',
+      justifyContent: 'flex-end',
+      gap: 12,
+    },
+    modalFooter: {
+      backgroundColor: theme.accent,
+      borderRadius: 12,
+      paddingVertical: 4,
+      alignItems: 'center',
+    },
+    modalButton: {
+      paddingVertical: 10,
+      paddingHorizontal: 20,
+      borderRadius: 8,
+    },
+    modalButtonCancel: {
+      borderWidth: 1,
+    },
+    modalButtonSubmit: {},
+    modalButtonText: {
+      fontSize: 14,
+      fontFamily: 'Inter-SemiBold',
+    },
+    emptySearchState: {
+      padding: 40,
+      alignItems: 'center',
+    },
+    emptySearchText: {
+      fontSize: 16,
+      fontFamily: 'Inter-Regular',
+      color: theme.textSecondary,
+      textAlign: 'center',
+    },
+    usersList: {
+      flexGrow: 1,
+    },
+    userItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: 16,
+      borderBottomWidth: 0.5,
+      borderBottomColor: theme.border,
+    },
+    userItemSelected: {
+      backgroundColor: Color(theme.accent).alpha(0.1).toString(),
+      borderRadius: 16,
+    },
+    userAvatar: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      marginRight: 12,
+    },
+    userInfo: {
+      flex: 1,
+    },
+    userName: {
+      fontSize: 16,
+      fontFamily: 'Inter-SemiBold',
+      color: theme.text,
+    },
+    userUsername: {
+      fontSize: 14,
+      fontFamily: 'Inter-Regular',
+      color: theme.textSecondary,
+      marginTop: 2,
+    },
   });
 };
 
@@ -775,12 +779,10 @@ export default function ProductDetailScreen() {
           return;
         }
 
-        console.log('Product fetched successfully:', response.product);
-
         setProduct(response.product);
         setShopProfile(response.product.shopId);
-      } catch (error) {
-        console.error('Error fetching product:', error);
+      } catch {
+        Alert.alert('Error', 'Failed to fetch product');
       } finally {
         setLoading(false);
       }
@@ -798,9 +800,7 @@ export default function ProductDetailScreen() {
         } else {
           Alert.alert('Error', response.message);
         }
-      } catch (error) {
-        console.error('Error fetching reviews:', error);
-      }
+      } catch {}
     };
 
     const fetchReviewedStatus = async () => {
@@ -819,9 +819,7 @@ export default function ProductDetailScreen() {
         }
 
         setHasReviewed(hasReviewedResult);
-      } catch (error) {
-        console.error('Error fetching reviewed status:', error);
-      }
+      } catch {}
     };
 
     fetchProduct();
@@ -883,82 +881,96 @@ export default function ProductDetailScreen() {
   }, [selectedImageIndex, product]);
 
   const handleShare = async () => {
-      if (!product || !token) return;
-  
-      setShowShareModal(false);
-      await Promise.all(selectedUsers.map(async user => {
-        const conversation = await messageService.getConversationId(user._id, token);
-        await messageService.sendMessage(conversation.conversationId, `Check out this product`, 'product', token, undefined, product._id, undefined, undefined, undefined);
-      }));
-    };
-  
-    const handleUserSelect = (selectedUser: any) => {
-      setSelectedUsers((prev) => {
-        if (prev.find((u) => u._id === selectedUser._id)) {
-          return prev.filter((u) => u._id !== selectedUser._id);
-        }
-        return [...prev, selectedUser];
-      });
-    };
-  
-    const searchUsers = async (query: string) => {
-      if (!token) {
-        setSearchedUsers([]);
-        return;
+    if (!product || !token) return;
+
+    setShowShareModal(false);
+    await Promise.all(
+      selectedUsers.map(async (user) => {
+        const conversation = await messageService.getConversationId(
+          user._id,
+          token
+        );
+        await messageService.sendMessage(
+          conversation.conversationId,
+          `Check out this product`,
+          'product',
+          token,
+          undefined,
+          product._id,
+          undefined,
+          undefined,
+          undefined
+        );
+      })
+    );
+  };
+
+  const handleUserSelect = (selectedUser: any) => {
+    setSelectedUsers((prev) => {
+      if (prev.find((u) => u._id === selectedUser._id)) {
+        return prev.filter((u) => u._id !== selectedUser._id);
       }
-  
-      try {
-        const [userRes, shopRes] = await Promise.all([
-          searchService.searchUsers(query, token),
-          searchService.searchShops(query, token),
-        ]);
-        let merged: any[] = [];
-        if (userRes.status) {
-          merged = merged.concat(
-            userRes.users.filter((u: any) => u._id !== user?._id)
-          );
-        }
-        if (shopRes.status) {
-          merged = merged.concat(
-            shopRes.users.filter((s: any) => s._id !== user?._id)
-          );
-        }
-        setSearchedUsers(merged);
-      } catch (err) {
-        console.error('Error searching users/shops:', err);
-        setSearchedUsers([]);
+      return [...prev, selectedUser];
+    });
+  };
+
+  const searchUsers = async (query: string) => {
+    if (!token) {
+      setSearchedUsers([]);
+      return;
+    }
+
+    try {
+      const [userRes, shopRes] = await Promise.all([
+        searchService.searchUsers(query, token),
+        searchService.searchShops(query, token),
+      ]);
+      let merged: any[] = [];
+      if (userRes.status) {
+        merged = merged.concat(
+          userRes.users.filter((u: any) => u._id !== user?._id)
+        );
       }
-    };
-  
-    useEffect(() => {
-      const timeoutId = setTimeout(() => {
-        searchUsers(userSearchQuery);
-      }, 300);
-  
-      return () => clearTimeout(timeoutId);
-    }, [userSearchQuery]);
-  
-    const renderUserList = (item: any) => {
-      const isSelected = selectedUsers.find((u) => u._id === item._id);
-      return (
-        <TouchableOpacity
-          style={[styles.userItem, isSelected && styles.userItemSelected]}
-          onPress={() => handleUserSelect(item)}
-          activeOpacity={0.7}
-        >
-          <Image source={{ uri: item.avatar }} style={styles.userAvatar} />
-          <View style={styles.userInfo}>
-            <Text style={styles.userName}>
-              {item.fullName || item.username || 'Unknown User'}
-            </Text>
-            {item.username && (
-              <Text style={styles.userUsername}>@{item.username}</Text>
-            )}
-          </View>
-          {isSelected && <Check size={20} color={theme.accent} />}
-        </TouchableOpacity>
-      );
-    };
+      if (shopRes.status) {
+        merged = merged.concat(
+          shopRes.users.filter((s: any) => s._id !== user?._id)
+        );
+      }
+      setSearchedUsers(merged);
+    } catch {
+      setSearchedUsers([]);
+    }
+  };
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      searchUsers(userSearchQuery);
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [userSearchQuery]);
+
+  const renderUserList = (item: any) => {
+    const isSelected = selectedUsers.find((u) => u._id === item._id);
+    return (
+      <TouchableOpacity
+        style={[styles.userItem, isSelected && styles.userItemSelected]}
+        onPress={() => handleUserSelect(item)}
+        activeOpacity={0.7}
+      >
+        <Image source={{ uri: item.avatar }} style={styles.userAvatar} />
+        <View style={styles.userInfo}>
+          <Text style={styles.userName}>
+            {item.fullName || item.username || 'Unknown User'}
+          </Text>
+          {item.username && (
+            <Text style={styles.userUsername}>@{item.username}</Text>
+          )}
+        </View>
+        {isSelected && <Check size={20} color={theme.accent} />}
+      </TouchableOpacity>
+    );
+  };
 
   if (loading) {
     return (
@@ -1019,7 +1031,13 @@ export default function ProductDetailScreen() {
     ]).start();
   };
 
-  const renderImageItem = ({ item, index }: { item: string; index: number }) => (
+  const renderImageItem = ({
+    item,
+    index,
+  }: {
+    item: string;
+    index: number;
+  }) => (
     <TouchableOpacity onPress={() => setSelectedImageIndex(index)}>
       <Image source={{ uri: item }} style={styles.thumbnailImage} />
     </TouchableOpacity>
@@ -1067,8 +1085,7 @@ export default function ProductDetailScreen() {
         'Review Deleted',
         'Your review has been deleted successfully.'
       );
-    } catch (error) {
-      console.error('Error deleting review:', error);
+    } catch {
       Alert.alert('Error', 'Failed to delete review. Please try again later.');
     }
   };
@@ -1110,8 +1127,7 @@ export default function ProductDetailScreen() {
       setRating(0);
       setHasReviewed(true);
       setReviewImages([]);
-    } catch (error) {
-      console.error('Error submitting review:', error);
+    } catch {
       Alert.alert('Error', 'Failed to submit review. Try again.');
     }
   };
@@ -1157,11 +1173,7 @@ export default function ProductDetailScreen() {
           reportDescription.trim() || 'No additional details provided',
       };
 
-      console.log('Submitting report with payload:', reportData);
-
       const response = await reportService.createReport(reportData, token);
-
-      console.log('Report response:', response);
 
       if (response.status) {
         setShowReportModal(false);
@@ -1171,10 +1183,8 @@ export default function ProductDetailScreen() {
           'Report Submitted',
           'Thank you for your report. We will review it shortly.'
         );
-        console.log('Report submitted successfully');
       }
-    } catch (err) {
-      console.error('Error submitting report:', err);
+    } catch {
       Alert.alert('Error', 'Failed to submit report. Please try again.');
     }
   };
@@ -1757,7 +1767,7 @@ export default function ProductDetailScreen() {
         animationType="fade"
         transparent
         onRequestClose={() => setShowShareModal(false)}
-      > 
+      >
         <KeyboardAvoidingView
           style={{ flex: 1 }}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}

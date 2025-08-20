@@ -1,4 +1,10 @@
-import { ArrowLeft, Bookmark, Menu, PackageMinus,  X } from 'lucide-react-native';
+import {
+  ArrowLeft,
+  Bookmark,
+  Menu,
+  PackageMinus,
+  X,
+} from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
   View,
@@ -328,24 +334,42 @@ const Wishlist = () => {
 
   const getDiscountedPrice = (price: number, discount?: number) => {
     if (!discount || discount <= 0) return null;
-    return price - (price * discount / 100);
+    return price - (price * discount) / 100;
   };
 
   const renderPrice = (item: Product, isModal = false) => {
     const hasDiscount = item.discount && item.discount > 0;
-    const discountedPrice = hasDiscount ? getDiscountedPrice(item.price, item.discount) : null;
+    const discountedPrice = hasDiscount
+      ? getDiscountedPrice(item.price, item.discount)
+      : null;
 
     if (hasDiscount && discountedPrice) {
       return (
-        <View style={isModal ? styles.productModalPriceContainer : styles.productPriceContainer}>
-          <Text style={isModal ? styles.modalOriginalPrice : styles.originalPrice}>
+        <View
+          style={
+            isModal
+              ? styles.productModalPriceContainer
+              : styles.productPriceContainer
+          }
+        >
+          <Text
+            style={isModal ? styles.modalOriginalPrice : styles.originalPrice}
+          >
             ${item.price.toFixed(2)}
           </Text>
-          <Text style={isModal ? styles.modalDiscountedPrice : styles.discountedPrice}>
+          <Text
+            style={
+              isModal ? styles.modalDiscountedPrice : styles.discountedPrice
+            }
+          >
             ${discountedPrice.toFixed(2)}
           </Text>
-          <View style={isModal ? styles.modalDiscountBadge : styles.discountBadge}>
-            <Text style={isModal ? styles.modalDiscountText : styles.discountText}>
+          <View
+            style={isModal ? styles.modalDiscountBadge : styles.discountBadge}
+          >
+            <Text
+              style={isModal ? styles.modalDiscountText : styles.discountText}
+            >
               -{item.discount}%
             </Text>
           </View>
@@ -361,16 +385,16 @@ const Wishlist = () => {
   };
 
   const renderEmptyState = () => (
-      <View style={styles.emptyState}>
-        <View style={styles.emptyIconContainer}>
-          <PackageMinus size={48} color={theme.text} />
-        </View>
-        <Text style={styles.emptyTitle}>No items in your wishlist</Text>
-        <Text style={styles.emptyMessage}>
-          When you add items to your wishlist, they&apos;ll appear here
-        </Text>
+    <View style={styles.emptyState}>
+      <View style={styles.emptyIconContainer}>
+        <PackageMinus size={48} color={theme.text} />
       </View>
-    );
+      <Text style={styles.emptyTitle}>No items in your wishlist</Text>
+      <Text style={styles.emptyMessage}>
+        When you add items to your wishlist, they&apos;ll appear here
+      </Text>
+    </View>
+  );
 
   const toggleWishlist = (product: Product) => {
     if (isInWishlist(product._id)) {
@@ -412,7 +436,7 @@ const Wishlist = () => {
       >
         <Bookmark
           size={20}
-          color={ theme.background }
+          color={theme.background}
           fill={isInWishlist(item._id) ? theme.background : 'transparent'}
         />
       </TouchableOpacity>

@@ -9,11 +9,10 @@ import {
   getShopOrders,
   createStripeSession,
   orderSuccess,
-  orderCancel
+  orderCancel,
 } from '../controllers/orderController.js';
 
 const router = express.Router();
-
 
 router.get('/success', orderSuccess);
 router.get('/cancel', orderCancel);

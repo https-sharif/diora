@@ -90,9 +90,10 @@ export default function FeedScreen() {
 
   const styles = createStyles(theme);
 
-  const unreadConversationsCount = conversations?.filter(conv => 
-    conv.unreadCount && user?._id && conv.unreadCount[user._id] > 0
-  ).length || 0;
+  const unreadConversationsCount =
+    conversations?.filter(
+      (conv) => conv.unreadCount && user?._id && conv.unreadCount[user._id] > 0
+    ).length || 0;
 
   useEffect(() => {
     if (user?.type === 'admin') {
@@ -101,20 +102,18 @@ export default function FeedScreen() {
   }, [user]);
 
   useEffect(() => {
-    if(!user || !token) return;
+    if (!user || !token) return;
     const fetchPosts = async () => {
       setLoading(true);
       try {
         const response = await axios.get(`${config.apiUrl}/api/post`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        
+
         if (response.data.status) {
           setPosts(response.data.posts);
         }
-      } catch (err: any) {
-        console.error('❌ Refresh failed:', err.response?.data || err.message);
-      }
+      } catch {}
       setLoading(false);
     };
 
@@ -126,7 +125,7 @@ export default function FeedScreen() {
   }
 
   const onRefresh = async () => {
-    if(!user) return;
+    if (!user) return;
     setRefreshing(true);
 
     try {
@@ -135,13 +134,11 @@ export default function FeedScreen() {
           Authorization: `Bearer ${token}`,
         },
       });
-      
+
       if (response.data.status) {
         setPosts(response.data.posts);
       }
-    } catch (err: any) {
-      console.error('❌ Refresh failed:', err.response?.data || err.message);
-    }
+    } catch {}
 
     await new Promise((resolve) => setTimeout(resolve, 1000));
     setRefreshing(false);
@@ -184,7 +181,9 @@ export default function FeedScreen() {
               {unreadConversationsCount > 0 && (
                 <View style={styles.notificationBadge}>
                   <Text style={styles.notificationBadgeText}>
-                    {unreadConversationsCount > 99 ? '99+' : unreadConversationsCount}
+                    {unreadConversationsCount > 99
+                      ? '99+'
+                      : unreadConversationsCount}
                   </Text>
                 </View>
               )}
@@ -196,7 +195,7 @@ export default function FeedScreen() {
       {loading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.text} />
-          <Text style={{ color: theme.text, fontSize: 16 , marginTop: 8 }}>
+          <Text style={{ color: theme.text, fontSize: 16, marginTop: 8 }}>
             Loading posts...
           </Text>
         </View>

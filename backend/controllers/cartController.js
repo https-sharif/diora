@@ -2,12 +2,13 @@ import Cart from '../models/Cart.js';
 import Product from '../models/Product.js';
 
 export const getCart = async (req, res) => {
+  console.log('Get cart route/controller hit');
   try {
     const userId = req.user.id;
-    
+
     let cart = await Cart.findOne({ userId }).populate({
       path: 'products.productId',
-      select: 'name price imageUrl description category'
+      select: 'name price imageUrl description category',
     });
 
     if (!cart) {
@@ -22,25 +23,28 @@ export const getCart = async (req, res) => {
 };
 
 export const addToCart = async (req, res) => {
+  console.log('Add to cart route/controller hit');
   try {
     const userId = req.user.id;
     const { productId, quantity = 1, size, variant } = req.body;
 
     const product = await Product.findById(productId);
     if (!product) {
-      return res.status(404).json({ status: false, message: 'Product not found' });
+      return res
+        .status(404)
+        .json({ status: false, message: 'Product not found' });
     }
 
     let cart = await Cart.findOne({ userId });
-    
+
     if (!cart) {
       cart = await Cart.create({ userId, products: [] });
     }
 
     const existingItemIndex = cart.products.findIndex(
-      item => 
-        item.productId.toString() === productId && 
-        item.size === size && 
+      (item) =>
+        item.productId.toString() === productId &&
+        item.size === size &&
         item.variant === variant
     );
 
@@ -51,10 +55,10 @@ export const addToCart = async (req, res) => {
     }
 
     await cart.save();
-    
+
     await cart.populate({
       path: 'products.productId',
-      select: 'name price imageUrl description category'
+      select: 'name price imageUrl description category',
     });
 
     res.json({ status: true, cart });
@@ -65,12 +69,15 @@ export const addToCart = async (req, res) => {
 };
 
 export const updateCartQuantity = async (req, res) => {
+  console.log('Update cart quantity route/controller hit');
   try {
     const userId = req.user.id;
     const { productId, quantity, size, variant } = req.body;
 
     if (quantity < 0) {
-      return res.status(400).json({ status: false, message: 'Quantity cannot be negative' });
+      return res
+        .status(400)
+        .json({ status: false, message: 'Quantity cannot be negative' });
     }
 
     const cart = await Cart.findOne({ userId });
@@ -79,14 +86,16 @@ export const updateCartQuantity = async (req, res) => {
     }
 
     const itemIndex = cart.products.findIndex(
-      item => 
-        item.productId.toString() === productId && 
-        item.size === size && 
+      (item) =>
+        item.productId.toString() === productId &&
+        item.size === size &&
         item.variant === variant
     );
 
     if (itemIndex === -1) {
-      return res.status(404).json({ status: false, message: 'Item not found in cart' });
+      return res
+        .status(404)
+        .json({ status: false, message: 'Item not found in cart' });
     }
 
     if (quantity === 0) {
@@ -96,10 +105,10 @@ export const updateCartQuantity = async (req, res) => {
     }
 
     await cart.save();
-    
+
     await cart.populate({
       path: 'products.productId',
-      select: 'name price imageUrl description category'
+      select: 'name price imageUrl description category',
     });
 
     res.json({ status: true, cart });
@@ -110,6 +119,7 @@ export const updateCartQuantity = async (req, res) => {
 };
 
 export const removeFromCart = async (req, res) => {
+  console.log('Remove from cart route/controller hit');
   try {
     const userId = req.user.id;
     const { productId, size, variant } = req.body;
@@ -120,18 +130,19 @@ export const removeFromCart = async (req, res) => {
     }
 
     cart.products = cart.products.filter(
-      item => !(
-        item.productId.toString() === productId && 
-        item.size === size && 
-        item.variant === variant
-      )
+      (item) =>
+        !(
+          item.productId.toString() === productId &&
+          item.size === size &&
+          item.variant === variant
+        )
     );
 
     await cart.save();
-    
+
     await cart.populate({
       path: 'products.productId',
-      select: 'name price imageUrl description category'
+      select: 'name price imageUrl description category',
     });
 
     res.json({ status: true, cart });
@@ -142,9 +153,10 @@ export const removeFromCart = async (req, res) => {
 };
 
 export const clearCart = async (req, res) => {
+  console.log('Clear cart route/controller hit');
   try {
     const userId = req.user.id;
-    
+
     let cart = await Cart.findOne({ userId });
     if (!cart) {
       cart = await Cart.create({ userId, products: [] });

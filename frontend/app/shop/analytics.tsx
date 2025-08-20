@@ -7,10 +7,17 @@ import {
   TouchableOpacity,
   Image,
   RefreshControl,
-  Dimensions
+  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ArrowLeft, TrendingUp, Package, Users, Heart, DollarSign } from 'lucide-react-native';
+import {
+  ArrowLeft,
+  TrendingUp,
+  Package,
+  Users,
+  Heart,
+  DollarSign,
+} from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -280,8 +287,7 @@ export default function ShopAnalytics() {
       if (response.data.status) {
         setAnalytics(response.data.analytics);
       }
-    } catch (error) {
-      console.error('Error fetching analytics:', error);
+    } catch {
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -328,7 +334,9 @@ export default function ShopAnalytics() {
     color: string
   ) => (
     <View style={styles.summaryCard}>
-      <View style={[styles.summaryIconContainer, { backgroundColor: color + '20' }]}>
+      <View
+        style={[styles.summaryIconContainer, { backgroundColor: color + '20' }]}
+      >
         {icon}
       </View>
       <View style={styles.summaryText}>
@@ -344,7 +352,10 @@ export default function ShopAnalytics() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+          >
             <ArrowLeft size={24} color={theme.text} />
           </TouchableOpacity>
           <Text style={styles.title}>Analytics</Text>
@@ -360,7 +371,10 @@ export default function ShopAnalytics() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+          >
             <ArrowLeft size={24} color={theme.text} />
           </TouchableOpacity>
           <Text style={styles.title}>Analytics</Text>
@@ -375,7 +389,10 @@ export default function ShopAnalytics() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
           <ArrowLeft size={24} color={theme.text} />
         </TouchableOpacity>
         <Text style={styles.title}>Analytics</Text>
@@ -431,8 +448,12 @@ export default function ShopAnalytics() {
                 <View key={trend._id} style={styles.trendItem}>
                   <Text style={styles.trendDate}>{formatDate(trend._id)}</Text>
                   <View style={styles.trendStats}>
-                    <Text style={styles.trendOrders}>{trend.orderCount} orders</Text>
-                    <Text style={styles.trendRevenue}>{formatCurrency(trend.revenue)}</Text>
+                    <Text style={styles.trendOrders}>
+                      {trend.orderCount} orders
+                    </Text>
+                    <Text style={styles.trendRevenue}>
+                      {formatCurrency(trend.revenue)}
+                    </Text>
                   </View>
                 </View>
               ))}
@@ -450,15 +471,21 @@ export default function ShopAnalytics() {
                   style={styles.orderAvatar}
                 />
                 <View style={styles.orderInfo}>
-                  <Text style={styles.orderCustomer}>{order.userId.fullName}</Text>
-                  <Text style={styles.orderDate}>{formatDate(order.createdAt)}</Text>
+                  <Text style={styles.orderCustomer}>
+                    {order.userId.fullName}
+                  </Text>
+                  <Text style={styles.orderDate}>
+                    {formatDate(order.createdAt)}
+                  </Text>
                 </View>
                 <View style={{ alignItems: 'flex-end' }}>
-                  <Text style={styles.orderAmount}>{formatCurrency(order.totalAmount)}</Text>
+                  <Text style={styles.orderAmount}>
+                    {formatCurrency(order.totalAmount)}
+                  </Text>
                   <Text
                     style={[
                       styles.orderStatus,
-                      { color: getStatusColor(order.status) }
+                      { color: getStatusColor(order.status) },
                     ]}
                   >
                     {order.status.toUpperCase()}

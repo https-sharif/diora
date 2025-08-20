@@ -636,11 +636,7 @@ export default function ExploreScreen() {
             trendingUsers: response.trendingUsers,
           }));
         }
-      } catch (err: any) {
-        console.error(
-          'Error fetching trending user data: ',
-          err.response?.data || err.message
-        );
+      } catch {
       } finally {
         setLoading((prevState) => ({ ...prevState, trendingUsers: false }));
       }
@@ -659,11 +655,7 @@ export default function ExploreScreen() {
             trendingShops: response.trendingShops,
           }));
         }
-      } catch (err: any) {
-        console.error(
-          'Error fetching trending shops data: ',
-          err.response?.data || err.message
-        );
+      } catch {
       } finally {
         setLoading((prevState) => ({ ...prevState, trendingShops: false }));
       }
@@ -682,11 +674,7 @@ export default function ExploreScreen() {
             trendingProducts: response.trendingProducts,
           }));
         }
-      } catch (err: any) {
-        console.error(
-          'Error fetching trending products data: ',
-          err.response?.data || err.message
-        );
+      } catch {
       } finally {
         setLoading((prevState) => ({ ...prevState, trendingProducts: false }));
       }
@@ -705,11 +693,7 @@ export default function ExploreScreen() {
             trendingPosts: response.trendingPosts,
           }));
         }
-      } catch (err: any) {
-        console.error(
-          'Error fetching trending posts data: ',
-          err.response?.data || err.message
-        );
+      } catch {
       } finally {
         setLoading((prevState) => ({ ...prevState, trendingPosts: false }));
       }
@@ -729,10 +713,13 @@ export default function ExploreScreen() {
   const fetchSearchResults = async (query: string, filterSnapshot: any) => {
     if (!token) return;
     try {
-      const response = await searchService.generalSearch({
-        query,
-        ...filterSnapshot,
-      }, token);
+      const response = await searchService.generalSearch(
+        {
+          query,
+          ...filterSnapshot,
+        },
+        token
+      );
 
       if (response.status) {
         setSearchResults({
@@ -742,12 +729,7 @@ export default function ExploreScreen() {
           posts: response.posts,
         });
       }
-    } catch (err: any) {
-      console.error(
-        'Error fetching search results: ',
-        err.response?.data || err.message
-      );
-    }
+    } catch {}
   };
 
   const debouncedSearch = useCallback(
@@ -858,8 +840,12 @@ export default function ExploreScreen() {
             )}
             <Store size={14} color="#FFD700" />
           </View>
-          {item.shop.location && <Text style={styles.userLocation}>📍 {item.shop.location}</Text>}
-          <Text style={styles.userFollowers}>{item.followers.length} followers</Text>
+          {item.shop.location && (
+            <Text style={styles.userLocation}>📍 {item.shop.location}</Text>
+          )}
+          <Text style={styles.userFollowers}>
+            {item.followers.length} followers
+          </Text>
         </View>
         <TouchableOpacity
           style={[
@@ -1383,9 +1369,7 @@ export default function ExploreScreen() {
                     <View style={styles.filterFooter}>
                       <TouchableOpacity
                         style={styles.clearFiltersButton}
-                        onPress={() =>
-                          setFilters(initialFilter)
-                        }
+                        onPress={() => setFilters(initialFilter)}
                       >
                         <Text style={styles.clearFiltersText}>Clear All</Text>
                       </TouchableOpacity>

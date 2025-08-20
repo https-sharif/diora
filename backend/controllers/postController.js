@@ -22,7 +22,7 @@ export const likePost = async (req, res) => {
       user.likedPosts.pull(postId);
       post.stars -= 1;
 
-      if(post.user._id.toString() !== userId) {
+      if (post.user._id.toString() !== userId) {
         const existingNotification = await Notification.findOne({
           type: 'like',
           postId,
@@ -30,16 +30,22 @@ export const likePost = async (req, res) => {
         });
 
         if (existingNotification && existingNotification.fromUserIds) {
-          existingNotification.fromUserIds = existingNotification.fromUserIds.filter(
-            id => id.toString() !== userId
-          );
+          existingNotification.fromUserIds =
+            existingNotification.fromUserIds.filter(
+              (id) => id.toString() !== userId
+            );
 
           if (existingNotification.fromUserIds.length === 0) {
             await Notification.findByIdAndDelete(existingNotification._id);
           } else {
             try {
-              const users = await User.find({ _id: { $in: existingNotification.fromUserIds } }, 'username');
-              const usernames = users.map(u => u.username).filter(name => name); 
+              const users = await User.find(
+                { _id: { $in: existingNotification.fromUserIds } },
+                'username'
+              );
+              const usernames = users
+                .map((u) => u.username)
+                .filter((name) => name);
 
               if (usernames.length === 0) {
                 await Notification.findByIdAndDelete(existingNotification._id);
@@ -52,11 +58,16 @@ export const likePost = async (req, res) => {
               } else if (usernames.length === 2) {
                 message = `${usernames[0]} and ${usernames[1]} liked your post`;
               } else {
-                message = `${usernames[0]}, ${usernames[1]} and ${usernames.length - 2} others liked your post`;
+                message = `${usernames[0]}, ${usernames[1]} and ${
+                  usernames.length - 2
+                } others liked your post`;
               }
 
               existingNotification.message = message;
-              existingNotification.fromUserId = existingNotification.fromUserIds[existingNotification.fromUserIds.length - 1];
+              existingNotification.fromUserId =
+                existingNotification.fromUserIds[
+                  existingNotification.fromUserIds.length - 1
+                ];
               existingNotification.updatedAt = new Date();
 
               await existingNotification.save();
@@ -64,10 +75,16 @@ export const likePost = async (req, res) => {
               const io = getIO();
               const targetSocketId = onlineUsers.get(post.user._id.toString());
               if (targetSocketId) {
-                io.to(targetSocketId).emit('notification', existingNotification);
+                io.to(targetSocketId).emit(
+                  'notification',
+                  existingNotification
+                );
               }
             } catch (userFetchError) {
-              console.error('Error updating notification after unlike:', userFetchError);
+              console.error(
+                'Error updating notification after unlike:',
+                userFetchError
+              );
             }
           }
         }
@@ -76,7 +93,7 @@ export const likePost = async (req, res) => {
       user.likedPosts.push(postId);
       post.stars += 1;
 
-      if(post.user._id.toString() !== userId) {
+      if (post.user._id.toString() !== userId) {
         const existingNotification = await Notification.findOne({
           type: 'like',
           postId,
@@ -84,15 +101,25 @@ export const likePost = async (req, res) => {
         });
 
         if (existingNotification) {
-          if (!existingNotification.fromUserIds) existingNotification.fromUserIds = [];
+          if (!existingNotification.fromUserIds)
+            existingNotification.fromUserIds = [];
 
-          if (!existingNotification.fromUserIds.some(id => id.toString() === userId)) {
+          if (
+            !existingNotification.fromUserIds.some(
+              (id) => id.toString() === userId
+            )
+          ) {
             existingNotification.fromUserIds.push(userId);
           }
 
           try {
-            const users = await User.find({ _id: { $in: existingNotification.fromUserIds } }, 'username');
-            const usernames = users.map(u => u.username).filter(name => name); 
+            const users = await User.find(
+              { _id: { $in: existingNotification.fromUserIds } },
+              'username'
+            );
+            const usernames = users
+              .map((u) => u.username)
+              .filter((name) => name);
 
             if (usernames.length === 0) {
               usernames.push(user.username);
@@ -110,16 +137,18 @@ export const likePost = async (req, res) => {
             } else if (usernames.length === 2) {
               message = `${usernames[0]} and ${usernames[1]} liked your post`;
             } else {
-              message = `${usernames[0]}, ${usernames[1]} and ${usernames.length - 2} others liked your post`;
+              message = `${usernames[0]}, ${usernames[1]} and ${
+                usernames.length - 2
+              } others liked your post`;
             }
 
             existingNotification.message = message;
             existingNotification.title = 'New Like';
             existingNotification.updatedAt = new Date();
             existingNotification.read = false;
-            
+
             existingNotification.fromUserId = userId;
-            
+
             await existingNotification.save();
             await existingNotification.populate('userId', 'username avatar');
 
@@ -129,8 +158,11 @@ export const likePost = async (req, res) => {
               io.to(targetSocketId).emit('notification', existingNotification);
             }
           } catch (userFetchError) {
-            console.error('Error fetching users for notification merging:', userFetchError);
-            
+            console.error(
+              'Error fetching users for notification merging:',
+              userFetchError
+            );
+
             existingNotification.message = `${user.username} liked your post`;
             existingNotification.fromUserId = userId;
             await existingNotification.save();
@@ -177,7 +209,7 @@ export const getAllPost = async (req, res) => {
   console.log('Get all posts route/controller hit');
   try {
     const isAdmin = req.userDetails && req.userDetails.type === 'admin';
-    
+
     const posts = await Post.find()
       .sort({ createdAt: -1 })
       .populate('user', 'username avatar type isVerified status');
@@ -186,25 +218,25 @@ export const getAllPost = async (req, res) => {
       return res.status(404).json({ status: false, message: 'No posts found' });
     }
 
-    const filteredPosts = isAdmin ? posts : posts.filter(post => post.user && post.user.status === 'active');
+    const filteredPosts = isAdmin
+      ? posts
+      : posts.filter((post) => post.user && post.user.status === 'active');
 
-    const transformedPosts = filteredPosts.map(post => ({
+    const transformedPosts = filteredPosts.map((post) => ({
       ...post.toObject(),
-      comments: post.comments ? post.comments.length : 0
+      comments: post.comments ? post.comments.length : 0,
     }));
 
     res.json({ status: true, posts: transformedPosts });
   } catch (err) {
     console.error(err);
     res.status(500).json({ status: false, message: 'Something went wrong' });
-  } finally {
-    console.log('Get all posts request completed');
   }
 };
 
 export const createPost = async (req, res) => {
+  console.log('Create post route/controller hit');
   try {
-    console.log('Create post route/controller hit');
     const userId = req.user.id;
 
     const user = await User.findById(userId);
@@ -234,11 +266,11 @@ export const createPost = async (req, res) => {
 };
 
 export const getUserPosts = async (req, res) => {
+  console.log('Get user posts route/controller hit');
   try {
-    console.log('Get user posts route/controller hit');
     const userId = req.params.userId;
     const isAdmin = req.userDetails && req.userDetails.type === 'admin';
-    
+
     if (!isAdmin) {
       const user = await User.findById(userId);
       if (!user || user.status !== 'active') {
@@ -247,7 +279,7 @@ export const getUserPosts = async (req, res) => {
           .json({ status: false, message: 'No posts found for this user' });
       }
     }
-    
+
     const posts = await Post.find({ user: userId })
       .sort({ createdAt: -1 })
       .populate('user', 'username avatar status');
@@ -258,9 +290,9 @@ export const getUserPosts = async (req, res) => {
         .json({ status: false, message: 'No posts found for this user' });
     }
 
-    const transformedPosts = posts.map(post => ({
+    const transformedPosts = posts.map((post) => ({
       ...post.toObject(),
-      comments: post.comments ? post.comments.length : 0
+      comments: post.comments ? post.comments.length : 0,
     }));
 
     res.json({ status: true, posts: transformedPosts });
@@ -271,8 +303,8 @@ export const getUserPosts = async (req, res) => {
 };
 
 export const getLikedPosts = async (req, res) => {
+  console.log('Get liked posts route/controller hit');
   try {
-    console.log('Get liked posts route/controller hit');
     const userId = req.params.userId;
     const user = await User.findById(userId);
 
@@ -282,9 +314,9 @@ export const getLikedPosts = async (req, res) => {
       .sort({ createdAt: -1 })
       .populate('user', 'username avatar');
 
-    const transformedPosts = posts.map(post => ({
+    const transformedPosts = posts.map((post) => ({
       ...post.toObject(),
-      comments: post.comments ? post.comments.length : 0
+      comments: post.comments ? post.comments.length : 0,
     }));
 
     res.json({ status: true, posts: transformedPosts });
@@ -295,8 +327,8 @@ export const getLikedPosts = async (req, res) => {
 };
 
 export const getPost = async (req, res) => {
+  console.log('Get post route/controller hit');
   try {
-    console.log('Get post route/controller hit');
     const postId = req.params.postId;
     const post = await Post.findById(postId)
       .populate('user', 'username avatar isVerified type')
@@ -314,8 +346,8 @@ export const getPost = async (req, res) => {
 };
 
 export const getTrendingPosts = async (req, res) => {
+  console.log('Get trending posts route/controller hit');
   try {
-    console.log('Get trending posts route/controller hit');
     const isAdmin = req.userDetails && req.userDetails.type === 'admin';
 
     let trendingPosts;
@@ -328,15 +360,15 @@ export const getTrendingPosts = async (req, res) => {
             from: 'users',
             localField: 'user',
             foreignField: '_id',
-            as: 'userInfo'
-          }
+            as: 'userInfo',
+          },
         },
         {
           $match: {
-            'userInfo.status': 'active'
-          }
+            'userInfo.status': 'active',
+          },
         },
-        { $sample: { size: 9 } }
+        { $sample: { size: 9 } },
       ]);
     }
 
@@ -346,12 +378,14 @@ export const getTrendingPosts = async (req, res) => {
     });
 
     if (!trendingPosts || trendingPosts.length === 0) {
-      return res.status(404).json({ status: false, message: 'No trending posts found' });
+      return res
+        .status(404)
+        .json({ status: false, message: 'No trending posts found' });
     }
 
-    const transformedPosts = trendingPosts.map(post => ({
+    const transformedPosts = trendingPosts.map((post) => ({
       ...post,
-      comments: post.comments ? post.comments.length : 0
+      comments: post.comments ? post.comments.length : 0,
     }));
 
     res.json({ status: true, trendingPosts: transformedPosts });
@@ -360,4 +394,3 @@ export const getTrendingPosts = async (req, res) => {
     res.status(500).json({ status: false, message: 'Something went wrong' });
   }
 };
-

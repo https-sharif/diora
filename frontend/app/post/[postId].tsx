@@ -601,9 +601,7 @@ export default function PostDetailScreen() {
         if (commentsResponse.status) setComments(commentsResponse.comments);
 
         setIsStarred(user?.likedPosts?.includes(post._id) || false);
-      } catch (err) {
-        console.log('error here line: 603');
-        console.error(err);
+      } catch {
       } finally {
         setIsLoading(false);
       }
@@ -625,7 +623,7 @@ export default function PostDetailScreen() {
 
           setImageHeight(scaledHeight);
         },
-        (err) => console.error('Failed to get image size:', err)
+        () => {}
       );
     }
   }, [post]);
@@ -653,8 +651,7 @@ export default function PostDetailScreen() {
         );
       }
       setSearchedUsers(merged);
-    } catch (err) {
-      console.error('Error searching users/shops:', err);
+    } catch {
       setSearchedUsers([]);
     }
   };
@@ -758,11 +755,8 @@ export default function PostDetailScreen() {
         post.comments += 1;
         setNewComment('');
       } else {
-        console.error('Failed to add comment:', response.data.message);
       }
-    } catch (err) {
-      console.error('Error adding comment:', err);
-    }
+    } catch {}
   };
 
   const handleShare = async () => {
@@ -851,8 +845,6 @@ export default function PostDetailScreen() {
         }
       );
 
-      console.log('Report response:', response.data);
-
       if (response.data.status) {
         setShowReportModal(false);
         setReportReason('');
@@ -861,15 +853,8 @@ export default function PostDetailScreen() {
           'Report Submitted',
           'Thank you for your report. We will review it shortly.'
         );
-        console.log('Report submitted successfully');
       }
-    } catch (err) {
-      console.error('Error submitting report:', err);
-      if (isAxiosError(err) && err.response) {
-        console.error('Response data:', err.response.data);
-        console.error('Response status:', err.response.status);
-      }
-    }
+    } catch {}
   };
 
   const renderComment = (comment: Comment, isReply = false) => (

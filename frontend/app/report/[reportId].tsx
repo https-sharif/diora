@@ -16,7 +16,16 @@ import { useAuth } from '@/hooks/useAuth';
 import { Theme } from '@/types/Theme';
 import axios from 'axios';
 import { config } from '@/config';
-import { ArrowLeft, CheckCircle, XCircle, AlertTriangle, User, FileText, Package, Store } from 'lucide-react-native';
+import {
+  ArrowLeft,
+  CheckCircle,
+  XCircle,
+  AlertTriangle,
+  User,
+  FileText,
+  Package,
+  Store,
+} from 'lucide-react-native';
 
 const createStyles = (theme: Theme) =>
   StyleSheet.create({
@@ -177,9 +186,9 @@ const createStyles = (theme: Theme) =>
       color: theme.text,
     },
     userUsername: {
-        fontSize: 12,
-        fontFamily: 'Inter-Regular',
-        color: theme.textSecondary,
+      fontSize: 12,
+      fontFamily: 'Inter-Regular',
+      color: theme.textSecondary,
     },
     actionButtons: {
       flexDirection: 'row',
@@ -271,15 +280,17 @@ export default function ReportDetail() {
   const fetchReportDetail = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${config.apiUrl}/api/report/${reportId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await axios.get(
+        `${config.apiUrl}/api/report/${reportId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
 
       if (response.data.status) {
         setReport(response.data.report);
       }
-    } catch (error) {
-      console.error('Fetch report detail error:', error);
+    } catch {
       Alert.alert('Error', 'Failed to fetch report details');
       router.back();
     } finally {
@@ -296,14 +307,11 @@ export default function ReportDetail() {
       );
 
       if (response.data.status) {
-        Alert.alert(
-          'Success',
-          `Report has been ${status}`,
-          [{ text: 'OK', onPress: () => router.back() }]
-        );
+        Alert.alert('Success', `Report has been ${status}`, [
+          { text: 'OK', onPress: () => router.back() },
+        ]);
       }
-    } catch (error) {
-      console.error('Update report status error:', error);
+    } catch {
       Alert.alert('Error', 'Failed to update report status');
     }
   };
@@ -318,7 +326,9 @@ export default function ReportDetail() {
 
     Alert.alert(
       'Confirm Action',
-      `Are you sure you want to ${actionMessages[action as keyof typeof actionMessages]}?`,
+      `Are you sure you want to ${
+        actionMessages[action as keyof typeof actionMessages]
+      }?`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -328,23 +338,20 @@ export default function ReportDetail() {
             try {
               const response = await axios.post(
                 `${config.apiUrl}/api/report/${reportId}/moderate`,
-                { 
+                {
                   action,
                   reason: `Admin action taken: ${action.replace('_', ' ')}`,
-                  duration: action === 'suspend_user' ? 7 : undefined
+                  duration: action === 'suspend_user' ? 7 : undefined,
                 },
                 { headers: { Authorization: `Bearer ${token}` } }
               );
 
               if (response.data.status) {
-                Alert.alert(
-                  'Success',
-                  `Action completed successfully`,
-                  [{ text: 'OK', onPress: () => router.back() }]
-                );
+                Alert.alert('Success', `Action completed successfully`, [
+                  { text: 'OK', onPress: () => router.back() },
+                ]);
               }
-            } catch (error) {
-              console.error('Moderation action error:', error);
+            } catch {
               Alert.alert('Error', 'Failed to take moderation action');
             }
           },
@@ -407,14 +414,21 @@ export default function ReportDetail() {
             <Text style={styles.sectionTitle}>Reported User</Text>
             <View style={styles.itemHeader}>
               {getItemIcon('user')}
-              <Text style={styles.itemTitle}>{user?.displayName || 'Unknown User'}</Text>
+              <Text style={styles.itemTitle}>
+                {user?.displayName || 'Unknown User'}
+              </Text>
             </View>
             {user?.profilePicture && (
-              <Image source={{ uri: user.profilePicture }} style={styles.itemImage} />
+              <Image
+                source={{ uri: user.profilePicture }}
+                style={styles.itemImage}
+              />
             )}
             <Text style={styles.itemDescription}>
-              Username: @{user?.username || 'unknown'}{'\n'}
-              Email: {user?.email || 'N/A'}{'\n'}
+              Username: @{user?.username || 'unknown'}
+              {'\n'}
+              Email: {user?.email || 'N/A'}
+              {'\n'}
               Bio: {user?.bio || 'No bio available'}
             </Text>
           </View>
@@ -427,9 +441,14 @@ export default function ReportDetail() {
             <Text style={styles.sectionTitle}>Reported Post</Text>
 
             {post?.images && post.images.length > 0 && (
-                <TouchableOpacity onPress={() => router.push(`/post/${post._id}`)}>
-                    <Image source={{ uri: post.images[0] }} style={styles.itemImage} />
-                </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => router.push(`/post/${post._id}`)}
+              >
+                <Image
+                  source={{ uri: post.images[0] }}
+                  style={styles.itemImage}
+                />
+              </TouchableOpacity>
             )}
             <Text style={styles.itemDescription}>
               {post?.caption || 'No content available'}
@@ -437,13 +456,20 @@ export default function ReportDetail() {
             {post?.user && (
               <View style={styles.userInfo}>
                 {post.user.profilePicture && (
-                <TouchableOpacity onPress={() => router.push(`/user/${post.user._id}`)}>
-                    <Image source={{ uri: post.user.profilePicture }} style={styles.userAvatar} />
-                </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => router.push(`/user/${post.user._id}`)}
+                  >
+                    <Image
+                      source={{ uri: post.user.profilePicture }}
+                      style={styles.userAvatar}
+                    />
+                  </TouchableOpacity>
                 )}
-                <TouchableOpacity onPress={() => router.push(`/user/${post.user._id}`)}>
-                    <Text style={styles.userName}>{post.user.displayName}</Text>
-                    <Text style={styles.userUsername}>@{post.user.username}</Text>
+                <TouchableOpacity
+                  onPress={() => router.push(`/user/${post.user._id}`)}
+                >
+                  <Text style={styles.userName}>{post.user.displayName}</Text>
+                  <Text style={styles.userUsername}>@{post.user.username}</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -457,27 +483,46 @@ export default function ReportDetail() {
             <Text style={styles.sectionTitle}>Reported Product</Text>
             <View style={styles.itemHeader}>
               {getItemIcon('product')}
-              <Text style={styles.itemTitle}>{product?.name || 'Unknown Product'}</Text>
+              <Text style={styles.itemTitle}>
+                {product?.name || 'Unknown Product'}
+              </Text>
             </View>
             {product?.images && product.images.length > 0 && (
-              <TouchableOpacity onPress={() => router.push(`/product/${product._id}`)}>
-                <Image source={{ uri: product.images[0] }} style={styles.itemImage} />
+              <TouchableOpacity
+                onPress={() => router.push(`/product/${product._id}`)}
+              >
+                <Image
+                  source={{ uri: product.images[0] }}
+                  style={styles.itemImage}
+                />
               </TouchableOpacity>
             )}
             <Text style={styles.itemDescription}>
-              Price: ${product?.price || '0'}{'\n'}
+              Price: ${product?.price || '0'}
+              {'\n'}
               Description: {product?.description || 'No description available'}
             </Text>
             {product?.shop && (
               <View style={styles.userInfo}>
                 {product.shop.profilePicture && (
-                  <TouchableOpacity onPress={() => router.push(`/shop/${product.shop._id}`)}>
-                    <Image source={{ uri: product.shop.profilePicture }} style={styles.userAvatar} />
+                  <TouchableOpacity
+                    onPress={() => router.push(`/shop/${product.shop._id}`)}
+                  >
+                    <Image
+                      source={{ uri: product.shop.profilePicture }}
+                      style={styles.userAvatar}
+                    />
                   </TouchableOpacity>
                 )}
-                <TouchableOpacity onPress={() => router.push(`/shop/${product.shop._id}`)}>
-                  <Text style={styles.userName}>{product.shop.displayName}</Text>
-                  <Text style={styles.userUsername}>@{product.shop.username}</Text>
+                <TouchableOpacity
+                  onPress={() => router.push(`/shop/${product.shop._id}`)}
+                >
+                  <Text style={styles.userName}>
+                    {product.shop.displayName}
+                  </Text>
+                  <Text style={styles.userUsername}>
+                    @{product.shop.username}
+                  </Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -491,14 +536,24 @@ export default function ReportDetail() {
             <Text style={styles.sectionTitle}>Reported Shop</Text>
             <View style={styles.itemHeader}>
               {getItemIcon('shop')}
-              <Text style={styles.itemTitle}>{shop?.name || shop?.displayName || shop?.username || 'Unknown Shop'}</Text>
+              <Text style={styles.itemTitle}>
+                {shop?.name ||
+                  shop?.displayName ||
+                  shop?.username ||
+                  'Unknown Shop'}
+              </Text>
             </View>
             {shop?.profilePicture && (
-              <Image source={{ uri: shop.profilePicture }} style={styles.itemImage} />
+              <Image
+                source={{ uri: shop.profilePicture }}
+                style={styles.itemImage}
+              />
             )}
             <Text style={styles.itemDescription}>
-              Description: {shop?.bio || 'No description available'}{'\n'}
-              Shop Owner: {shop?.displayName || shop?.username || 'Unknown Owner'}
+              Description: {shop?.bio || 'No description available'}
+              {'\n'}
+              Shop Owner:{' '}
+              {shop?.displayName || shop?.username || 'Unknown Owner'}
             </Text>
           </View>
         );
@@ -517,7 +572,10 @@ export default function ReportDetail() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+          >
             <ArrowLeft size={24} color={theme.text} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Report Details</Text>
@@ -537,7 +595,10 @@ export default function ReportDetail() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+          >
             <ArrowLeft size={24} color={theme.text} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Report Details</Text>
@@ -553,7 +614,10 @@ export default function ReportDetail() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
           <ArrowLeft size={24} color={theme.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Report Details</Text>
@@ -561,13 +625,25 @@ export default function ReportDetail() {
       </View>
 
       <ScrollView style={styles.scrollContent}>
-        <View style={[styles.reportCard, { borderLeftColor: getBorderColor(report.status) }]}>
+        <View
+          style={[
+            styles.reportCard,
+            { borderLeftColor: getBorderColor(report.status) },
+          ]}
+        >
           <View style={styles.reportHeader}>
             <View style={styles.reportType}>
-              <View style={styles.typeIcon}>{getItemIcon(report.itemType)}</View>
+              <View style={styles.typeIcon}>
+                {getItemIcon(report.itemType)}
+              </View>
               <Text style={styles.typeText}>{report.itemType} Report</Text>
             </View>
-            <View style={[styles.statusBadge, { backgroundColor: getStatusColor(report.status) }]}>
+            <View
+              style={[
+                styles.statusBadge,
+                { backgroundColor: getStatusColor(report.status) },
+              ]}
+            >
               <Text style={styles.statusText}>{report.status}</Text>
             </View>
           </View>
@@ -603,13 +679,24 @@ export default function ReportDetail() {
             <Text style={styles.sectionTitle}>Reporter</Text>
             <View style={styles.reporterHeader}>
               {report.reporter.profilePicture && (
-                <TouchableOpacity onPress={() => router.push(`/user/${report.reporter._id}`)}>
-                  <Image source={{ uri: report.reporter.profilePicture }} style={styles.reporterAvatar} />
+                <TouchableOpacity
+                  onPress={() => router.push(`/user/${report.reporter._id}`)}
+                >
+                  <Image
+                    source={{ uri: report.reporter.profilePicture }}
+                    style={styles.reporterAvatar}
+                  />
                 </TouchableOpacity>
               )}
-              <TouchableOpacity onPress={() => router.push(`/user/${report.reporter._id}`)}>
-                <Text style={styles.reporterName}>{report.reporter.displayName}</Text>
-                <Text style={styles.reporterUsername}>@{report.reporter.username}</Text>
+              <TouchableOpacity
+                onPress={() => router.push(`/user/${report.reporter._id}`)}
+              >
+                <Text style={styles.reporterName}>
+                  {report.reporter.displayName}
+                </Text>
+                <Text style={styles.reporterUsername}>
+                  @{report.reporter.username}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -626,7 +713,7 @@ export default function ReportDetail() {
               <AlertTriangle size={18} color="#000" />
               <Text style={styles.actionButtonText}>Warn User</Text>
             </TouchableOpacity>
-            
+
             {(report.itemType === 'user' || report.itemType === 'User') && (
               <TouchableOpacity
                 style={[styles.actionButton, styles.suspendButton]}
@@ -636,27 +723,31 @@ export default function ReportDetail() {
                 <Text style={styles.actionButtonText}>Suspend User</Text>
               </TouchableOpacity>
             )}
-            
+
             {(report.itemType === 'user' || report.itemType === 'User') && (
               <TouchableOpacity
                 style={[styles.actionButton, styles.banButton]}
                 onPress={() => takeModerationAction('ban_user')}
               >
                 <XCircle size={18} color="#fff" />
-                <Text style={[styles.actionButtonText, { color: '#fff' }]}>Ban User</Text>
+                <Text style={[styles.actionButtonText, { color: '#fff' }]}>
+                  Ban User
+                </Text>
               </TouchableOpacity>
             )}
-            
-            {(report.itemType !== 'user' && report.itemType !== 'User') && (
+
+            {report.itemType !== 'user' && report.itemType !== 'User' && (
               <TouchableOpacity
                 style={[styles.actionButton, styles.removeContentButton]}
                 onPress={() => takeModerationAction('remove_content')}
               >
                 <XCircle size={18} color="#fff" />
-                <Text style={[styles.actionButtonText, { color: '#fff' }]}>Remove Content</Text>
+                <Text style={[styles.actionButtonText, { color: '#fff' }]}>
+                  Remove Content
+                </Text>
               </TouchableOpacity>
             )}
-            
+
             <TouchableOpacity
               style={[styles.actionButton, styles.resolveButton]}
               onPress={() => updateReportStatus('resolved')}
@@ -664,13 +755,15 @@ export default function ReportDetail() {
               <CheckCircle size={18} color="#000" />
               <Text style={styles.actionButtonText}>Resolve</Text>
             </TouchableOpacity>
-            
+
             <TouchableOpacity
               style={[styles.actionButton, styles.dismissButton]}
               onPress={() => updateReportStatus('dismissed')}
             >
               <XCircle size={18} color="#fff" />
-              <Text style={[styles.actionButtonText, { color: '#fff' }]}>Dismiss</Text>
+              <Text style={[styles.actionButtonText, { color: '#fff' }]}>
+                Dismiss
+              </Text>
             </TouchableOpacity>
           </View>
         )}

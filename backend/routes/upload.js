@@ -8,6 +8,10 @@ const upload = multer({ dest: 'uploads/' });
 
 router.use(verifyToken);
 
-router.post('/group-photo/:conversationId', upload.single('photo'), uploadGroupPhoto);
+router.post(
+  '/group-photo/:conversationId',
+  upload.single('photo'),
+  uploadGroupPhoto
+);
 
 export default router;

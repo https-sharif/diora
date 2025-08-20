@@ -14,10 +14,16 @@ const createStyles = () => {
   });
 };
 
-export default function RatingStars({ rating, onPress }: { rating: number, onPress: (star: number) => void }) {
+export default function RatingStars({
+  rating,
+  onPress,
+}: {
+  rating: number;
+  onPress: (star: number) => void;
+}) {
   const styles = createStyles();
   const { theme } = useTheme();
-  
+
   return (
     <View style={styles.ratingContainer}>
       {[1, 2, 3, 4, 5].map((star) => (

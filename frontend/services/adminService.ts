@@ -4,19 +4,24 @@ import { config } from '@/config';
 export const adminService = {
   async getStats(token: string): Promise<any> {
     const response = await axios.get(`${config.apiUrl}/api/admin/stats`, {
-      headers: { Authorization: `Bearer ${token}` }
+      headers: { Authorization: `Bearer ${token}` },
     });
     return response.data;
   },
 
   async getHealth(token: string): Promise<any> {
     const response = await axios.get(`${config.apiUrl}/api/admin/health`, {
-      headers: { Authorization: `Bearer ${token}` }
+      headers: { Authorization: `Bearer ${token}` },
     });
     return response.data;
   },
 
-  async getPromotionRequests(status?: string, page?: number, limit?: number, token?: string): Promise<any> {
+  async getPromotionRequests(
+    status?: string,
+    page?: number,
+    limit?: number,
+    token?: string
+  ): Promise<any> {
     const params = new URLSearchParams();
     if (status) params.append('status', status);
     if (page) params.append('page', page.toString());
@@ -25,35 +30,49 @@ export const adminService = {
     const queryString = params.toString();
     const endpoint = queryString ? `?${queryString}` : '';
 
-    const response = await axios.get(`${config.apiUrl}/api/admin/promotion-requests${endpoint}`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {}
-    });
+    const response = await axios.get(
+      `${config.apiUrl}/api/admin/promotion-requests${endpoint}`,
+      {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      }
+    );
     return response.data;
   },
 
-  async approvePromotionRequest(requestId: string, token: string): Promise<any> {
+  async approvePromotionRequest(
+    requestId: string,
+    token: string
+  ): Promise<any> {
     const response = await axios.post(
       `${config.apiUrl}/api/admin/promotion-requests/${requestId}`,
       { action: 'approve' },
       {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       }
     );
     return response.data;
   },
 
-  async rejectPromotionRequest(requestId: string, reason: string, token: string): Promise<any> {
+  async rejectPromotionRequest(
+    requestId: string,
+    reason: string,
+    token: string
+  ): Promise<any> {
     const response = await axios.post(
       `${config.apiUrl}/api/admin/promotion-requests/${requestId}`,
       { action: 'reject', reason },
       {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       }
     );
     return response.data;
   },
 
-  async searchUsers(searchQuery: string, filter: string, token: string): Promise<any> {
+  async searchUsers(
+    searchQuery: string,
+    filter: string,
+    token: string
+  ): Promise<any> {
     const params = new URLSearchParams({ q: searchQuery });
     if (filter !== 'All') {
       if (filter === 'Verified') params.append('verified', 'true');
@@ -61,42 +80,63 @@ export const adminService = {
       if (filter === 'Suspended') params.append('suspended', 'true');
       if (filter === 'Recent') params.append('sort', 'recent');
     }
-    
-    const response = await axios.get(`${config.apiUrl}/api/admin/users/search?${params.toString()}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+
+    const response = await axios.get(
+      `${config.apiUrl}/api/admin/users/search?${params.toString()}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
     return response.data;
   },
 
-  async searchPosts(searchQuery: string, filter: string, token: string): Promise<any> {
+  async searchPosts(
+    searchQuery: string,
+    filter: string,
+    token: string
+  ): Promise<any> {
     const params = new URLSearchParams({ q: searchQuery });
     if (filter !== 'All') {
       if (filter === 'Recent') params.append('sort', 'recent');
       if (filter === 'Reported') params.append('reported', 'true');
       if (filter === 'Hidden') params.append('hidden', 'true');
     }
-    
-    const response = await axios.get(`${config.apiUrl}/api/admin/posts/search?${params.toString()}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+
+    const response = await axios.get(
+      `${config.apiUrl}/api/admin/posts/search?${params.toString()}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
     return response.data;
   },
 
-  async searchProducts(searchQuery: string, filter: string, token: string): Promise<any> {
+  async searchProducts(
+    searchQuery: string,
+    filter: string,
+    token: string
+  ): Promise<any> {
     const params = new URLSearchParams({ q: searchQuery });
     if (filter !== 'All') {
       if (filter === 'Recent') params.append('sort', 'recent');
       if (filter === 'Reported') params.append('reported', 'true');
       if (filter === 'Out of Stock') params.append('outOfStock', 'true');
     }
-    
-    const response = await axios.get(`${config.apiUrl}/api/admin/products/search?${params.toString()}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+
+    const response = await axios.get(
+      `${config.apiUrl}/api/admin/products/search?${params.toString()}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
     return response.data;
   },
 
-  async suspendUser(userId: string, duration: number, token: string): Promise<any> {
+  async suspendUser(
+    userId: string,
+    duration: number,
+    token: string
+  ): Promise<any> {
     const response = await axios.post(
       `${config.apiUrl}/api/admin/users/${userId}/suspend`,
       { duration },
@@ -130,5 +170,5 @@ export const adminService = {
       { headers: { Authorization: `Bearer ${token}` } }
     );
     return response.data;
-  }
+  },
 };

@@ -14,15 +14,15 @@ import {
   RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { 
-  ArrowLeft, 
-  Store, 
-  Calendar, 
-  FileText, 
-  CheckCircle, 
-  XCircle, 
+import {
+  ArrowLeft,
+  Store,
+  Calendar,
+  FileText,
+  CheckCircle,
+  XCircle,
   Eye,
-  ExternalLink 
+  ExternalLink,
 } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
@@ -299,9 +299,12 @@ export default function PromotionRequestsScreen() {
   const [loading, setLoading] = useState(true);
   const [requests, setRequests] = useState<PromotionRequest[]>([]);
   const [selectedFilter, setSelectedFilter] = useState<string>('all');
-  const [selectedRequest, setSelectedRequest] = useState<PromotionRequest | null>(null);
+  const [selectedRequest, setSelectedRequest] =
+    useState<PromotionRequest | null>(null);
   const [showModal, setShowModal] = useState(false);
-  const [actionType, setActionType] = useState<'view' | 'approve' | 'reject'>('view');
+  const [actionType, setActionType] = useState<'view' | 'approve' | 'reject'>(
+    'view'
+  );
   const [comments, setComments] = useState('');
   const [processing, setProcessing] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -315,7 +318,10 @@ export default function PromotionRequestsScreen() {
 
   useEffect(() => {
     if (user?.type !== 'admin') {
-      Alert.alert('Access Denied', 'You need admin privileges to access this page.');
+      Alert.alert(
+        'Access Denied',
+        'You need admin privileges to access this page.'
+      );
       router.back();
       return;
     }
@@ -325,16 +331,19 @@ export default function PromotionRequestsScreen() {
   const fetchRequests = async () => {
     try {
       setLoading(true);
-      const params = selectedFilter !== 'all' ? `?status=${selectedFilter}` : '';
-      const response = await axios.get(`${config.apiUrl}/api/admin/promotion-requests${params}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const params =
+        selectedFilter !== 'all' ? `?status=${selectedFilter}` : '';
+      const response = await axios.get(
+        `${config.apiUrl}/api/admin/promotion-requests${params}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
 
       if (response.data.status) {
         setRequests(response.data.requests);
       }
-    } catch (error) {
-      console.error('Error fetching requests:', error);
+    } catch {
       Alert.alert('Error', 'Failed to fetch promotion requests');
     } finally {
       setLoading(false);
@@ -347,7 +356,10 @@ export default function PromotionRequestsScreen() {
     setRefreshing(false);
   };
 
-  const handleAction = async (request: PromotionRequest, action: 'approve' | 'reject') => {
+  const handleAction = async (
+    request: PromotionRequest,
+    action: 'approve' | 'reject'
+  ) => {
     try {
       setProcessing(true);
       const response = await axios.put(
@@ -357,22 +369,22 @@ export default function PromotionRequestsScreen() {
       );
 
       if (response.data.status) {
-        Alert.alert(
-          'Success',
-          `Request ${action}d successfully`,
-          [{ text: 'OK', onPress: () => setShowModal(false) }]
-        );
+        Alert.alert('Success', `Request ${action}d successfully`, [
+          { text: 'OK', onPress: () => setShowModal(false) },
+        ]);
         fetchRequests();
       }
-    } catch (error) {
-      console.error('Error processing request:', error);
+    } catch {
       Alert.alert('Error', `Failed to ${action} request`);
     } finally {
       setProcessing(false);
     }
   };
 
-  const openModal = (request: PromotionRequest, type: 'view' | 'approve' | 'reject') => {
+  const openModal = (
+    request: PromotionRequest,
+    type: 'view' | 'approve' | 'reject'
+  ) => {
     setSelectedRequest(request);
     setActionType(type);
     setComments('');
@@ -396,7 +408,10 @@ export default function PromotionRequestsScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
           <ArrowLeft size={24} color={theme.text} />
         </TouchableOpacity>
         <Text style={styles.title}>Promotion Requests</Text>
@@ -432,11 +447,12 @@ export default function PromotionRequestsScreen() {
         <View style={styles.emptyContainer}>
           <Store size={48} color={theme.textSecondary} />
           <Text style={styles.emptyText}>
-            No {selectedFilter !== 'all' ? selectedFilter : ''} promotion requests found
+            No {selectedFilter !== 'all' ? selectedFilter : ''} promotion
+            requests found
           </Text>
         </View>
       ) : (
-        <ScrollView 
+        <ScrollView
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl
@@ -452,13 +468,19 @@ export default function PromotionRequestsScreen() {
               <View style={styles.requestHeader}>
                 <Image
                   source={{
-                    uri: request.userId.avatar || 'https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png',
+                    uri:
+                      request.userId.avatar ||
+                      'https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png',
                   }}
                   style={styles.userAvatar}
                 />
                 <View style={styles.requestInfo}>
-                  <Text style={styles.businessName}>{request.businessName}</Text>
-                  <Text style={styles.userName}>by {request.userId.fullName}</Text>
+                  <Text style={styles.businessName}>
+                    {request.businessName}
+                  </Text>
+                  <Text style={styles.userName}>
+                    by {request.userId.fullName}
+                  </Text>
                 </View>
                 <View
                   style={[
@@ -466,7 +488,12 @@ export default function PromotionRequestsScreen() {
                     getStatusColor(request.status, theme),
                   ]}
                 >
-                  <Text style={[styles.statusText, { color: getStatusColor(request.status, theme).color }]}>
+                  <Text
+                    style={[
+                      styles.statusText,
+                      { color: getStatusColor(request.status, theme).color },
+                    ]}
+                  >
                     {request.status.toUpperCase()}
                   </Text>
                 </View>
@@ -474,16 +501,32 @@ export default function PromotionRequestsScreen() {
 
               <View style={styles.requestDetails}>
                 <View style={styles.detailRow}>
-                  <Store size={16} color={theme.textSecondary} style={styles.detailIcon} />
+                  <Store
+                    size={16}
+                    color={theme.textSecondary}
+                    style={styles.detailIcon}
+                  />
                   <Text style={styles.detailText}>{request.businessType}</Text>
                 </View>
                 <View style={styles.detailRow}>
-                  <Calendar size={16} color={theme.textSecondary} style={styles.detailIcon} />
-                  <Text style={styles.detailText}>Submitted {formatDate(request.submittedAt)}</Text>
+                  <Calendar
+                    size={16}
+                    color={theme.textSecondary}
+                    style={styles.detailIcon}
+                  />
+                  <Text style={styles.detailText}>
+                    Submitted {formatDate(request.submittedAt)}
+                  </Text>
                 </View>
                 <View style={styles.detailRow}>
-                  <FileText size={16} color={theme.textSecondary} style={styles.detailIcon} />
-                  <Text style={styles.detailText}>{request.proofDocuments.length} documents</Text>
+                  <FileText
+                    size={16}
+                    color={theme.textSecondary}
+                    style={styles.detailIcon}
+                  />
+                  <Text style={styles.detailText}>
+                    {request.proofDocuments.length} documents
+                  </Text>
                 </View>
               </View>
 
@@ -530,49 +573,72 @@ export default function PromotionRequestsScreen() {
           <View style={styles.modalContainer}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>
-                {actionType === 'view' ? 'Request Details' : 
-                 actionType === 'approve' ? 'Approve Request' : 'Reject Request'}
+                {actionType === 'view'
+                  ? 'Request Details'
+                  : actionType === 'approve'
+                  ? 'Approve Request'
+                  : 'Reject Request'}
               </Text>
-              <TouchableOpacity style={styles.closeButton} onPress={() => setShowModal(false)}>
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => setShowModal(false)}
+              >
                 <XCircle size={24} color={theme.text} />
               </TouchableOpacity>
             </View>
 
             {selectedRequest && (
-              <ScrollView style={styles.modalContent} showsVerticalScrollIndicator={false}>
+              <ScrollView
+                style={styles.modalContent}
+                showsVerticalScrollIndicator={false}
+              >
                 <View style={styles.fieldGroup}>
                   <Text style={styles.fieldLabel}>Business Name</Text>
-                  <Text style={styles.fieldValue}>{selectedRequest.businessName}</Text>
+                  <Text style={styles.fieldValue}>
+                    {selectedRequest.businessName}
+                  </Text>
                 </View>
 
                 <View style={styles.fieldGroup}>
                   <Text style={styles.fieldLabel}>Business Type</Text>
-                  <Text style={styles.fieldValue}>{selectedRequest.businessType}</Text>
+                  <Text style={styles.fieldValue}>
+                    {selectedRequest.businessType}
+                  </Text>
                 </View>
 
                 <View style={styles.fieldGroup}>
                   <Text style={styles.fieldLabel}>Description</Text>
-                  <Text style={styles.fieldValue}>{selectedRequest.businessDescription}</Text>
+                  <Text style={styles.fieldValue}>
+                    {selectedRequest.businessDescription}
+                  </Text>
                 </View>
 
                 {selectedRequest.yearsInBusiness && (
                   <View style={styles.fieldGroup}>
                     <Text style={styles.fieldLabel}>Years in Business</Text>
-                    <Text style={styles.fieldValue}>{selectedRequest.yearsInBusiness}</Text>
+                    <Text style={styles.fieldValue}>
+                      {selectedRequest.yearsInBusiness}
+                    </Text>
                   </View>
                 )}
 
                 {selectedRequest.expectedProducts && (
                   <View style={styles.fieldGroup}>
                     <Text style={styles.fieldLabel}>Expected Products</Text>
-                    <Text style={styles.fieldValue}>{selectedRequest.expectedProducts}</Text>
+                    <Text style={styles.fieldValue}>
+                      {selectedRequest.expectedProducts}
+                    </Text>
                   </View>
                 )}
 
                 {selectedRequest.additionalInfo && (
                   <View style={styles.fieldGroup}>
-                    <Text style={styles.fieldLabel}>Additional Information</Text>
-                    <Text style={styles.fieldValue}>{selectedRequest.additionalInfo}</Text>
+                    <Text style={styles.fieldLabel}>
+                      Additional Information
+                    </Text>
+                    <Text style={styles.fieldValue}>
+                      {selectedRequest.additionalInfo}
+                    </Text>
                   </View>
                 )}
 
@@ -584,28 +650,35 @@ export default function PromotionRequestsScreen() {
                         <TouchableOpacity
                           style={styles.documentItem}
                           onPress={() => {
-                            const documentUrl = doc.path.startsWith('http') ? doc.path : `${config.apiUrl}/${doc.path}`;
-                            console.log('Opening document:', documentUrl);
-                            Linking.openURL(documentUrl).catch(err => {
-                              console.error('Error opening document:', err);
-                              Alert.alert('Error', 'Unable to open document. Please try again.');
+                            const documentUrl = doc.path.startsWith('http')
+                              ? doc.path
+                              : `${config.apiUrl}/${doc.path}`;
+                            Linking.openURL(documentUrl).catch((err) => {
+                              Alert.alert(
+                                'Error',
+                                'Unable to open document. Please try again.'
+                              );
                             });
                           }}
                         >
                           <View style={{ flex: 1 }}>
-                            <Text style={styles.documentName}>{doc.originalName}</Text>
+                            <Text style={styles.documentName}>
+                              {doc.originalName}
+                            </Text>
                             <Text style={[styles.fieldValue, { fontSize: 12 }]}>
                               Type: {doc.mimetype}
                             </Text>
                           </View>
                           <ExternalLink size={16} color={theme.primary} />
                         </TouchableOpacity>
-                        
+
                         {doc.mimetype.startsWith('image/') && (
                           <View style={{ marginTop: 8, marginBottom: 12 }}>
                             <Image
-                              source={{ 
-                                uri: doc.path.startsWith('http') ? doc.path : `${config.apiUrl}/${doc.path}`
+                              source={{
+                                uri: doc.path.startsWith('http')
+                                  ? doc.path
+                                  : `${config.apiUrl}/${doc.path}`,
                               }}
                               style={{
                                 width: '100%',
@@ -614,9 +687,6 @@ export default function PromotionRequestsScreen() {
                                 backgroundColor: theme.card,
                               }}
                               resizeMode="contain"
-                              onError={(error) => {
-                                console.error('Error loading image:', error);
-                              }}
                             />
                           </View>
                         )}
@@ -644,15 +714,24 @@ export default function PromotionRequestsScreen() {
                 {actionType !== 'view' && (
                   <View style={styles.modalActions}>
                     <TouchableOpacity
-                      style={[styles.actionButton, { backgroundColor: theme.border }]}
+                      style={[
+                        styles.actionButton,
+                        { backgroundColor: theme.border },
+                      ]}
                       onPress={() => setShowModal(false)}
                     >
-                      <Text style={[styles.actionButtonText, { color: theme.text }]}>Cancel</Text>
+                      <Text
+                        style={[styles.actionButtonText, { color: theme.text }]}
+                      >
+                        Cancel
+                      </Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={[
                         styles.actionButton,
-                        actionType === 'approve' ? styles.approveButton : styles.rejectButton,
+                        actionType === 'approve'
+                          ? styles.approveButton
+                          : styles.rejectButton,
                         processing && { opacity: 0.6 },
                       ]}
                       onPress={() => handleAction(selectedRequest, actionType)}

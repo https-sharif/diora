@@ -52,15 +52,26 @@ function AppReadyWrapper({ insets }: { insets: EdgeInsets }) {
       const params = queryParams || {};
 
       if (path === 'order-success') {
-        Alert.alert('Payment Completed!', `Order #${params.orderId ?? ''} is paid.`);
-        
+        Alert.alert(
+          'Payment Completed!',
+          `Order #${params.orderId ?? ''} is paid.`
+        );
+
         await fetchCart();
         Alert.alert(
           'Order Placed Successfully!',
-          `Order #${params.orderId ?? ''} has been placed. You will receive updates via email.`,
+          `Order #${
+            params.orderId ?? ''
+          } has been placed. You will receive updates via email.`,
           [
-            { text: 'View Order', onPress: () => router.push(`/order/${params.orderId ?? ''}`) },
-            { text: 'Continue Shopping', onPress: () => router.push('/shopping') },
+            {
+              text: 'View Order',
+              onPress: () => router.push(`/order/${params.orderId ?? ''}`),
+            },
+            {
+              text: 'Continue Shopping',
+              onPress: () => router.push('/shopping'),
+            },
           ]
         );
       } else if (path === 'order-cancel') {
@@ -73,27 +84,24 @@ function AppReadyWrapper({ insets }: { insets: EdgeInsets }) {
     return () => subscription.remove();
   }, []);
 
-
   useEffect(() => {
     if (user?._id && user?.onboarding?.isComplete) {
-      console.log('🛒 Initializing shopping data for user:', user._id);
       initializeUserData();
       syncUser();
     }
   }, [user?._id, user?.onboarding?.isComplete, initializeUserData, syncUser]);
   useEffect(() => {
     if (user?._id) {
-      console.log('🚀 Setting up socket for user:', user._id);
-      
       const onNotification = (notif: any) => {
-        console.log('📨 Socket notification callback triggered:', notif);
         handleIncomingNotification(notif);
       };
 
-      const onMessage = (data: {conversationId : string; message : Message}) => {
-        console.log('📩 Socket message callback triggered:', data.message);
+      const onMessage = (data: {
+        conversationId: string;
+        message: Message;
+      }) => {
         handleIncomingMessage(data.conversationId, data.message);
-      }
+      };
 
       initSocket(user._id, onNotification, onMessage);
 
@@ -107,7 +115,12 @@ function AppReadyWrapper({ insets }: { insets: EdgeInsets }) {
         socket.disconnect();
       };
     }
-  }, [user?._id, handleIncomingNotification, handleIncomingMessage, sendMessage]);
+  }, [
+    user?._id,
+    handleIncomingNotification,
+    handleIncomingMessage,
+    sendMessage,
+  ]);
 
   const [fontsLoaded] = useFonts({
     'Inter-Regular': Inter_400Regular,

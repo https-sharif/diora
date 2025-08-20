@@ -30,11 +30,10 @@ const documentStorage = new CloudinaryStorage({
 const deleteImage = async (publicId) => {
   try {
     await cloudinary.uploader.destroy(publicId);
-    console.log(`Deleted image with public ID: ${publicId}`);
   } catch (error) {
     console.error(`Error deleting image with public ID ${publicId}:`, error);
   }
-}
+};
 
 const parser = multer({ storage });
 const documentParser = multer({ storage: documentStorage });

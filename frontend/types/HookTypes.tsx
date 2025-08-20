@@ -36,7 +36,10 @@ export interface UseOrdersResult {
   refreshOrders: () => Promise<void>;
   markAsDelivered: (orderId: string) => Promise<void>;
   cancelOrder: (orderId: string) => Promise<void>;
-  updateOrderStatus: (orderId: string, status: Order['status']) => Promise<void>;
+  updateOrderStatus: (
+    orderId: string,
+    status: Order['status']
+  ) => Promise<void>;
 }
 
 export type ToastType = 'error' | 'success' | 'neutral' | 'alert';

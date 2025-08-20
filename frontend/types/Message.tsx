@@ -1,6 +1,6 @@
-import { Product } from "./Product";
-import { Post} from "./Post";
-import { User } from "./User";
+import { Product } from './Product';
+import { Post } from './Post';
+import { User } from './User';
 
 export interface Message {
   _id: string;

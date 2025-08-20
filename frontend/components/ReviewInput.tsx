@@ -11,22 +11,36 @@ const createStyles = (theme: any) => {
       backgroundColor: theme.background,
     },
     reviewInput: {
-    flex: 1,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: theme.textSecondary,
-    borderRadius: 8,
-    backgroundColor: theme.card,
-    marginBottom: 16,
-    color: theme.text,
-  },
-  headerButton: {
-    marginLeft: 8,
-  },
-});
+      flex: 1,
+      padding: 12,
+      borderWidth: 1,
+      borderColor: theme.textSecondary,
+      borderRadius: 8,
+      backgroundColor: theme.card,
+      marginBottom: 16,
+      color: theme.text,
+    },
+    headerButton: {
+      marginLeft: 8,
+    },
+  });
 };
 
-export default function ReviewInput({ reviewInputRef, value, onChangeText, onSend, onCancel, isEditing }: {reviewInputRef: any, value: string, onChangeText: (text: string) => void, onSend: () => void, onCancel: () => void, isEditing: boolean}) {
+export default function ReviewInput({
+  reviewInputRef,
+  value,
+  onChangeText,
+  onSend,
+  onCancel,
+  isEditing,
+}: {
+  reviewInputRef: any;
+  value: string;
+  onChangeText: (text: string) => void;
+  onSend: () => void;
+  onCancel: () => void;
+  isEditing: boolean;
+}) {
   const { theme } = useTheme();
   const styles = createStyles(theme);
 
@@ -52,4 +66,4 @@ export default function ReviewInput({ reviewInputRef, value, onChangeText, onSen
       )}
     </View>
   );
-};
+}

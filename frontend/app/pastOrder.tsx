@@ -327,16 +327,16 @@ export default function PastOrderScreen() {
 
     try {
       setLoading(true);
-      
-      const response = user.type === 'shop' 
-        ? await orderService.getShopOrders(token)
-        : await orderService.getOrders(1, token);
+
+      const response =
+        user.type === 'shop'
+          ? await orderService.getShopOrders(token)
+          : await orderService.getOrders(1, token);
 
       if (response.status) {
         setOrders(response.orders);
       }
-    } catch (error) {
-      console.error('Error fetching orders:', error);
+    } catch {
       Alert.alert('Error', 'Failed to load orders');
     } finally {
       setLoading(false);
@@ -411,28 +411,34 @@ export default function PastOrderScreen() {
 
   const updateOrderStatus = async (orderId: string, newStatus: string) => {
     if (!token) return;
-    
+
     try {
-      const response = await orderService.updateOrderStatus(orderId, newStatus, token);
+      const response = await orderService.updateOrderStatus(
+        orderId,
+        newStatus,
+        token
+      );
 
       if (response.status) {
-        setOrders(prev => 
-          prev.map(order => 
-            order._id === orderId 
+        setOrders((prev) =>
+          prev.map((order) =>
+            order._id === orderId
               ? { ...order, status: newStatus as any }
               : order
           )
         );
         Alert.alert('Success', `Order status updated to ${newStatus}`);
       }
-    } catch (error) {
-      console.error('Error updating order status:', error);
+    } catch {
       Alert.alert('Error', 'Failed to update order status');
     }
   };
 
   const renderOrderItem = ({ item }: { item: Order }) => (
-    <TouchableOpacity style={styles.orderCard} onPress={() => handleOrderPress(item)}>
+    <TouchableOpacity
+      style={styles.orderCard}
+      onPress={() => handleOrderPress(item)}
+    >
       <View style={styles.orderHeader}>
         <View style={styles.orderInfo}>
           <Text style={styles.orderNumber}>#{item.orderNumber}</Text>
@@ -501,27 +507,43 @@ export default function PastOrderScreen() {
       </View>
 
       <View style={styles.orderActions}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.actionButton}
           onPress={() => handleOrderPress(item)}
         >
           <Text style={styles.actionButtonText}>View Details</Text>
         </TouchableOpacity>
-        {user?.type === 'shop' && ['processing', 'confirmed'].includes(item.status) ? (
-          <TouchableOpacity 
+        {user?.type === 'shop' &&
+        ['processing', 'confirmed'].includes(item.status) ? (
+          <TouchableOpacity
             style={[styles.actionButton, styles.actionButtonSecondary]}
             onPress={() => handleUpdateOrderStatus(item)}
           >
-            <Text style={[styles.actionButtonText, styles.actionButtonTextSecondary]}>
+            <Text
+              style={[
+                styles.actionButtonText,
+                styles.actionButtonTextSecondary,
+              ]}
+            >
               Update Status
             </Text>
           </TouchableOpacity>
         ) : item.status === 'delivered' && user?.type !== 'shop' ? (
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.actionButton, styles.actionButtonSecondary]}
-            onPress={() => Alert.alert('Feature Coming Soon', 'Reorder functionality will be available soon!')}
+            onPress={() =>
+              Alert.alert(
+                'Feature Coming Soon',
+                'Reorder functionality will be available soon!'
+              )
+            }
           >
-            <Text style={[styles.actionButtonText, styles.actionButtonTextSecondary]}>
+            <Text
+              style={[
+                styles.actionButtonText,
+                styles.actionButtonTextSecondary,
+              ]}
+            >
               Reorder
             </Text>
           </TouchableOpacity>
@@ -561,9 +583,14 @@ export default function PastOrderScreen() {
           <Text style={styles.title}>Past Orders</Text>
         </View>
         <View style={styles.headerRight}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.headerButton}
-            onPress={() => Alert.alert('Feature Coming Soon', 'Export functionality will be available soon!')}
+            onPress={() =>
+              Alert.alert(
+                'Feature Coming Soon',
+                'Export functionality will be available soon!'
+              )
+            }
           >
             <Download size={24} color={theme.text} />
           </TouchableOpacity>
@@ -571,8 +598,8 @@ export default function PastOrderScreen() {
       </View>
 
       <View style={styles.filterContainer}>
-        <ScrollView 
-          horizontal 
+        <ScrollView
+          horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.filterScrollView}
         >
@@ -602,13 +629,14 @@ export default function PastOrderScreen() {
         <View style={styles.emptyContainer}>
           <Package size={64} color={theme.textSecondary} />
           <Text style={styles.emptyText}>
-            {orderFilter === 'all' ? 'No orders yet' : `No ${orderFilter} orders`}
+            {orderFilter === 'all'
+              ? 'No orders yet'
+              : `No ${orderFilter} orders`}
           </Text>
           <Text style={styles.emptySubtext}>
-            {orderFilter === 'all' 
+            {orderFilter === 'all'
               ? 'Start shopping to see your orders here!'
-              : 'Try changing the filter to see other orders.'
-            }
+              : 'Try changing the filter to see other orders.'}
           </Text>
         </View>
       ) : (

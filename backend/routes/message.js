@@ -1,6 +1,6 @@
 import express from 'express';
 import { verifyToken } from '../middleware/auth.js';
-import { 
+import {
   getConversations,
   getOrCreateConversation,
   getMessages,
@@ -12,7 +12,7 @@ import {
   leaveGroup,
   updateGroup,
   addUser,
-  getConversationId
+  getConversationId,
 } from '../controllers/messageController.js';
 import { parser } from '../utils/cloudinary.js';
 

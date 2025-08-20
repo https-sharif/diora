@@ -1,10 +1,10 @@
 import express from 'express';
-import { 
-  getCart, 
-  addToCart, 
-  updateCartQuantity, 
-  removeFromCart, 
-  clearCart 
+import {
+  getCart,
+  addToCart,
+  updateCartQuantity,
+  removeFromCart,
+  clearCart,
 } from '../controllers/cartController.js';
 import { verifyToken } from '../middleware/auth.js';
 

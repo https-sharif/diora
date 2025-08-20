@@ -529,26 +529,17 @@ export default function ShoppingScreen() {
     setRefreshing(true);
     try {
       if (!token) {
-        console.error('No token available for refreshing products');
         return;
       }
 
-      console.log('Refreshing products from /api/product');
       const products = await productService.getProducts({}, token);
-
-      console.log('Refresh response:', products);
 
       if (products) {
         setProducts(products);
       } else {
-        console.warn('No products found in refresh response');
         setProducts([]);
       }
-    } catch (err: any) {
-      console.error(
-        'Error fetching products:',
-        err.response?.data || err.message
-      );
+    } catch {
     } finally {
       setRefreshing(false);
     }
@@ -557,31 +548,23 @@ export default function ShoppingScreen() {
   const fetchProductResults = async (query: string, filterSnapshot: any) => {
     try {
       if (!token) {
-        console.error('No token available for product search');
         return;
       }
 
-      console.log('Fetching products with:', { query, filterSnapshot });
-
-      const searchResults = await searchService.generalSearch({
-        query,
-        ...filterSnapshot,
-      }, token);
-
-      console.log('Search response:', searchResults);
+      const searchResults = await searchService.generalSearch(
+        {
+          query,
+          ...filterSnapshot,
+        },
+        token
+      );
 
       if (searchResults && searchResults.status && searchResults.products) {
         setProducts(searchResults.products);
       } else {
-        console.warn('No products found or invalid response:', searchResults);
         setProducts([]);
       }
-    } catch (err: any) {
-      console.error(
-        'Error fetching product results: ',
-        err.response?.data || err.message
-      );
-    }
+    } catch {}
   };
 
   const debouncedProductSearch = useCallback(
@@ -592,7 +575,7 @@ export default function ShoppingScreen() {
   );
 
   useEffect(() => {
-    if (!token) return; 
+    if (!token) return;
 
     const hasSearchQuery = searchQuery.trim() !== '';
     const hasActiveFilters = selectedCategory !== 'All';
@@ -619,7 +602,7 @@ export default function ShoppingScreen() {
     };
 
     fetch();
-  }, [token]); 
+  }, [token]);
 
   const handleProductPress = (product: Product) => {
     router.push(`/product/${product._id}`);

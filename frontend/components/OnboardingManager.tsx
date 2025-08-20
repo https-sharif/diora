@@ -7,7 +7,9 @@ interface OnboardingManagerProps {
   onComplete: () => void;
 }
 
-export const OnboardingManager: React.FC<OnboardingManagerProps> = ({ onComplete }) => {
+export const OnboardingManager: React.FC<OnboardingManagerProps> = ({
+  onComplete,
+}) => {
   const { user } = useAuth();
 
   const needsOnboarding = !user.onboarding?.isComplete;
@@ -25,7 +27,7 @@ export const OnboardingManager: React.FC<OnboardingManagerProps> = ({ onComplete
     if (user.type === 'user') {
       return <UserOnboarding onComplete={onComplete} />;
     }
-    
+
     if (user.type === 'shop') {
       return <ShopOnboarding onComplete={onComplete} />;
     }

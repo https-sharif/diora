@@ -166,17 +166,21 @@ export default function EditUserProfile() {
   const [selectedFile, setSelectedFile] = useState<any>(null);
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [field]: value,
     }));
   };
 
   const pickImage = async () => {
-    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    
+    const permissionResult =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
+
     if (permissionResult.granted === false) {
-      Alert.alert('Permission Required', 'Permission to access camera roll is required!');
+      Alert.alert(
+        'Permission Required',
+        'Permission to access camera roll is required!'
+      );
       return;
     }
 
@@ -189,29 +193,29 @@ export default function EditUserProfile() {
 
     if (!result.canceled && result.assets[0]) {
       const asset = result.assets[0];
-      
+
       setSelectedFile({
         uri: asset.uri,
         type: 'image/jpeg',
         name: `avatar_${Date.now()}.jpg`,
       });
 
-      setFormData(prev => ({ ...prev, avatar: asset.uri }));
+      setFormData((prev) => ({ ...prev, avatar: asset.uri }));
     }
   };
 
   const handleSave = async () => {
     if (!token) return;
-    
+
     try {
       setSaving(true);
 
       const requestFormData = new FormData();
-      
+
       requestFormData.append('fullName', formData.fullName);
       requestFormData.append('username', formData.username);
       requestFormData.append('bio', formData.bio);
-      
+
       if (selectedFile) {
         requestFormData.append('avatar', selectedFile as any);
       }
@@ -225,8 +229,7 @@ export default function EditUserProfile() {
       } else {
         Alert.alert('Error', response.message || 'Failed to update profile');
       }
-    } catch (error) {
-      console.error('Error updating profile:', error);
+    } catch {
       Alert.alert('Error', 'Failed to update profile. Please try again.');
     } finally {
       setSaving(false);
@@ -246,7 +249,10 @@ export default function EditUserProfile() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
           <ArrowLeft size={24} color={theme.text} />
         </TouchableOpacity>
         <Text style={styles.title}>Edit Profile</Text>
@@ -273,9 +279,14 @@ export default function EditUserProfile() {
             onPress={pickImage}
           >
             {formData.avatar ? (
-              <Image source={{ uri: formData.avatar }} style={styles.profileImage} />
+              <Image
+                source={{ uri: formData.avatar }}
+                style={styles.profileImage}
+              />
             ) : (
-              <View style={[styles.profileImage, { backgroundColor: theme.border }]} />
+              <View
+                style={[styles.profileImage, { backgroundColor: theme.border }]}
+              />
             )}
             <View style={styles.profileImageOverlay}>
               <View style={styles.imageButton}>
@@ -290,7 +301,7 @@ export default function EditUserProfile() {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Basic Information</Text>
-          
+
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Full Name</Text>
             <TextInput
@@ -311,7 +322,9 @@ export default function EditUserProfile() {
             <TextInput
               style={styles.input}
               value={formData.username}
-              onChangeText={(value) => handleInputChange('username', value.toLowerCase())}
+              onChangeText={(value) =>
+                handleInputChange('username', value.toLowerCase())
+              }
               placeholder="Enter your username"
               placeholderTextColor={theme.textSecondary}
               maxLength={20}
@@ -333,9 +346,7 @@ export default function EditUserProfile() {
               numberOfLines={4}
               maxLength={200}
             />
-            <Text style={styles.characterCount}>
-              {formData.bio.length}/200
-            </Text>
+            <Text style={styles.characterCount}>{formData.bio.length}/200</Text>
           </View>
         </View>
 

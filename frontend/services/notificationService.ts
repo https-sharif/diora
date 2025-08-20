@@ -4,7 +4,7 @@ import { config } from '@/config';
 export const notificationService = {
   async getNotifications(token: string): Promise<any> {
     const response = await axios.get(`${config.apiUrl}/api/notification`, {
-      headers: { Authorization: `Bearer ${token}` }
+      headers: { Authorization: `Bearer ${token}` },
     });
     return response.data;
   },
@@ -14,7 +14,7 @@ export const notificationService = {
       `${config.apiUrl}/api/notification/mark-as-read/${id}`,
       {},
       {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       }
     );
     return response.data;
@@ -25,16 +25,19 @@ export const notificationService = {
       `${config.apiUrl}/api/notification/mark-all-as-read`,
       {},
       {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       }
     );
     return response.data;
   },
 
   async deleteNotification(id: string, token: string): Promise<any> {
-    const response = await axios.delete(`${config.apiUrl}/api/notification/delete/${id}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    const response = await axios.delete(
+      `${config.apiUrl}/api/notification/delete/${id}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
     return response.data;
   },
 
@@ -42,7 +45,7 @@ export const notificationService = {
     const response = await axios.get(
       `${config.apiUrl}/api/user/settings/${toUserId}`,
       {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       }
     );
     return response.data;
@@ -61,12 +64,12 @@ export const notificationService = {
         type,
         toUserId,
         message,
-        data
+        data,
       },
       {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       }
     );
     return response.data;
-  }
+  },
 };

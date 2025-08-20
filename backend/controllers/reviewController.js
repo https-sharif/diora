@@ -9,9 +9,6 @@ export const createReview = async (req, res) => {
     const { targetId, targetType, rating, comment } = req.body;
     const userId = req.user.id;
 
-    console.log('Request body:', req.body);
-    console.log('User ID:', userId);
-
     if (!targetId || !targetType || !rating) {
       return res
         .status(400)
@@ -43,7 +40,7 @@ export const createReview = async (req, res) => {
           .status(404)
           .json({ status: false, message: 'Product not found' });
       }
-      
+
       product.rating += Number(rating);
       product.reviewCount += 1;
       await product.save();
@@ -142,12 +139,10 @@ export const deleteReview = async (req, res) => {
     }
 
     if (review.user.toString() !== userId) {
-      return res
-        .status(403)
-        .json({
-          status: false,
-          message: 'Not authorized to delete this review',
-        });
+      return res.status(403).json({
+        status: false,
+        message: 'Not authorized to delete this review',
+      });
     }
 
     if (review.imagesIds && review.imagesIds.length > 0) {
@@ -159,21 +154,21 @@ export const deleteReview = async (req, res) => {
         }
       }
     }
-    
+
     if (targetType === 'product') {
-        const product = await Product.findById(review.targetId);
-        if (product) {
-            product.rating -= review.rating;
-            product.reviewCount -= 1;
-            await product.save();
-        }
+      const product = await Product.findById(review.targetId);
+      if (product) {
+        product.rating -= review.rating;
+        product.reviewCount -= 1;
+        await product.save();
+      }
     } else {
-        const shop = await User.findById(review.targetId);
-        if (shop) {
-            shop.rating -= review.rating;
-            shop.reviewCount -= 1;
-            await shop.save();
-        }
+      const shop = await User.findById(review.targetId);
+      if (shop) {
+        shop.rating -= review.rating;
+        shop.reviewCount -= 1;
+        await shop.save();
+      }
     }
 
     await Review.findByIdAndDelete(id);
@@ -194,7 +189,9 @@ export const updateReview = async (req, res) => {
 
     const review = await Review.findById(id);
     if (!review) {
-      return res.status(404).json({ status: false, message: 'Review not found' });
+      return res
+        .status(404)
+        .json({ status: false, message: 'Review not found' });
     }
 
     if (review.user.toString() !== userId) {
@@ -207,7 +204,9 @@ export const updateReview = async (req, res) => {
     if (targetType === 'product') {
       const product = await Product.findById(review.targetId);
       if (!product) {
-        return res.status(404).json({ status: false, message: 'Product not found' });
+        return res
+          .status(404)
+          .json({ status: false, message: 'Product not found' });
       }
       product.rating -= review.rating;
       product.rating += Number(rating);
@@ -215,7 +214,9 @@ export const updateReview = async (req, res) => {
     } else {
       const shop = await User.findById(review.targetId);
       if (!shop) {
-        return res.status(404).json({ status: false, message: 'Shop not found' });
+        return res
+          .status(404)
+          .json({ status: false, message: 'Shop not found' });
       }
       shop.rating -= review.rating;
       shop.rating += Number(rating);
@@ -231,10 +232,10 @@ export const updateReview = async (req, res) => {
           await deleteImage(publicId);
         }
       }
-      review.images = req.files.map(file => file.path);
-      review.imagesIds = req.files.map(file => file.filename);
+      review.images = req.files.map((file) => file.path);
+      review.imagesIds = req.files.map((file) => file.filename);
     }
-    
+
     await review.save();
     await review.populate('user', 'username avatar');
 
@@ -256,7 +257,10 @@ export const getReviewsByProductId = async (req, res) => {
         .json({ status: false, message: 'Product ID is required' });
     }
 
-    const reviews = await Review.find({ targetId: productId, targetType: 'product' })
+    const reviews = await Review.find({
+      targetId: productId,
+      targetType: 'product',
+    })
       .populate('user', 'username avatar isVerified type')
       .sort({ createdAt: -1 });
 

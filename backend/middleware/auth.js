@@ -6,36 +6,45 @@ export const verifyToken = async (req, res, next) => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ status: false, message: 'No token provided' });
+    return res
+      .status(401)
+      .json({ status: false, message: 'No token provided' });
   }
 
   const token = authHeader.split(' ')[1];
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    
+
     const user = await User.findById(decoded.id);
     if (!user) {
       return res.status(401).json({ status: false, message: 'User not found' });
     }
 
     if (user.status === 'banned') {
-      return res.status(403).json({ 
-        status: false, 
+      return res.status(403).json({
+        status: false,
         message: 'Account is banned',
-        details: `Your account has been permanently banned. Reason: ${user.banReason || 'Violation of community guidelines'}.`
+        details: `Your account has been permanently banned. Reason: ${
+          user.banReason || 'Violation of community guidelines'
+        }.`,
       });
     }
 
     if (user.status === 'suspended') {
-      const isStillSuspended = user.suspendedUntil && new Date() < new Date(user.suspendedUntil);
-      
+      const isStillSuspended =
+        user.suspendedUntil && new Date() < new Date(user.suspendedUntil);
+
       if (isStillSuspended) {
-        const suspendedUntilDate = new Date(user.suspendedUntil).toLocaleDateString();
-        return res.status(403).json({ 
-          status: false, 
+        const suspendedUntilDate = new Date(
+          user.suspendedUntil
+        ).toLocaleDateString();
+        return res.status(403).json({
+          status: false,
           message: 'Account is suspended',
-          details: `Your account is suspended until ${suspendedUntilDate}. Reason: ${user.suspensionReason || 'Violation of community guidelines'}.`
+          details: `Your account is suspended until ${suspendedUntilDate}. Reason: ${
+            user.suspensionReason || 'Violation of community guidelines'
+          }.`,
         });
       } else {
         user.status = 'active';
@@ -49,7 +58,9 @@ export const verifyToken = async (req, res, next) => {
     req.userDetails = user;
     next();
   } catch (err) {
-    return res.status(401).json({ status: false, message: 'Invalid or expired token' });
+    return res
+      .status(401)
+      .json({ status: false, message: 'Invalid or expired token' });
   }
 };
 

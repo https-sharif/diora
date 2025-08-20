@@ -1,20 +1,20 @@
 import express from 'express';
 import { verifyToken } from '../middleware/auth.js';
-import { 
-  followUser, 
-  getUserProfile, 
-  getTrendingUsers, 
-  updateUserProfile, 
-  getUserSettings, 
+import {
+  followUser,
+  getUserProfile,
+  getTrendingUsers,
+  updateUserProfile,
+  getUserSettings,
   updateUserSettings,
-  updateUserEmail, 
-  updateUserPassword, 
+  updateUserEmail,
+  updateUserPassword,
   requestPromotion,
   getCurrentUser,
   completeOnboarding,
   completeShopOnboarding,
   uploadImage,
-  updateShopDetails
+  updateShopDetails,
 } from '../controllers/userController.js';
 import { parser, documentParser } from '../utils/cloudinary.js';
 

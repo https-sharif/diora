@@ -170,7 +170,7 @@ export const PromotionRequestModal: React.FC<PromotionRequestModalProps> = ({
   const [proofDocuments, setProofDocuments] = useState<any[]>([]);
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [field]: value,
     }));
@@ -186,20 +186,23 @@ export const PromotionRequestModal: React.FC<PromotionRequestModalProps> = ({
       });
 
       if (!result.canceled && result.assets) {
-        setProofDocuments(prev => [...prev, ...result.assets]);
+        setProofDocuments((prev) => [...prev, ...result.assets]);
       }
-    } catch (error) {
-      console.error('Error picking document:', error);
+    } catch {
       Alert.alert('Error', 'Failed to pick document');
     }
   };
 
   const removeDocument = (index: number) => {
-    setProofDocuments(prev => prev.filter((_, i) => i !== index));
+    setProofDocuments((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async () => {
-    if (!formData.businessName || !formData.businessDescription || !formData.businessType) {
+    if (
+      !formData.businessName ||
+      !formData.businessDescription ||
+      !formData.businessType
+    ) {
       Alert.alert('Error', 'Please fill in all required fields');
       return;
     }
@@ -213,15 +216,15 @@ export const PromotionRequestModal: React.FC<PromotionRequestModalProps> = ({
       setLoading(true);
 
       const requestFormData = new FormData();
-      
-      Object.keys(formData).forEach(key => {
+
+      Object.keys(formData).forEach((key) => {
         requestFormData.append(key, formData[key as keyof typeof formData]);
       });
-      
+
       proofDocuments.forEach((doc, index) => {
         const fileExtension = doc.uri.split('.').pop() || 'jpg';
         const fileName = doc.fileName || `document_${index}.${fileExtension}`;
-        
+
         requestFormData.append('proofDocuments', {
           uri: doc.uri,
           type: doc.type || doc.mimeType || 'image/jpeg',
@@ -229,26 +232,19 @@ export const PromotionRequestModal: React.FC<PromotionRequestModalProps> = ({
         } as any);
       });
 
-      console.log('Submitting form data with', proofDocuments.length, 'documents');
-      console.log('Request payload preview:', {
-        businessName: formData.businessName,
-        businessDescription: formData.businessDescription,
-        businessType: formData.businessType,
-        documentCount: proofDocuments.length
-      });
-
       if (!token) {
         Alert.alert('Error', 'No authentication token available');
         return;
       }
 
-      const response = await userService.requestPromotion(requestFormData, token);
-
-      console.log('Response received:', response);
+      const response = await userService.requestPromotion(
+        requestFormData,
+        token
+      );
 
       if (response.status) {
         Alert.alert(
-          'Success', 
+          'Success',
           'Your promotion request has been submitted successfully! You will be notified once an admin reviews your request.',
           [{ text: 'OK', onPress: onClose }]
         );
@@ -262,17 +258,16 @@ export const PromotionRequestModal: React.FC<PromotionRequestModalProps> = ({
         });
         setProofDocuments([]);
       } else {
-        Alert.alert('Error', response.data.message || 'Failed to submit request');
+        Alert.alert(
+          'Error',
+          response.data.message || 'Failed to submit request'
+        );
       }
     } catch (error: any) {
-      console.error('Error submitting request:', error);
       if (error.response) {
-        console.error('Response data:', error.response.data);
-        console.error('Response status:', error.response.status);
-        
         if (error.response.status === 400 && error.response.data?.message) {
           const message = error.response.data.message;
-          
+
           if (message.includes('already have a pending promotion request')) {
             Alert.alert(
               'Pending Application',
@@ -285,10 +280,17 @@ export const PromotionRequestModal: React.FC<PromotionRequestModalProps> = ({
             return;
           }
         }
-        
-        Alert.alert('Error', error.response.data?.message || 'Failed to submit request. Please try again.');
+
+        Alert.alert(
+          'Error',
+          error.response.data?.message ||
+            'Failed to submit request. Please try again.'
+        );
       } else {
-        Alert.alert('Error', 'Failed to submit request. Please check your connection and try again.');
+        Alert.alert(
+          'Error',
+          'Failed to submit request. Please check your connection and try again.'
+        );
       }
     } finally {
       setLoading(false);
@@ -307,10 +309,14 @@ export const PromotionRequestModal: React.FC<PromotionRequestModalProps> = ({
             </TouchableOpacity>
           </View>
 
-          <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          <ScrollView
+            style={styles.content}
+            showsVerticalScrollIndicator={false}
+          >
             <Text style={styles.description}>
-              Submit your business information and required documents to request promotion to a shop account.
-              Our team will review your application and get back to you within 3-5 business days.
+              Submit your business information and required documents to request
+              promotion to a shop account. Our team will review your application
+              and get back to you within 3-5 business days.
             </Text>
 
             <View style={styles.inputGroup}>
@@ -318,7 +324,9 @@ export const PromotionRequestModal: React.FC<PromotionRequestModalProps> = ({
               <TextInput
                 style={styles.input}
                 value={formData.businessName}
-                onChangeText={(value) => handleInputChange('businessName', value)}
+                onChangeText={(value) =>
+                  handleInputChange('businessName', value)
+                }
                 placeholder="Enter your business name"
                 placeholderTextColor={theme.textSecondary}
                 maxLength={100}
@@ -333,7 +341,9 @@ export const PromotionRequestModal: React.FC<PromotionRequestModalProps> = ({
               <TextInput
                 style={[styles.input, styles.textArea]}
                 value={formData.businessDescription}
-                onChangeText={(value) => handleInputChange('businessDescription', value)}
+                onChangeText={(value) =>
+                  handleInputChange('businessDescription', value)
+                }
                 placeholder="Describe your business, products, and services..."
                 placeholderTextColor={theme.textSecondary}
                 multiline
@@ -350,7 +360,9 @@ export const PromotionRequestModal: React.FC<PromotionRequestModalProps> = ({
               <TextInput
                 style={styles.input}
                 value={formData.businessType}
-                onChangeText={(value) => handleInputChange('businessType', value)}
+                onChangeText={(value) =>
+                  handleInputChange('businessType', value)
+                }
                 placeholder="e.g., Retail, Handmade, Digital Services, etc."
                 placeholderTextColor={theme.textSecondary}
                 maxLength={100}
@@ -362,7 +374,9 @@ export const PromotionRequestModal: React.FC<PromotionRequestModalProps> = ({
               <TextInput
                 style={styles.input}
                 value={formData.yearsInBusiness}
-                onChangeText={(value) => handleInputChange('yearsInBusiness', value)}
+                onChangeText={(value) =>
+                  handleInputChange('yearsInBusiness', value)
+                }
                 placeholder="How long have you been in business?"
                 placeholderTextColor={theme.textSecondary}
                 maxLength={50}
@@ -374,7 +388,9 @@ export const PromotionRequestModal: React.FC<PromotionRequestModalProps> = ({
               <TextInput
                 style={styles.input}
                 value={formData.expectedProducts}
-                onChangeText={(value) => handleInputChange('expectedProducts', value)}
+                onChangeText={(value) =>
+                  handleInputChange('expectedProducts', value)
+                }
                 placeholder="How many products do you plan to list?"
                 placeholderTextColor={theme.textSecondary}
                 maxLength={50}
@@ -386,7 +402,9 @@ export const PromotionRequestModal: React.FC<PromotionRequestModalProps> = ({
               <TextInput
                 style={[styles.input, styles.textArea]}
                 value={formData.additionalInfo}
-                onChangeText={(value) => handleInputChange('additionalInfo', value)}
+                onChangeText={(value) =>
+                  handleInputChange('additionalInfo', value)
+                }
                 placeholder="Any additional information you'd like to share..."
                 placeholderTextColor={theme.textSecondary}
                 multiline
@@ -403,17 +421,20 @@ export const PromotionRequestModal: React.FC<PromotionRequestModalProps> = ({
               <Text style={[styles.description, { marginBottom: 8 }]}>
                 Upload business documents, licenses, or images (JPG, PNG, etc.)
               </Text>
-              
-              <TouchableOpacity style={styles.uploadButton} onPress={pickDocument}>
+
+              <TouchableOpacity
+                style={styles.uploadButton}
+                onPress={pickDocument}
+              >
                 <Upload size={20} color={theme.textSecondary} />
-                <Text style={styles.uploadButtonText}>
-                  Upload Documents
-                </Text>
+                <Text style={styles.uploadButtonText}>Upload Documents</Text>
               </TouchableOpacity>
 
               {proofDocuments.map((doc, index) => (
                 <View key={index} style={styles.uploadedFile}>
-                  <Text style={styles.uploadedFileName}>{doc.fileName || `Document ${index + 1}`}</Text>
+                  <Text style={styles.uploadedFileName}>
+                    {doc.fileName || `Document ${index + 1}`}
+                  </Text>
                   <TouchableOpacity
                     style={styles.removeButton}
                     onPress={() => removeDocument(index)}
@@ -427,10 +448,21 @@ export const PromotionRequestModal: React.FC<PromotionRequestModalProps> = ({
             <TouchableOpacity
               style={[
                 styles.submitButton,
-                (loading || !formData.businessName || !formData.businessDescription || !formData.businessType || proofDocuments.length === 0) && styles.submitButtonDisabled
+                (loading ||
+                  !formData.businessName ||
+                  !formData.businessDescription ||
+                  !formData.businessType ||
+                  proofDocuments.length === 0) &&
+                  styles.submitButtonDisabled,
               ]}
               onPress={handleSubmit}
-              disabled={loading || !formData.businessName || !formData.businessDescription || !formData.businessType || proofDocuments.length === 0}
+              disabled={
+                loading ||
+                !formData.businessName ||
+                !formData.businessDescription ||
+                !formData.businessType ||
+                proofDocuments.length === 0
+              }
             >
               {loading ? (
                 <ActivityIndicator color="white" size="small" />

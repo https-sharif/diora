@@ -1,5 +1,9 @@
 import express from 'express';
-import { searchUsers, searchShops, searchUsersAndShops } from '../controllers/userSearchController.js';
+import {
+  searchUsers,
+  searchShops,
+  searchUsersAndShops,
+} from '../controllers/userSearchController.js';
 import auth from '../middleware/auth.js';
 
 const router = express.Router();

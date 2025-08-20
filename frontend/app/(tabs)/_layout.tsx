@@ -1,5 +1,14 @@
 import { router, Tabs } from 'expo-router';
-import { Eye, Flag, BarChart3, User, Home, Search, Plus, ShoppingBag } from 'lucide-react-native';
+import {
+  Eye,
+  Flag,
+  BarChart3,
+  User,
+  Home,
+  Search,
+  Plus,
+  ShoppingBag,
+} from 'lucide-react-native';
 import React, { useEffect } from 'react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/hooks/useAuth';
@@ -53,7 +62,11 @@ export default function TabLayout() {
           href: user?.type === 'admin' ? '/analytics' : null,
           title: 'Analytics',
           tabBarIcon: ({ size, color, focused }) => (
-            <BarChart3 size={size} color={color} strokeWidth={focused ? 3 : 2} />
+            <BarChart3
+              size={size}
+              color={color}
+              strokeWidth={focused ? 3 : 2}
+            />
           ),
         }}
       />
@@ -103,7 +116,11 @@ export default function TabLayout() {
           href: user?.type === 'admin' ? null : '/shopping',
           title: 'Shop',
           tabBarIcon: ({ size, color, focused }) => (
-            <ShoppingBag size={size} color={color} strokeWidth={focused ? 3 : 2} />
+            <ShoppingBag
+              size={size}
+              color={color}
+              strokeWidth={focused ? 3 : 2}
+            />
           ),
         }}
       />

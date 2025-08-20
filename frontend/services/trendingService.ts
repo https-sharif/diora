@@ -28,5 +28,5 @@ export const trendingService = {
       headers: { Authorization: `Bearer ${token}` },
     });
     return response.data;
-  }
+  },
 };

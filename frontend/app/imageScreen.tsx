@@ -182,7 +182,14 @@ const createStyles = (theme: Theme) => {
 
 export default function CreateImageScreen() {
   const navigation = useNavigation();
-  const { images, setImages, contentType, setContentType, imageUri, setImageUri } = useCreatePost();
+  const {
+    images,
+    setImages,
+    contentType,
+    setContentType,
+    imageUri,
+    setImageUri,
+  } = useCreatePost();
   const { theme } = useTheme();
   const styles = createStyles(theme);
   const { user } = useAuth();
@@ -194,7 +201,9 @@ export default function CreateImageScreen() {
     if (remaining <= 0) {
       Alert.alert(
         'Limit reached',
-        `You can only select up to ${limit} ${contentType === 'product' ? 'images' : 'image'}. Long press on a thumbnail to remove it.`
+        `You can only select up to ${limit} ${
+          contentType === 'product' ? 'images' : 'image'
+        }. Long press on a thumbnail to remove it.`
       );
       return;
     }
@@ -211,7 +220,10 @@ export default function CreateImageScreen() {
     const launchCamera = async () => {
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permission denied', 'Camera permission is required to take photos.');
+        Alert.alert(
+          'Permission denied',
+          'Camera permission is required to take photos.'
+        );
         return;
       }
       const result = await ImagePicker.launchCameraAsync({
@@ -221,9 +233,13 @@ export default function CreateImageScreen() {
     };
 
     const launchGallery = async () => {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      const { status } =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permission denied', 'Gallery permission is required to select images.');
+        Alert.alert(
+          'Permission denied',
+          'Gallery permission is required to select images.'
+        );
         return;
       }
       const result = await ImagePicker.launchImageLibraryAsync({
@@ -258,8 +274,6 @@ export default function CreateImageScreen() {
       ]);
     }
   };
-
-  
 
   const handleDeleteImage = (uri: string) => {
     Alert.alert('Delete Image', 'Are you sure you want to delete this image?', [
@@ -297,7 +311,9 @@ export default function CreateImageScreen() {
       <View style={styles.header}>
         <Text style={styles.title}>Create</Text>
         <TouchableOpacity onPress={handleNext} disabled={images.length === 0}>
-          {images.length > 0 ? <ArrowRight size={24} color={theme.text} /> : null }
+          {images.length > 0 ? (
+            <ArrowRight size={24} color={theme.text} />
+          ) : null}
         </TouchableOpacity>
       </View>
 
@@ -363,49 +379,66 @@ export default function CreateImageScreen() {
           )}
         </TouchableOpacity>
       </View>
-        
-      {images.length > 0 && 
-        <TouchableOpacity style={styles.imageListTextContainer} activeOpacity={0.8} onPress={() => {
-          Alert.alert('Remove all images', 'Are you sure you want to remove all images?', [
-            { text: 'Cancel', style: 'cancel' },
-            { text: 'Remove', style: 'destructive', onPress: () => {
-              setImages([]);
-              setImageUri(null);
-            }
-          }
-        ])}}>
-          <Text style={styles.imageListText}>Remove {images.length > 1 && 'all' }</Text>
+
+      {images.length > 0 && (
+        <TouchableOpacity
+          style={styles.imageListTextContainer}
+          activeOpacity={0.8}
+          onPress={() => {
+            Alert.alert(
+              'Remove all images',
+              'Are you sure you want to remove all images?',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                  text: 'Remove',
+                  style: 'destructive',
+                  onPress: () => {
+                    setImages([]);
+                    setImageUri(null);
+                  },
+                },
+              ]
+            );
+          }}
+        >
+          <Text style={styles.imageListText}>
+            Remove {images.length > 1 && 'all'}
+          </Text>
         </TouchableOpacity>
-      }
+      )}
 
       <View style={styles.imageList}>
-      <FlatList
-        data={
-          contentType === 'product' && images.length > 0 && images.length < 5
-            ? [...images, 'add-button']
-            : images
-        }
-        horizontal
-        keyExtractor={(item, index) => item + index}
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingLeft: 0 }}
-        ItemSeparatorComponent={() => <View style={{ width: 8 }} />}
-        renderItem={({ item }) =>
-          item === 'add-button' ? (
-            <TouchableOpacity onPress={pickImages} style={styles.addImageButton}>
-              <Plus size={24} color={theme.textSecondary} />
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity
-              onPress={() => setImageUri(item)}
-              onLongPress={() => handleDeleteImage(item)}
-              activeOpacity={0.9}
-            >
-              <Image source={{ uri: item }} style={styles.imageListImage} />
-            </TouchableOpacity>
-          )
-        }
-      />
+        <FlatList
+          data={
+            contentType === 'product' && images.length > 0 && images.length < 5
+              ? [...images, 'add-button']
+              : images
+          }
+          horizontal
+          keyExtractor={(item, index) => item + index}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ paddingLeft: 0 }}
+          ItemSeparatorComponent={() => <View style={{ width: 8 }} />}
+          renderItem={({ item }) =>
+            item === 'add-button' ? (
+              <TouchableOpacity
+                onPress={pickImages}
+                style={styles.addImageButton}
+              >
+                <Plus size={24} color={theme.textSecondary} />
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                onPress={() => setImageUri(item)}
+                onLongPress={() => handleDeleteImage(item)}
+                activeOpacity={0.9}
+              >
+                <Image source={{ uri: item }} style={styles.imageListImage} />
+              </TouchableOpacity>
+            )
+          }
+        />
       </View>
 
       <View style={styles.buttonContainer}>

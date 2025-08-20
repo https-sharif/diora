@@ -6,7 +6,6 @@ import { getIO, onlineUsers } from '../sockets/socketSetup.js';
 
 export const createComment = async (req, res) => {
   console.log('Create comment route/controller hit');
-  console.log('Request body:', req.body);
 
   const { userId, postId, text } = req.body;
 
@@ -41,14 +40,22 @@ export const createComment = async (req, res) => {
       });
 
       if (existingNotification) {
-        if (!existingNotification.fromUserIds) existingNotification.fromUserIds = [];
+        if (!existingNotification.fromUserIds)
+          existingNotification.fromUserIds = [];
 
-        if (!existingNotification.fromUserIds.some(id => id.toString() === userId)) {
+        if (
+          !existingNotification.fromUserIds.some(
+            (id) => id.toString() === userId
+          )
+        ) {
           existingNotification.fromUserIds.push(userId);
         }
 
-        const users = await User.find({ _id: { $in: existingNotification.fromUserIds } }, 'username');
-        const usernames = users.map(u => u.username).filter(name => name);
+        const users = await User.find(
+          { _id: { $in: existingNotification.fromUserIds } },
+          'username'
+        );
+        const usernames = users.map((u) => u.username).filter((name) => name);
 
         if (usernames.length === 0) {
           usernames.push(user.username);
@@ -66,7 +73,9 @@ export const createComment = async (req, res) => {
         } else if (usernames.length === 2) {
           message = `${usernames[0]} and ${usernames[1]} commented on your post`;
         } else {
-          message = `${usernames[0]}, ${usernames[1]} and ${usernames.length - 2} others commented on your post`;
+          message = `${usernames[0]}, ${usernames[1]} and ${
+            usernames.length - 2
+          } others commented on your post`;
         }
 
         existingNotification.message = message;
@@ -115,12 +124,9 @@ export const createComment = async (req, res) => {
   }
 };
 
-
 export const createReply = async (req, res) => {
   console.log('Create reply route/controller hit');
 
-  console.log('Replying to comment ID:', req.params.commentId);
-  console.log('Request body:', req.body);
   const commentId = req.params.commentId;
   const { userId, text, postId } = req.body;
 
@@ -155,7 +161,7 @@ export const createReply = async (req, res) => {
         userId: parentComment.user,
         fromUserId: userId,
         title: 'New Reply',
-        postId : postId,
+        postId: postId,
         message: `${user.username} replied to your comment`,
         actionUrl: `/post/${postId}`,
       });

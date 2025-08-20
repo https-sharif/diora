@@ -697,7 +697,6 @@ export default function MessageScreen() {
   };
 
   const handleSaveEditGroup = async () => {
-    console.log('Saving group changes...');
     if (!conversation) return;
     try {
       const formData = new FormData();
@@ -726,13 +725,11 @@ export default function MessageScreen() {
 
       if (response.data.status) {
         const updatedConversation = response.data.conversation;
-        console.log(response.data.conversation);
         setConversation(updatedConversation);
         updateConversation(updatedConversation._id, updatedConversation);
         setMyMessages((prev) => [...prev, response.data.message]);
       }
-    } catch (err) {
-      console.error(err);
+    } catch {
       alert('Failed to update group');
     } finally {
       setShowEditGroupModal(false);
@@ -1216,13 +1213,7 @@ export default function MessageScreen() {
 
   useEffect(() => {
     const fetchConversationData = async () => {
-      console.log('=== fetchConversationData START ===');
-      console.log('conversationId:', conversationId);
-      console.log('token exists:', !!token);
-      console.log('conversations count:', conversations.length);
-
       if (!conversationId || !token) {
-        console.log('Missing conversationId or token - returning early');
         return;
       }
 
@@ -1233,8 +1224,6 @@ export default function MessageScreen() {
         const foundConv = conversations.find(
           (c: Conversation) => c._id === conversationId
         ) as Conversation;
-
-        console.log('Found conversation in local store:', !!foundConv);
 
         if (foundConv) {
           setConversation(foundConv);
@@ -1251,20 +1240,12 @@ export default function MessageScreen() {
             );
 
             if (otherParticipant) {
-              console.log(
-                'Setting otherUser from conversation participants:',
-                otherParticipant
-              );
               const participantId =
                 typeof otherParticipant === 'string'
                   ? otherParticipant
                   : (otherParticipant as any)._id;
 
               try {
-                console.log(
-                  'Fetching complete user profile for participant:',
-                  participantId
-                );
                 const userResponse = await fetch(
                   `${config.apiUrl}/api/user/${participantId}`,
                   {
@@ -1275,10 +1256,6 @@ export default function MessageScreen() {
                 if (userResponse.ok) {
                   const userData = await userResponse.json();
                   if (userData.status) {
-                    console.log(
-                      'Setting complete otherUser with status:',
-                      userData.user
-                    );
                     setOtherUser(userData.user);
                   }
                 } else {
@@ -1286,32 +1263,20 @@ export default function MessageScreen() {
                     typeof otherParticipant === 'object' &&
                     (otherParticipant as any)._id
                   ) {
-                    console.log(
-                      'Fallback: Using populated participant as otherUser'
-                    );
                     setOtherUser(otherParticipant as User);
                   }
                 }
-              } catch (userErr) {
-                console.error(
-                  'Error fetching complete participant details:',
-                  userErr
-                );
+              } catch {
                 if (
                   typeof otherParticipant === 'object' &&
                   (otherParticipant as any)._id
                 ) {
-                  console.log(
-                    'Error fallback: Using populated participant as otherUser'
-                  );
                   setOtherUser(otherParticipant as User);
                 }
               }
             }
           }
         }
-
-        console.log('Fetching messages for conversation:', conversationId);
 
         try {
           const messagesResponse = await messageService.getMessages(
@@ -1320,10 +1285,8 @@ export default function MessageScreen() {
             50,
             token
           );
-          console.log('Messages response:', messagesResponse);
 
           if (messagesResponse.status && messagesResponse.messages.length > 0) {
-            console.log('Setting messages:', messagesResponse.messages.length);
             const sortedMessages = messagesResponse.messages.sort(
               (a, b) =>
                 new Date(a.createdAt).getTime() -
@@ -1333,31 +1296,18 @@ export default function MessageScreen() {
 
             try {
               await messageService.markMessagesAsRead(conversationId, token);
-              console.log('Messages marked as read');
               markConversationAsRead(conversationId);
-            } catch (readErr) {
-              console.error('Error marking messages as read:', readErr);
-            }
+            } catch {}
           } else {
-            console.log('No messages found');
             setMyMessages([]);
           }
         } catch {
-          console.log(
-            'Failed to fetch messages, treating as new conversation with user ID:',
-            conversationId
-          );
           setMyMessages([]);
           setConversation(null);
         }
 
         if (!otherUser && !foundConv) {
           try {
-            console.log(
-              'Attempting to fetch user profile for ID:',
-              conversationId
-            );
-
             const userResponse = await fetch(
               `${config.apiUrl}/api/user/${conversationId}`,
               {
@@ -1369,26 +1319,17 @@ export default function MessageScreen() {
               const userData = await userResponse.json();
 
               if (userData.status) {
-                console.log('Setting otherUser:', userData.user);
                 setOtherUser(userData.user);
               }
             }
-          } catch (userErr) {
-            console.error('Error fetching user profile:', userErr);
-          }
+          } catch {}
         }
-      } catch (err) {
-        console.error('Error in fetchConversationData:', err);
+      } catch {
         setMyMessages([]);
         setConversation(null);
 
         if (!otherUser) {
           try {
-            console.log(
-              'Final attempt to fetch user profile for ID:',
-              conversationId
-            );
-
             const userResponse = await fetch(
               `${config.apiUrl}/api/user/${conversationId}`,
               {
@@ -1400,15 +1341,10 @@ export default function MessageScreen() {
               const userData = await userResponse.json();
 
               if (userData.status) {
-                console.log(
-                  'Setting otherUser from final attempt:',
-                  userData.user
-                );
                 setOtherUser(userData.user);
               }
             }
-          } catch (userErr) {
-            console.error('Error fetching user profile in catch:', userErr);
+          } catch {
             setError('Failed to load conversation or user profile');
           }
         }
@@ -1435,79 +1371,59 @@ export default function MessageScreen() {
   };
 
   const handleGallery = async () => {
-    console.log('handleGallery called');
-
     try {
       const { status } =
         await ImagePicker.requestMediaLibraryPermissionsAsync();
-      console.log('Gallery permission status:', status);
 
       if (status !== 'granted') {
         alert('Gallery permission denied');
         return;
       }
 
-      console.log('Launching image library...');
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         quality: 1,
         allowsEditing: false,
       });
 
-      console.log('Image picker result:', result);
-
       if (!result.canceled) {
         const photo = result.assets[0];
-        console.log('Selected image from gallery:', photo.uri);
 
         await sendImageMessage(photo.uri);
       } else {
-        console.log('Image selection was canceled');
       }
-    } catch (error) {
-      console.error('Error in handleGallery:', error);
-      alert('Error opening gallery: ' + (error as Error)?.message || error);
+    } catch {
+      alert('Error opening gallery');
     }
   };
 
   const handleCamera = async () => {
-    console.log('handleCamera called');
-
     try {
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
-      console.log('Camera permission status:', status);
 
       if (status !== 'granted') {
         alert('Camera permission denied');
         return;
       }
 
-      console.log('Launching camera...');
       const result = await ImagePicker.launchCameraAsync({
         mediaTypes: 'images',
         allowsEditing: false,
         quality: 1,
       });
 
-      console.log('Camera result:', result);
-
       if (!result.canceled) {
         const photo = result.assets[0];
-        console.log('Captured image from camera:', photo.uri);
 
         await sendImageMessage(photo.uri);
-      } else {
-        console.log('Camera was canceled');
       }
-    } catch (error) {
-      console.error('Error in handleCamera:', error);
-      alert('Error opening camera: ' + (error as Error)?.message || error);
+    } catch {
+      alert('Error opening camera');
     }
   };
 
   const sendImageMessage = async (imageUri: string) => {
     if (!conversationId || !token || !user) {
-      console.log('Missing requirements for sending image');
       return;
     }
 
@@ -1528,8 +1444,6 @@ export default function MessageScreen() {
       let targetConversationId = conversationId;
 
       if (!conversation) {
-        console.log('No conversation found, attempting to resolve...');
-
         try {
           const messagesResponse = await messageService.getMessages(
             conversationId,
@@ -1559,8 +1473,7 @@ export default function MessageScreen() {
               alert('Failed to start conversation. User may not exist.');
               return;
             }
-          } catch (convError) {
-            console.error('Error creating conversation:', convError);
+          } catch {
             alert('Failed to start conversation. Please try again.');
             return;
           }
@@ -1574,11 +1487,6 @@ export default function MessageScreen() {
         flatListRef.current?.scrollToEnd({ animated: true });
       }, 100);
 
-      console.log(
-        'Attempting to send image message to conversation:',
-        targetConversationId
-      );
-
       const response = await messageService.sendMessage(
         targetConversationId,
         '',
@@ -1589,8 +1497,6 @@ export default function MessageScreen() {
         imageUri
       );
 
-      console.log('Image API response:', response);
-
       if (response.status) {
         const sentMessage = { ...response.message, status: 'sent' as const };
         setMyMessages((prev) =>
@@ -1600,17 +1506,14 @@ export default function MessageScreen() {
         );
 
         updateLastMessage(targetConversationId, sentMessage);
-
-        console.log('Image sent successfully');
       } else {
         setMyMessages((prev) =>
           prev.filter((msg) => msg._id !== optimisticMessageId)
         );
-        console.log('API returned error:', response);
+
         alert('Failed to send image. Please try again.');
       }
-    } catch (error) {
-      console.error('Error sending image:', error);
+    } catch {
       setMyMessages((prev) =>
         prev.filter((msg) => msg._id !== optimisticMessageId)
       );
@@ -1619,14 +1522,7 @@ export default function MessageScreen() {
   };
 
   const handleSendMessage = async () => {
-    console.log('handleSendMessage called');
-    console.log('messageText:', messageText);
-    console.log('conversationId:', conversationId);
-    console.log('token exists:', !!token);
-    console.log('conversation exists:', !!conversation);
-
     if (!messageText.trim() || !conversationId || !token || !user) {
-      console.log('Early return due to missing requirements');
       return;
     }
 
@@ -1639,13 +1535,7 @@ export default function MessageScreen() {
       let targetConversationId = conversationId;
 
       if (!conversation) {
-        console.log('No conversation found locally, attempting to resolve...');
-
         try {
-          console.log(
-            'Trying to fetch messages for potential conversation ID:',
-            conversationId
-          );
           const messagesResponse = await messageService.getMessages(
             conversationId,
             1,
@@ -1654,19 +1544,11 @@ export default function MessageScreen() {
           );
 
           if (messagesResponse.status) {
-            console.log(
-              'Found valid conversation, proceeding with message send'
-            );
             targetConversationId = conversationId;
           } else {
-            console.log('Not a valid conversation, treating as user ID');
             throw new Error('Not a conversation ID');
           }
         } catch {
-          console.log(
-            'Failed to fetch messages, treating as user ID and creating conversation'
-          );
-
           try {
             const conversationResponse =
               await messageService.getOrCreateConversation(
@@ -1676,20 +1558,14 @@ export default function MessageScreen() {
               );
 
             if (conversationResponse.status) {
-              console.log(
-                'Created conversation:',
-                conversationResponse.conversation
-              );
               setConversation(conversationResponse.conversation);
               targetConversationId = conversationResponse.conversation._id;
             } else {
-              console.log('Failed to create conversation');
               alert('Failed to start conversation. User may not exist.');
               setMessageText(messageToSend);
               return;
             }
-          } catch (convError) {
-            console.error('Error creating conversation:', convError);
+          } catch {
             alert('Failed to start conversation. Please try again.');
             setMessageText(messageToSend);
             return;
@@ -1714,19 +1590,12 @@ export default function MessageScreen() {
         flatListRef.current?.scrollToEnd({ animated: true });
       }, 100);
 
-      console.log(
-        'Attempting to send message to conversation:',
-        targetConversationId
-      );
-
       const response = await messageService.sendMessage(
         targetConversationId,
         messageToSend,
         'text',
         token
       );
-
-      console.log('API response:', response);
 
       if (response.status) {
         const updatedMessage: Message = {
@@ -1740,18 +1609,14 @@ export default function MessageScreen() {
         );
 
         updateLastMessage(targetConversationId, updatedMessage);
-
-        console.log('Message sent successfully');
       } else {
         setMyMessages((prev) =>
           prev.filter((msg) => msg._id !== optimisticMessageId)
         );
         setMessageText(messageToSend);
-        console.log('API returned error:', response);
         alert('Failed to send message. Please try again.');
       }
-    } catch (error) {
-      console.error('Error sending message:', error);
+    } catch {
       setMyMessages((prev) =>
         prev.filter((msg) => msg._id !== optimisticMessageId)
       );
@@ -1804,8 +1669,7 @@ export default function MessageScreen() {
                   response.message || 'Failed to leave group'
                 );
               }
-            } catch (error) {
-              console.error('Error leaving group:', error);
+            } catch {
               Alert.alert('Error', 'Failed to leave group');
             }
           },
@@ -1872,8 +1736,7 @@ export default function MessageScreen() {
                   [{ text: 'OK' }]
                 );
               }
-            } catch (error) {
-              console.error('Error submitting report:', error);
+            } catch {
               Alert.alert(
                 'Error',
                 'Failed to submit report. Please try again later.',
@@ -1887,22 +1750,21 @@ export default function MessageScreen() {
   };
 
   const handleDeleteMessage = async (messageId: string) => {
-    if(!token) return;
+    if (!token) return;
 
     try {
       const response = await messageService.deleteMessage(messageId, token);
       if (response.status) {
         Alert.alert('Success', 'Message deleted successfully');
-        setMyMessages(prev =>
-          prev.map(m =>
-            m._id === messageId ? { ...m, type: "deleted", text: "" } : m
+        setMyMessages((prev) =>
+          prev.map((m) =>
+            m._id === messageId ? { ...m, type: 'deleted', text: '' } : m
           )
         );
       } else {
         Alert.alert('Error', 'Failed to delete message');
       }
-    } catch (error) {
-      console.error('Error deleting message:', error);
+    } catch {
       Alert.alert('Error', 'Failed to delete message');
     }
   };
@@ -2063,22 +1925,24 @@ export default function MessageScreen() {
             isMe ? styles.myMessageBubble : styles.otherMessageBubble,
           ]}
           activeOpacity={1}
-          onLongPress={
-            () => {
-              if(!isMe) return;
+          onLongPress={() => {
+            if (!isMe) return;
 
-              Alert.alert(
-                "Delete Message",
-                "Are you sure you want to delete this message?",
-                [
-                  { text: "Cancel", style: "cancel" },
-                  { text: "Delete", style: "destructive", onPress: () => {
-                    handleDeleteMessage(item._id)
-                  }}
-                ]
-              );
-            }
-          }
+            Alert.alert(
+              'Delete Message',
+              'Are you sure you want to delete this message?',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                  text: 'Delete',
+                  style: 'destructive',
+                  onPress: () => {
+                    handleDeleteMessage(item._id);
+                  },
+                },
+              ]
+            );
+          }}
         >
           {item.type === 'text' && item.text ? (
             <Text style={[styles.messageText, isMe && styles.myMessageText]}>

@@ -6,11 +6,16 @@ import {
   StyleSheet,
   ScrollView,
   Image,
-
   SafeAreaView,
   FlatList,
 } from 'react-native';
-import { Grid3X3 as Grid, Star, Settings, LogOut, Check } from 'lucide-react-native';
+import {
+  Grid3X3 as Grid,
+  Star,
+  Settings,
+  LogOut,
+  Check,
+} from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/hooks/useAuth';
 import { postService } from '@/services';
@@ -178,17 +183,14 @@ export default function UserProfile() {
 
   const fetchData = async () => {
     if (!user || !token) return;
-    
+
     try {
       const likedPosts = await postService.getUserLikedPosts(user._id, token);
       setMyLikedPosts(likedPosts);
 
       const userPosts = await postService.getUserPosts(user._id, token);
       setMyPosts(userPosts);
-
-    } catch (err) {
-      console.error(err);
-    }
+    } catch {}
   };
 
   useEffect(() => {
@@ -199,7 +201,9 @@ export default function UserProfile() {
     if (user?._id) fetchData();
   }, [user, user?.posts, user?.likedPosts, token]);
 
-  const handleTabPress = (tab: 'posts' | 'liked') => { setActiveTab(tab) };
+  const handleTabPress = (tab: 'posts' | 'liked') => {
+    setActiveTab(tab);
+  };
 
   const handlePostPress = (postId: string) => {
     router.push(`/post/${postId}`);
@@ -217,8 +221,8 @@ export default function UserProfile() {
       >
         <Image source={{ uri: item.imageUrl }} style={styles.postImage} />
       </TouchableOpacity>
-    )
-  }
+    );
+  };
 
   if (!user) {
     return null;
@@ -245,14 +249,14 @@ export default function UserProfile() {
         <View style={styles.profileSection}>
           <Image source={{ uri: user.avatar }} style={styles.profileImage} />
           <View style={styles.profileInfo}>
-             <View style={styles.userNameRow}>
+            <View style={styles.userNameRow}>
               <Text style={styles.fullName}>{user.fullName}</Text>
               {user.isVerified && (
                 <View style={styles.verifiedBadgeContainer}>
                   <Check size={10} color="white" />
                 </View>
               )}
-             </View>
+            </View>
             <Text style={styles.username}>@{user.username}</Text>
             <Text style={styles.bio}>{user.bio}</Text>
           </View>
@@ -270,7 +274,9 @@ export default function UserProfile() {
             <Text style={styles.statLabel}>Followers</Text>
           </View>
           <View style={styles.statItem}>
-            <Text style={styles.statNumber}>{user.following.length.toLocaleString()}</Text>
+            <Text style={styles.statNumber}>
+              {user.following.length.toLocaleString()}
+            </Text>
             <Text style={styles.statLabel}>Following</Text>
           </View>
         </View>

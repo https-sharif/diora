@@ -1,7 +1,14 @@
 import express from 'express';
 import { verifyToken } from '../middleware/auth.js';
 import { parser } from '../utils/cloudinary.js';
-import { createReview, getReviewsByShopId, reviewed, deleteReview, updateReview, getReviewsByProductId } from '../controllers/reviewController.js';
+import {
+  createReview,
+  getReviewsByShopId,
+  reviewed,
+  deleteReview,
+  updateReview,
+  getReviewsByProductId,
+} from '../controllers/reviewController.js';
 
 const router = express.Router();
 router.use(verifyToken);

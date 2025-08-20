@@ -67,7 +67,7 @@ export const useAdminStats = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await adminService.getStats(token);
 
       if (response.status) {
@@ -76,7 +76,9 @@ export const useAdminStats = () => {
         setError(response.message || 'Failed to fetch stats');
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to fetch admin statistics');
+      setError(
+        err.response?.data?.message || 'Failed to fetch admin statistics'
+      );
     } finally {
       setLoading(false);
     }
@@ -87,7 +89,7 @@ export const useAdminStats = () => {
 
     try {
       setError(null);
-      
+
       const response = await adminService.getHealth(token);
 
       if (response.status) {
