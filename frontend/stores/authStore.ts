@@ -7,7 +7,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { loginSchema, signupSchema } from '@/validation/authSchema';
 import { authService } from '@/services';
 
-
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
@@ -47,17 +46,21 @@ export const useAuthStore = create<AuthState>()(
             return { success: true, error: null };
           } else {
             set({ error: data.message, loading: false });
-            return { success: false, error: data.message, details: data.details };
+            return {
+              success: false,
+              error: data.message,
+              details: data.details,
+            };
           }
         } catch (err: any) {
           let errorMsg = err.message || 'Login failed';
           let details = null;
-          
+
           if (err.response?.data) {
             errorMsg = err.response.data.message || errorMsg;
             details = err.response.data.details;
           }
-          
+
           set({ error: errorMsg, loading: false });
           return { success: false, error: errorMsg, details };
         }
@@ -76,7 +79,7 @@ export const useAuthStore = create<AuthState>()(
           const signupData = await authService.signup(data);
 
           if (signupData.status) {
-            await AsyncStorage.setItem('token', signupData.token);            
+            await AsyncStorage.setItem('token', signupData.token);
 
             const newUser: User = {
               _id: signupData.user._id,
@@ -105,9 +108,11 @@ export const useAuthStore = create<AuthState>()(
                   promotion: signupData.user.settings.notifications.promotion,
                   system: signupData.user.settings.notifications.system,
                   warning: signupData.user.settings.notifications.warning,
-                  reportUpdate: signupData.user.settings.notifications.reportUpdate,
+                  reportUpdate:
+                    signupData.user.settings.notifications.reportUpdate,
                   messages: signupData.user.settings.notifications.messages,
-                  emailFrequency: signupData.user.settings.notifications.emailFrequency,
+                  emailFrequency:
+                    signupData.user.settings.notifications.emailFrequency,
                 },
               },
               avatarId: signupData.user.avatarId,
@@ -144,7 +149,11 @@ export const useAuthStore = create<AuthState>()(
         if (!user || !token) return;
 
         try {
-          const res = await authService.followUser(targetUserId, targetType, token);
+          const res = await authService.followUser(
+            targetUserId,
+            targetType,
+            token
+          );
 
           const updatedFollowing = res.following;
 
@@ -154,17 +163,11 @@ export const useAuthStore = create<AuthState>()(
               following: updatedFollowing,
             },
           });
-        } catch (err: any) {
-          console.error(
-            '❌ Follow/unfollow failed:',
-            err.response?.data || err.message
-          );
-        }
+        } catch {}
       },
 
       likePost: async (postId) => {
         const { user, token } = get();
-        console.log('Like post called', postId);
         if (!user || !token) return;
 
         try {
@@ -178,9 +181,7 @@ export const useAuthStore = create<AuthState>()(
               likedPosts: updatedLikedPosts,
             },
           });
-        } catch (err: any) {
-          console.error('❌ Like/unlike failed:', err.response?.data || err.message);
-        }
+        } catch {}
       },
 
       reset: () =>
@@ -200,7 +201,7 @@ export const useAuthStore = create<AuthState>()(
 
           if (response.status) {
             const updatedUser = response.user;
-            
+
             if (updatedUser.status === 'banned') {
               await AsyncStorage.clear();
               set({ user: null, token: null, isAuthenticated: false });
@@ -208,7 +209,10 @@ export const useAuthStore = create<AuthState>()(
               return;
             }
 
-            if (updatedUser.status === 'suspended' && updatedUser.suspendedUntil) {
+            if (
+              updatedUser.status === 'suspended' &&
+              updatedUser.suspendedUntil
+            ) {
               const suspendedUntil = new Date(updatedUser.suspendedUntil);
               if (new Date() < suspendedUntil) {
                 await AsyncStorage.clear();
@@ -218,43 +222,21 @@ export const useAuthStore = create<AuthState>()(
               }
             }
 
-            console.log('🔄 syncUser - Updated user from API:', {
-              userId: updatedUser._id,
-              onboarding: updatedUser.onboarding,
-              timestamp: new Date().toISOString()
-            });
-            
             set({ user: updatedUser });
-            
-            const storeAfterSet = get();
-            console.log('🔄 syncUser - Store state after set:', {
-              userId: storeAfterSet.user?._id,
-              onboarding: storeAfterSet.user?.onboarding,
-              timestamp: new Date().toISOString()
-            });
-
-            setTimeout(() => {
-              AsyncStorage.getItem('auth-store').then(stored => {
-                const parsed = stored ? JSON.parse(stored) : null;
-                console.log('🔄 syncUser - AsyncStorage verification:', {
-                  userId: parsed?.state?.user?._id,
-                  onboarding: parsed?.state?.user?.onboarding,
-                  timestamp: new Date().toISOString()
-                });
-              }).catch(err => console.error('AsyncStorage check failed:', err));
-            }, 100);
           } else {
             await AsyncStorage.clear();
             set({ user: null, token: null, isAuthenticated: false });
             router.replace('/auth');
           }
         } catch (error: any) {
-          if (error.response?.status === 401 || error.response?.status === 403) {
+          if (
+            error.response?.status === 401 ||
+            error.response?.status === 403
+          ) {
             await AsyncStorage.clear();
             set({ user: null, token: null, isAuthenticated: false });
             router.replace('/auth');
           }
-          console.error('Failed to sync user:', error);
         }
       },
     }),

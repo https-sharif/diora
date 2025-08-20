@@ -29,7 +29,6 @@ const lightTheme: Theme = {
   blue: '#007AFF',
 };
 
-
 const darkTheme: Theme = {
   background: '#000000',
   card: '#1c1c1e',
@@ -45,7 +44,6 @@ const darkTheme: Theme = {
   mode: 'dark',
   blue: '#007AFF',
 };
-
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
@@ -65,9 +63,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         if (savedTheme !== null) {
           setIsDarkMode(savedTheme === 'dark');
         }
-      } catch (e) {
-        console.log('Failed to load theme:', e);
-      }
+      } catch {}
     };
 
     loadTheme();
@@ -75,8 +71,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const unsubscribe = useAuthStore.subscribe((state, prevState) => {
       if (!prevState.user && state.user?.settings?.theme) {
         setIsDarkMode(state.user.settings.theme === 'dark');
-      }
-      else if (state.user?.settings?.theme !== prevState.user?.settings?.theme) {
+      } else if (
+        state.user?.settings?.theme !== prevState.user?.settings?.theme
+      ) {
         if (state.user?.settings?.theme) {
           setIsDarkMode(state.user.settings.theme === 'dark');
         }
@@ -90,23 +87,23 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     try {
       const newTheme = !isDarkMode;
       setIsDarkMode(newTheme);
-      
+
       await AsyncStorage.setItem(THEME_KEY, newTheme ? 'dark' : 'light');
-    } catch (e) {
-      console.log('Failed to save theme:', e);
-    }
+    } catch {}
   };
 
   const theme = isDarkMode ? darkTheme : lightTheme;
 
   return (
-    <ThemeContext.Provider value={{
-      theme,
-      isDarkMode,
-      toggleTheme,
-      lightTheme,
-      darkTheme,
-    }}>
+    <ThemeContext.Provider
+      value={{
+        theme,
+        isDarkMode,
+        toggleTheme,
+        lightTheme,
+        darkTheme,
+      }}
+    >
       {children}
     </ThemeContext.Provider>
   );

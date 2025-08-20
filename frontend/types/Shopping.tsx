@@ -1,7 +1,6 @@
 import { Product } from './Product';
 import { CartItem } from './Cart';
 
-
 export interface CartItemData {
   productId: string;
   quantity: number;
@@ -16,15 +15,29 @@ export interface WishlistItemData {
 export interface ShoppingStore {
   cart: CartItem[];
   wishlist: Product[];
-  
+
   cartOperations: Set<string>;
   wishlistOperations: Set<string>;
-  
+
   wishlistDebounceMap: Map<string, ReturnType<typeof setTimeout>>;
 
-  addToCart: (product: Product, quantity: number, size?: string, variant?: string ) => Promise<void>;
-  removeFromCart: (productId: string, size?: string, variant?: string) => Promise<void>;
-  updateCartQuantity: (productId: string, quantity: number, size?: string, variant?: string) => Promise<void>;
+  addToCart: (
+    product: Product,
+    quantity: number,
+    size?: string,
+    variant?: string
+  ) => Promise<void>;
+  removeFromCart: (
+    productId: string,
+    size?: string,
+    variant?: string
+  ) => Promise<void>;
+  updateCartQuantity: (
+    productId: string,
+    quantity: number,
+    size?: string,
+    variant?: string
+  ) => Promise<void>;
 
   addToWishlist: (product: Product) => Promise<void>;
   removeFromWishlist: (productId: string) => Promise<void>;

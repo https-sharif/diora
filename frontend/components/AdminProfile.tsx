@@ -8,16 +8,11 @@ import {
   Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { 
-  Settings, 
-  LogOut, 
-  Shield, 
-  User
-} from 'lucide-react-native';
+import { Settings, LogOut, Shield, User } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/contexts/ThemeContext';
-import { Theme } from '@/types/Theme';  
+import { Theme } from '@/types/Theme';
 
 const createStyles = (theme: Theme) =>
   StyleSheet.create({
@@ -166,7 +161,7 @@ export default function AdminProfile() {
           <View style={styles.profileHeader}>
             <Image
               source={{
-                uri: user.avatar || 'https://via.placeholder.com/80x80'
+                uri: user.avatar || 'https://via.placeholder.com/80x80',
               }}
               style={styles.profileImage}
             />
@@ -196,47 +191,56 @@ export default function AdminProfile() {
             </View>
             <View style={styles.profileInfoRow}>
               <Text style={styles.profileInfoLabel}>Status:</Text>
-              <Text style={[styles.profileInfoValue, { color: '#10B981' }]}>Active</Text>
+              <Text style={[styles.profileInfoValue, { color: '#10B981' }]}>
+                Active
+              </Text>
             </View>
             <View style={styles.profileInfoRow}>
               <Text style={styles.profileInfoLabel}>Member Since:</Text>
               <Text style={styles.profileInfoValue}>
-                {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
+                {user.createdAt
+                  ? new Date(user.createdAt).toLocaleDateString()
+                  : 'N/A'}
               </Text>
             </View>
           </View>
 
           <View style={styles.adminActions}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.adminAction}
               onPress={() => router.push('/settings')}
             >
               <Settings size={20} color={theme.primary} />
               <View style={styles.adminActionContent}>
                 <Text style={styles.adminActionTitle}>Account Settings</Text>
-                <Text style={styles.adminActionSubtitle}>Manage your account preferences</Text>
+                <Text style={styles.adminActionSubtitle}>
+                  Manage your account preferences
+                </Text>
               </View>
             </TouchableOpacity>
 
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.adminAction}
               onPress={() => router.push('/admin/promotion-requests')}
             >
               <User size={20} color={theme.primary} />
               <View style={styles.adminActionContent}>
                 <Text style={styles.adminActionTitle}>Promotion Requests</Text>
-                <Text style={styles.adminActionSubtitle}>Approve/reject shop promotion requests</Text>
+                <Text style={styles.adminActionSubtitle}>
+                  Approve/reject shop promotion requests
+                </Text>
               </View>
             </TouchableOpacity>
 
-            <TouchableOpacity 
-              style={styles.adminAction}
-              onPress={logout}
-            >
+            <TouchableOpacity style={styles.adminAction} onPress={logout}>
               <LogOut size={20} color="#EF4444" />
               <View style={styles.adminActionContent}>
-                <Text style={[styles.adminActionTitle, { color: '#EF4444' }]}>Logout</Text>
-                <Text style={styles.adminActionSubtitle}>Sign out of admin account</Text>
+                <Text style={[styles.adminActionTitle, { color: '#EF4444' }]}>
+                  Logout
+                </Text>
+                <Text style={styles.adminActionSubtitle}>
+                  Sign out of admin account
+                </Text>
               </View>
             </TouchableOpacity>
           </View>

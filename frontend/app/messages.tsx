@@ -366,7 +366,7 @@ const createStyles = (theme: any) => {
     },
     createGroupButtonDisabled: {
       backgroundColor: theme.border,
-  },
+    },
     createGroupButtonText: {
       fontSize: 16,
       fontFamily: 'Inter-SemiBold',
@@ -463,8 +463,7 @@ export default function MessagesScreen() {
             return userData.status ? userData.user : null;
           }
           return null;
-        } catch (error) {
-          console.error('Error fetching following user:', error);
+        } catch {
           return null;
         }
       });
@@ -472,8 +471,7 @@ export default function MessagesScreen() {
       const followingData = await Promise.all(followingPromises);
       const validFollowing = followingData.filter((user) => user !== null);
       setFollowingUsers(validFollowing);
-    } catch (error) {
-      console.error('Error fetching following users:', error);
+    } catch {
       setFollowingUsers([]);
     } finally {
       setFollowingLoading(false);
@@ -527,8 +525,7 @@ export default function MessagesScreen() {
         );
       }
       setSearchedUsers(merged);
-    } catch (err) {
-      console.error('Error searching users/shops:', err);
+    } catch {
       setSearchError('Failed to search users/shops');
       setSearchedUsers([]);
     } finally {
@@ -567,8 +564,7 @@ export default function MessagesScreen() {
       } else {
         router.push(`/message/${selectedUser._id}`);
       }
-    } catch (error) {
-      console.error('Error handling user/shop selection:', error);
+    } catch {
       alert('Failed to start conversation');
     }
   };
@@ -601,8 +597,7 @@ export default function MessagesScreen() {
       } else {
         alert('Failed to create group chat');
       }
-    } catch (error) {
-      console.error('Error creating group chat:', error);
+    } catch {
       alert('Failed to create group chat');
     }
   };
@@ -910,8 +905,7 @@ export default function MessagesScreen() {
                   } else {
                     setError('Failed to load conversations');
                   }
-                } catch (err) {
-                  console.error('Error fetching conversations:', err);
+                } catch {
                   setError('Failed to load conversations');
                 } finally {
                   setLoading(false);

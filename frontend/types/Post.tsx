@@ -6,7 +6,7 @@ export interface Post {
     avatar: string;
     type: 'user' | 'shop' | 'admin';
     isVerified: boolean;
-  }
+  };
   imageUrl: string;
   caption?: string;
   stars: number;

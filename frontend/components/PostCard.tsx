@@ -251,11 +251,10 @@ export default function PostCard({ post }: { post: Post }) {
   useEffect(() => {
     const fetchComments = async () => {
       if (!token) return;
-      
+
       const response = await commentService.getPostComments(post._id, token);
 
       if (response.status) {
-        console.log('Fetched comments:', response.comments);
         setComments(response.comments);
       }
     };
@@ -278,11 +277,18 @@ export default function PostCard({ post }: { post: Post }) {
           useNativeDriver: false,
         }).start();
       },
-      (error) => {
-        console.warn('Failed to get image size:', error);
-      }
+      () => {}
     );
-  }, [post._id, post.imageUrl, post.stars, post.user._id, user?.likedPosts, animatedHeight, screenWidth, token]);
+  }, [
+    post._id,
+    post.imageUrl,
+    post.stars,
+    post.user._id,
+    user?.likedPosts,
+    animatedHeight,
+    screenWidth,
+    token,
+  ]);
 
   const handleStar = () => {
     const newStarred = !isStarred;
@@ -304,11 +310,13 @@ export default function PostCard({ post }: { post: Post }) {
 
     try {
       const payload = { content: newComment, postId: post._id };
-      
-      console.log('Adding comment:', payload);
 
       const response = replyingTo
-        ? await commentService.replyToComment(replyingTo, { content: newComment, postId: post._id }, token)
+        ? await commentService.replyToComment(
+            replyingTo,
+            { content: newComment, postId: post._id },
+            token
+          )
         : await commentService.createComment(payload, token);
 
       if (response.status) {
@@ -332,12 +340,8 @@ export default function PostCard({ post }: { post: Post }) {
 
         post.comments += 1;
         setNewComment('');
-      } else {
-        console.error('Failed to add comment:', response.data.message);
       }
-    } catch (err) {
-      console.error('Error adding comment:', err);
-    }
+    } catch {}
   };
 
   const renderComment = (comment: Comment, isReply = false) => {
@@ -475,7 +479,9 @@ export default function PostCard({ post }: { post: Post }) {
             activeOpacity={1}
           >
             <MessageCircle size={24} color={theme.text} strokeWidth={2} />
-            <Text style={styles.actionText}>{formatNumber(comments.length)}</Text>
+            <Text style={styles.actionText}>
+              {formatNumber(comments.length)}
+            </Text>
           </TouchableOpacity>
         </View>
 

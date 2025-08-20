@@ -1,4 +1,4 @@
-import { Product } from "./Product";
+import { Product } from './Product';
 
 export interface User {
   _id: string;
@@ -36,7 +36,12 @@ export interface User {
       completed: boolean;
       favoriteCategories: string[];
       shoppingFrequency?: 'rarely' | 'monthly' | 'weekly' | 'daily';
-      budgetRange?: 'under-50' | '50-200' | '200-500' | '500-1000' | 'over-1000';
+      budgetRange?:
+        | 'under-50'
+        | '50-200'
+        | '200-500'
+        | '500-1000'
+        | 'over-1000';
     };
   };
   shop?: {

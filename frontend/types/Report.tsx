@@ -27,7 +27,7 @@ export interface Report {
   actionTaken?: string;
   createdAt: string;
   updatedAt: string;
-  
+
   reportedUser?: {
     _id: string;
     displayName: string;

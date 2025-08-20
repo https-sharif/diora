@@ -10,6 +10,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
 });
 
 router.post('/create-account-link', async (req, res) => {
+  console.log('Create account link route/controller hit');
   try {
     const user = req.userDetails;
     if (!user || user.type !== 'shop') {
@@ -38,14 +39,18 @@ router.post('/create-account-link', async (req, res) => {
     res.json({ url: accountLink.url });
   } catch (err) {
     console.error('Stripe onboarding link error', err);
-    res.status(500).json({ message: 'Failed to create Stripe onboarding link' });
+    res
+      .status(500)
+      .json({ message: 'Failed to create Stripe onboarding link' });
   }
 });
 
 router.get('/check-onboarding-status', async (req, res) => {
+  console.log('Check onboarding status route/controller hit');
   try {
     const user = req.userDetails;
-    if (!user || user.type !== 'shop') return res.status(403).json({ message: 'Unauthorized' });
+    if (!user || user.type !== 'shop')
+      return res.status(403).json({ message: 'Unauthorized' });
 
     if (!user.shop.stripeAccountId) return res.json({ onboarded: false });
 
@@ -56,7 +61,5 @@ router.get('/check-onboarding-status', async (req, res) => {
     res.status(500).json({ message: 'Failed to check onboarding status' });
   }
 });
-
-
 
 export default router;

@@ -426,37 +426,48 @@ export default function SettingsScreen() {
 
   const saveTimeoutRef = useRef<any>(null);
 
-  const saveSettings = useCallback(async (updatedSettings: any) => {
-    try {
-      await axios.put(`${config.apiUrl}/api/user/settings`, {
-        theme: updatedSettings.theme,
-        notifications: updatedSettings.notifications
-      }, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      console.log('Settings saved successfully');
-    } catch (error) {
-      console.error('Error saving settings:', error);
-      showToast('error', 'Failed to save settings');
-    }
-  }, [token, showToast]);
+  const saveSettings = useCallback(
+    async (updatedSettings: any) => {
+      try {
+        await axios.put(
+          `${config.apiUrl}/api/user/settings`,
+          {
+            theme: updatedSettings.theme,
+            notifications: updatedSettings.notifications,
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+      } catch {
+        showToast('error', 'Failed to save settings');
+      }
+    },
+    [token, showToast]
+  );
 
-  const debouncedSaveSettings = useCallback((updatedUser: any) => {
-    if (saveTimeoutRef.current) {
-      clearTimeout(saveTimeoutRef.current);
-    }
-    
-    saveTimeoutRef.current = setTimeout(() => {
-      saveSettings(updatedUser.settings);
-    }, 1000);
-  }, [saveSettings]);
+  const debouncedSaveSettings = useCallback(
+    (updatedUser: any) => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
 
-  const updateUserSettings = useCallback((updatedUser: any) => {
-    setUser(updatedUser);
-    debouncedSaveSettings(updatedUser);
-  }, [setUser, debouncedSaveSettings]);
+      saveTimeoutRef.current = setTimeout(() => {
+        saveSettings(updatedUser.settings);
+      }, 1000);
+    },
+    [saveSettings]
+  );
+
+  const updateUserSettings = useCallback(
+    (updatedUser: any) => {
+      setUser(updatedUser);
+      debouncedSaveSettings(updatedUser);
+    },
+    [setUser, debouncedSaveSettings]
+  );
 
   const handleThemeToggle = useCallback(() => {
     toggleTheme();
@@ -506,8 +517,6 @@ export default function SettingsScreen() {
   const handleSaveProfile = async () => {
     if (!user) return;
 
-    console.log(user);
-
     if (fullName.length < 2 || fullName.length > 50) {
       showToast('error', 'Full name must be between 2-50 characters');
       return;
@@ -537,19 +546,21 @@ export default function SettingsScreen() {
     formData.append('username', username);
     formData.append('bio', bio);
 
-    const response = await axios.put(`${config.apiUrl}/api/user/update/profile`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const response = await axios.put(
+      `${config.apiUrl}/api/user/update/profile`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
 
-    if(!response.data.status) {
+    if (!response.data.status) {
       showToast('error', response.data.message || 'Failed to update profile');
       return;
     }
-
-    console.log('Profile updated:', response.data.user);
 
     setUser(response.data.user);
 
@@ -570,12 +581,16 @@ export default function SettingsScreen() {
       return;
     }
 
-    const response = await axios.put(`${config.apiUrl}/api/user/update/security`, {
-      currentPassword,
-      newPassword,
-    }, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const response = await axios.put(
+      `${config.apiUrl}/api/user/update/security`,
+      {
+        currentPassword,
+        newPassword,
+      },
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
 
     if (!response.data.status) {
       showToast('error', response.data.message || 'Failed to change password');
@@ -595,11 +610,15 @@ export default function SettingsScreen() {
       return;
     }
 
-    const response = await axios.put(`${config.apiUrl}/api/user/update/email`, { email: newEmail }, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const response = await axios.put(
+      `${config.apiUrl}/api/user/update/email`,
+      { email: newEmail },
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
 
-    if(!response.data.status) {
+    if (!response.data.status) {
       showToast('error', 'Failed to update email');
       return;
     }
@@ -743,15 +762,14 @@ export default function SettingsScreen() {
                 }
               }
             )}
-            {user?.type === 'user' && (
+            {user?.type === 'user' &&
               renderSettingItem(
                 <Store size={20} color={theme.primary} />,
                 'Request Shop Promotion',
                 'Apply to become a shop owner',
                 <ChevronRight size={20} color={theme.textSecondary} />,
                 () => setShowPromotionModal(true)
-              )
-            )}
+              )}
           </>
         )}
 
@@ -976,30 +994,31 @@ export default function SettingsScreen() {
               />
             )}
 
-            {user?.type === 'shop' && renderSettingItem(
-              <Bell size={20} color={theme.text} />,
-              'Order Notifications',
-              'Get notified about new orders',
-              <Switch
-                value={user?.settings.notifications.order}
-                onValueChange={(value) =>
-                  updateUserSettings({
-                    ...user,
-                    settings: {
-                      ...user.settings,
-                      notifications: {
-                        ...user.settings.notifications,
-                        order: value,
+            {user?.type === 'shop' &&
+              renderSettingItem(
+                <Bell size={20} color={theme.text} />,
+                'Order Notifications',
+                'Get notified about new orders',
+                <Switch
+                  value={user?.settings.notifications.order}
+                  onValueChange={(value) =>
+                    updateUserSettings({
+                      ...user,
+                      settings: {
+                        ...user.settings,
+                        notifications: {
+                          ...user.settings.notifications,
+                          order: value,
+                        },
                       },
-                    },
-                  })
-                }
-                trackColor={{ false: theme.border, true: '#4CAF50' }}
-                thumbColor={
-                  user?.settings.notifications.order ? '#fff' : '#f4f3f4'
-                }
-              />
-            )}
+                    })
+                  }
+                  trackColor={{ false: theme.border, true: '#4CAF50' }}
+                  thumbColor={
+                    user?.settings.notifications.order ? '#fff' : '#f4f3f4'
+                  }
+                />
+              )}
 
             {renderSettingItem(
               <Bell size={20} color={theme.text} />,

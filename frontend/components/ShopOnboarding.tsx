@@ -356,8 +356,7 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
       if (!result.canceled && result.assets[0]) {
         await uploadPhoto(type, result);
       }
-    } catch (error) {
-      console.error('Error picking image:', error);
+    } catch {
       Alert.alert('Error', 'Failed to pick image');
     }
   };
@@ -367,12 +366,10 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
     result: ImagePicker.ImagePickerResult
   ) => {
     if (result.canceled) {
-      console.log('Photo upload cancelled by user');
       return;
     }
 
     const asset = result.assets[0];
-    console.log('Starting photo upload - Type:', type, 'Asset URI:', asset.uri);
 
     const propertyName = type === 'cover' ? 'coverPhoto' : 'profilePicture';
     const uploadingProperty =
@@ -380,11 +377,10 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
 
     setPhotoData((prev) => ({
       ...prev,
-      [propertyName]: asset.uri, 
+      [propertyName]: asset.uri,
       [uploadingProperty]: true,
     }));
 
-    console.log('Optimistic update applied - showing local image immediately');
     showToast(
       'success',
       `${type.replace(/([A-Z])/g, ' $1').toLowerCase()} selected! Uploading...`
@@ -404,8 +400,6 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
 
       const response = await userService.uploadImage(formData, token);
 
-      console.log('Photo upload response:', response);
-
       if (response.status) {
         if (type === 'cover') {
           setPhotoData((prev) => ({
@@ -421,12 +415,6 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
             [uploadingProperty]: false,
           }));
         }
-        console.log(
-          'Upload completed - URL:',
-          response.data.url,
-          'ID:',
-          response.data.id
-        );
         showToast(
           'success',
           `${type
@@ -439,21 +427,17 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
           [propertyName]: null,
           [uploadingProperty]: false,
         }));
-        console.error('Upload failed - Response:', response.data);
         showToast(
           'error',
           `Failed to upload ${type.replace(/([A-Z])/g, ' $1').toLowerCase()}`
         );
       }
-    } catch (error: any) {
+    } catch {
       setPhotoData((prev) => ({
         ...prev,
         [propertyName]: null,
         [uploadingProperty]: false,
       }));
-      console.error('Photo upload error:', error);
-      console.error('Error response:', error.response?.data);
-      console.error('Error status:', error.response?.status);
       showToast(
         'error',
         `Failed to upload ${type.replace(/([A-Z])/g, ' $1').toLowerCase()}`
@@ -478,10 +462,6 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
   const completeOnboarding = async () => {
     try {
       setLoading(true);
-
-      console.log('Starting shop onboarding completion...');
-      console.log('Cover photo:', photoData.coverPhoto);
-      console.log('Shop data:', shopData);
 
       if (!shopData.location.trim()) {
         Alert.alert('Error', 'Please provide a shop location');
@@ -529,8 +509,6 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
         updateData.avatar = photoData.profilePicture;
       }
 
-      console.log('Sending shop onboarding data:', updateData);
-
       if (!token) {
         throw new Error('No authentication token available');
       }
@@ -540,74 +518,31 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
         token
       );
 
-      console.log('Shop onboarding response:', response);
-      console.log('Response status:', response?.status);
-      console.log('Response user data:', response?.user);
-
       if (response.status) {
-        console.log('Shop onboarding completed successfully');
-        console.log(
-          'Backend response user data:',
-          JSON.stringify(response?.user?.onboarding, null, 2)
-        );
-
-        console.log('🔄 First refresh attempt...');
         await refreshUser();
         await new Promise((resolve) => setTimeout(resolve, 300));
 
-        console.log(
-          'User state after first refresh:',
-          JSON.stringify(user?.onboarding, null, 2)
-        );
-        console.log(
-          'Shop onboarding isComplete after first refresh:',
-          user?.onboarding?.isComplete
-        );
-
         if (!user?.onboarding?.isComplete) {
-          console.log('🔄 Not complete yet, trying second refresh...');
           await refreshUser();
           await new Promise((resolve) => setTimeout(resolve, 300));
-          console.log(
-            'User state after second refresh:',
-            JSON.stringify(user?.onboarding, null, 2)
-          );
         }
 
         const isCompleteInResponse = response?.user?.onboarding?.isComplete;
         const isCompleteInStore = user?.onboarding?.isComplete;
-
-        console.log('🔍 Final verification:');
-        console.log(
-          '  - Backend response says complete:',
-          isCompleteInResponse
-        );
-        console.log('  - Store state says complete:', isCompleteInStore);
-
         if (isCompleteInResponse || isCompleteInStore) {
-          console.log(
-            '✅ Shop onboarding verified as complete, calling onComplete...'
-          );
           onComplete();
         } else {
-          console.log(
-            '❌ Shop onboarding not marked as complete anywhere, forcing completion...'
-          );
           await refreshUser();
           await new Promise((resolve) => setTimeout(resolve, 500));
-          console.log('🔧 Forcing completion despite state mismatch...');
           onComplete();
         }
       } else {
-        console.error('Shop onboarding failed:', response.message);
         Alert.alert(
           'Error',
           response.message || 'Failed to complete shop onboarding'
         );
       }
     } catch (error: any) {
-      console.error('Error completing shop onboarding:', error);
-      console.error('Error response:', error.response?.data);
       const errorMessage =
         error.response?.data?.message ||
         error.message ||
@@ -900,41 +835,40 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
   );
 
   const handleStripeOnboarding = async () => {
-  try {
-    setLoading(true);
-    const statusRes = await axios.get(
-      `${config.apiUrl}/api/stripe/check-onboarding-status`,
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
+    try {
+      setLoading(true);
+      const statusRes = await axios.get(
+        `${config.apiUrl}/api/stripe/check-onboarding-status`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
-    if (statusRes.data.onboarded) {
-      setStripeConnected(true);
-      handleNext();
-      return;
-    }
-
-    const { data } = await axios.post(
-      `${config.apiUrl}/api/stripe/create-account-link`,
-      {},
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      if (statusRes.data.onboarded) {
+        setStripeConnected(true);
+        handleNext();
+        return;
       }
-    );
-    if (data.url) {
-      setStripeConnected(true);
-      handleNext();
-    } else {
-      alert('Failed to get Stripe onboarding link.');
+
+      const { data } = await axios.post(
+        `${config.apiUrl}/api/stripe/create-account-link`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      if (data.url) {
+        setStripeConnected(true);
+        handleNext();
+      } else {
+        alert('Failed to get Stripe onboarding link.');
+      }
+    } catch {
+      alert('Failed to connect Stripe. Try again.');
+    } finally {
+      setLoading(false);
     }
-  } catch (err) {
-    console.error('Stripe onboarding failed', err);
-    alert('Failed to connect Stripe. Try again.');
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   const renderStripeOnboardingStep = () => (
     <View style={styles.stepContent}>

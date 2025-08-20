@@ -28,9 +28,14 @@ export interface AuthState {
     username: string,
     password: string
   ) => Promise<{ success: boolean; error: string | null; details?: string }>;
-  signup: (data: SignupData) => Promise<{ success: boolean; error: string | null; } | undefined>;
+  signup: (
+    data: SignupData
+  ) => Promise<{ success: boolean; error: string | null } | undefined>;
   logout: () => Promise<void>;
-  followUser: (targetUserId: string, targetType: 'user' | 'shop') => Promise<void>;
+  followUser: (
+    targetUserId: string,
+    targetType: 'user' | 'shop'
+  ) => Promise<void>;
   likePost: (postId: string) => Promise<void>;
   syncUser: () => Promise<void>;
   setIsAuthenticated: (val: boolean) => void;

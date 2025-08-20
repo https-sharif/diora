@@ -10,175 +10,188 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { ArrowLeft, Heart, MessageCircle, UserPlus, AtSign, Package, Tag, Trash2, Check, CheckCheck, BellOff } from 'lucide-react-native';
+import {
+  ArrowLeft,
+  Heart,
+  MessageCircle,
+  UserPlus,
+  AtSign,
+  Package,
+  Tag,
+  Trash2,
+  Check,
+  CheckCheck,
+  BellOff,
+} from 'lucide-react-native';
 import { useNotification } from '@/hooks/useNotification';
 import { Notification } from '@/types/Notification';
 import { useTheme } from '@/contexts/ThemeContext';
-import { format } from 'timeago.js'
+import { format } from 'timeago.js';
 
-const createStyle = (theme: any) => StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.background,
-    paddingTop: -100,
-    paddingBottom: -100,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.border,
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  headerButton: {
-    padding: 8,
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontFamily: 'Inter-Bold',
-    color: theme.text,
-    marginLeft: 8,
-  },
-  notificationsList: {
-    paddingBottom: 50,
-  },
-  notificationItem: {
-    backgroundColor: theme.background,
-  },
-  unreadNotification: {
-    backgroundColor: theme.card,
-  },
-  selectedNotification: {
-    backgroundColor: theme.primary,
-  },
-  notificationContent: {
-    flexDirection: 'row',
-    padding: 16,
-    alignItems: 'center',
-  },
-  notificationLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  iconContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: theme.card,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 8,
-  },
-  notificationAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    resizeMode: 'cover',
-    borderWidth: 1,
-    borderColor: theme.primary,
-  },
-  notificationBody: {
-    flex: 1,
-    marginRight: 12,
-  },
-  notificationTitle: {
-    fontSize: 16,
-    fontFamily: 'Inter-SemiBold',
-    color: theme.text,
-    marginBottom: 4,
-  },
-  notificationMessage: {
-    fontSize: 14,
-    fontFamily: 'Inter-Regular',
-    color: theme.textSecondary,
-    lineHeight: 20,
-    marginBottom: 4,
-  },
-  notificationTime: {
-    fontSize: 12,
-    fontFamily: 'Inter-Regular',
-    color: theme.textSecondary,
-  },
-  notificationRight: {
-    alignItems: 'center',
-    gap: 8,
-  },
-  postThumbnail: {
-    width: 40,
-    height: 40,
-    borderRadius: 8,
-  },
-  selectionCircle: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: theme.border,
-    backgroundColor: theme.card,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  selectedCircle: {
-    backgroundColor: theme.background,
-    borderColor: theme.background,
-  },
-  emptyState: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 32,
-  },
-  emptyIconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: theme.card,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  emptyTitle: {
-    fontSize: 20,
-    fontFamily: 'Inter-Bold',
-    color: theme.text,
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  emptyMessage: {
-    fontSize: 16,
-    fontFamily: 'Inter-Regular',
-    color: theme.textSecondary,
-    textAlign: 'center',
-    lineHeight: 24,
-  },
-});
+const createStyle = (theme: any) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.background,
+      paddingTop: -100,
+      paddingBottom: -100,
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.border,
+    },
+    headerLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      flex: 1,
+    },
+    headerRight: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+    },
+    headerButton: {
+      padding: 8,
+    },
+    headerTitle: {
+      fontSize: 24,
+      fontFamily: 'Inter-Bold',
+      color: theme.text,
+      marginLeft: 8,
+    },
+    notificationsList: {
+      paddingBottom: 50,
+    },
+    notificationItem: {
+      backgroundColor: theme.background,
+    },
+    unreadNotification: {
+      backgroundColor: theme.card,
+    },
+    selectedNotification: {
+      backgroundColor: theme.primary,
+    },
+    notificationContent: {
+      flexDirection: 'row',
+      padding: 16,
+      alignItems: 'center',
+    },
+    notificationLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginRight: 12,
+    },
+    iconContainer: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      backgroundColor: theme.card,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: 8,
+    },
+    notificationAvatar: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      resizeMode: 'cover',
+      borderWidth: 1,
+      borderColor: theme.primary,
+    },
+    notificationBody: {
+      flex: 1,
+      marginRight: 12,
+    },
+    notificationTitle: {
+      fontSize: 16,
+      fontFamily: 'Inter-SemiBold',
+      color: theme.text,
+      marginBottom: 4,
+    },
+    notificationMessage: {
+      fontSize: 14,
+      fontFamily: 'Inter-Regular',
+      color: theme.textSecondary,
+      lineHeight: 20,
+      marginBottom: 4,
+    },
+    notificationTime: {
+      fontSize: 12,
+      fontFamily: 'Inter-Regular',
+      color: theme.textSecondary,
+    },
+    notificationRight: {
+      alignItems: 'center',
+      gap: 8,
+    },
+    postThumbnail: {
+      width: 40,
+      height: 40,
+      borderRadius: 8,
+    },
+    selectionCircle: {
+      width: 20,
+      height: 20,
+      borderRadius: 10,
+      borderWidth: 2,
+      borderColor: theme.border,
+      backgroundColor: theme.card,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: 12,
+    },
+    selectedCircle: {
+      backgroundColor: theme.background,
+      borderColor: theme.background,
+    },
+    emptyState: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingHorizontal: 32,
+    },
+    emptyIconContainer: {
+      width: 80,
+      height: 80,
+      borderRadius: 40,
+      backgroundColor: theme.card,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginBottom: 24,
+    },
+    emptyTitle: {
+      fontSize: 20,
+      fontFamily: 'Inter-Bold',
+      color: theme.text,
+      marginBottom: 8,
+      textAlign: 'center',
+    },
+    emptyMessage: {
+      fontSize: 16,
+      fontFamily: 'Inter-Regular',
+      color: theme.textSecondary,
+      textAlign: 'center',
+      lineHeight: 24,
+    },
+  });
 
-const getNotificationIcon = (type: Notification['type'], theme : any) => {
+const getNotificationIcon = (type: Notification['type'], theme: any) => {
   switch (type) {
     case 'like':
       return <Heart size={20} color="#ff453a" fill="#ff453a" />;
     case 'comment':
       return <MessageCircle size={20} color="#1DA1F2" fill="#1DA1F2" />;
     case 'follow':
-      return <UserPlus size={20} color="#17BF63"/>;
+      return <UserPlus size={20} color="#17BF63" />;
     case 'mention':
       return <AtSign size={20} color="#794BC4" />;
     case 'order':
-      return <Package size={20} color='#FF9500' />;
+      return <Package size={20} color="#FF9500" />;
     case 'promotion':
       return <Tag size={20} color="#FF9FF3" />;
     case 'warning':
@@ -189,8 +202,11 @@ const getNotificationIcon = (type: Notification['type'], theme : any) => {
 };
 
 export default function NotificationsScreen() {
-  const { notifications, markAsRead, markAllAsRead, deleteNotification } = useNotification();
-  const [selectedNotifications, setSelectedNotifications] = useState<string[]>([]);
+  const { notifications, markAsRead, markAllAsRead, deleteNotification } =
+    useNotification();
+  const [selectedNotifications, setSelectedNotifications] = useState<string[]>(
+    []
+  );
   const [selectionMode, setSelectionMode] = useState(false);
   const { theme } = useTheme();
 
@@ -212,9 +228,9 @@ export default function NotificationsScreen() {
   };
 
   const toggleSelection = (notificationId: string) => {
-    setSelectedNotifications(prev => 
+    setSelectedNotifications((prev) =>
       prev.includes(notificationId)
-        ? prev.filter(id => id !== notificationId)
+        ? prev.filter((id) => id !== notificationId)
         : [...prev, notificationId]
     );
   };
@@ -239,7 +255,7 @@ export default function NotificationsScreen() {
           text: 'Delete',
           style: 'destructive',
           onPress: () => {
-            selectedNotifications.forEach(id => deleteNotification(id));
+            selectedNotifications.forEach((id) => deleteNotification(id));
             exitSelectionMode();
           },
         },
@@ -248,7 +264,7 @@ export default function NotificationsScreen() {
   };
 
   const markSelectedAsRead = () => {
-    selectedNotifications.forEach(id => markAsRead(id));
+    selectedNotifications.forEach((id) => markAsRead(id));
     exitSelectionMode();
   };
 
@@ -264,33 +280,43 @@ export default function NotificationsScreen() {
     >
       <View style={styles.notificationContent}>
         {selectionMode && (
-            <View style={[
+          <View
+            style={[
               styles.selectionCircle,
-              selectedNotifications.includes(item._id) && styles.selectedCircle
-            ]}>
-              {selectedNotifications.includes(item._id) && (
-                <Check size={12} color={theme.text} />
-              )}
-            </View>
-          )}
+              selectedNotifications.includes(item._id) && styles.selectedCircle,
+            ]}
+          >
+            {selectedNotifications.includes(item._id) && (
+              <Check size={12} color={theme.text} />
+            )}
+          </View>
+        )}
         <View style={styles.notificationLeft}>
           <View style={styles.iconContainer}>
             {getNotificationIcon(item.type, theme)}
           </View>
           {item.avatar && (
-            <Image source={{ uri: item.avatar }} style={styles.notificationAvatar} />
+            <Image
+              source={{ uri: item.avatar }}
+              style={styles.notificationAvatar}
+            />
           )}
         </View>
 
         <View style={styles.notificationBody}>
           <Text style={styles.notificationTitle}>{item.title}</Text>
           <Text style={styles.notificationMessage}>{item.message}</Text>
-          <Text style={styles.notificationTime}>{format(new Date(item.updatedAt))}</Text>
+          <Text style={styles.notificationTime}>
+            {format(new Date(item.updatedAt))}
+          </Text>
         </View>
 
         <View style={styles.notificationRight}>
           {item.imageUrl && (
-            <Image source={{ uri: item.imageUrl }} style={styles.postThumbnail} />
+            <Image
+              source={{ uri: item.imageUrl }}
+              style={styles.postThumbnail}
+            />
           )}
         </View>
       </View>
@@ -304,7 +330,8 @@ export default function NotificationsScreen() {
       </View>
       <Text style={styles.emptyTitle}>No notifications yet</Text>
       <Text style={styles.emptyMessage}>
-        No notifications to show. You will see updates here when you receive new notifications.
+        No notifications to show. You will see updates here when you receive new
+        notifications.
       </Text>
     </View>
   );
@@ -312,26 +339,28 @@ export default function NotificationsScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.headerButton} 
+        <TouchableOpacity
+          style={styles.headerButton}
           onPress={selectionMode ? exitSelectionMode : () => router.back()}
         >
           <ArrowLeft size={24} color={theme.text} />
         </TouchableOpacity>
 
         <Text style={styles.headerTitle}>
-          {selectionMode ? `${selectedNotifications.length} selected` : 'Notifications'}
+          {selectionMode
+            ? `${selectedNotifications.length} selected`
+            : 'Notifications'}
         </Text>
 
         {selectionMode ? (
           <>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.headerButton}
               onPress={markSelectedAsRead}
             >
               <CheckCheck size={24} color={theme.text} />
             </TouchableOpacity>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.headerButton}
               onPress={deleteSelected}
             >
@@ -347,7 +376,7 @@ export default function NotificationsScreen() {
               <Check size={24} color={theme.text} />
             </TouchableOpacity>
           </>
-        ) }
+        )}
       </View>
 
       {notifications.length === 0 ? (

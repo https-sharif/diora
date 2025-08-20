@@ -4,36 +4,50 @@ import { PostData } from '@/types/Post';
 
 export const postService = {
   async getUserPosts(userId: string, token: string): Promise<any> {
-    const response = await axios.get(`${config.apiUrl}/api/post/user/${userId}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    const response = await axios.get(
+      `${config.apiUrl}/api/post/user/${userId}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
     return response.data.posts || [];
   },
 
   async getUserLikedPosts(userId: string, token: string): Promise<any> {
-    const response = await axios.get(`${config.apiUrl}/api/post/user/${userId}/liked`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    const response = await axios.get(
+      `${config.apiUrl}/api/post/user/${userId}/liked`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
     return response.data.posts || [];
   },
 
   async createPost(postData: PostData, token: string): Promise<any> {
     const response = await axios.post(`${config.apiUrl}/api/post`, postData, {
-      headers: { Authorization: `Bearer ${token}` }
+      headers: { Authorization: `Bearer ${token}` },
     });
     return response.data;
   },
 
-  async updatePost(postId: string, postData: PostData, token: string): Promise<any> {
-    const response = await axios.put(`${config.apiUrl}/api/post/${postId}`, postData, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+  async updatePost(
+    postId: string,
+    postData: PostData,
+    token: string
+  ): Promise<any> {
+    const response = await axios.put(
+      `${config.apiUrl}/api/post/${postId}`,
+      postData,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
     return response.data;
   },
 
   async deletePost(postId: string, token: string): Promise<any> {
     const response = await axios.delete(`${config.apiUrl}/api/post/${postId}`, {
-      headers: { Authorization: `Bearer ${token}` }
+      headers: { Authorization: `Bearer ${token}` },
     });
     return response.data;
   },
@@ -48,16 +62,19 @@ export const postService = {
       });
     }
 
-    const response = await axios.get(`${config.apiUrl}/api/post?${params.toString()}`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {}
-    });
+    const response = await axios.get(
+      `${config.apiUrl}/api/post?${params.toString()}`,
+      {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      }
+    );
     return response.data;
   },
 
   async getPostById(postId: string, token: string): Promise<any> {
     const response = await axios.get(`${config.apiUrl}/api/post/${postId}`, {
-      headers: { Authorization: `Bearer ${token}` }
+      headers: { Authorization: `Bearer ${token}` },
     });
     return response.data;
-  }
+  },
 };

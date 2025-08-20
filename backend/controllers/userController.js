@@ -3,22 +3,22 @@ import PromotionRequest from '../models/PromotionRequest.js';
 import Notification from '../models/Notification.js';
 import { deleteImage } from '../utils/cloudinary.js';
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken'
+import jwt from 'jsonwebtoken';
 import mongoose from 'mongoose';
 
 const isUserAccessible = (user, requesterIsAdmin = false) => {
   if (!user) return false;
-  
+
   if (requesterIsAdmin) return true;
-  
+
   if (user.status === 'banned') return false;
-  
+
   if (user.status === 'suspended') {
     if (!user.suspendedUntil || new Date() < new Date(user.suspendedUntil)) {
       return false;
     }
   }
-  
+
   return true;
 };
 
@@ -26,7 +26,7 @@ export const getCurrentUser = async (req, res) => {
   console.log('Get current user route/controller hit');
   try {
     const userId = req.user.id;
-    
+
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ status: false, message: 'User not found' });
@@ -35,7 +35,11 @@ export const getCurrentUser = async (req, res) => {
     user.lastActiveAt = new Date();
     await user.save();
 
-    if (user.status === 'suspended' && user.suspendedUntil && new Date() >= new Date(user.suspendedUntil)) {
+    if (
+      user.status === 'suspended' &&
+      user.suspendedUntil &&
+      new Date() >= new Date(user.suspendedUntil)
+    ) {
       user.status = 'active';
       user.suspendedUntil = null;
       user.suspensionReason = null;
@@ -43,24 +47,22 @@ export const getCurrentUser = async (req, res) => {
     }
 
     if (!user.onboarding) {
-      console.log('User missing onboarding object, creating default...');
       user.onboarding = {
         isComplete: user.type === 'user',
         step: user.type === 'user' ? 3 : 0,
         profile: {
           completed: user.type === 'user',
-          interests: []
+          interests: [],
         },
         preferences: {
           completed: user.type === 'user',
-          favoriteCategories: []
-        }
+          favoriteCategories: [],
+        },
       };
       if (user.type === 'user') {
         user.onboarding.completedAt = new Date();
       }
       await user.save();
-      console.log('Created default onboarding for user:', user._id);
     }
 
     const safeUser = {
@@ -151,7 +153,11 @@ export const getUserProfile = async (req, res) => {
       return res.status(200).json({ status: false, message: 'User not found' });
     }
 
-    if (user.status === 'suspended' && user.suspendedUntil && new Date() >= new Date(user.suspendedUntil)) {
+    if (
+      user.status === 'suspended' &&
+      user.suspendedUntil &&
+      new Date() >= new Date(user.suspendedUntil)
+    ) {
       user.status = 'active';
       user.suspendedUntil = null;
       user.suspensionReason = null;
@@ -169,18 +175,18 @@ export const getUserProfile = async (req, res) => {
         bannedAt: user.bannedAt,
         banReason: user.banReason,
         suspendedUntil: user.suspendedUntil,
-        suspensionReason: user.suspensionReason
+        suspensionReason: user.suspensionReason,
       };
       return res.json({ status: true, user: limitedUser });
     }
 
-    if(user.type === 'shop') {
+    if (user.type === 'shop') {
       await user.populate({
         path: 'shop',
         populate: {
           path: 'productIds',
           select: 'name price imageUrl rating reviewCount discount stock',
-        }
+        },
       });
     }
 
@@ -196,16 +202,16 @@ export const getTrendingUsers = async (req, res) => {
   try {
     const currentUserId = req.user.id;
     const isAdmin = req.userDetails && req.userDetails.type === 'admin';
-    
-    const matchCriteria = { 
-      _id: { $ne: new mongoose.Types.ObjectId(currentUserId) }, 
-      type: 'user'
+
+    const matchCriteria = {
+      _id: { $ne: new mongoose.Types.ObjectId(currentUserId) },
+      type: 'user',
     };
-    
+
     if (!isAdmin) {
       matchCriteria.status = 'active';
     }
-    
+
     const users = await User.aggregate([
       { $match: matchCriteria },
       { $sample: { size: 4 } },
@@ -221,7 +227,9 @@ export const getTrendingUsers = async (req, res) => {
       _id: user._id,
       username: user.username,
       fullName: user.fullName,
-      avatar: user.avatar || 'https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png',
+      avatar:
+        user.avatar ||
+        'https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png',
       followers: user.followers.length,
       following: user.following.length,
       isVerified: user.isVerified,
@@ -241,7 +249,6 @@ export const updateUserProfile = async (req, res) => {
     const userId = req.user.id;
     const { fullName, bio, username } = req.body;
     const file = req.file;
-    console.log("File received:", file ? file.originalname : "No file uploaded");
 
     const user = await User.findById(userId);
     if (!user) {
@@ -249,13 +256,15 @@ export const updateUserProfile = async (req, res) => {
     }
 
     if (username && username !== user.username) {
-      const existingUser = await User.findOne({ username: username.toLowerCase() });
+      const existingUser = await User.findOne({
+        username: username.toLowerCase(),
+      });
       if (existingUser) {
-        return res.status(200).json({ status: false, message: 'Username already exists' });
+        return res
+          .status(200)
+          .json({ status: false, message: 'Username already exists' });
       }
     }
-
-    console.log(`Updating profile for user: ${user.username}`);
 
     user.fullName = fullName ? fullName : user.fullName;
     user.bio = bio ? bio : user.bio;
@@ -291,7 +300,12 @@ export const updateUserEmail = async (req, res) => {
       return res.status(404).json({ status: false, message: 'User not found' });
     }
     if (user.email === email) {
-      return res.status(400).json({ status: false, message: 'New email is the same as current email' });
+      return res
+        .status(400)
+        .json({
+          status: false,
+          message: 'New email is the same as current email',
+        });
     }
 
     user.email = email;
@@ -317,7 +331,9 @@ export const updateUserPassword = async (req, res) => {
 
     const isMatch = await bcrypt.compare(currentPassword, user.password);
     if (!isMatch) {
-      return res.status(200).json({ status: false, message: 'Current password is incorrect' });
+      return res
+        .status(200)
+        .json({ status: false, message: 'Current password is incorrect' });
     }
 
     user.password = await bcrypt.hash(newPassword, 12);
@@ -328,8 +344,7 @@ export const updateUserPassword = async (req, res) => {
     });
 
     res.json({ status: true, message: 'Password updated successfully', user });
-  }
-  catch (err) {
+  } catch (err) {
     console.error(err);
     res.status(500).json({ status: false, message: 'Something went wrong' });
   }
@@ -370,25 +385,40 @@ export const updateUserSettings = async (req, res) => {
     }
 
     if (notifications) {
-      const validBooleanFields = ['likes', 'comments', 'follow', 'mention', 'order', 'promotion', 'system', 'warning', 'reportUpdate', 'messages'];
-      
-      validBooleanFields.forEach(field => {
+      const validBooleanFields = [
+        'likes',
+        'comments',
+        'follow',
+        'mention',
+        'order',
+        'promotion',
+        'system',
+        'warning',
+        'reportUpdate',
+        'messages',
+      ];
+
+      validBooleanFields.forEach((field) => {
         if (typeof notifications[field] === 'boolean') {
           user.settings.notifications[field] = notifications[field];
         }
       });
 
-      if (notifications.emailFrequency && ['instant', 'daily', 'weekly'].includes(notifications.emailFrequency)) {
-        user.settings.notifications.emailFrequency = notifications.emailFrequency;
+      if (
+        notifications.emailFrequency &&
+        ['instant', 'daily', 'weekly'].includes(notifications.emailFrequency)
+      ) {
+        user.settings.notifications.emailFrequency =
+          notifications.emailFrequency;
       }
     }
 
     await user.save();
 
-    res.json({ 
-      status: true, 
-      message: 'Settings updated successfully', 
-      settings: user.settings 
+    res.json({
+      status: true,
+      message: 'Settings updated successfully',
+      settings: user.settings,
     });
   } catch (err) {
     console.error(err);
@@ -397,11 +427,7 @@ export const updateUserSettings = async (req, res) => {
 };
 
 export const requestPromotion = async (req, res) => {
-  console.log('=== Promotion Request Started ===');
-  console.log('User ID:', req.user?.id);
-  console.log('Request body:', req.body);
-  console.log('Files received:', req.files ? req.files.length : 0);
-  
+  console.log('Request promotion route/controller hit');
   try {
     const userId = req.user.id;
     const {
@@ -410,79 +436,59 @@ export const requestPromotion = async (req, res) => {
       businessType,
       yearsInBusiness,
       expectedProducts,
-      additionalInfo
+      additionalInfo,
     } = req.body;
 
-    console.log('Form data:', {
-      businessName,
-      businessDescription,
-      businessType,
-      yearsInBusiness,
-      expectedProducts,
-      additionalInfo
-    });
-
     if (!businessName || !businessDescription || !businessType) {
-      console.log('Missing required fields');
-      return res.status(400).json({ 
-        status: false, 
-        message: 'Business name, description, and type are required' 
+      return res.status(400).json({
+        status: false,
+        message: 'Business name, description, and type are required',
       });
     }
 
     const user = await User.findById(userId);
     if (!user) {
-      console.log('User not found:', userId);
       return res.status(404).json({ status: false, message: 'User not found' });
     }
 
     if (user.type !== 'user') {
-      return res.status(400).json({ status: false, message: 'Only regular users can request promotion' });
+      return res
+        .status(400)
+        .json({
+          status: false,
+          message: 'Only regular users can request promotion',
+        });
     }
 
-    const existingRequest = await PromotionRequest.findOne({ 
-      userId: userId, 
-      status: 'pending' 
+    const existingRequest = await PromotionRequest.findOne({
+      userId: userId,
+      status: 'pending',
     });
 
     if (existingRequest) {
-      return res.status(400).json({ 
-        status: false, 
-        message: 'You already have a pending promotion request' 
+      return res.status(400).json({
+        status: false,
+        message: 'You already have a pending promotion request',
       });
     }
 
     const proofDocuments = [];
-    console.log('Files check - req.files:', req.files);
-    console.log('Files type:', typeof req.files);
-    console.log('Files length:', req.files ? req.files.length : 'undefined');
-    
+
     if (req.files && req.files.length > 0) {
-      console.log('Processing', req.files.length, 'files');
       for (const file of req.files) {
-        console.log('File details:', {
-          filename: file.filename,
-          originalname: file.originalname,
-          path: file.path,
-          mimetype: file.mimetype
-        });
         proofDocuments.push({
           filename: file.filename,
           originalName: file.originalname,
           path: file.path,
-          mimetype: file.mimetype
+          mimetype: file.mimetype,
         });
       }
     } else {
-      console.log('No files received or files array is empty');
-      return res.status(400).json({ 
-        status: false, 
-        message: 'At least one proof document is required' 
+      return res.status(400).json({
+        status: false,
+        message: 'At least one proof document is required',
       });
     }
-
-    console.log('Received files:', req.files ? req.files.length : 0);
-    console.log('Processed documents:', proofDocuments.length);
 
     const promotionRequest = new PromotionRequest({
       userId,
@@ -494,7 +500,7 @@ export const requestPromotion = async (req, res) => {
       additionalInfo,
       proofDocuments,
       status: 'pending',
-      submittedAt: new Date()
+      submittedAt: new Date(),
     });
 
     await promotionRequest.save();
@@ -508,25 +514,23 @@ export const requestPromotion = async (req, res) => {
         message: `${user.fullName} has requested promotion to shop owner`,
         data: {
           requestId: promotionRequest._id,
-          userId: userId
-        }
+          userId: userId,
+        },
       });
       await notification.save();
     }
 
-    console.log('Promotion request created successfully');
-    res.json({ 
-      status: true, 
+    res.json({
+      status: true,
       message: 'Promotion request submitted successfully',
-      requestId: promotionRequest._id
+      requestId: promotionRequest._id,
     });
   } catch (err) {
-    console.error('Error in requestPromotion:', err);
-    console.error('Error stack:', err.stack);
-    res.status(500).json({ 
-      status: false, 
+    console.error('Error creating promotion request:', err);
+    res.status(500).json({
+      status: false,
       message: 'Something went wrong while processing your request',
-      error: err.message 
+      error: err.message,
     });
   }
 };
@@ -538,23 +542,32 @@ export const approvePromotionRequest = async (req, res) => {
     const { requestId } = req.params;
     const { action, comments } = req.body;
 
-    const promotionRequest = await PromotionRequest.findById(requestId).populate('userId');
+    const promotionRequest = await PromotionRequest.findById(
+      requestId
+    ).populate('userId');
     if (!promotionRequest) {
-      return res.status(404).json({ status: false, message: 'Promotion request not found' });
+      return res
+        .status(404)
+        .json({ status: false, message: 'Promotion request not found' });
     }
 
     if (promotionRequest.status !== 'pending') {
-      return res.status(400).json({ status: false, message: 'This request has already been processed' });
+      return res
+        .status(400)
+        .json({
+          status: false,
+          message: 'This request has already been processed',
+        });
     }
 
     const user = promotionRequest.userId;
 
     if (action === 'approve') {
       user.type = 'shop';
-      
+
       user.fullName = promotionRequest.businessName;
       user.bio = promotionRequest.businessDescription;
-      
+
       user.shop = {
         coverImageUrl: '',
         location: '',
@@ -565,7 +578,7 @@ export const approvePromotionRequest = async (req, res) => {
           instagram: '',
           facebook: '',
           twitter: '',
-          tiktok: ''
+          tiktok: '',
         },
         categories: [],
         productIds: [],
@@ -573,7 +586,7 @@ export const approvePromotionRequest = async (req, res) => {
         reviewCount: 0,
         businessType: promotionRequest.businessType,
         yearsInBusiness: promotionRequest.yearsInBusiness,
-        expectedProducts: promotionRequest.expectedProducts
+        expectedProducts: promotionRequest.expectedProducts,
       };
 
       if (!user.onboarding) {
@@ -582,27 +595,27 @@ export const approvePromotionRequest = async (req, res) => {
           step: 0,
           profile: {
             completed: false,
-            interests: []
+            interests: [],
           },
           preferences: {
             completed: false,
-            favoriteCategories: []
-          }
+            favoriteCategories: [],
+          },
         };
       } else {
         user.onboarding.isComplete = false;
         user.onboarding.step = 0;
-        
+
         if (!user.onboarding.profile) {
           user.onboarding.profile = {
             completed: false,
-            interests: []
+            interests: [],
           };
         }
         if (!user.onboarding.preferences) {
           user.onboarding.preferences = {
             completed: false,
-            favoriteCategories: []
+            favoriteCategories: [],
           };
         }
       }
@@ -622,17 +635,16 @@ export const approvePromotionRequest = async (req, res) => {
         message: `Congratulations! Your shop "${promotionRequest.businessName}" has been approved. You can now start listing products.`,
         data: {
           requestId: promotionRequest._id,
-          newShopName: promotionRequest.businessName
-        }
+          newShopName: promotionRequest.businessName,
+        },
       });
       await notification.save();
 
-      res.json({ 
-        status: true, 
+      res.json({
+        status: true,
         message: 'Promotion request approved successfully',
-        user: user
+        user: user,
       });
-
     } else if (action === 'reject') {
       promotionRequest.status = 'rejected';
       promotionRequest.reviewedAt = new Date();
@@ -648,21 +660,24 @@ export const approvePromotionRequest = async (req, res) => {
         data: {
           requestId: promotionRequest._id,
           status: 'rejected',
-          comments: comments
-        }
+          comments: comments,
+        },
       });
       await notification.save();
 
-      res.json({ 
-        status: true, 
+      res.json({
+        status: true,
         message: 'Promotion request rejected',
-        comments: comments
+        comments: comments,
       });
-
     } else {
-      return res.status(400).json({ status: false, message: 'Invalid action. Use "approve" or "reject"' });
+      return res
+        .status(400)
+        .json({
+          status: false,
+          message: 'Invalid action. Use "approve" or "reject"',
+        });
     }
-
   } catch (err) {
     console.error(err);
     res.status(500).json({ status: false, message: 'Something went wrong' });
@@ -686,17 +701,16 @@ export const getPromotionRequests = async (req, res) => {
 
     const total = await PromotionRequest.countDocuments(query);
 
-    res.json({ 
-      status: true, 
+    res.json({
+      status: true,
       requests: promotionRequests,
       pagination: {
         current: page,
         total: Math.ceil(total / limit),
         count: promotionRequests.length,
-        totalCount: total
-      }
+        totalCount: total,
+      },
     });
-
   } catch (err) {
     console.error(err);
     res.status(500).json({ status: false, message: 'Something went wrong' });
@@ -704,12 +718,10 @@ export const getPromotionRequests = async (req, res) => {
 };
 
 export const completeOnboarding = async (req, res) => {
+  console.log('Complete onboarding route/controller hit');
   try {
     const userId = req.user.id;
     const { onboarding } = req.body;
-
-    console.log('Completing onboarding for user:', userId);
-    console.log('Onboarding data:', onboarding);
 
     const user = await User.findById(userId);
     if (!user) {
@@ -722,11 +734,11 @@ export const completeOnboarding = async (req, res) => {
         ...onboarding.profile,
         completed: true,
       };
-      
+
       if (cleanedProfile.gender === '') {
         cleanedProfile.gender = null;
       }
-      
+
       user.onboarding.profile = cleanedProfile;
     }
 
@@ -736,14 +748,14 @@ export const completeOnboarding = async (req, res) => {
         ...onboarding.preferences,
         completed: true,
       };
-      
+
       if (cleanedPreferences.shoppingFrequency === '') {
         cleanedPreferences.shoppingFrequency = null;
       }
       if (cleanedPreferences.budgetRange === '') {
         cleanedPreferences.budgetRange = null;
       }
-      
+
       user.onboarding.preferences = cleanedPreferences;
     }
 
@@ -755,32 +767,33 @@ export const completeOnboarding = async (req, res) => {
 
     await user.save();
 
-    res.json({ 
-      status: true, 
+    res.json({
+      status: true,
       message: 'Onboarding completed successfully',
       user: {
         _id: user._id,
-        onboarding: user.onboarding
-      }
+        onboarding: user.onboarding,
+      },
     });
   } catch (err) {
     console.error('Error completing onboarding:', err);
-    res.status(500).json({ 
-      status: false, 
+    res.status(500).json({
+      status: false,
       message: 'Failed to complete onboarding',
-      error: err.message 
+      error: err.message,
     });
   }
 };
 
 export const uploadImage = async (req, res) => {
+  console.log('Upload image route/controller hit');
   try {
     const file = req.file;
-    
+
     if (!file) {
-      return res.status(400).json({ 
-        status: false, 
-        message: 'No image file provided' 
+      return res.status(400).json({
+        status: false,
+        message: 'No image file provided',
       });
     }
 
@@ -789,27 +802,24 @@ export const uploadImage = async (req, res) => {
       message: 'Image uploaded successfully',
       data: {
         url: file.path,
-        id: file.filename
-      }
+        id: file.filename,
+      },
     });
   } catch (error) {
     console.error('Error uploading image:', error);
     res.status(500).json({
       status: false,
       message: 'Failed to upload image',
-      error: error.message
+      error: error.message,
     });
   }
 };
 
 export const completeShopOnboarding = async (req, res) => {
+  console.log('Complete shop onboarding route/controller hit');
   try {
     const userId = req.user.id;
     const { onboarding, avatar, shop } = req.body;
-
-    console.log('Completing shop onboarding for user:', userId);
-    console.log('Shop onboarding data:', onboarding);
-    console.log('Shop data:', shop);
 
     const user = await User.findById(userId);
     if (!user) {
@@ -817,9 +827,9 @@ export const completeShopOnboarding = async (req, res) => {
     }
 
     if (user.type !== 'shop') {
-      return res.status(400).json({ 
-        status: false, 
-        message: 'Only shop owners can complete shop onboarding' 
+      return res.status(400).json({
+        status: false,
+        message: 'Only shop owners can complete shop onboarding',
       });
     }
 
@@ -829,25 +839,25 @@ export const completeShopOnboarding = async (req, res) => {
         step: 0,
         profile: {
           completed: false,
-          interests: []
+          interests: [],
         },
         preferences: {
           completed: false,
-          favoriteCategories: []
-        }
+          favoriteCategories: [],
+        },
       };
     }
 
     if (!user.onboarding.profile) {
       user.onboarding.profile = {
         completed: false,
-        interests: []
+        interests: [],
       };
     }
     if (!user.onboarding.preferences) {
       user.onboarding.preferences = {
         completed: false,
-        favoriteCategories: []
+        favoriteCategories: [],
       };
     }
 
@@ -856,13 +866,6 @@ export const completeShopOnboarding = async (req, res) => {
     if (onboarding.isComplete) {
       user.onboarding.completedAt = new Date();
     }
-
-    console.log('About to save user with onboarding:', {
-      userId: user._id,
-      isComplete: user.onboarding.isComplete,
-      step: user.onboarding.step,
-      completedAt: user.onboarding.completedAt
-    });
 
     if (shop) {
       if (!user.shop) {
@@ -897,51 +900,37 @@ export const completeShopOnboarding = async (req, res) => {
       }
     }
 
-    console.log('Final onboarding data to be saved:', user.onboarding);
-    console.log('Final shop data to be saved:', user.shop);
-
     if (avatar) {
       user.avatar = avatar;
     }
 
     await user.save();
 
-    console.log('User saved successfully. Verifying save:', {
-      userId: user._id,
-      isComplete: user.onboarding.isComplete,
-      step: user.onboarding.step,
-      completedAt: user.onboarding.completedAt
-    });
-
-    console.log('Shop onboarding saved successfully for user:', userId);
-
-    res.json({ 
-      status: true, 
+    res.json({
+      status: true,
       message: 'Shop onboarding completed successfully',
       user: {
         _id: user._id,
         onboarding: user.onboarding,
         shop: user.shop,
-        avatar: user.avatar
-      }
+        avatar: user.avatar,
+      },
     });
   } catch (err) {
     console.error('Error completing shop onboarding:', err);
-    res.status(500).json({ 
-      status: false, 
+    res.status(500).json({
+      status: false,
       message: 'Failed to complete shop onboarding',
-      error: err.message 
+      error: err.message,
     });
   }
 };
 
 export const updateShopDetails = async (req, res) => {
+  console.log('Update shop details route/controller hit');
   try {
     const userId = req.user.id;
     const { shop } = req.body;
-
-    console.log('Updating shop details for user:', userId);
-    console.log('Shop data:', shop);
 
     const user = await User.findById(userId);
     if (!user) {
@@ -949,9 +938,9 @@ export const updateShopDetails = async (req, res) => {
     }
 
     if (user.type !== 'shop') {
-      return res.status(400).json({ 
-        status: false, 
-        message: 'Only shop owners can update shop details' 
+      return res.status(400).json({
+        status: false,
+        message: 'Only shop owners can update shop details',
       });
     }
 
@@ -983,22 +972,20 @@ export const updateShopDetails = async (req, res) => {
 
     await user.save();
 
-    console.log('Shop details updated successfully for user:', userId);
-
-    res.json({ 
-      status: true, 
+    res.json({
+      status: true,
       message: 'Shop details updated successfully',
       user: {
         _id: user._id,
-        shop: user.shop
-      }
+        shop: user.shop,
+      },
     });
   } catch (err) {
     console.error('Error updating shop details:', err);
-    res.status(500).json({ 
-      status: false, 
+    res.status(500).json({
+      status: false,
       message: 'Failed to update shop details',
-      error: err.message 
+      error: err.message,
     });
   }
 };

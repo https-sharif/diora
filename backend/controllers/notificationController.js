@@ -34,7 +34,6 @@ export const addNotification = async (req, res) => {
     }
 
     if (targetUser.status === 'banned' || targetUser.status === 'suspended') {
-      console.log(`Not sending notification to ${targetUser.status} user ${userId}`);
       return res.status(200).json({
         status: true,
         message: 'User status prevents notification delivery',
@@ -42,24 +41,26 @@ export const addNotification = async (req, res) => {
     }
 
     const notificationTypeMap = {
-      'like': 'likes',
-      'likes': 'likes',
-      'comment': 'comments',
-      'comments': 'comments',
-      'follow': 'follow',
-      'mention': 'mention',
-      'order': 'order',
-      'promotion': 'promotion',
-      'system': 'system',
-      'warning': 'warning',
-      'reportUpdate': 'reportUpdate',
-      'message': 'messages',
-      'messages': 'messages',
+      like: 'likes',
+      likes: 'likes',
+      comment: 'comments',
+      comments: 'comments',
+      follow: 'follow',
+      mention: 'mention',
+      order: 'order',
+      promotion: 'promotion',
+      system: 'system',
+      warning: 'warning',
+      reportUpdate: 'reportUpdate',
+      message: 'messages',
+      messages: 'messages',
     };
 
     const settingKey = notificationTypeMap[type];
-    if (settingKey && targetUser.settings?.notifications?.[settingKey] === false) {
-      console.log(`Notification type '${type}' is disabled for user ${userId}`);
+    if (
+      settingKey &&
+      targetUser.settings?.notifications?.[settingKey] === false
+    ) {
       return res.status(200).json({
         status: true,
         message: 'Notification type disabled for user',
@@ -95,7 +96,6 @@ export const addNotification = async (req, res) => {
 
     if (targetSocketId) {
       io.to(targetSocketId).emit('notification', newNotification);
-      console.log(`Socket notification sent to user ${userId}`);
     }
 
     res.status(201).json({ status: true, notification: newNotification });
@@ -123,11 +123,12 @@ export const getNotifications = async (req, res) => {
     if (!notifications || notifications.length === 0) {
       return res
         .status(200)
-        .json({ status: true, message: 'No notifications found', notifications: [] });
+        .json({
+          status: true,
+          message: 'No notifications found',
+          notifications: [],
+        });
     }
-    console.log(
-      `Found ${notifications.length} notifications for user ${userId}`
-    );
 
     res.json({ status: true, notifications });
   } catch (err) {

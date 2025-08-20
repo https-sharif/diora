@@ -1,8 +1,20 @@
 import mongoose from 'mongoose';
 
 const userSchema = new mongoose.Schema({
-  email: { type: String, required: true, unique: true, lowercase: true, trim: true },
-  username: { type: String, required: true, unique: true, trim: true, lowercase: true },
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+    lowercase: true,
+    trim: true,
+  },
+  username: {
+    type: String,
+    required: true,
+    unique: true,
+    trim: true,
+    lowercase: true,
+  },
   fullName: { type: String, required: true, trim: true },
   password: { type: String, required: true },
   avatar: { type: String, default: null },
@@ -16,7 +28,11 @@ const userSchema = new mongoose.Schema({
   posts: { type: Number, default: 0 },
   likedPosts: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Post' }],
   type: { type: String, enum: ['user', 'shop', 'admin'], default: 'user' },
-  status: { type: String, enum: ['active', 'suspended', 'banned'], default: 'active' },
+  status: {
+    type: String,
+    enum: ['active', 'suspended', 'banned'],
+    default: 'active',
+  },
   suspendedUntil: { type: Date, default: null },
   suspensionReason: { type: String, default: null },
   banReason: { type: String, default: null },
@@ -29,15 +45,27 @@ const userSchema = new mongoose.Schema({
     profile: {
       completed: { type: Boolean, default: false },
       dateOfBirth: { type: Date, default: null },
-      gender: { type: String, enum: ['male', 'female', 'other', 'prefer-not-to-say'], default: null },
+      gender: {
+        type: String,
+        enum: ['male', 'female', 'other', 'prefer-not-to-say'],
+        default: null,
+      },
       location: { type: String, default: '' },
       interests: [{ type: String }],
     },
     preferences: {
       completed: { type: Boolean, default: false },
       favoriteCategories: [{ type: String }],
-      shoppingFrequency: { type: String, enum: ['rarely', 'monthly', 'weekly', 'daily'], default: null },
-      budgetRange: { type: String, enum: ['under-50', '50-200', '200-500', '500-1000', 'over-1000'], default: null },
+      shoppingFrequency: {
+        type: String,
+        enum: ['rarely', 'monthly', 'weekly', 'daily'],
+        default: null,
+      },
+      budgetRange: {
+        type: String,
+        enum: ['under-50', '50-200', '200-500', '500-1000', 'over-1000'],
+        default: null,
+      },
     },
   },
   shop: {
@@ -75,7 +103,11 @@ const userSchema = new mongoose.Schema({
       warning: { type: Boolean, default: true },
       reportUpdate: { type: Boolean, default: true },
       messages: { type: Boolean, default: true },
-      emailFrequency: { type: String, enum: ['instant', 'daily', 'weekly'], default: 'instant' },
+      emailFrequency: {
+        type: String,
+        enum: ['instant', 'daily', 'weekly'],
+        default: 'instant',
+      },
     },
   },
 });

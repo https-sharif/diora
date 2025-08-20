@@ -10,14 +10,26 @@ import {
   Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Settings, Grid2x2 as Grid, Star, LogOut, Check, Package, BarChart3, MapPin, Phone, Mail, Globe } from 'lucide-react-native';
+import {
+  Settings,
+  Grid2x2 as Grid,
+  Star,
+  LogOut,
+  Check,
+  Package,
+  BarChart3,
+  MapPin,
+  Phone,
+  Mail,
+  Globe,
+} from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Post } from '@/types/Post';
 import { Product } from '@/types/Product';
-import { Theme } from '@/types/Theme';  
-import { userService, postService, productService } from '@/services';
+import { Theme } from '@/types/Theme';
+import { postService, productService } from '@/services';
 
 const createStyles = (theme: Theme) =>
   StyleSheet.create({
@@ -304,56 +316,34 @@ const createStyles = (theme: Theme) =>
 
 export default function ShopProfile() {
   const { user, logout, token } = useAuth();
-  const [activeTab, setActiveTab] = React.useState<'posts' | 'products' | 'liked'>('posts');
+  const [activeTab, setActiveTab] = React.useState<
+    'posts' | 'products' | 'liked'
+  >('posts');
   const { theme } = useTheme();
   const styles = createStyles(theme);
   const [myPosts, setMyPosts] = useState([]);
   const [myProducts, setMyProducts] = useState([]);
   const [myLikedPosts, setMyLikedPosts] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [shopProfile, setShopProfile] = useState(null);
 
   useEffect(() => {
-    const fetchShopProfile = async () => {
-      if (!user?._id || !token) return;
-      
-      try {
-        setLoading(true);
-
-        console.log('Fetching shop profile for:', user._id);
-        const shop = await userService.getUserById(user._id, token);
-        setShopProfile(shop);
-      } catch (error) {
-        console.error('Error fetching shop profile:', error);
-        setShopProfile(null);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     const fetchPosts = async () => {
       if (!user?._id || !token) return;
-      
+
       try {
         const posts = await postService.getUserPosts(user._id, token);
         setMyPosts(posts);
-      } catch (error) {
-        console.error('Error fetching posts:', error);
-      }
+      } catch {}
     };
 
     const fetchProducts = async () => {
       if (!user?._id || !token) return;
-      
+
       try {
         const products = await productService.getShopProducts(user._id, token);
         setMyProducts(products);
-      } catch (error) {
-        console.error('Error fetching products:', error);
-      }
+      } catch {}
     };
 
-    fetchShopProfile();
     fetchPosts();
     fetchProducts();
   }, [user, token]);
@@ -367,17 +357,16 @@ export default function ShopProfile() {
 
       const userPosts = await postService.getUserPosts(user._id, token);
       setMyPosts(userPosts);
-
-    } catch (err) {
-      console.error(err);
-    }
+    } catch {}
   };
 
   useEffect(() => {
     if (user?._id) fetchData();
   }, [user, user?.posts, user?.likedPosts, token]);
 
-  const handleTabPress = (tab: 'posts' | 'products' | 'liked') => { setActiveTab(tab) };
+  const handleTabPress = (tab: 'posts' | 'products' | 'liked') => {
+    setActiveTab(tab);
+  };
 
   const handlePostPress = (postId: string) => {
     router.push(`/post/${postId}`);
@@ -396,12 +385,15 @@ export default function ShopProfile() {
   };
 
   const handleViewOrdersPress = () => {
-    console.log('View Orders pressed');
+    router.push('/pastOrder');
   };
 
-  const handleContactPress = (type: 'email' | 'phone' | 'website', value: string) => {
+  const handleContactPress = (
+    type: 'email' | 'phone' | 'website',
+    value: string
+  ) => {
     if (!value) return;
-    
+
     let url = '';
     switch (type) {
       case 'email':
@@ -414,7 +406,7 @@ export default function ShopProfile() {
         url = value.startsWith('http') ? value : `https://${value}`;
         break;
     }
-    
+
     Linking.openURL(url);
   };
 
@@ -426,8 +418,8 @@ export default function ShopProfile() {
       >
         <Image source={{ uri: item.imageUrl }} style={styles.postImage} />
       </TouchableOpacity>
-    )
-  }
+    );
+  };
 
   const renderProduct = ({ item }: { item: Product }) => {
     return (
@@ -437,12 +429,14 @@ export default function ShopProfile() {
       >
         <Image source={{ uri: item.imageUrl[0] }} style={styles.productImage} />
         <View style={styles.productInfo}>
-          <Text style={styles.productName} numberOfLines={2}>{item.name}</Text>
+          <Text style={styles.productName} numberOfLines={2}>
+            {item.name}
+          </Text>
           <Text style={styles.productPrice}>${item.price.toFixed(2)}</Text>
         </View>
       </TouchableOpacity>
-    )
-  }
+    );
+  };
 
   if (!user) {
     return null;
@@ -466,11 +460,13 @@ export default function ShopProfile() {
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <Image 
-          source={{ 
-            uri: user.shop?.coverImageUrl || 'https://images.unsplash.com/photo-1557821552-17105176677c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1932&h=1087'
-          }} 
-          style={styles.coverImage} 
+        <Image
+          source={{
+            uri:
+              user.shop?.coverImageUrl ||
+              'https://images.unsplash.com/photo-1557821552-17105176677c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1932&h=1087',
+          }}
+          style={styles.coverImage}
         />
 
         <View style={styles.shopSection}>
@@ -486,7 +482,9 @@ export default function ShopProfile() {
                 <Text style={styles.statLabel}>Products</Text>
               </View>
               <View style={styles.statItem}>
-                <Text style={styles.statNumber}>{user?.followers?.length || 0}</Text>
+                <Text style={styles.statNumber}>
+                  {user?.followers?.length || 0}
+                </Text>
                 <Text style={styles.statLabel}>Followers</Text>
               </View>
             </View>
@@ -511,34 +509,46 @@ export default function ShopProfile() {
                   <Text style={styles.contactText}>{user.shop.location}</Text>
                 </View>
               )}
-              
+
               {user.shop?.contactPhone && (
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.contactItem}
-                  onPress={() => handleContactPress('phone', user.shop?.contactPhone || '')}
+                  onPress={() =>
+                    handleContactPress('phone', user.shop?.contactPhone || '')
+                  }
                 >
                   <Phone size={16} color={theme.textSecondary} />
-                  <Text style={styles.contactLinkText}>{user.shop.contactPhone}</Text>
+                  <Text style={styles.contactLinkText}>
+                    {user.shop.contactPhone}
+                  </Text>
                 </TouchableOpacity>
               )}
-              
+
               {user.shop?.contactEmail && (
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.contactItem}
-                  onPress={() => handleContactPress('email', user.shop?.contactEmail || '')}
+                  onPress={() =>
+                    handleContactPress('email', user.shop?.contactEmail || '')
+                  }
                 >
                   <Mail size={16} color={theme.textSecondary} />
-                  <Text style={styles.contactLinkText}>{user.shop.contactEmail}</Text>
+                  <Text style={styles.contactLinkText}>
+                    {user.shop.contactEmail}
+                  </Text>
                 </TouchableOpacity>
               )}
-              
+
               {user.shop?.website && (
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.contactItem}
-                  onPress={() => handleContactPress('website', user.shop?.website || '')}
+                  onPress={() =>
+                    handleContactPress('website', user.shop?.website || '')
+                  }
                 >
                   <Globe size={16} color={theme.primary} />
-                  <Text style={styles.contactLinkText}>{user.shop.website}</Text>
+                  <Text style={styles.contactLinkText}>
+                    {user.shop.website}
+                  </Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -565,7 +575,7 @@ export default function ShopProfile() {
               <Package size={16} strokeWidth={2} color={theme.text} />
               <Text style={styles.viewOrderText}>View Orders</Text>
             </TouchableOpacity>
-            
+
             <TouchableOpacity
               style={styles.analyticsButton}
               onPress={handleAnalyticsPress}
@@ -595,13 +605,18 @@ export default function ShopProfile() {
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.tab, activeTab === 'products' ? styles.activeTab : {}]}
+            style={[
+              styles.tab,
+              activeTab === 'products' ? styles.activeTab : {},
+            ]}
             onPress={() => handleTabPress('products')}
             activeOpacity={0.7}
           >
             <Package
               size={activeTab === 'products' ? 22 : 20}
-              color={activeTab === 'products' ? theme.text : theme.textSecondary}
+              color={
+                activeTab === 'products' ? theme.text : theme.textSecondary
+              }
             />
             <Text
               style={

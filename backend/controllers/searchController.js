@@ -3,7 +3,7 @@ import User from '../models/User.js';
 import Product from '../models/Product.js';
 
 export const getSearchResults = async (req, res) => {
-  console.log('Search route/controller hit');
+  console.log('Get search results route/controller hit');
   try {
     const {
       query,
@@ -18,7 +18,6 @@ export const getSearchResults = async (req, res) => {
     } = req.query;
 
     const isAdmin = req.userDetails && req.userDetails.type === 'admin';
-    console.log(contentType);
 
     const searchQuery = query?.trim() || '';
     const hasQuery = searchQuery !== '';
@@ -156,11 +155,10 @@ export const getSearchResults = async (req, res) => {
 };
 
 export const searchUsers = async (req, res) => {
+  console.log('Search user route/controller hit');
   try {
     const { q: query } = req.query;
     const userId = req.userDetails?._id;
-
-    console.log('User search query:', query);
 
     if (!query || query.trim() === '') {
       const user = await User.findById(userId).select('following type');
@@ -192,8 +190,6 @@ export const searchUsers = async (req, res) => {
       .select('username fullName avatar email createdAt')
       .limit(20);
 
-    console.log(`Found ${users.length} users for query: ${searchQuery}`);
-
     res.status(200).json({
       status: true,
       users: users,
@@ -210,11 +206,10 @@ export const searchUsers = async (req, res) => {
 };
 
 export const searchShops = async (req, res) => {
+  console.log('Search shop route/controller hit');
   try {
     const { q: query } = req.query;
     const userId = req.userDetails?._id;
-
-    console.log('Shop search query:', query);
 
     if (!query || query.trim() === '') {
       const user = await User.findById(userId).select('following');
@@ -246,8 +241,6 @@ export const searchShops = async (req, res) => {
     })
       .select('username fullName shopName avatar email createdAt')
       .limit(20);
-
-    console.log(`Found ${shops.length} shops for query: ${searchQuery}`);
 
     res.status(200).json({
       status: true,

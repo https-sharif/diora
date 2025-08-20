@@ -1,7 +1,15 @@
 import express from 'express';
 import { verifyToken } from '../middleware/auth.js';
 import { parser } from '../utils/cloudinary.js';
-import { getAllProducts, getProductById, createProduct, updateProduct, deleteProduct, getTrendingProducts, getProductsByShop } from '../controllers/productController.js';
+import {
+  getAllProducts,
+  getProductById,
+  createProduct,
+  updateProduct,
+  deleteProduct,
+  getTrendingProducts,
+  getProductsByShop,
+} from '../controllers/productController.js';
 
 const router = express.Router();
 router.use(verifyToken);

@@ -11,7 +11,15 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ArrowLeft, Camera, Save, Globe, Phone, Mail, MapPin } from 'lucide-react-native';
+import {
+  ArrowLeft,
+  Camera,
+  Save,
+  Globe,
+  Phone,
+  Mail,
+  MapPin,
+} from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -240,8 +248,13 @@ export default function EditShopProfile() {
   });
 
   const BUSINESS_CATEGORIES = [
-    'Women\'s Clothing', 'Men\'s Clothing', 'Shoes & Footwear', 'Bags & Accessories', 
-    'Jewelry & Watches', 'Activewear & Sports', 'Other Fashion'
+    "Women's Clothing",
+    "Men's Clothing",
+    'Shoes & Footwear',
+    'Bags & Accessories',
+    'Jewelry & Watches',
+    'Activewear & Sports',
+    'Other Fashion',
   ];
 
   const [selectedFiles, setSelectedFiles] = useState<{
@@ -252,7 +265,7 @@ export default function EditShopProfile() {
   const handleInputChange = (field: string, value: string) => {
     if (field.startsWith('social.')) {
       const socialField = field.replace('social.', '');
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         socialLinks: {
           ...prev.socialLinks,
@@ -260,7 +273,7 @@ export default function EditShopProfile() {
         },
       }));
     } else {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         [field]: value,
       }));
@@ -268,19 +281,23 @@ export default function EditShopProfile() {
   };
 
   const toggleCategory = (category: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       categories: prev.categories.includes(category)
         ? prev.categories.filter((c: string) => c !== category)
-        : [...prev.categories, category]
+        : [...prev.categories, category],
     }));
   };
 
   const pickImage = async (type: 'avatar' | 'cover') => {
-    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    
+    const permissionResult =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
+
     if (permissionResult.granted === false) {
-      Alert.alert('Permission Required', 'Permission to access camera roll is required!');
+      Alert.alert(
+        'Permission Required',
+        'Permission to access camera roll is required!'
+      );
       return;
     }
 
@@ -293,20 +310,20 @@ export default function EditShopProfile() {
 
     if (!result.canceled && result.assets[0]) {
       const asset = result.assets[0];
-      
-      setSelectedFiles(prev => ({
+
+      setSelectedFiles((prev) => ({
         ...prev,
         [type === 'avatar' ? 'avatar' : 'coverImage']: {
           uri: asset.uri,
           type: 'image/jpeg',
           name: `${type}_${Date.now()}.jpg`,
-        }
+        },
       }));
 
       if (type === 'avatar') {
-        setFormData(prev => ({ ...prev, avatar: asset.uri }));
+        setFormData((prev) => ({ ...prev, avatar: asset.uri }));
       } else {
-        setFormData(prev => ({ ...prev, coverImageUrl: asset.uri }));
+        setFormData((prev) => ({ ...prev, coverImageUrl: asset.uri }));
       }
     }
   };
@@ -316,39 +333,48 @@ export default function EditShopProfile() {
       setSaving(true);
 
       const requestFormData = new FormData();
-      
+
       requestFormData.append('fullName', formData.fullName);
       requestFormData.append('bio', formData.bio);
       requestFormData.append('location', formData.location);
       requestFormData.append('contactEmail', formData.contactEmail);
       requestFormData.append('contactPhone', formData.contactPhone);
       requestFormData.append('website', formData.website);
-      requestFormData.append('socialLinks', JSON.stringify(formData.socialLinks));
+      requestFormData.append(
+        'socialLinks',
+        JSON.stringify(formData.socialLinks)
+      );
       requestFormData.append('categories', JSON.stringify(formData.categories));
-      
+
       if (selectedFiles.avatar) {
         requestFormData.append('avatar', selectedFiles.avatar as any);
       }
-      
+
       if (selectedFiles.coverImage) {
         requestFormData.append('coverImage', selectedFiles.coverImage as any);
       }
 
-      const response = await axios.put(`${config.apiUrl}/api/shop/profile`, requestFormData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await axios.put(
+        `${config.apiUrl}/api/shop/profile`,
+        requestFormData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       if (response.data.status) {
         Alert.alert('Success', 'Profile updated successfully!');
         setUser(response.data.user);
         router.back();
       } else {
-        Alert.alert('Error', response.data.message || 'Failed to update profile');
+        Alert.alert(
+          'Error',
+          response.data.message || 'Failed to update profile'
+        );
       }
-    } catch (error) {
-      console.error('Error updating profile:', error);
+    } catch {
       Alert.alert('Error', 'Failed to update profile. Please try again.');
     } finally {
       setSaving(false);
@@ -368,7 +394,10 @@ export default function EditShopProfile() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
           <ArrowLeft size={24} color={theme.text} />
         </TouchableOpacity>
         <Text style={styles.title}>Edit Shop Profile</Text>
@@ -396,7 +425,10 @@ export default function EditShopProfile() {
             onPress={() => pickImage('cover')}
           >
             {formData.coverImageUrl ? (
-              <Image source={{ uri: formData.coverImageUrl }} style={styles.coverImage} />
+              <Image
+                source={{ uri: formData.coverImageUrl }}
+                style={styles.coverImage}
+              />
             ) : null}
             <View style={styles.coverImageOverlay}>
               <View style={styles.imageButton}>
@@ -415,7 +447,10 @@ export default function EditShopProfile() {
             onPress={() => pickImage('avatar')}
           >
             {formData.avatar ? (
-              <Image source={{ uri: formData.avatar }} style={styles.profileImage} />
+              <Image
+                source={{ uri: formData.avatar }}
+                style={styles.profileImage}
+              />
             ) : null}
             <View style={styles.profileImageOverlay}>
               <Camera size={20} color="white" />
@@ -425,7 +460,7 @@ export default function EditShopProfile() {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Basic Information</Text>
-          
+
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Shop Name</Text>
             <TextInput
@@ -452,7 +487,7 @@ export default function EditShopProfile() {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Contact Information</Text>
-          
+
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Location</Text>
             <View style={styles.socialInput}>
@@ -478,7 +513,9 @@ export default function EditShopProfile() {
               <TextInput
                 style={styles.socialTextInput}
                 value={formData.contactEmail}
-                onChangeText={(value) => handleInputChange('contactEmail', value)}
+                onChangeText={(value) =>
+                  handleInputChange('contactEmail', value)
+                }
                 placeholder="contact@shop.com"
                 placeholderTextColor={theme.textSecondary}
                 keyboardType="email-address"
@@ -495,7 +532,9 @@ export default function EditShopProfile() {
               <TextInput
                 style={styles.socialTextInput}
                 value={formData.contactPhone}
-                onChangeText={(value) => handleInputChange('contactPhone', value)}
+                onChangeText={(value) =>
+                  handleInputChange('contactPhone', value)
+                }
                 placeholder="+1 (555) 123-4567"
                 placeholderTextColor={theme.textSecondary}
                 keyboardType="phone-pad"
@@ -523,24 +562,33 @@ export default function EditShopProfile() {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Business Categories</Text>
-          <Text style={[styles.label, { marginBottom: 12, color: theme.textSecondary }]}>
+          <Text
+            style={[
+              styles.label,
+              { marginBottom: 12, color: theme.textSecondary },
+            ]}
+          >
             Select categories that best describe your products
           </Text>
-          
+
           <View style={styles.categoriesContainer}>
             {BUSINESS_CATEGORIES.map((category) => (
               <TouchableOpacity
                 key={category}
                 style={[
                   styles.categoryItem,
-                  formData.categories.includes(category) && styles.categoryItemSelected
+                  formData.categories.includes(category) &&
+                    styles.categoryItemSelected,
                 ]}
                 onPress={() => toggleCategory(category)}
               >
-                <Text style={[
-                  styles.categoryText,
-                  formData.categories.includes(category) && styles.categoryTextSelected
-                ]}>
+                <Text
+                  style={[
+                    styles.categoryText,
+                    formData.categories.includes(category) &&
+                      styles.categoryTextSelected,
+                  ]}
+                >
                   {category}
                 </Text>
               </TouchableOpacity>
@@ -550,7 +598,7 @@ export default function EditShopProfile() {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Social Media</Text>
-          
+
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Facebook</Text>
             <View style={styles.socialInput}>
@@ -560,7 +608,9 @@ export default function EditShopProfile() {
               <TextInput
                 style={styles.socialTextInput}
                 value={formData.socialLinks.facebook}
-                onChangeText={(value) => handleInputChange('social.facebook', value)}
+                onChangeText={(value) =>
+                  handleInputChange('social.facebook', value)
+                }
                 placeholder="Facebook profile/page URL"
                 placeholderTextColor={theme.textSecondary}
               />
@@ -576,7 +626,9 @@ export default function EditShopProfile() {
               <TextInput
                 style={styles.socialTextInput}
                 value={formData.socialLinks.instagram}
-                onChangeText={(value) => handleInputChange('social.instagram', value)}
+                onChangeText={(value) =>
+                  handleInputChange('social.instagram', value)
+                }
                 placeholder="Instagram profile URL"
                 placeholderTextColor={theme.textSecondary}
               />
@@ -592,7 +644,9 @@ export default function EditShopProfile() {
               <TextInput
                 style={styles.socialTextInput}
                 value={formData.socialLinks.twitter}
-                onChangeText={(value) => handleInputChange('social.twitter', value)}
+                onChangeText={(value) =>
+                  handleInputChange('social.twitter', value)
+                }
                 placeholder="Twitter profile URL"
                 placeholderTextColor={theme.textSecondary}
               />
@@ -608,7 +662,9 @@ export default function EditShopProfile() {
               <TextInput
                 style={styles.socialTextInput}
                 value={formData.socialLinks.tiktok}
-                onChangeText={(value) => handleInputChange('social.tiktok', value)}
+                onChangeText={(value) =>
+                  handleInputChange('social.tiktok', value)
+                }
                 placeholder="TikTok profile URL"
                 placeholderTextColor={theme.textSecondary}
               />

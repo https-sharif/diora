@@ -30,14 +30,11 @@ export const useNotificationStore = create<NotificationStore>((set, get) => {
 
           set({
             notifications,
-            unreadCount: notifications.filter((n: Notification) => !n.read).length,
+            unreadCount: notifications.filter((n: Notification) => !n.read)
+              .length,
           });
-        } else {
-          console.error('Failed to fetch notifications:', response.data.message);
         }
-      } catch (err) {
-        console.error('Notification fetch error:', err);
-      }
+      } catch {}
     },
 
     markAsRead: async (id) => {
@@ -48,7 +45,6 @@ export const useNotificationStore = create<NotificationStore>((set, get) => {
       const response = await notificationService.markAsRead(id, token);
 
       if (!response.status) {
-        console.error('Failed to mark notification as read:', response.message);
         return;
       }
 
@@ -70,7 +66,6 @@ export const useNotificationStore = create<NotificationStore>((set, get) => {
       const response = await notificationService.markAllAsRead(token);
 
       if (!response.status) {
-        console.error('Failed to mark all notifications as read:', response.message);
         return;
       }
 
@@ -93,18 +88,19 @@ export const useNotificationStore = create<NotificationStore>((set, get) => {
         if (toUserId === user._id) {
           shouldSendNotification = get().isNotificationEnabled(data.type);
           if (!shouldSendNotification) {
-            console.log(`Local check: Notification type '${data.type}' is disabled`);
             return;
           }
         }
 
-        const settingsRes = await notificationService.getUserSettings(toUserId, token);
+        const settingsRes = await notificationService.getUserSettings(
+          toUserId,
+          token
+        );
 
         if (!settingsRes.status) return;
 
         const notify = settingsRes.settings.notifications?.[data.type];
         if (!notify) {
-          console.log(`Backend check: Notification type '${data.type}' is disabled for recipient`);
           return;
         }
 
@@ -129,16 +125,11 @@ export const useNotificationStore = create<NotificationStore>((set, get) => {
           notifications: [newNotification, ...state.notifications],
           unreadCount: state.unreadCount + 1,
         }));
-      } catch (err) {
-        console.error('Error adding notification:', err);
-      }
+      } catch {}
     },
 
     handleIncomingNotification: (notification) => {
-      console.log('Received socket notification:', notification);
-
       if (!get().shouldShowNotification(notification.type)) {
-        console.log(`Notification type '${notification.type}' is disabled for user`);
         return;
       }
 
@@ -151,7 +142,9 @@ export const useNotificationStore = create<NotificationStore>((set, get) => {
 
       set((state) => ({
         notifications: [newNotification, ...state.notifications],
-        unreadCount: !newNotification.read ? state.unreadCount + 1 : state.unreadCount,
+        unreadCount: !newNotification.read
+          ? state.unreadCount + 1
+          : state.unreadCount,
       }));
     },
 
@@ -163,7 +156,6 @@ export const useNotificationStore = create<NotificationStore>((set, get) => {
       const response = await notificationService.deleteNotification(id, token);
 
       if (!response.status) {
-        console.error('Failed to delete notification:', response.message);
         return;
       }
 
@@ -182,27 +174,29 @@ export const useNotificationStore = create<NotificationStore>((set, get) => {
 
     isNotificationEnabled: (type: string) => {
       const user = useAuthStore.getState().user;
-      if (!user?.settings?.notifications) return true; 
+      if (!user?.settings?.notifications) return true;
 
-      const notificationMap: { [key: string]: keyof typeof user.settings.notifications } = {
-        'like': 'likes',
-        'likes': 'likes',
-        'comment': 'comments',
-        'comments': 'comments',
-        'follow': 'follow',
-        'mention': 'mention',
-        'order': 'order',
-        'promotion': 'promotion',
-        'system': 'system',
-        'warning': 'warning',
-        'reportUpdate': 'reportUpdate',
-        'message': 'messages',
-        'messages': 'messages',
+      const notificationMap: {
+        [key: string]: keyof typeof user.settings.notifications;
+      } = {
+        like: 'likes',
+        likes: 'likes',
+        comment: 'comments',
+        comments: 'comments',
+        follow: 'follow',
+        mention: 'mention',
+        order: 'order',
+        promotion: 'promotion',
+        system: 'system',
+        warning: 'warning',
+        reportUpdate: 'reportUpdate',
+        message: 'messages',
+        messages: 'messages',
       };
 
       const settingKey = notificationMap[type];
       if (!settingKey) return true;
-      
+
       const settingValue = user.settings.notifications[settingKey];
       return typeof settingValue === 'boolean' ? settingValue : true;
     },

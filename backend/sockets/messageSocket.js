@@ -2,28 +2,33 @@ import { getIO, onlineUsers } from './socketSetup.js';
 
 export const emitNewMessage = (conversationId, message, participants) => {
   const io = getIO();
-  
-  participants.forEach(participantId => {
+
+  participants.forEach((participantId) => {
     const socketId = onlineUsers.get(participantId);
     if (socketId) {
       io.to(socketId).emit('newMessage', {
         conversationId,
-        message
+        message,
       });
     }
   });
 };
 
-export const emitMessageReaction = (conversationId, messageId, reactions, participants) => {
+export const emitMessageReaction = (
+  conversationId,
+  messageId,
+  reactions,
+  participants
+) => {
   const io = getIO();
-  
-  participants.forEach(participantId => {
+
+  participants.forEach((participantId) => {
     const socketId = onlineUsers.get(participantId.toString());
     if (socketId) {
       io.to(socketId).emit('messageReaction', {
         conversationId,
         messageId,
-        reactions
+        reactions,
       });
     }
   });
@@ -31,14 +36,14 @@ export const emitMessageReaction = (conversationId, messageId, reactions, partic
 
 export const emitMessageDeleted = (conversationId, messageId, participants) => {
   const io = getIO();
-  
-  participants.forEach(participantId => {
+
+  participants.forEach((participantId) => {
     const socketId = onlineUsers.get(participantId.toString());
     if (socketId) {
       io.to(socketId).emit('messageDeleted', {
         conversationId,
         messageId,
-        type: 'deleted'
+        type: 'deleted',
       });
     }
   });
@@ -46,13 +51,13 @@ export const emitMessageDeleted = (conversationId, messageId, participants) => {
 
 export const emitMessagesRead = (conversationId, userId, participants) => {
   const io = getIO();
-  
-  participants.forEach(participantId => {
+
+  participants.forEach((participantId) => {
     const socketId = onlineUsers.get(participantId.toString());
     if (socketId) {
       io.to(socketId).emit('messagesRead', {
         conversationId,
-        userId
+        userId,
       });
     }
   });

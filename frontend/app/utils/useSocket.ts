@@ -35,22 +35,18 @@ export function setupListeners(
   const s = getSocket();
 
   s.on('connect', () => {
-    console.log('Socket connected:', s.id);
     if (onConnect) onConnect();
   });
 
   s.on('notification', (notif) => {
-    console.log('🔔 Received notification via socket:', notif);
     onNotification(notif);
   });
 
   s.on('message', (data) => {
-    console.log('📨 Received message via socket:', data);
     onMessage(data);
   });
 
   s.on('disconnect', () => {
-    console.log('Socket disconnected');
     if (onDisconnect) onDisconnect();
   });
 }
@@ -58,7 +54,7 @@ export function setupListeners(
 export default function initSocket(
   userId: string,
   onNotification: (notif: any) => void,
-  onMessage: (data: {conversationId: string; message: Message}) => void,
+  onMessage: (data: { conversationId: string; message: Message }) => void,
   onConnect?: () => void,
   onDisconnect?: () => void
 ) {
@@ -67,15 +63,12 @@ export default function initSocket(
   if (!s.connected) s.connect();
 
   s.once('connect', () => {
-    console.log('Socket connected:', s.id);
     s.emit('register', userId);
   });
 
   s.on('message', (data) => {
-    console.log('📨 Socket received message:', data);
     onMessage(data);
   });
 
   setupListeners(onNotification, onMessage, onConnect, onDisconnect);
 }
-

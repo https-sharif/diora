@@ -9,7 +9,7 @@ import {
   takeModerationAction,
   getReportStats,
   clearOldReports,
-  clearResolvedReports
+  clearResolvedReports,
 } from '../controllers/reportController.js';
 
 const router = express.Router();

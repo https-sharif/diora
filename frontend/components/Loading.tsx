@@ -7,7 +7,10 @@ interface LoadingViewProps {
   size?: 'small' | 'large' | number;
 }
 
-const LoadingView = ({ message = 'Loading...', size = 'large' }: LoadingViewProps) => {
+const LoadingView = ({
+  message = 'Loading...',
+  size = 'large',
+}: LoadingViewProps) => {
   const { theme } = useTheme();
   return (
     <View style={styles.container}>

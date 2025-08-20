@@ -1,9 +1,9 @@
 import express from 'express';
-import { 
-  getWishlist, 
-  addToWishlist, 
-  removeFromWishlist, 
-  toggleWishlist 
+import {
+  getWishlist,
+  addToWishlist,
+  removeFromWishlist,
+  toggleWishlist,
 } from '../controllers/wishlistController.js';
 import { verifyToken } from '../middleware/auth.js';
 

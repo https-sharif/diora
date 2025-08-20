@@ -22,22 +22,52 @@ interface UserOnboardingProps {
 }
 
 const FASHION_INTERESTS = [
-  'Streetwear', 'Luxury Fashion', 'Vintage/Thrift', 'Sustainable Fashion', 'Activewear',
-  'Formal Wear', 'Casual Wear', 'Designer Items', 'Accessories', 'Shoes',
-  'Jewelry', 'Bags & Purses', 'Makeup & Beauty', 'Skincare', 'Hair Care'
+  'Streetwear',
+  'Luxury Fashion',
+  'Vintage/Thrift',
+  'Sustainable Fashion',
+  'Activewear',
+  'Formal Wear',
+  'Casual Wear',
+  'Designer Items',
+  'Accessories',
+  'Shoes',
+  'Jewelry',
+  'Bags & Purses',
+  'Makeup & Beauty',
+  'Skincare',
+  'Hair Care',
 ];
 
 const FASHION_CATEGORIES = [
-  'Women\'s Clothing', 'Men\'s Clothing', 'Shoes', 'Accessories', 'Jewelry',
-  'Bags & Handbags', 'Beauty & Skincare', 'Watches', 'Sunglasses', 'Activewear'
+  "Women's Clothing",
+  "Men's Clothing",
+  'Shoes',
+  'Accessories',
+  'Jewelry',
+  'Bags & Handbags',
+  'Beauty & Skincare',
+  'Watches',
+  'Sunglasses',
+  'Activewear',
 ];
 
 const STYLE_PREFERENCES = [
-  'Minimalist', 'Bohemian', 'Classic/Timeless', 'Trendy/Fashion Forward', 'Edgy/Alternative',
-  'Romantic/Feminine', 'Sporty/Casual', 'Professional/Business', 'Vintage/Retro', 'Streetwear'
+  'Minimalist',
+  'Bohemian',
+  'Classic/Timeless',
+  'Trendy/Fashion Forward',
+  'Edgy/Alternative',
+  'Romantic/Feminine',
+  'Sporty/Casual',
+  'Professional/Business',
+  'Vintage/Retro',
+  'Streetwear',
 ];
 
-export const UserOnboarding: React.FC<UserOnboardingProps> = ({ onComplete }) => {
+export const UserOnboarding: React.FC<UserOnboardingProps> = ({
+  onComplete,
+}) => {
   const { theme } = useTheme();
   const { user, token, refreshUser } = useAuth();
 
@@ -66,9 +96,13 @@ export const UserOnboarding: React.FC<UserOnboardingProps> = ({ onComplete }) =>
 
   const pickProfileImage = async () => {
     try {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      const { status } =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permission needed', 'Please grant camera roll permissions to upload a profile picture.');
+        Alert.alert(
+          'Permission needed',
+          'Please grant camera roll permissions to upload a profile picture.'
+        );
         return;
       }
 
@@ -82,42 +116,41 @@ export const UserOnboarding: React.FC<UserOnboardingProps> = ({ onComplete }) =>
       if (!result.canceled && result.assets?.[0]) {
         setProfileImage(result.assets[0]);
       }
-    } catch (error) {
-      console.error('Error picking image:', error);
+    } catch {
       Alert.alert('Error', 'Failed to pick image');
     }
   };
 
   const toggleInterest = (interest: string) => {
-    setProfileData(prev => ({
+    setProfileData((prev) => ({
       ...prev,
       interests: prev.interests.includes(interest)
-        ? prev.interests.filter(i => i !== interest)
-        : [...prev.interests, interest]
+        ? prev.interests.filter((i) => i !== interest)
+        : [...prev.interests, interest],
     }));
   };
 
   const toggleStylePreference = (style: string) => {
-    setProfileData(prev => ({
+    setProfileData((prev) => ({
       ...prev,
       stylePreferences: prev.stylePreferences.includes(style)
-        ? prev.stylePreferences.filter(s => s !== style)
-        : [...prev.stylePreferences, style]
+        ? prev.stylePreferences.filter((s) => s !== style)
+        : [...prev.stylePreferences, style],
     }));
   };
 
   const toggleCategory = (category: string) => {
-    setPreferencesData(prev => ({
+    setPreferencesData((prev) => ({
       ...prev,
       favoriteCategories: prev.favoriteCategories.includes(category)
-        ? prev.favoriteCategories.filter(c => c !== category)
-        : [...prev.favoriteCategories, category]
+        ? prev.favoriteCategories.filter((c) => c !== category)
+        : [...prev.favoriteCategories, category],
     }));
   };
 
   const handleNext = async () => {
     if (currentStep < totalSteps - 1) {
-      setCurrentStep(prev => prev + 1);
+      setCurrentStep((prev) => prev + 1);
     } else {
       await completeOnboarding();
     }
@@ -125,7 +158,7 @@ export const UserOnboarding: React.FC<UserOnboardingProps> = ({ onComplete }) =>
 
   const handleBack = () => {
     if (currentStep > 0) {
-      setCurrentStep(prev => prev - 1);
+      setCurrentStep((prev) => prev - 1);
     }
   };
 
@@ -192,13 +225,8 @@ export const UserOnboarding: React.FC<UserOnboardingProps> = ({ onComplete }) =>
       } else {
         Alert.alert('Error', 'Failed to complete onboarding');
       }
-    } catch (error: any) {
-      console.error('Error completing onboarding:', error);
-      if (error.response?.data?.message) {
-        Alert.alert('Error', error.response.data.message);
-      } else {
-        Alert.alert('Error', 'Failed to complete onboarding');
-      }
+    } catch {
+      Alert.alert('Error', 'Failed to complete onboarding');
     } finally {
       setLoading(false);
     }
@@ -211,9 +239,11 @@ export const UserOnboarding: React.FC<UserOnboardingProps> = ({ onComplete }) =>
       case 1:
         return profileImage !== null;
       case 2:
-        return profileData.fullName.trim().length > 0 && 
-               profileData.bio.trim().length > 0 &&
-               profileData.interests.length > 0;
+        return (
+          profileData.fullName.trim().length > 0 &&
+          profileData.bio.trim().length > 0 &&
+          profileData.interests.length > 0
+        );
       case 3:
         return preferencesData.favoriteCategories.length > 0;
       default:
@@ -228,7 +258,9 @@ export const UserOnboarding: React.FC<UserOnboardingProps> = ({ onComplete }) =>
       </View>
       <Text style={styles.title}>Welcome to Diora!</Text>
       <Text style={styles.subtitle}>
-        Your ultimate fashion destination! Let&apos;s personalize your experience to help you discover amazing styles and connect with fashion-forward shops.
+        Your ultimate fashion destination! Let&apos;s personalize your
+        experience to help you discover amazing styles and connect with
+        fashion-forward shops.
       </Text>
     </View>
   );
@@ -237,11 +269,18 @@ export const UserOnboarding: React.FC<UserOnboardingProps> = ({ onComplete }) =>
     <View style={styles.stepContent}>
       <Text style={styles.title}>Add Your Profile Picture</Text>
       <Text style={styles.subtitle}>
-        Show your style! Upload a profile picture to personalize your fashion journey.
+        Show your style! Upload a profile picture to personalize your fashion
+        journey.
       </Text>
-      <TouchableOpacity style={styles.profileImageContainer} onPress={pickProfileImage}>
+      <TouchableOpacity
+        style={styles.profileImageContainer}
+        onPress={pickProfileImage}
+      >
         {profileImage ? (
-          <Image source={{ uri: profileImage.uri }} style={styles.profileImagePreview} />
+          <Image
+            source={{ uri: profileImage.uri }}
+            style={styles.profileImagePreview}
+          />
         ) : (
           <View style={styles.profileImagePlaceholder}>
             <Camera size={40} color={theme.textSecondary} />
@@ -264,7 +303,9 @@ export const UserOnboarding: React.FC<UserOnboardingProps> = ({ onComplete }) =>
         <TextInput
           style={styles.input}
           value={profileData.fullName}
-          onChangeText={(text) => setProfileData(prev => ({ ...prev, fullName: text }))}
+          onChangeText={(text) =>
+            setProfileData((prev) => ({ ...prev, fullName: text }))
+          }
           placeholder="Enter your full name"
           placeholderTextColor={theme.textSecondary}
         />
@@ -275,7 +316,9 @@ export const UserOnboarding: React.FC<UserOnboardingProps> = ({ onComplete }) =>
         <TextInput
           style={[styles.input, styles.textArea]}
           value={profileData.bio}
-          onChangeText={(text) => setProfileData(prev => ({ ...prev, bio: text }))}
+          onChangeText={(text) =>
+            setProfileData((prev) => ({ ...prev, bio: text }))
+          }
           placeholder="Tell us about your style and what you love about fashion..."
           placeholderTextColor={theme.textSecondary}
           multiline
@@ -288,7 +331,9 @@ export const UserOnboarding: React.FC<UserOnboardingProps> = ({ onComplete }) =>
         <TextInput
           style={styles.input}
           value={profileData.location}
-          onChangeText={(text) => setProfileData(prev => ({ ...prev, location: text }))}
+          onChangeText={(text) =>
+            setProfileData((prev) => ({ ...prev, location: text }))
+          }
           placeholder="Enter your city or region"
           placeholderTextColor={theme.textSecondary}
         />
@@ -302,15 +347,20 @@ export const UserOnboarding: React.FC<UserOnboardingProps> = ({ onComplete }) =>
               key={option}
               style={[
                 styles.option,
-                profileData.gender === option && styles.optionSelected
+                profileData.gender === option && styles.optionSelected,
               ]}
-              onPress={() => setProfileData(prev => ({ ...prev, gender: option }))}
+              onPress={() =>
+                setProfileData((prev) => ({ ...prev, gender: option }))
+              }
             >
-              <Text style={[
-                styles.optionText,
-                profileData.gender === option && styles.optionTextSelected
-              ]}>
-                {option.charAt(0).toUpperCase() + option.slice(1).replace('-', ' ')}
+              <Text
+                style={[
+                  styles.optionText,
+                  profileData.gender === option && styles.optionTextSelected,
+                ]}
+              >
+                {option.charAt(0).toUpperCase() +
+                  option.slice(1).replace('-', ' ')}
               </Text>
             </TouchableOpacity>
           ))}
@@ -325,14 +375,18 @@ export const UserOnboarding: React.FC<UserOnboardingProps> = ({ onComplete }) =>
               key={interest}
               style={[
                 styles.option,
-                profileData.interests.includes(interest) && styles.optionSelected
+                profileData.interests.includes(interest) &&
+                  styles.optionSelected,
               ]}
               onPress={() => toggleInterest(interest)}
             >
-              <Text style={[
-                styles.optionText,
-                profileData.interests.includes(interest) && styles.optionTextSelected
-              ]}>
+              <Text
+                style={[
+                  styles.optionText,
+                  profileData.interests.includes(interest) &&
+                    styles.optionTextSelected,
+                ]}
+              >
                 {interest}
               </Text>
             </TouchableOpacity>
@@ -348,14 +402,18 @@ export const UserOnboarding: React.FC<UserOnboardingProps> = ({ onComplete }) =>
               key={style}
               style={[
                 styles.option,
-                profileData.stylePreferences.includes(style) && styles.optionSelected
+                profileData.stylePreferences.includes(style) &&
+                  styles.optionSelected,
               ]}
               onPress={() => toggleStylePreference(style)}
             >
-              <Text style={[
-                styles.optionText,
-                profileData.stylePreferences.includes(style) && styles.optionTextSelected
-              ]}>
+              <Text
+                style={[
+                  styles.optionText,
+                  profileData.stylePreferences.includes(style) &&
+                    styles.optionTextSelected,
+                ]}
+              >
                 {style}
               </Text>
             </TouchableOpacity>
@@ -380,14 +438,18 @@ export const UserOnboarding: React.FC<UserOnboardingProps> = ({ onComplete }) =>
               key={category}
               style={[
                 styles.option,
-                preferencesData.favoriteCategories.includes(category) && styles.optionSelected
+                preferencesData.favoriteCategories.includes(category) &&
+                  styles.optionSelected,
               ]}
               onPress={() => toggleCategory(category)}
             >
-              <Text style={[
-                styles.optionText,
-                preferencesData.favoriteCategories.includes(category) && styles.optionTextSelected
-              ]}>
+              <Text
+                style={[
+                  styles.optionText,
+                  preferencesData.favoriteCategories.includes(category) &&
+                    styles.optionTextSelected,
+                ]}
+              >
                 {category}
               </Text>
             </TouchableOpacity>
@@ -402,20 +464,29 @@ export const UserOnboarding: React.FC<UserOnboardingProps> = ({ onComplete }) =>
             { key: 'rarely', label: 'Rarely' },
             { key: 'monthly', label: 'Monthly' },
             { key: 'weekly', label: 'Weekly' },
-            { key: 'daily', label: 'Daily' }
+            { key: 'daily', label: 'Daily' },
           ].map((option) => (
             <TouchableOpacity
               key={option.key}
               style={[
                 styles.option,
-                preferencesData.shoppingFrequency === option.key && styles.optionSelected
+                preferencesData.shoppingFrequency === option.key &&
+                  styles.optionSelected,
               ]}
-              onPress={() => setPreferencesData(prev => ({ ...prev, shoppingFrequency: option.key }))}
+              onPress={() =>
+                setPreferencesData((prev) => ({
+                  ...prev,
+                  shoppingFrequency: option.key,
+                }))
+              }
             >
-              <Text style={[
-                styles.optionText,
-                preferencesData.shoppingFrequency === option.key && styles.optionTextSelected
-              ]}>
+              <Text
+                style={[
+                  styles.optionText,
+                  preferencesData.shoppingFrequency === option.key &&
+                    styles.optionTextSelected,
+                ]}
+              >
                 {option.label}
               </Text>
             </TouchableOpacity>
@@ -431,20 +502,29 @@ export const UserOnboarding: React.FC<UserOnboardingProps> = ({ onComplete }) =>
             { key: '50-200', label: '$50 - $200' },
             { key: '200-500', label: '$200 - $500' },
             { key: '500-1000', label: '$500 - $1000' },
-            { key: 'over-1000', label: 'Over $1000' }
+            { key: 'over-1000', label: 'Over $1000' },
           ].map((option) => (
             <TouchableOpacity
               key={option.key}
               style={[
                 styles.option,
-                preferencesData.budgetRange === option.key && styles.optionSelected
+                preferencesData.budgetRange === option.key &&
+                  styles.optionSelected,
               ]}
-              onPress={() => setPreferencesData(prev => ({ ...prev, budgetRange: option.key }))}
+              onPress={() =>
+                setPreferencesData((prev) => ({
+                  ...prev,
+                  budgetRange: option.key,
+                }))
+              }
             >
-              <Text style={[
-                styles.optionText,
-                preferencesData.budgetRange === option.key && styles.optionTextSelected
-              ]}>
+              <Text
+                style={[
+                  styles.optionText,
+                  preferencesData.budgetRange === option.key &&
+                    styles.optionTextSelected,
+                ]}
+              >
                 {option.label}
               </Text>
             </TouchableOpacity>
@@ -456,11 +536,16 @@ export const UserOnboarding: React.FC<UserOnboardingProps> = ({ onComplete }) =>
 
   const renderCurrentStep = () => {
     switch (currentStep) {
-      case 0: return renderWelcomeStep();
-      case 1: return renderProfilePictureStep();
-      case 2: return renderProfileStep();
-      case 3: return renderPreferencesStep();
-      default: return null;
+      case 0:
+        return renderWelcomeStep();
+      case 1:
+        return renderProfilePictureStep();
+      case 2:
+        return renderProfileStep();
+      case 3:
+        return renderPreferencesStep();
+      default:
+        return null;
     }
   };
 
@@ -666,7 +751,7 @@ export const UserOnboarding: React.FC<UserOnboardingProps> = ({ onComplete }) =>
               key={index}
               style={[
                 styles.stepDot,
-                index <= currentStep && styles.stepDotActive
+                index <= currentStep && styles.stepDotActive,
               ]}
             />
           ))}
@@ -678,11 +763,11 @@ export const UserOnboarding: React.FC<UserOnboardingProps> = ({ onComplete }) =>
       </View>
 
       <View style={styles.progressBar}>
-        <View 
+        <View
           style={[
-            styles.progressFill, 
-            { width: `${((currentStep + 1) / totalSteps) * 100}%` }
-          ]} 
+            styles.progressFill,
+            { width: `${((currentStep + 1) / totalSteps) * 100}%` },
+          ]}
         />
       </View>
 
@@ -692,7 +777,7 @@ export const UserOnboarding: React.FC<UserOnboardingProps> = ({ onComplete }) =>
         <TouchableOpacity
           style={[
             styles.nextButton,
-            (!canProceed() || loading) && styles.nextButtonDisabled
+            (!canProceed() || loading) && styles.nextButtonDisabled,
           ]}
           onPress={handleNext}
           disabled={!canProceed() || loading}

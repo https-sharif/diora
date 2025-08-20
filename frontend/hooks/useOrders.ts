@@ -58,7 +58,7 @@ export const useOrders = (): UseOrdersResult => {
   const [totalPages, setTotalPages] = useState(1);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalOrders, setTotalOrders] = useState(0);
-  
+
   const { token, user } = useAuth();
 
   const fetchOrders = async (page = 1) => {
@@ -80,7 +80,6 @@ export const useOrders = (): UseOrdersResult => {
         setTotalOrders(response.data.totalOrders);
       }
     } catch (err: any) {
-      console.error('Error fetching orders:', err);
       setError(err.response?.data?.message || 'Failed to fetch orders');
       setOrders([]);
     } finally {
@@ -99,7 +98,6 @@ export const useOrders = (): UseOrdersResult => {
       }
       return null;
     } catch (err: any) {
-      console.error('Error fetching order by ID:', err);
       setError(err.response?.data?.message || 'Failed to fetch order');
       return null;
     }
@@ -112,8 +110,8 @@ export const useOrders = (): UseOrdersResult => {
       const response = await orderService.cancelOrder(orderId, token);
 
       if (response.status) {
-        setOrders(prevOrders =>
-          prevOrders.map(order =>
+        setOrders((prevOrders) =>
+          prevOrders.map((order) =>
             order._id === orderId
               ? { ...order, status: 'cancelled' as const }
               : order
@@ -123,7 +121,6 @@ export const useOrders = (): UseOrdersResult => {
       }
       return false;
     } catch (err: any) {
-      console.error('Error cancelling order:', err);
       setError(err.response?.data?.message || 'Failed to cancel order');
       return false;
     }

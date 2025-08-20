@@ -416,8 +416,7 @@ const createStyles = (theme: Theme) => {
     modalButtonCancel: {
       borderWidth: 1,
     },
-    modalButtonSubmit: {
-    },
+    modalButtonSubmit: {},
     modalButtonText: {
       fontSize: 14,
       fontFamily: 'Inter-SemiBold',
@@ -514,8 +513,7 @@ export default function UserProfileScreen() {
         setIsFollowing(user?.following.includes(user._id) || false);
         setPosts(postsRes.posts);
         setLikedPosts(likedRes.posts);
-      } catch (error) {
-        console.error('Error fetching data:', error);
+      } catch {
         router.back();
       } finally {
         setSelectedTab('posts');
@@ -563,10 +561,25 @@ export default function UserProfileScreen() {
     if (!userProfile || !token) return;
 
     setShowShareModal(false);
-    await Promise.all(selectedUsers.map(async user => {
-      const conversation = await messageService.getConversationId(user._id, token);
-      await messageService.sendMessage(conversation.conversationId, `Check out ${userProfile?.fullName}'s profile`, 'profile', token, undefined, undefined, userProfile._id, undefined, undefined);
-    }));
+    await Promise.all(
+      selectedUsers.map(async (user) => {
+        const conversation = await messageService.getConversationId(
+          user._id,
+          token
+        );
+        await messageService.sendMessage(
+          conversation.conversationId,
+          `Check out ${userProfile?.fullName}'s profile`,
+          'profile',
+          token,
+          undefined,
+          undefined,
+          userProfile._id,
+          undefined,
+          undefined
+        );
+      })
+    );
   };
 
   const handleUserSelect = (selectedUser: any) => {
@@ -601,8 +614,7 @@ export default function UserProfileScreen() {
         );
       }
       setSearchedUsers(merged);
-    } catch (err) {
-      console.error('Error searching users/shops:', err);
+    } catch {
       setSearchedUsers([]);
     }
   };
@@ -657,8 +669,6 @@ export default function UserProfileScreen() {
           reportDescription.trim() || 'No additional details provided',
       };
 
-      console.log('Submitting report:', reportData);
-
       const response = await reportService.createReport(reportData, token);
 
       if (response.status) {
@@ -670,11 +680,8 @@ export default function UserProfileScreen() {
           'Report Submitted',
           `Thank you for reporting this user. We will review it shortly.`
         );
-      } else {
-        console.log('Report submission failed:', response.message);
       }
-    } catch (err) {
-      console.error('Error submitting report:', err);
+    } catch {
       Alert.alert('Error', 'Failed to submit report. Please try again.');
     }
   };
@@ -792,7 +799,6 @@ export default function UserProfileScreen() {
           <TouchableOpacity
             style={styles.headerButton}
             onPress={() => {
-              console.log('Menu button pressed, setting showMoreMenu to true');
               setShowMoreMenu(true);
             }}
           >

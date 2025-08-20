@@ -4,11 +4,14 @@ export const getAllProducts = async (req, res) => {
   console.log('Get all products route/controller hit');
   try {
     const isAdmin = req.userDetails && req.userDetails.type === 'admin';
-    
+
     let products;
     if (isAdmin) {
       products = await Product.aggregate([{ $sample: { size: 10 } }]);
-      await Product.populate(products, { path: 'shopId', select: 'name status' });
+      await Product.populate(products, {
+        path: 'shopId',
+        select: 'name status',
+      });
     } else {
       products = await Product.aggregate([
         {
@@ -16,18 +19,21 @@ export const getAllProducts = async (req, res) => {
             from: 'users',
             localField: 'shopId',
             foreignField: '_id',
-            as: 'shop'
-          }
+            as: 'shop',
+          },
         },
         {
           $match: {
-            'shop.status': 'active'
-          }
+            'shop.status': 'active',
+          },
         },
-        { $sample: { size: 10 } }
+        { $sample: { size: 10 } },
       ]);
-      
-      await Product.populate(products, { path: 'shopId', select: 'name status' });
+
+      await Product.populate(products, {
+        path: 'shopId',
+        select: 'name status',
+      });
     }
 
     res.json({ status: true, products });
@@ -43,7 +49,10 @@ export const getProductById = async (req, res) => {
     const productId = req.params.productId;
     const isAdmin = req.userDetails && req.userDetails.type === 'admin';
 
-    const product = await Product.findById(productId).populate('shopId', 'fullName avatar followers shop.rating shop.reviewCount isVerified status');
+    const product = await Product.findById(productId).populate(
+      'shopId',
+      'fullName avatar followers shop.rating shop.reviewCount isVerified status'
+    );
 
     if (!product) {
       return res
@@ -79,17 +88,17 @@ export const createProduct = async (req, res) => {
     } = req.body;
 
     const shopId = req.user.id;
-    const imageUrls = req.files.map(file => file.path);
+    const imageUrls = req.files.map((file) => file.path);
 
     const newProduct = new Product({
       shopId,
       name,
       price,
       imageUrl: imageUrls,
-      category : JSON.parse(category || '[]'),
+      category: JSON.parse(category || '[]'),
       description,
-      sizes : JSON.parse(sizes || '[]'),
-      variants : JSON.parse(variants || '[]'),
+      sizes: JSON.parse(sizes || '[]'),
+      variants: JSON.parse(variants || '[]'),
       stock,
       rating: 0,
       reviewCount: 0,
@@ -151,7 +160,7 @@ export const getTrendingProducts = async (req, res) => {
   console.log('Get trending products route/controller hit');
   try {
     const isAdmin = req.userDetails && req.userDetails.type === 'admin';
-    
+
     let trendingProducts;
     if (isAdmin) {
       trendingProducts = await Product.aggregate([{ $sample: { size: 6 } }]);
@@ -162,27 +171,32 @@ export const getTrendingProducts = async (req, res) => {
             from: 'users',
             localField: 'shopId',
             foreignField: '_id',
-            as: 'shop'
-          }
+            as: 'shop',
+          },
         },
         {
           $match: {
-            'shop.status': 'active'
-          }
+            'shop.status': 'active',
+          },
         },
-        { $sample: { size: 6 } }
+        { $sample: { size: 6 } },
       ]);
     }
 
-    await Product.populate(trendingProducts, { path: 'shopId', select: 'fullName status' });
+    await Product.populate(trendingProducts, {
+      path: 'shopId',
+      select: 'fullName status',
+    });
 
     if (!trendingProducts || trendingProducts.length === 0) {
       return res
         .status(200)
-        .json({ status: true, message: 'No trending products found', trendingProducts: [] });
+        .json({
+          status: true,
+          message: 'No trending products found',
+          trendingProducts: [],
+        });
     }
-
-    console.log('Trending products:', trendingProducts);
 
     res.json({ status: true, trendingProducts });
   } catch (err) {
@@ -196,10 +210,18 @@ export const getProductsByShop = async (req, res) => {
   try {
     const { shopId } = req.params;
     const isAdmin = req.userDetails && req.userDetails.type === 'admin';
-    
-    const products = await Product.find({ shopId }).populate('shopId', 'fullName avatar status');
 
-    if (!isAdmin && products.length > 0 && products[0].shopId && products[0].shopId.status !== 'active') {
+    const products = await Product.find({ shopId }).populate(
+      'shopId',
+      'fullName avatar status'
+    );
+
+    if (
+      !isAdmin &&
+      products.length > 0 &&
+      products[0].shopId &&
+      products[0].shopId.status !== 'active'
+    ) {
       return res.json({ status: true, products: [] });
     }
 

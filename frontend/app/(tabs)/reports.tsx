@@ -394,7 +394,7 @@ const createStyles = (theme: Theme) =>
 export default function ReportsManagement() {
   const { theme } = useTheme();
   const { user, token } = useAuth();
-  
+
   const categories = [
     { id: 'all', label: 'All', icon: Shield },
     { id: 'user', label: 'Users', icon: null },
@@ -433,7 +433,7 @@ export default function ReportsManagement() {
       } else {
         setReportsLoading(true);
       }
-      
+
       const response = await axios.get(`${config.apiUrl}/api/report`, {
         headers: { Authorization: `Bearer ${token}` },
         params: {
@@ -445,12 +445,10 @@ export default function ReportsManagement() {
 
       if (response.data.status) {
         setReports(response.data.reports);
-        console.log('Fetched reports:', response.data.reports);
       }
-      
+
       await fetchStats();
-    } catch (error) {
-      console.error('Fetch reports error:', error);
+    } catch {
       Alert.alert('Error', 'Failed to fetch reports');
     } finally {
       setLoading(false);
@@ -468,8 +466,7 @@ export default function ReportsManagement() {
       if (response.data.status) {
         setStats(response.data.stats);
       }
-    } catch (error) {
-      console.error('Fetch stats error:', error);
+    } catch {
     } finally {
       setStatsLoading(false);
     }
@@ -477,10 +474,7 @@ export default function ReportsManagement() {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await Promise.all([
-      fetchReports(),
-      fetchStats()
-    ]);
+    await Promise.all([fetchReports(), fetchStats()]);
     setRefreshing(false);
   };
 
@@ -506,8 +500,7 @@ export default function ReportsManagement() {
         );
         fetchStats();
       }
-    } catch (error) {
-      console.error('Update report error:', error);
+    } catch {
       Alert.alert('Error', 'Failed to update report');
     }
   };
@@ -530,8 +523,7 @@ export default function ReportsManagement() {
         setShowActionModal(false);
         setSelectedReport(null);
       }
-    } catch (error) {
-      console.error('Moderation action error:', error);
+    } catch {
       Alert.alert('Error', 'Failed to take moderation action');
     }
   };
@@ -561,16 +553,14 @@ export default function ReportsManagement() {
                 } else {
                   Alert.alert('Error', 'Failed to clear old reports');
                 }
-              } catch (error) {
-                console.error('Clear old reports error:', error);
+              } catch {
                 Alert.alert('Error', 'Failed to clear old reports');
               }
             },
           },
         ]
       );
-    } catch (error) {
-      console.error('Clear old reports error:', error);
+    } catch {
       Alert.alert('Error', 'Failed to clear old reports');
     }
   };
@@ -589,7 +579,9 @@ export default function ReportsManagement() {
               try {
                 if (!token) return;
                 setShowActionsMenu(false);
-                const response = await reportService.clearResolvedReports(token);
+                const response = await reportService.clearResolvedReports(
+                  token
+                );
 
                 if (response.status) {
                   Alert.alert(
@@ -603,8 +595,7 @@ export default function ReportsManagement() {
                     'Failed to clear resolved/dismissed reports'
                   );
                 }
-              } catch (error) {
-                console.error('Clear resolved reports error:', error);
+              } catch {
                 Alert.alert(
                   'Error',
                   'Failed to clear resolved/dismissed reports'
@@ -614,8 +605,7 @@ export default function ReportsManagement() {
           },
         ]
       );
-    } catch (error) {
-      console.error('Clear resolved reports error:', error);
+    } catch {
       Alert.alert('Error', 'Failed to clear resolved/dismissed reports');
     }
   };
@@ -695,7 +685,8 @@ export default function ReportsManagement() {
   const filteredReports = reports.filter((report) => {
     const matchesSearch =
       searchTerm === '' ||
-      (report.description && report.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (report.description &&
+        report.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
       report.reporter.username
         .toLowerCase()
         .includes(searchTerm.toLowerCase()) ||
@@ -720,17 +711,29 @@ export default function ReportsManagement() {
         case 'post':
           return {
             title: `Post: ${item.reportedPost?.title || 'Untitled Post'}`,
-            subtitle: `By: ${item.reportedPost?.user?.displayName || 'Unknown User'}`,
+            subtitle: `By: ${
+              item.reportedPost?.user?.displayName || 'Unknown User'
+            }`,
           };
         case 'product':
           return {
-            title: `Product: ${item.reportedProduct?.name || 'Unknown Product'}`,
-            subtitle: `Shop: ${item.reportedProduct?.shop?.name || 'Unknown Shop'}`,
+            title: `Product: ${
+              item.reportedProduct?.name || 'Unknown Product'
+            }`,
+            subtitle: `Shop: ${
+              item.reportedProduct?.shop?.name || 'Unknown Shop'
+            }`,
           };
         case 'shop':
           return {
-            title: `Shop: ${item.reportedShop?.name || item.reportedShop?.displayName || 'Unknown Shop'}`,
-            subtitle: `Username: ${item.reportedShop?.username || 'Unknown Username'}`,
+            title: `Shop: ${
+              item.reportedShop?.name ||
+              item.reportedShop?.displayName ||
+              'Unknown Shop'
+            }`,
+            subtitle: `Username: ${
+              item.reportedShop?.username || 'Unknown Username'
+            }`,
           };
         default:
           return {
@@ -762,7 +765,9 @@ export default function ReportsManagement() {
               )}
             </View>
             <View>
-              <Text style={styles.reporterName}>{item.reporter?.displayName || 'Unknown Reporter'}</Text>
+              <Text style={styles.reporterName}>
+                {item.reporter?.displayName || 'Unknown Reporter'}
+              </Text>
               <Text style={styles.reportTime}>
                 {formatTimeAgo(item.createdAt)}
               </Text>
@@ -775,7 +780,12 @@ export default function ReportsManagement() {
             ]}
           >
             <ItemTypeIcon size={14} color={getItemTypeColor(item.itemType)} />
-            <Text style={[styles.itemTypeText, { color: getItemTypeColor(item.itemType) }]}>
+            <Text
+              style={[
+                styles.itemTypeText,
+                { color: getItemTypeColor(item.itemType) },
+              ]}
+            >
               {item.itemType.toUpperCase()}
             </Text>
           </View>
@@ -899,10 +909,13 @@ export default function ReportsManagement() {
               onPress={() => setActiveCategory(category.id)}
             >
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Text style={[
-                  styles.categoryTabText,
-                  activeCategory === category.id && styles.categoryTabTextActive,
-                ]}>
+                <Text
+                  style={[
+                    styles.categoryTabText,
+                    activeCategory === category.id &&
+                      styles.categoryTabTextActive,
+                  ]}
+                >
                   {category.label}
                 </Text>
               </View>
@@ -989,10 +1002,13 @@ export default function ReportsManagement() {
             onPress={() => setActiveCategory(category.id)}
           >
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Text style={[
-                styles.categoryTabText,
-                activeCategory === category.id && styles.categoryTabTextActive,
-              ]}>
+              <Text
+                style={[
+                  styles.categoryTabText,
+                  activeCategory === category.id &&
+                    styles.categoryTabTextActive,
+                ]}
+              >
                 {category.label}
               </Text>
             </View>

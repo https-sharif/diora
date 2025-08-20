@@ -88,7 +88,13 @@ export default function CategorySelector({
           >
             {cat}
           </Text>
-          {selected.includes(cat) && <Check size={16} color="#000" style={{ marginRight: -4, marginLeft: 4 }} />}
+          {selected.includes(cat) && (
+            <Check
+              size={16}
+              color="#000"
+              style={{ marginRight: -4, marginLeft: 4 }}
+            />
+          )}
         </TouchableOpacity>
       ))}
     </View>

@@ -1,8 +1,8 @@
- import express from 'express';
+import express from 'express';
 import { verifyAdmin } from '../middleware/adminAuth.js';
-import { 
+import {
   getPromotionRequests,
-  approvePromotionRequest
+  approvePromotionRequest,
 } from '../controllers/userController.js';
 import {
   getAdminStats,
@@ -17,7 +17,7 @@ import {
   hidePost,
   showPost,
   hideProduct,
-  showProduct
+  showProduct,
 } from '../controllers/adminController.js';
 
 const router = express.Router();

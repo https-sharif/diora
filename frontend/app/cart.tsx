@@ -248,43 +248,49 @@ export default function Cart() {
   const updateQuantityTimeoutRef = useRef<any>(null);
   const removeItemTimeoutRef = useRef<any>(null);
 
-  const debouncedUpdateQuantity = useCallback((productId: string, quantity: number, size?: string, variant?: string) => {
-    const key = `${productId}-${size || ''}-${variant || ''}`;
-    
-    setPendingUpdates(prev => new Set(prev.add(key)));
-    
-    if (updateQuantityTimeoutRef.current) {
-      clearTimeout(updateQuantityTimeoutRef.current);
-    }
-    
-    updateQuantityTimeoutRef.current = setTimeout(() => {
-      updateCartQuantity(productId, quantity, size, variant);
-      setPendingUpdates(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(key);
-        return newSet;
-      });
-    }, 500);
-  }, [updateCartQuantity]);
+  const debouncedUpdateQuantity = useCallback(
+    (productId: string, quantity: number, size?: string, variant?: string) => {
+      const key = `${productId}-${size || ''}-${variant || ''}`;
 
-  const debouncedRemoveFromCart = useCallback((productId: string, size?: string, variant?: string) => {
-    const key = `${productId}-${size || ''}-${variant || ''}`;
-    
-    setPendingUpdates(prev => new Set(prev.add(key)));
-    
-    if (removeItemTimeoutRef.current) {
-      clearTimeout(removeItemTimeoutRef.current);
-    }
-    
-    removeItemTimeoutRef.current = setTimeout(() => {
-      removeFromCart(productId, size, variant);
-      setPendingUpdates(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(key);
-        return newSet;
-      });
-    }, 300);
-  }, [removeFromCart]);
+      setPendingUpdates((prev) => new Set(prev.add(key)));
+
+      if (updateQuantityTimeoutRef.current) {
+        clearTimeout(updateQuantityTimeoutRef.current);
+      }
+
+      updateQuantityTimeoutRef.current = setTimeout(() => {
+        updateCartQuantity(productId, quantity, size, variant);
+        setPendingUpdates((prev) => {
+          const newSet = new Set(prev);
+          newSet.delete(key);
+          return newSet;
+        });
+      }, 500);
+    },
+    [updateCartQuantity]
+  );
+
+  const debouncedRemoveFromCart = useCallback(
+    (productId: string, size?: string, variant?: string) => {
+      const key = `${productId}-${size || ''}-${variant || ''}`;
+
+      setPendingUpdates((prev) => new Set(prev.add(key)));
+
+      if (removeItemTimeoutRef.current) {
+        clearTimeout(removeItemTimeoutRef.current);
+      }
+
+      removeItemTimeoutRef.current = setTimeout(() => {
+        removeFromCart(productId, size, variant);
+        setPendingUpdates((prev) => {
+          const newSet = new Set(prev);
+          newSet.delete(key);
+          return newSet;
+        });
+      }, 300);
+    },
+    [removeFromCart]
+  );
 
   useEffect(() => {
     return () => {
@@ -297,10 +303,13 @@ export default function Cart() {
     };
   }, []);
 
-  const hasPendingUpdate = useCallback((productId: string, size?: string, variant?: string) => {
-    const key = `${productId}-${size || ''}-${variant || ''}`;
-    return pendingUpdates.has(key);
-  }, [pendingUpdates]);
+  const hasPendingUpdate = useCallback(
+    (productId: string, size?: string, variant?: string) => {
+      const key = `${productId}-${size || ''}-${variant || ''}`;
+      return pendingUpdates.has(key);
+    },
+    [pendingUpdates]
+  );
 
   useEffect(() => {
     if (user) {
@@ -328,9 +337,7 @@ export default function Cart() {
       );
     } else {
       return (
-        <Text style={styles.cartItemPrice}>
-          ${product.price.toFixed(2)}
-        </Text>
+        <Text style={styles.cartItemPrice}>${product.price.toFixed(2)}</Text>
       );
     }
   };
@@ -342,7 +349,8 @@ export default function Cart() {
       </View>
       <Text style={styles.emptyTitle}>Your cart is empty</Text>
       <Text style={styles.emptyMessage}>
-        Discover amazing products from local shops and add them to your cart to get started.
+        Discover amazing products from local shops and add them to your cart to
+        get started.
       </Text>
       <TouchableOpacity
         style={styles.shopButton}
@@ -359,21 +367,23 @@ export default function Cart() {
     const isPending = hasPendingUpdate(product._id, item.size, item.variant);
 
     return (
-      <View style={[
-        styles.cartItem,
-        isPending && { opacity: 0.7, backgroundColor: theme.accentSecondary }
-      ]}>
+      <View
+        style={[
+          styles.cartItem,
+          isPending && { opacity: 0.7, backgroundColor: theme.accentSecondary },
+        ]}
+      >
         <Image
           source={{ uri: product.imageUrl?.[0] }}
           style={styles.cartItemImage}
           resizeMode="cover"
         />
-        
+
         <View style={styles.cartItemInfo}>
           <Text style={styles.cartItemName} numberOfLines={2}>
             {product.name}
           </Text>
-          
+
           {(item.size || item.variant) && (
             <Text style={styles.cartItemDetails}>
               {item.size && `Size: ${item.size}`}
@@ -381,27 +391,37 @@ export default function Cart() {
               {item.variant && `Color: ${item.variant}`}
             </Text>
           )}
-          
+
           {renderCartItemPrice(product)}
-          
+
           <View style={styles.cartItemActions}>
             <View style={styles.quantityControls}>
               <TouchableOpacity
                 style={styles.quantityButton}
                 onPress={() => {
                   if (item.quantity > 1) {
-                    debouncedUpdateQuantity(product._id, item.quantity - 1, item.size, item.variant);
+                    debouncedUpdateQuantity(
+                      product._id,
+                      item.quantity - 1,
+                      item.size,
+                      item.variant
+                    );
                   } else {
                     Alert.alert(
                       'Remove Item',
                       'Do you want to remove this item from your cart?',
                       [
                         { text: 'Cancel', style: 'cancel' },
-                        { 
-                          text: 'Remove', 
+                        {
+                          text: 'Remove',
                           style: 'destructive',
-                          onPress: () => debouncedRemoveFromCart(product._id, item.size, item.variant)
-                        }
+                          onPress: () =>
+                            debouncedRemoveFromCart(
+                              product._id,
+                              item.size,
+                              item.variant
+                            ),
+                        },
                       ]
                     );
                   }
@@ -409,26 +429,33 @@ export default function Cart() {
               >
                 <Minus size={16} color="#000" strokeWidth={3} />
               </TouchableOpacity>
-              
+
               <View style={styles.quantityTextContainer}>
                 <Text style={styles.quantityText}>{item.quantity}</Text>
                 {isPending && (
-                  <ActivityIndicator 
-                    size="small" 
-                    color={theme.primary} 
+                  <ActivityIndicator
+                    size="small"
+                    color={theme.primary}
                     style={{ marginLeft: 4 }}
                   />
                 )}
               </View>
-              
+
               <TouchableOpacity
                 style={styles.quantityButton}
-                onPress={() => debouncedUpdateQuantity(product._id, item.quantity + 1, item.size, item.variant)}
+                onPress={() =>
+                  debouncedUpdateQuantity(
+                    product._id,
+                    item.quantity + 1,
+                    item.size,
+                    item.variant
+                  )
+                }
               >
                 <Plus size={16} color="#000" strokeWidth={3} />
               </TouchableOpacity>
             </View>
-            
+
             <TouchableOpacity
               style={styles.removeButton}
               onPress={() => {
@@ -437,11 +464,16 @@ export default function Cart() {
                   'Do you want to remove this item from your cart?',
                   [
                     { text: 'Cancel', style: 'cancel' },
-                    { 
-                      text: 'Remove', 
+                    {
+                      text: 'Remove',
                       style: 'destructive',
-                      onPress: () => debouncedRemoveFromCart(product._id, item.size, item.variant)
-                    }
+                      onPress: () =>
+                        debouncedRemoveFromCart(
+                          product._id,
+                          item.size,
+                          item.variant
+                        ),
+                    },
                   ]
                 );
               }}
@@ -467,7 +499,7 @@ export default function Cart() {
           <Text style={styles.headerTitle}>Shopping Cart</Text>
           <View style={styles.headerButton} />
         </View>
-        
+
         <View style={styles.emptyState}>
           <View style={styles.emptyIconContainer}>
             <AlertCircle size={48} color={theme.text} strokeWidth={2} />
@@ -499,9 +531,9 @@ export default function Cart() {
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <Text style={styles.headerTitle}>Shopping Cart</Text>
           {pendingUpdates.size > 0 && (
-            <ActivityIndicator 
-              size="small" 
-              color={theme.primary} 
+            <ActivityIndicator
+              size="small"
+              color={theme.primary}
               style={{ marginLeft: 8 }}
             />
           )}
@@ -514,7 +546,8 @@ export default function Cart() {
       {cart && cart.length > 0 && (
         <View style={styles.cartSummary}>
           <Text style={styles.cartSummaryText}>
-            {getCartItemCount()} {getCartItemCount() === 1 ? 'item' : 'items'} in your cart
+            {getCartItemCount()} {getCartItemCount() === 1 ? 'item' : 'items'}{' '}
+            in your cart
           </Text>
           <Text style={styles.cartTotal}>
             Total: ${getCartTotal().toFixed(2)}
@@ -525,9 +558,15 @@ export default function Cart() {
       <FlatList
         data={cart}
         renderItem={renderCartItem}
-        keyExtractor={(item, index) => `${item.productId._id}-${item.size || 'no-size'}-${item.variant || 'no-variant'}-${index}`}
+        keyExtractor={(item, index) =>
+          `${item.productId._id}-${item.size || 'no-size'}-${
+            item.variant || 'no-variant'
+          }-${index}`
+        }
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={cart && cart.length > 0 ? { paddingBottom: 100 } : { flex: 1 }}
+        contentContainerStyle={
+          cart && cart.length > 0 ? { paddingBottom: 100 } : { flex: 1 }
+        }
         ListEmptyComponent={renderEmptyCart}
       />
 
