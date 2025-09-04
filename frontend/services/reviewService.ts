@@ -13,7 +13,7 @@ export const reviewService = {
     return response.data;
   },
 
-  async createReview(reviewData: ReviewData, token: string): Promise<any> {
+  async createReview(reviewData: ReviewData | FormData, token: string): Promise<any> {
     const response = await axios.post(
       `${config.apiUrl}/api/review`,
       reviewData,
@@ -26,7 +26,7 @@ export const reviewService = {
 
   async updateReview(
     reviewId: string,
-    reviewData: Partial<ReviewData>,
+    reviewData: Partial<ReviewData> | FormData,
     token: string
   ): Promise<any> {
     const response = await axios.put(
@@ -49,6 +49,16 @@ export const reviewService = {
     return response.data;
   },
 
+  async getShopReviews(shopId: string, token?: string): Promise<any> {
+    const response = await axios.get(
+      `${config.apiUrl}/api/review/shop/${shopId}`,
+      {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      }
+    );
+    return response.data;
+  },
+
   async getReviewById(reviewId: string, token?: string): Promise<any> {
     const response = await axios.get(
       `${config.apiUrl}/api/review/${reviewId}`,
@@ -57,6 +67,20 @@ export const reviewService = {
       }
     );
     return response.data;
+  },
+
+  async hasUserReviewedShop(
+    userId: string,
+    shopId: string,
+    token: string
+  ): Promise<boolean> {
+    const response = await axios.get(
+      `${config.apiUrl}/api/review/reviewed/${userId}/shop/${shopId}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+    return response.data.reviewed || false;
   },
 
   async hasUserReviewedProduct(

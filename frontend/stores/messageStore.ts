@@ -22,41 +22,7 @@ export const useMessageStore = create<MessageState>((set, get) => ({
     profileId,
     postId
   ) => {
-    const user = useAuthStore.getState().user;
-    if (!messageText.trim() && !imageUri) return;
-
-    const newMessage: Message = {
-      _id: Date.now().toString(),
-      text: messageText,
-      createdAt: new Date(),
-      conversationId,
-      senderId: user?._id || 'me',
-      type: imageUri ? 'image' : 'text',
-      status: 'sending',
-      replyTo: replyToId,
-      reactions: {},
-      imageUrl: imageUri || undefined,
-      productId: productId || undefined,
-      profileId: profileId || undefined,
-      postId: postId || undefined,
-    };
-
-    set((state) => ({
-      messages: [...state.messages, newMessage],
-      conversations: state.conversations.map((conv) =>
-        conv._id === conversationId
-          ? { ...conv, lastMessageId: newMessage }
-          : conv
-      ),
-    }));
-
-    setTimeout(() => {
-      get().updateMessageStatus(conversationId, newMessage._id, 'sent');
-    }, 1000);
-
-    setTimeout(() => {
-      get().updateMessageStatus(conversationId, newMessage._id, 'delivered');
-    }, 2000);
+    console.log('sendMessage called but not implemented');
   },
 
   handleIncomingNotification: () => {},

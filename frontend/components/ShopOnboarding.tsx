@@ -23,9 +23,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
 import { Theme } from '@/types/Theme';
-import { userService } from '@/services';
-import axios from 'axios';
-import { config } from '@/config';
+import { shopService, userService } from '@/services';
 
 interface ShopOnboardingProps {
   onComplete: () => void;
@@ -836,27 +834,19 @@ export default function ShopOnboarding({ onComplete }: ShopOnboardingProps) {
 
   const handleStripeOnboarding = async () => {
     try {
+      if (!token) {
+        throw new Error('No authentication token available');
+      }
       setLoading(true);
-      const statusRes = await axios.get(
-        `${config.apiUrl}/api/stripe/check-onboarding-status`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const statusRes = await shopService.checkStripeOnboarding(token);
 
-      if (statusRes.data.onboarded) {
+      if (statusRes.onboarded) {
         setStripeConnected(true);
         handleNext();
         return;
       }
 
-      const { data } = await axios.post(
-        `${config.apiUrl}/api/stripe/create-account-link`,
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const data = await shopService.createStripeAccountLink(token);
       if (data.url) {
         setStripeConnected(true);
         handleNext();

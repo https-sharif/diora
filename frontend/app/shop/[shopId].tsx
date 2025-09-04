@@ -51,8 +51,7 @@ import { User } from '@/types/User';
 import { Post } from '@/types/Post';
 import { Theme } from '@/types/Theme';
 import { useTheme } from '@/contexts/ThemeContext';
-import axios from 'axios';
-import { config } from '@/config';
+import { userService, reviewService, postService, messageService, searchService, reportService } from '@/services';
 import Color from 'color';
 import { BlurView } from 'expo-blur';
 import { format as timeago } from 'timeago.js';
@@ -63,7 +62,6 @@ import StarSlashIcon from '@/icon/StarSlashIcon';
 import RatingStars from '@/components/RatingStar';
 import ReviewInput from '@/components/ReviewInput';
 import * as ImagePicker from 'expo-image-picker';
-import { messageService, searchService } from '@/services/';
 
 const { width, height } = Dimensions.get('window');
 const isSmallScreen = width < 360;
@@ -883,21 +881,15 @@ export default function ShopProfileScreen() {
   useEffect(() => {
     const fetchShopProfile = async () => {
       try {
+        if (!token || !shopId) return;
         setLoading(true);
-        const response = await axios.get(
-          `${config.apiUrl}/api/user/${shopId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+        const response = await userService.getUserById(shopId, token);
 
-        if (response.data.status === false) {
+        if (response.status === false) {
           router.back();
           return;
         }
-        const shop = response.data.user;
+        const shop = response.user;
 
         setShopProfile(shop);
 
@@ -913,62 +905,37 @@ export default function ShopProfileScreen() {
 
     const fetchReviews = async () => {
       try {
-        const response = await axios.get(
-          `${config.apiUrl}/api/review/shop/${shopId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+        if (!token || !shopId) return;
+        const response = await reviewService.getShopReviews(shopId, token);
 
-        if (response.data.status === false) {
+        if (response.status === false) {
           setReviews([]);
           return;
         }
 
-        setReviews(response.data.reviews);
+        setReviews(response.reviews);
       } catch {}
     };
 
     const fetchPosts = async () => {
       try {
-        const response = await axios.get(
-          `${config.apiUrl}/api/post/user/${shopId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+        if (!token || !shopId) return;
+        const response = await postService.getUserPosts(shopId, token);
 
-        if (response.data.status === false) {
+        if (response.status === false) {
           return;
         }
 
-        setPosts(response.data.posts);
+        setPosts(response);
       } catch {}
     };
 
     const fetchReviewedStatus = async () => {
-      if (!user) return;
+      if (!user || !token || !shopId) return;
 
       try {
-        const response = await axios.get(
-          `${config.apiUrl}/api/review/reviewed/${user._id}/shop/${shopId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        if (response.data.status === false) {
-          setHasReviewed(false);
-          return;
-        }
-
-        setHasReviewed(response.data.reviewed);
+        const reviewed = await reviewService.hasUserReviewedShop(user._id, shopId, token);
+        setHasReviewed(reviewed);
       } catch {}
     };
 
@@ -1070,21 +1037,10 @@ export default function ShopProfileScreen() {
   };
 
   const handleDeleteReview = async () => {
-    if (!selectedReview || !user) return;
+    if (!selectedReview || !user || !token) return;
     try {
-      const response = await axios.delete(
-        `${config.apiUrl}/api/review/shop/${selectedReview._id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      await reviewService.deleteReview(selectedReview._id, token);
 
-      if (response.data.status === false) {
-        Alert.alert('Error', response.data.message);
-        return;
-      }
       setReviews(reviews.filter((review) => review._id !== selectedReview._id));
       setSelectedReview(null);
       setShowReviewModal(false);
@@ -1100,7 +1056,7 @@ export default function ShopProfileScreen() {
   };
 
   const handleSubmitReview = async () => {
-    if (!shopProfile || !user) return;
+    if (!shopProfile || !user || !token) return;
     if (rating === 0) return;
 
     try {
@@ -1125,31 +1081,17 @@ export default function ShopProfileScreen() {
 
       let response;
       if (editingReview && selectedReview) {
-        response = await axios.put(
-          `${config.apiUrl}/api/review/shop/${selectedReview._id}`,
-          form,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              'Content-Type': 'multipart/form-data',
-            },
-          }
-        );
+        response = await reviewService.updateReview(selectedReview._id, form, token);
       } else {
-        response = await axios.post(`${config.apiUrl}/api/review`, form, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'multipart/form-data',
-          },
-        });
+        response = await reviewService.createReview(form, token);
       }
 
-      if (response.data.status === false) {
-        Alert.alert('Error', response.data.message);
+      if (response.status === false) {
+        Alert.alert('Error', response.message);
         return;
       }
 
-      const review = response.data.review;
+      const review = response.review;
 
       setReviews([...reviews, review]);
       setEditingReview(false);
@@ -1303,7 +1245,7 @@ export default function ShopProfileScreen() {
   }, [userSearchQuery]);
 
   const handleReport = async () => {
-    if (!reportReason.trim() || !user || !shopProfile) return;
+    if (!reportReason.trim() || !user || !shopProfile || !token) return;
 
     const reasonMap: { [key: string]: string } = {
       Spam: 'spam',
@@ -1316,24 +1258,15 @@ export default function ShopProfileScreen() {
 
     try {
       const payload = {
-        reportedItem: {
-          itemType: 'shop',
-          itemId: shopProfile._id,
-        },
-        type: reasonMap[reportReason] || 'other',
-        description:
-          reportDescription.trim() || 'No additional details provided',
+        targetType: 'user' as const,
+        targetId: shopProfile._id,
+        reason: reasonMap[reportReason] || 'other',
+        description: reportDescription.trim() || 'No additional details provided',
       };
 
-      const response = await axios.post(
-        `${config.apiUrl}/api/report`,
-        payload,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const response = await reportService.createReport(payload, token);
 
-      if (response.data.status) {
+      if (response.status) {
         setShowReportModal(false);
         setShowMoreMenu(false);
         setReportReason('');

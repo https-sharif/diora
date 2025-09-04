@@ -38,11 +38,13 @@ export const reportService = {
   async moderateReport(
     reportId: string,
     action: string,
-    token: string
+    token: string,
+    additionalData?: any
   ): Promise<any> {
+    const data = { action, ...additionalData };
     const response = await axios.post(
       `${config.apiUrl}/api/report/${reportId}/moderate`,
-      { action },
+      data,
       {
         headers: { Authorization: `Bearer ${token}` },
       }
@@ -66,6 +68,13 @@ export const reportService = {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       }
     );
+    return response.data;
+  },
+
+  async getStats(token: string): Promise<any> {
+    const response = await axios.get(`${config.apiUrl}/api/report/stats`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
     return response.data;
   },
 

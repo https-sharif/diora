@@ -19,7 +19,7 @@ export const userService = {
 
   async updateProfile(profileData: FormData, token: string): Promise<any> {
     const response = await axios.put(
-      `${config.apiUrl}/api/user/profile`,
+      `${config.apiUrl}/api/user/update/profile`,
       profileData,
       {
         headers: { Authorization: `Bearer ${token}` },

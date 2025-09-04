@@ -222,4 +222,22 @@ export const messageService = {
     );
     return response.data;
   },
+
+  async updateGroupWithAvatar(
+    conversationId: string,
+    formData: FormData,
+    token: string
+  ): Promise<{ status: boolean; conversation: Conversation }> {
+    const response = await axios.put(
+      `${config.apiUrl}/api/message/conversations/${conversationId}/edit`,
+      formData,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+    return response.data;
+  },
 };

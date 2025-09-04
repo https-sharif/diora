@@ -17,8 +17,7 @@ import { router } from 'expo-router';
 import PostCard from '@/components/PostCard';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Theme } from '@/types/Theme';
-import axios from 'axios';
-import { config } from '@/config';
+import { postService } from '@/services/postService';
 
 const createStyles = (theme: Theme) => {
   return StyleSheet.create({
@@ -106,12 +105,10 @@ export default function FeedScreen() {
     const fetchPosts = async () => {
       setLoading(true);
       try {
-        const response = await axios.get(`${config.apiUrl}/api/post`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const response = await postService.getPosts({}, token);
 
-        if (response.data.status) {
-          setPosts(response.data.posts);
+        if (response.status) {
+          setPosts(response.posts);
         }
       } catch {}
       setLoading(false);
@@ -125,18 +122,14 @@ export default function FeedScreen() {
   }
 
   const onRefresh = async () => {
-    if (!user) return;
+    if (!user || !token) return;
     setRefreshing(true);
 
     try {
-      const response = await axios.get(`${config.apiUrl}/api/post`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await postService.getPosts({}, token);
 
-      if (response.data.status) {
-        setPosts(response.data.posts);
+      if (response.status) {
+        setPosts(response.posts);
       }
     } catch {}
 

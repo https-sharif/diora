@@ -43,7 +43,6 @@ function AppReadyWrapper({ insets }: { insets: EdgeInsets }) {
   const { user, loading, syncUser } = useAuth();
   const { handleIncomingNotification } = useNotification();
   const { handleIncomingMessage } = useMessage();
-  const { sendMessage } = useMessage();
   const { initializeUserData, fetchCart } = useShopping();
 
   useEffect(() => {
@@ -82,7 +81,7 @@ function AppReadyWrapper({ insets }: { insets: EdgeInsets }) {
     const subscription = Linking.addEventListener('url', handleUrl);
 
     return () => subscription.remove();
-  }, []);
+  }, [fetchCart]);
 
   useEffect(() => {
     if (user?._id && user?.onboarding?.isComplete) {
@@ -93,6 +92,7 @@ function AppReadyWrapper({ insets }: { insets: EdgeInsets }) {
   useEffect(() => {
     if (user?._id) {
       const onNotification = (notif: any) => {
+        console.log('🔔 Handling incoming notification');
         handleIncomingNotification(notif);
       };
 
@@ -100,18 +100,48 @@ function AppReadyWrapper({ insets }: { insets: EdgeInsets }) {
         conversationId: string;
         message: Message;
       }) => {
+        console.log('💬 Handling incoming message for conversation:', data.conversationId);
         handleIncomingMessage(data.conversationId, data.message);
       };
 
-      initSocket(user._id, onNotification, onMessage);
+      const onConnect = () => {
+        console.log('✅ Socket connected in layout');
+      };
 
-      const socket = getSocket();
+      const onDisconnect = () => {
+        console.log('🔌 Socket disconnected in layout');
+      };
 
-      socket.on('message', sendMessage);
+      const onMessageReaction = (data: any) => {
+        console.log('😀 Handling message reaction');
+      };
+
+      const onMessageDeleted = (data: any) => {
+        console.log('🗑️ Handling message deleted');
+      };
+
+      const onMessagesRead = (data: any) => {
+        console.log('👀 Handling messages read');
+      };
+
+      initSocket(
+        user._id,
+        onNotification,
+        onMessage,
+        onConnect,
+        onDisconnect,
+        onMessageReaction,
+        onMessageDeleted,
+        onMessagesRead
+      );
 
       return () => {
+        const socket = getSocket();
         socket.off('notification');
-        socket.off('message', sendMessage);
+        socket.off('newMessage');
+        socket.off('messageReaction');
+        socket.off('messageDeleted');
+        socket.off('messagesRead');
         socket.disconnect();
       };
     }
@@ -119,7 +149,6 @@ function AppReadyWrapper({ insets }: { insets: EdgeInsets }) {
     user?._id,
     handleIncomingNotification,
     handleIncomingMessage,
-    sendMessage,
   ]);
 
   const [fontsLoaded] = useFonts({

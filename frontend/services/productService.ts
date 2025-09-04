@@ -42,12 +42,19 @@ export const productService = {
     return response.data.products || [];
   },
 
-  async createProduct(productData: ProductData, token: string): Promise<any> {
+  async createProduct(productData: ProductData | FormData, token: string): Promise<any> {
+    const headers: any = { Authorization: `Bearer ${token}` };
+    
+    // If it's FormData, don't set Content-Type (let browser set it with boundary)
+    if (!(productData instanceof FormData)) {
+      headers['Content-Type'] = 'application/json';
+    }
+    
     const response = await axios.post(
       `${config.apiUrl}/api/product`,
       productData,
       {
-        headers: { Authorization: `Bearer ${token}` },
+        headers,
       }
     );
     return response.data;

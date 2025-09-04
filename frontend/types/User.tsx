@@ -93,6 +93,7 @@ export interface UserProfileData {
 }
 
 export interface UserSettings {
+  theme?: string;
   notifications?: {
     orders?: boolean;
     messages?: boolean;

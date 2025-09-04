@@ -23,9 +23,8 @@ import {
 } from 'lucide-react-native';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/contexts/ThemeContext';
-import { config } from '@/config';
 import { Theme } from '@/types/Theme';
-import axios from 'axios';
+import { orderService } from '@/services/orderService';
 
 interface Order {
   _id: string;
@@ -344,15 +343,10 @@ const OrderDetailsScreen = () => {
 
     try {
       setLoading(true);
-      const response = await axios.get(
-        `${config.apiUrl}/api/order/${orderId}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const response = await orderService.getOrderById(orderId, token);
 
-      if (response.data.status) {
-        setOrder(response.data.order);
+      if (response.status) {
+        setOrder(response.order);
         setError(null);
       } else {
         setError('Order not found');
@@ -373,14 +367,11 @@ const OrderDetailsScreen = () => {
         text: 'Yes',
         style: 'destructive',
         onPress: async () => {
+          if (!token) return;
           try {
-            const response = await axios.patch(
-              `${config.apiUrl}/api/order/${order._id}/cancel`,
-              {},
-              { headers: { Authorization: `Bearer ${token}` } }
-            );
+            const response = await orderService.cancelOrder(order._id, token);
 
-            if (response.data.status) {
+            if (response.status) {
               setOrder((prev) =>
                 prev ? { ...prev, status: 'cancelled' } : null
               );

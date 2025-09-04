@@ -40,4 +40,36 @@ export const shopService = {
     });
     return response.data;
   },
+
+  async checkStripeOnboarding(token: string): Promise<any> {
+    const response = await axios.get(
+      `${config.apiUrl}/api/stripe/check-onboarding-status`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+    return response.data;
+  },
+
+  async createStripeAccountLink(token: string): Promise<any> {
+    const response = await axios.post(
+      `${config.apiUrl}/api/stripe/create-account-link`,
+      {},
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+    return response.data;
+  },
+
+  async updateShopProfile(profileData: FormData, token: string): Promise<any> {
+    const response = await axios.put(
+      `${config.apiUrl}/api/shop/profile`,
+      profileData,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+    return response.data;
+  },
 };

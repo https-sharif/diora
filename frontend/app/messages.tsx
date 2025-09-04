@@ -30,10 +30,10 @@ import { useMessage } from '@/hooks/useMessage';
 import { useAuthStore } from '@/stores/authStore';
 import { messageService } from '@/services/messageService';
 import { searchService } from '@/services/searchService';
+import { userService } from '@/services/userService';
 import { Conversation } from '@/types/Conversation';
 import { useAuth } from '@/hooks/useAuth';
 import Color from 'color';
-import { config } from '@/config';
 
 const createStyles = (theme: any) => {
   return StyleSheet.create({
@@ -455,14 +455,9 @@ export default function MessagesScreen() {
     try {
       const followingPromises = user.following.map(async (userId: string) => {
         try {
-          const response = await fetch(`${config.apiUrl}/api/user/${userId}`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          if (response.ok) {
-            const userData = await response.json();
-            return userData.status ? userData.user : null;
-          }
-          return null;
+          if (!token) return null;
+          const response = await userService.getUserById(userId, token);
+          return response.status ? response.user : null;
         } catch {
           return null;
         }

@@ -24,8 +24,7 @@ import { router } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Theme } from '@/types/Theme';
-import axios from 'axios';
-import { config } from '@/config';
+import { shopService } from '@/services';
 import * as ImagePicker from 'expo-image-picker';
 
 const createStyles = (theme: Theme) =>
@@ -330,6 +329,9 @@ export default function EditShopProfile() {
 
   const handleSave = async () => {
     try {
+      if (!token) {
+        throw new Error('No authentication token available');
+      }
       setSaving(true);
 
       const requestFormData = new FormData();
@@ -354,24 +356,16 @@ export default function EditShopProfile() {
         requestFormData.append('coverImage', selectedFiles.coverImage as any);
       }
 
-      const response = await axios.put(
-        `${config.apiUrl}/api/shop/profile`,
-        requestFormData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await shopService.updateProfile(requestFormData, token);
 
-      if (response.data.status) {
+      if (response.status) {
         Alert.alert('Success', 'Profile updated successfully!');
-        setUser(response.data.user);
+        setUser(response.user);
         router.back();
       } else {
         Alert.alert(
           'Error',
-          response.data.message || 'Failed to update profile'
+          response.message || 'Failed to update profile'
         );
       }
     } catch {

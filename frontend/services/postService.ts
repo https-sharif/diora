@@ -23,9 +23,16 @@ export const postService = {
     return response.data.posts || [];
   },
 
-  async createPost(postData: PostData, token: string): Promise<any> {
-    const response = await axios.post(`${config.apiUrl}/api/post`, postData, {
-      headers: { Authorization: `Bearer ${token}` },
+  async createPost(postData: PostData | FormData, token: string): Promise<any> {
+    const headers: any = { Authorization: `Bearer ${token}` };
+    
+    // If it's FormData, don't set Content-Type (let browser set it with boundary)
+    if (!(postData instanceof FormData)) {
+      headers['Content-Type'] = 'application/json';
+    }
+    
+    const response = await axios.post(`${config.apiUrl}/api/post/create`, postData, {
+      headers,
     });
     return response.data;
   },

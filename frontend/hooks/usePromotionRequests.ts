@@ -48,6 +48,7 @@ export const usePromotionRequests = () => {
         setError(null);
         const response = await adminService.approvePromotionRequest(
           requestId,
+          comments || '',
           token
         );
 

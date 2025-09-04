@@ -35,8 +35,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useToast } from '@/hooks/useToast';
 import { Toast } from '@/components/Toast';
 import { PromotionRequestModal } from '@/components/PromotionRequestModal';
-import axios from 'axios';
-import { config } from '@/config';
+import { userService } from '@/services/userService';
 import * as ImagePicker from 'expo-image-picker';
 
 interface SocialAccount {
@@ -428,18 +427,14 @@ export default function SettingsScreen() {
 
   const saveSettings = useCallback(
     async (updatedSettings: any) => {
+      if (!token) return;
       try {
-        await axios.put(
-          `${config.apiUrl}/api/user/settings`,
+        await userService.updateSettings(
           {
             theme: updatedSettings.theme,
             notifications: updatedSettings.notifications,
           },
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
+          token
         );
       } catch {
         showToast('error', 'Failed to save settings');
@@ -515,7 +510,7 @@ export default function SettingsScreen() {
   };
 
   const handleSaveProfile = async () => {
-    if (!user) return;
+    if (!user || !token) return;
 
     if (fullName.length < 2 || fullName.length > 50) {
       showToast('error', 'Full name must be between 2-50 characters');
@@ -546,28 +541,24 @@ export default function SettingsScreen() {
     formData.append('username', username);
     formData.append('bio', bio);
 
-    const response = await axios.put(
-      `${config.apiUrl}/api/user/update/profile`,
-      formData,
-      {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          Authorization: `Bearer ${token}`,
-        },
+    try {
+      const response = await userService.updateProfile(formData, token);
+
+      if (!response.status) {
+        showToast('error', response.message || 'Failed to update profile');
+        return;
       }
-    );
 
-    if (!response.data.status) {
-      showToast('error', response.data.message || 'Failed to update profile');
-      return;
+      setUser(response.user);
+
+      showToast('success', 'Profile updated successfully');
+    } catch {
+      showToast('error', 'Failed to update profile');
     }
-
-    setUser(response.data.user);
-
-    showToast('success', 'Profile updated successfully');
   };
 
   const handleChangePassword = async () => {
+    if (!token) return;
     if (!currentPassword || !newPassword || !confirmPassword) {
       showToast('error', 'Please fill in all password fields');
       return;
@@ -581,54 +572,48 @@ export default function SettingsScreen() {
       return;
     }
 
-    const response = await axios.put(
-      `${config.apiUrl}/api/user/update/security`,
-      {
-        currentPassword,
-        newPassword,
-      },
-      {
-        headers: { Authorization: `Bearer ${token}` },
+    try {
+      const response = await userService.updateSecurity(currentPassword, newPassword, token);
+
+      if (!response.status) {
+        showToast('error', response.message || 'Failed to change password');
+        return;
       }
-    );
+      setUser(response.user);
 
-    if (!response.data.status) {
-      showToast('error', response.data.message || 'Failed to change password');
-      return;
+      showToast('success', 'Password changed successfully');
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch {
+      showToast('error', 'Failed to change password');
     }
-    setUser(response.data.user);
-
-    showToast('success', 'Password changed successfully');
-    setCurrentPassword('');
-    setNewPassword('');
-    setConfirmPassword('');
   };
 
   const handleUpdateEmail = async () => {
+    if (!token) return;
     if (!newEmail.includes('@')) {
       showToast('error', 'Please enter a valid email address');
       return;
     }
 
-    const response = await axios.put(
-      `${config.apiUrl}/api/user/update/email`,
-      { email: newEmail },
-      {
-        headers: { Authorization: `Bearer ${token}` },
+    try {
+      const response = await userService.updateEmail(newEmail, token);
+
+      if (!response.status) {
+        showToast('error', 'Failed to update email');
+        return;
       }
-    );
 
-    if (!response.data.status) {
+      setUser(response.user);
+
+      showToast(
+        'alert',
+        'A verification email has been sent to your new email address'
+      );
+    } catch {
       showToast('error', 'Failed to update email');
-      return;
     }
-
-    setUser(response.data.user);
-
-    showToast(
-      'alert',
-      'A verification email has been sent to your new email address'
-    );
   };
 
   const toggleSocialAccount = (id: string) => {

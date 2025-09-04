@@ -8,13 +8,14 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from 'react-native';
 import { useCreatePost } from '@/contexts/CreatePostContext';
 import CategorySelector from '@/components/CategorySelector';
 import { Theme } from '@/types/Theme';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Check, Plus, X } from 'lucide-react-native';
-import { router, useNavigation } from 'expo-router';
+import { router } from 'expo-router';
 
 const createStyles = (theme: Theme) => {
   return StyleSheet.create({
@@ -143,7 +144,6 @@ export default function CreateFormScreen() {
   const { theme } = useTheme();
   const styles = createStyles(theme);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const navigation = useNavigation();
   const [tempSize, setTempSize] = useState('');
   const [tempVariant, setTempVariant] = useState('');
 
@@ -159,10 +159,14 @@ export default function CreateFormScreen() {
       } else {
         await createPost();
       }
-      navigation.goBack();
-      router.push('/(tabs)');
+      router.push('/imageScreen');
       reset();
-    } catch {
+    } catch (error) {
+      console.error('Post creation failed:', error);
+      Alert.alert(
+        'Error',
+        error instanceof Error ? error.message : 'Failed to create post. Please try again.'
+      );
       setIsSubmitting(false);
       return;
     } finally {

@@ -37,14 +37,13 @@ import { Theme } from '@/types/Theme';
 import { User } from '@/types/User';
 import { useTheme } from '@/contexts/ThemeContext';
 import ImageSlashIcon from '@/icon/ImageSlashIcon';
-import axios, { isAxiosError } from 'axios';
-import { config } from '@/config';
 import { format } from 'timeago.js';
 import {
   postService,
   commentService,
   messageService,
   searchService,
+  reportService,
 } from '@/services';
 import Color from 'color';
 
@@ -720,21 +719,25 @@ export default function PostDetailScreen() {
   };
 
   const handleAddComment = async () => {
-    if (!newComment.trim() || !user) return;
+    if (!newComment.trim() || !user || !token) return;
 
     try {
-      const url = replyingTo
-        ? `${config.apiUrl}/api/comment/reply/${replyingTo}`
-        : `${config.apiUrl}/api/comment/create`;
+      let response;
+      if (replyingTo) {
+        response = await commentService.replyToComment(
+          replyingTo,
+          { content: newComment, postId: post._id },
+          token
+        );
+      } else {
+        response = await commentService.createComment(
+          { content: newComment, postId: post._id },
+          token
+        );
+      }
 
-      const payload = { userId: user._id, postId: post._id, text: newComment };
-
-      const response = await axios.post(url, payload, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (response.data.status) {
-        const newAdded = response.data.comment;
+      if (response.status) {
+        const newAdded = response.comment;
 
         if (replyingTo) {
           setComments((prev) =>
@@ -827,25 +830,20 @@ export default function PostDetailScreen() {
     };
 
     try {
-      const payload = {
-        reportedItem: {
-          itemType: 'post',
-          itemId: post._id,
-        },
-        type: reasonMap[reportReason] || 'other',
-        description:
-          reportDescription.trim() || 'No additional details provided',
-      };
+      if (!token) return;
 
-      const response = await axios.post(
-        `${config.apiUrl}/api/report`,
-        payload,
+      const response = await reportService.createReport(
         {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+          targetType: 'post',
+          targetId: post._id,
+          reason: reasonMap[reportReason] || 'other',
+          description:
+            reportDescription.trim() || 'No additional details provided',
+        },
+        token
       );
 
-      if (response.data.status) {
+      if (response.status) {
         setShowReportModal(false);
         setReportReason('');
         setReportDescription('');

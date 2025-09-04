@@ -41,11 +41,12 @@ export const adminService = {
 
   async approvePromotionRequest(
     requestId: string,
+    comments: string,
     token: string
   ): Promise<any> {
-    const response = await axios.post(
+    const response = await axios.put(
       `${config.apiUrl}/api/admin/promotion-requests/${requestId}`,
-      { action: 'approve' },
+      { action: 'approve', comments },
       {
         headers: { Authorization: `Bearer ${token}` },
       }
@@ -55,12 +56,12 @@ export const adminService = {
 
   async rejectPromotionRequest(
     requestId: string,
-    reason: string,
+    comments: string,
     token: string
   ): Promise<any> {
-    const response = await axios.post(
+    const response = await axios.put(
       `${config.apiUrl}/api/admin/promotion-requests/${requestId}`,
-      { action: 'reject', reason },
+      { action: 'reject', comments },
       {
         headers: { Authorization: `Bearer ${token}` },
       }
@@ -167,6 +168,42 @@ export const adminService = {
     const response = await axios.post(
       `${config.apiUrl}/api/admin/users/${userId}/warn`,
       { message },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    return response.data;
+  },
+
+  async hidePost(postId: string, token: string): Promise<any> {
+    const response = await axios.post(
+      `${config.apiUrl}/api/admin/posts/${postId}/hide`,
+      {},
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    return response.data;
+  },
+
+  async showPost(postId: string, token: string): Promise<any> {
+    const response = await axios.post(
+      `${config.apiUrl}/api/admin/posts/${postId}/show`,
+      {},
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    return response.data;
+  },
+
+  async hideProduct(productId: string, token: string): Promise<any> {
+    const response = await axios.post(
+      `${config.apiUrl}/api/admin/products/${productId}/hide`,
+      {},
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    return response.data;
+  },
+
+  async showProduct(productId: string, token: string): Promise<any> {
+    const response = await axios.post(
+      `${config.apiUrl}/api/admin/products/${productId}/show`,
+      {},
       { headers: { Authorization: `Bearer ${token}` } }
     );
     return response.data;

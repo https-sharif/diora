@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -29,7 +29,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Theme } from '@/types/Theme';
 import { PromotionRequest } from '@/types/PromotionRequest';
-import axios from 'axios';
+import { adminService } from '@/services';
 import { config } from '@/config';
 
 const createStyles = (theme: Theme) =>
@@ -316,8 +316,25 @@ export default function PromotionRequestsScreen() {
     { key: 'rejected', label: 'Rejected' },
   ];
 
+  const fetchRequests = useCallback(async () => {
+    try {
+      if (!token) return;
+      setLoading(true);
+      const status = selectedFilter !== 'all' ? selectedFilter : undefined;
+      const response = await adminService.getPromotionRequests(status, undefined, undefined, token);
+
+      if (response.status) {
+        setRequests(response.requests);
+      }
+    } catch {
+      Alert.alert('Error', 'Failed to fetch promotion requests');
+    } finally {
+      setLoading(false);
+    }
+  }, [token, selectedFilter]);
+
   useEffect(() => {
-    if (user?.type !== 'admin') {
+    if (!user || user.type !== 'admin') {
       Alert.alert(
         'Access Denied',
         'You need admin privileges to access this page.'
@@ -326,29 +343,7 @@ export default function PromotionRequestsScreen() {
       return;
     }
     fetchRequests();
-  }, [selectedFilter]);
-
-  const fetchRequests = async () => {
-    try {
-      setLoading(true);
-      const params =
-        selectedFilter !== 'all' ? `?status=${selectedFilter}` : '';
-      const response = await axios.get(
-        `${config.apiUrl}/api/admin/promotion-requests${params}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-
-      if (response.data.status) {
-        setRequests(response.data.requests);
-      }
-    } catch {
-      Alert.alert('Error', 'Failed to fetch promotion requests');
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [user, fetchRequests]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -361,14 +356,13 @@ export default function PromotionRequestsScreen() {
     action: 'approve' | 'reject'
   ) => {
     try {
+      if (!token) return;
       setProcessing(true);
-      const response = await axios.put(
-        `${config.apiUrl}/api/admin/promotion-requests/${request._id}`,
-        { action, comments },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const response = action === 'approve'
+        ? await adminService.approvePromotionRequest(request._id, comments, token)
+        : await adminService.rejectPromotionRequest(request._id, comments, token);
 
-      if (response.data.status) {
+      if (response.status) {
         Alert.alert('Success', `Request ${action}d successfully`, [
           { text: 'OK', onPress: () => setShowModal(false) },
         ]);

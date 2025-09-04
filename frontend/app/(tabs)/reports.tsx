@@ -34,8 +34,6 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/hooks/useAuth';
 import { Theme } from '@/types/Theme';
 import { useEffect, useState } from 'react';
-import axios from 'axios';
-import { config } from '@/config';
 import { reportService } from '@/services';
 import { Report, ReportStats } from '@/types/Report';
 
@@ -427,6 +425,7 @@ export default function ReportsManagement() {
   }, [user, activeCategory, filterStatus]);
 
   const fetchReports = async () => {
+    if (!token) return;
     try {
       if (reports.length === 0) {
         setLoading(true);
@@ -434,17 +433,17 @@ export default function ReportsManagement() {
         setReportsLoading(true);
       }
 
-      const response = await axios.get(`${config.apiUrl}/api/report`, {
-        headers: { Authorization: `Bearer ${token}` },
-        params: {
+      const response = await reportService.getReports(
+        {
           status: filterStatus !== 'all' ? filterStatus : undefined,
           itemType: activeCategory !== 'all' ? activeCategory : undefined,
           limit: 50,
         },
-      });
+        token
+      );
 
-      if (response.data.status) {
-        setReports(response.data.reports);
+      if (response.status) {
+        setReports(response.reports);
       }
 
       await fetchStats();
@@ -457,14 +456,13 @@ export default function ReportsManagement() {
   };
 
   const fetchStats = async () => {
+    if (!token) return;
     try {
       setStatsLoading(true);
-      const response = await axios.get(`${config.apiUrl}/api/report/stats`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await reportService.getStats(token);
 
-      if (response.data.status) {
-        setStats(response.data.stats);
+      if (response.status) {
+        setStats(response.stats);
       }
     } catch {
     } finally {
@@ -483,14 +481,15 @@ export default function ReportsManagement() {
     status: string,
     adminNotes?: string
   ) => {
+    if (!token) return;
     try {
-      const response = await axios.put(
-        `${config.apiUrl}/api/report/${reportId}`,
+      const response = await reportService.updateReport(
+        reportId,
         { status, adminNotes },
-        { headers: { Authorization: `Bearer ${token}` } }
+        token
       );
 
-      if (response.data.status) {
+      if (response.status) {
         setReports((prev) =>
           prev.map((report) =>
             report._id === reportId
@@ -510,14 +509,16 @@ export default function ReportsManagement() {
     action: string,
     reason?: string
   ) => {
+    if (!token) return;
     try {
-      const response = await axios.post(
-        `${config.apiUrl}/api/report/${reportId}/moderate`,
-        { action, reason },
-        { headers: { Authorization: `Bearer ${token}` } }
+      const response = await reportService.moderateReport(
+        reportId,
+        action,
+        token,
+        { reason }
       );
 
-      if (response.data.status) {
+      if (response.status) {
         Alert.alert('Success', 'Moderation action completed');
         fetchReports();
         setShowActionModal(false);
