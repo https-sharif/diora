@@ -215,3 +215,67 @@ export const deleteNotification = async (req, res) => {
     res.status(500).json({ status: false, message: 'Something went wrong' });
   }
 };
+
+export const cleanupOldNotifications = async (req, res) => {
+  console.log('Cleanup old notifications route/controller hit');
+  try {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const result = await Notification.deleteMany({
+      createdAt: { $lt: thirtyDaysAgo },
+      read: true
+    });
+
+    res.json({
+      status: true,
+      message: `Cleaned up ${result.deletedCount} old notifications`
+    });
+  } catch (err) {
+    console.error('Error cleaning up notifications:', err);
+    res.status(500).json({
+      status: false,
+      message: 'Error cleaning up notifications',
+      error: err.message
+    });
+  }
+};
+
+export const enforceNotificationLimit = async (userId) => {
+  try {
+    const MAX_NOTIFICATIONS = 100;
+
+    const notificationCount = await Notification.countDocuments({ userId });
+
+    if (notificationCount > MAX_NOTIFICATIONS) {
+      const excessCount = notificationCount - MAX_NOTIFICATIONS;
+
+      const notificationsToDelete = await Notification.find({ userId, read: true })
+        .sort({ updatedAt: 1 })
+        .limit(excessCount)
+        .select('_id');
+
+      if (notificationsToDelete.length > 0) {
+        const idsToDelete = notificationsToDelete.map(n => n._id);
+        await Notification.deleteMany({ _id: { $in: idsToDelete } });
+      }
+
+      const remainingCount = await Notification.countDocuments({ userId });
+      if (remainingCount > MAX_NOTIFICATIONS) {
+        const finalExcessCount = remainingCount - MAX_NOTIFICATIONS;
+
+        const finalNotificationsToDelete = await Notification.find({ userId })
+          .sort({ updatedAt: 1 })
+          .limit(finalExcessCount)
+          .select('_id');
+
+        if (finalNotificationsToDelete.length > 0) {
+          const finalIdsToDelete = finalNotificationsToDelete.map(n => n._id);
+          await Notification.deleteMany({ _id: { $in: finalIdsToDelete } });
+        }
+      }
+    }
+  } catch (err) {
+    console.error('Error enforcing notification limit:', err);
+  }
+};

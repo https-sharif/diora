@@ -6,6 +6,7 @@ import {
   markNotificationAsRead,
   markAllNotificationsAsRead,
   deleteNotification,
+  cleanupOldNotifications,
 } from '../controllers/notificationController.js';
 
 const router = express.Router();
@@ -15,6 +16,7 @@ router.post('/add', addNotification);
 router.patch('/mark-as-read/:notificationId', markNotificationAsRead);
 router.patch('/mark-all-as-read', markAllNotificationsAsRead);
 router.delete('/delete/:notificationId', deleteNotification);
+router.post('/cleanup', cleanupOldNotifications);
 router.get('/', getNotifications);
 
 export default router;

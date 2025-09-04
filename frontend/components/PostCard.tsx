@@ -6,13 +6,14 @@ import {
   TouchableOpacity,
   Dimensions,
   Modal,
-  ScrollView,
   TextInput,
   StyleSheet,
   TouchableWithoutFeedback,
   KeyboardAvoidingView,
   Platform,
   Animated,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { Star, MessageCircle, X, Send, Check } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -23,6 +24,8 @@ import { router } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { format } from 'timeago.js';
 import { commentService } from '@/services';
+import { commentValidation, validateField, sanitizeInput, commentRateLimiter } from '@/utils/validationUtils';
+import { VirtualizedCommentList } from '@/utils/virtualizationUtils';
 
 const createStyles = (theme: Theme) => {
   return StyleSheet.create({
@@ -231,6 +234,29 @@ const createStyles = (theme: Theme) => {
     sendButton: {
       padding: 12,
     },
+    loadingContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingVertical: 20,
+    },
+    loadingText: {
+      color: theme.textSecondary,
+      fontSize: 14,
+      fontFamily: 'Inter-Regular',
+      marginTop: 8,
+    },
+    imageLoadingOverlay: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: 'rgba(0, 0, 0, 0.1)',
+      borderRadius: 12,
+    },
   });
 };
 
@@ -242,6 +268,11 @@ export default function PostCard({ post }: { post: Post }) {
   const [newComment, setNewComment] = useState('');
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
 
+  const [isLiking, setIsLiking] = useState(false);
+  const [isPostingComment, setIsPostingComment] = useState(false);
+  const [isLoadingComments, setIsLoadingComments] = useState(false);
+  const [imageLoading, setImageLoading] = useState(true);
+
   const { theme } = useTheme();
   const { user, likePost, token } = useAuth();
   const styles = createStyles(theme);
@@ -252,10 +283,19 @@ export default function PostCard({ post }: { post: Post }) {
     const fetchComments = async () => {
       if (!token) return;
 
-      const response = await commentService.getPostComments(post._id, token);
+      setIsLoadingComments(true);
+      try {
+        const response = await commentService.getPostComments(post._id, token, 1, 10);
 
-      if (response.status) {
-        setComments(response.comments);
+        if (response.status) {
+          setComments(response.comments);
+        } else {
+          console.error('Failed to fetch comments:', response.message);
+        }
+      } catch (error) {
+        console.error('Error fetching comments:', error);
+      } finally {
+        setIsLoadingComments(false);
       }
     };
 
@@ -290,11 +330,23 @@ export default function PostCard({ post }: { post: Post }) {
     token,
   ]);
 
-  const handleStar = () => {
+  const handleStar = async () => {
+    if (isLiking) return;
+
+    setIsLiking(true);
     const newStarred = !isStarred;
     setIsStarred(newStarred);
     setStarCount((prev) => (newStarred ? prev + 1 : prev - 1));
-    likePost(post._id);
+
+    try {
+      await likePost(post._id);
+    } catch (error) {
+      setIsStarred(!newStarred);
+      setStarCount((prev) => (newStarred ? prev - 1 : prev + 1));
+      console.error('Failed to like post:', error);
+    } finally {
+      setIsLiking(false);
+    }
   };
 
   const formatNumber = (num: number | undefined) => {
@@ -306,15 +358,62 @@ export default function PostCard({ post }: { post: Post }) {
   };
 
   const handleAddComment = async () => {
-    if (!newComment.trim() || !user || !token) return;
+    if (!newComment.trim() || !user || !token || isPostingComment) return;
+
+    const validation = validateField(commentValidation.text, newComment.trim());
+    if (!validation.success) {
+      Alert.alert('Invalid Comment', validation.error);
+      return;
+    }
+
+    if (!commentRateLimiter.isAllowed(user._id)) {
+      Alert.alert('Rate Limit Exceeded', 'Please wait before posting another comment.');
+      return;
+    }
+
+    const commentText = sanitizeInput(newComment.trim());
+    setIsPostingComment(true);
+
+    const optimisticComment: Comment = {
+      _id: `temp-${Date.now()}`,
+      text: commentText,
+      user: {
+        _id: user._id,
+        username: user.username,
+        avatar: user.avatar,
+        type: user.type,
+      },
+      postId: post._id,
+      createdAt: new Date().toISOString(),
+      replies: [],
+      isOptimistic: true, 
+    } as Comment;
+
+    if (replyingTo) {
+      setComments((prev) =>
+        prev.map((comment) =>
+          comment._id === replyingTo
+            ? {
+                ...comment,
+                replies: [...(comment.replies || []), optimisticComment],
+              }
+            : comment
+        )
+      );
+    } else {
+      setComments((prev) => [optimisticComment, ...prev]);
+    }
+
+    post.comments += 1;
+    setNewComment('');
 
     try {
-      const payload = { content: newComment, postId: post._id };
+      const payload = { content: commentText, postId: post._id };
 
       const response = replyingTo
         ? await commentService.replyToComment(
             replyingTo,
-            { content: newComment, postId: post._id },
+            { content: commentText, postId: post._id },
             token
           )
         : await commentService.createComment(payload, token);
@@ -328,29 +427,66 @@ export default function PostCard({ post }: { post: Post }) {
               comment._id === replyingTo
                 ? {
                     ...comment,
-                    replies: [...(comment.replies || []), newAdded],
+                    replies: comment.replies?.map((reply) =>
+                      reply._id === optimisticComment._id ? newAdded : reply
+                    ),
                   }
                 : comment
             )
           );
-          setReplyingTo(null);
         } else {
-          setComments((prev) => [newAdded, ...prev]);
+          setComments((prev) =>
+            prev.map((comment) =>
+              comment._id === optimisticComment._id ? newAdded : comment
+            )
+          );
         }
-
-        post.comments += 1;
-        setNewComment('');
+      } else {
+        throw new Error('Failed to post comment');
       }
-    } catch {}
+    } catch (error) {
+      console.error('Failed to post comment:', error);
+
+      if (replyingTo) {
+        setComments((prev) =>
+          prev.map((comment) =>
+            comment._id === replyingTo
+              ? {
+                  ...comment,
+                  replies: comment.replies?.filter(
+                    (reply) => reply._id !== optimisticComment._id
+                  ),
+                }
+              : comment
+          )
+        );
+      } else {
+        setComments((prev) =>
+          prev.filter((comment) => comment._id !== optimisticComment._id)
+        );
+      }
+
+      post.comments -= 1;
+      setNewComment(commentText);
+      Alert.alert('Error', 'Failed to post comment. Please try again.');
+    } finally {
+      setIsPostingComment(false);
+    }
   };
 
   const renderComment = (comment: Comment, isReply = false) => {
     if (!comment.user) return null;
 
+    const isOptimistic = (comment as any).isOptimistic;
+
     return (
       <View
         key={comment._id}
-        style={[styles.commentItem, isReply && styles.replyItem]}
+        style={[
+          styles.commentItem,
+          isReply && styles.replyItem,
+          isOptimistic && { opacity: 0.7 },
+        ]}
       >
         <TouchableOpacity
           onPress={() => {
@@ -447,15 +583,24 @@ export default function PostCard({ post }: { post: Post }) {
           onPress={() => router.push(`/post/${post._id}`)}
           activeOpacity={1}
         >
-          <Animated.Image
-            source={{ uri: post.imageUrl }}
-            style={{
-              width: screenWidth,
-              height: animatedHeight,
-              borderRadius: 12,
-            }}
-            resizeMode="contain"
-          />
+          <View style={{ position: 'relative' }}>
+            <Animated.Image
+              source={{ uri: post.imageUrl }}
+              style={{
+                width: screenWidth,
+                height: animatedHeight,
+                borderRadius: 12,
+              }}
+              resizeMode="contain"
+              onLoadStart={() => setImageLoading(true)}
+              onLoadEnd={() => setImageLoading(false)}
+            />
+            {imageLoading && (
+              <View style={styles.imageLoadingOverlay}>
+                <ActivityIndicator size="large" color={theme.text} />
+              </View>
+            )}
+          </View>
         </TouchableOpacity>
 
         <View style={styles.actions}>
@@ -463,13 +608,18 @@ export default function PostCard({ post }: { post: Post }) {
             style={styles.actionButton}
             onPress={handleStar}
             activeOpacity={1}
+            disabled={isLiking}
           >
-            <Star
-              size={24}
-              color={isStarred ? '#FFD700' : theme.text}
-              fill={isStarred ? '#FFD700' : 'transparent'}
-              strokeWidth={2}
-            />
+            {isLiking ? (
+              <ActivityIndicator size="small" color={theme.text} />
+            ) : (
+              <Star
+                size={24}
+                color={isStarred ? '#FFD700' : theme.text}
+                fill={isStarred ? '#FFD700' : 'transparent'}
+                strokeWidth={2}
+              />
+            )}
             <Text style={styles.actionText}>{formatNumber(starCount)}</Text>
           </TouchableOpacity>
 
@@ -528,14 +678,20 @@ export default function PostCard({ post }: { post: Post }) {
                     </TouchableOpacity>
                   </View>
 
-                  <ScrollView
-                    style={[styles.commentsList, { flex: 1 }]}
-                    contentContainerStyle={{ paddingBottom: 80 }}
-                    keyboardShouldPersistTaps="handled"
-                    showsVerticalScrollIndicator={false}
-                  >
-                    {comments.map((comment) => renderComment(comment))}
-                  </ScrollView>
+                  {isLoadingComments ? (
+                    <View style={styles.loadingContainer}>
+                      <ActivityIndicator size="small" color={theme.text} />
+                      <Text style={styles.loadingText}>Loading comments...</Text>
+                    </View>
+                  ) : (
+                    <VirtualizedCommentList
+                      comments={comments}
+                      renderComment={(comment) => renderComment(comment, false)}
+                      emptyMessage="No comments yet"
+                      contentContainerStyle={{ paddingBottom: 80 }}
+                      keyboardShouldPersistTaps="handled"
+                    />
+                  )}
 
                   {replyingTo && (
                     <View style={styles.replyingIndicator}>
@@ -565,14 +721,18 @@ export default function PostCard({ post }: { post: Post }) {
                       <TouchableOpacity
                         style={styles.sendButton}
                         onPress={handleAddComment}
-                        disabled={!newComment.trim()}
+                        disabled={!newComment.trim() || isPostingComment}
                       >
-                        <Send
-                          size={20}
-                          color={
-                            newComment.trim() ? theme.text : theme.textSecondary
-                          }
-                        />
+                        {isPostingComment ? (
+                          <ActivityIndicator size="small" color={theme.text} />
+                        ) : (
+                          <Send
+                            size={20}
+                            color={
+                              newComment.trim() ? theme.text : theme.textSecondary
+                            }
+                          />
+                        )}
                       </TouchableOpacity>
                     </View>
                   </View>

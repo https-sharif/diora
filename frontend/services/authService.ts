@@ -1,33 +1,58 @@
 import axios from 'axios';
 import { config } from '@/config';
 import { LoginData, SignupData, AuthResponse } from '@/types/Auth';
+import { showToast, toastMessages } from '@/utils/toastUtils';
 
 export const authService = {
   async login(data: LoginData): Promise<AuthResponse> {
-    const loginPayload = {
-      username: data.email,
-      password: data.password,
-    };
+    try {
+      const loginPayload = {
+        username: data.email,
+        password: data.password,
+      };
 
-    const response = await axios.post(
-      `${config.apiUrl}/api/auth/login`,
-      loginPayload,
-      {
-        headers: { 'Content-Type': 'application/json' },
+      const response = await axios.post(
+        `${config.apiUrl}/api/auth/login`,
+        loginPayload,
+        {
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+
+      if (response.data.status) {
+        showToast.success(toastMessages.loginSuccess);
       }
-    );
-    return response.data;
+
+      return response.data;
+    } catch (error: any) {
+      console.error('Login error:', error);
+      const errorMessage = error.response?.data?.message || toastMessages.loginFailed;
+      showToast.error(errorMessage);
+      throw error;
+    }
   },
 
   async signup(data: SignupData): Promise<AuthResponse> {
-    const response = await axios.post(
-      `${config.apiUrl}/api/auth/signup`,
-      data,
-      {
-        headers: { 'Content-Type': 'application/json' },
+    try {
+      const response = await axios.post(
+        `${config.apiUrl}/api/auth/signup`,
+        data,
+        {
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+
+      if (response.data.status) {
+        showToast.success(toastMessages.signupSuccess);
       }
-    );
-    return response.data;
+
+      return response.data;
+    } catch (error: any) {
+      console.error('Signup error:', error);
+      const errorMessage = error.response?.data?.message || toastMessages.signupFailed;
+      showToast.error(errorMessage);
+      throw error;
+    }
   },
 
   async getMe(token: string): Promise<any> {

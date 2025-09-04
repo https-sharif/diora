@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { useCreatePost } from '@/contexts/CreatePostContext';
 import CategorySelector from '@/components/CategorySelector';
@@ -16,6 +17,8 @@ import { Theme } from '@/types/Theme';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Check, Plus, X } from 'lucide-react-native';
 import { router } from 'expo-router';
+import { postValidation, validateField, postRateLimiter } from '@/utils/validationUtils';
+import { useAuth } from '@/hooks/useAuth';
 
 const createStyles = (theme: Theme) => {
   return StyleSheet.create({
@@ -142,6 +145,7 @@ export default function CreateFormScreen() {
   } = useCreatePost();
   const isProduct = contentType === 'product';
   const { theme } = useTheme();
+  const { user } = useAuth();
   const styles = createStyles(theme);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [tempSize, setTempSize] = useState('');
@@ -152,6 +156,21 @@ export default function CreateFormScreen() {
   };
 
   const handleSubmit = async () => {
+    if (isSubmitting || !user) return;
+
+    if (!postRateLimiter.isAllowed(user._id)) {
+      Alert.alert('Rate Limit Exceeded', 'Please wait before creating another post.');
+      return;
+    }
+
+    if (formData.description?.trim()) {
+      const validation = validateField(postValidation.caption, formData.description.trim());
+      if (!validation.success) {
+        Alert.alert('Invalid Caption', validation.error);
+        return;
+      }
+    }
+
     setIsSubmitting(true);
     try {
       if (isProduct) {
@@ -185,9 +204,13 @@ export default function CreateFormScreen() {
           <Text style={styles.title}>Create</Text>
           <TouchableOpacity
             onPress={handleSubmit}
-            disabled={images.length === 0}
+            disabled={images.length === 0 || isSubmitting}
           >
-            <Check size={24} color={theme.text} />
+            {isSubmitting ? (
+              <ActivityIndicator size="small" color={theme.text} />
+            ) : (
+              <Check size={24} color={theme.text} />
+            )}
           </TouchableOpacity>
         </View>
 
@@ -407,7 +430,11 @@ export default function CreateFormScreen() {
             onPress={handleSubmit}
             disabled={isSubmitting}
           >
-            {isSubmitting ? null : <Plus size={20} color="#000" />}
+            {isSubmitting ? (
+              <ActivityIndicator size="small" color="#000" />
+            ) : (
+              <Plus size={20} color="#000" />
+            )}
             <Text
               style={[
                 styles.submitButtonText,

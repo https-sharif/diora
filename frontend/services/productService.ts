@@ -45,7 +45,6 @@ export const productService = {
   async createProduct(productData: ProductData | FormData, token: string): Promise<any> {
     const headers: any = { Authorization: `Bearer ${token}` };
     
-    // If it's FormData, don't set Content-Type (let browser set it with boundary)
     if (!(productData instanceof FormData)) {
       headers['Content-Type'] = 'application/json';
     }

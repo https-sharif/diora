@@ -3,6 +3,7 @@ import { verifyToken } from '../middleware/auth.js';
 import { parser } from '../utils/cloudinary.js';
 import {
   createReview,
+  getReviewsByTargetId,
   getReviewsByShopId,
   reviewed,
   deleteReview,
@@ -14,6 +15,7 @@ const router = express.Router();
 router.use(verifyToken);
 
 router.post('/', parser.array('images'), createReview);
+router.get('/target/:targetId', getReviewsByTargetId);
 router.get('/product/:productId', getReviewsByProductId);
 router.get('/shop/:shopId', getReviewsByShopId);
 router.get('/reviewed/:userId/:targetType/:targetId', reviewed);

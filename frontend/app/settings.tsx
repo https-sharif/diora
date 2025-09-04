@@ -21,11 +21,7 @@ import {
   Download,
   Eye,
   EyeOff,
-  Camera,
-  X,
   TriangleAlert as AlertTriangle,
-  ImageIcon,
-  ImageOff,
   Store,
   Edit,
   ChevronRight,
@@ -33,10 +29,8 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useToast } from '@/hooks/useToast';
-import { Toast } from '@/components/Toast';
 import { PromotionRequestModal } from '@/components/PromotionRequestModal';
 import { userService } from '@/services/userService';
-import * as ImagePicker from 'expo-image-picker';
 
 interface SocialAccount {
   id: string;
@@ -394,14 +388,9 @@ const createTheme = (theme: any) =>
 export default function SettingsScreen() {
   const { user, logout, setUser, token } = useAuth();
   const { theme, toggleTheme, isDarkMode } = useTheme();
-  const { showToast, visible, hideToast, messages } = useToast();
+  const { showToast } = useToast();
 
   const styles = createTheme(theme);
-
-  const [fullName, setFullName] = useState(user?.fullName || '');
-  const [username, setUsername] = useState(user?.username || '');
-  const [bio, setBio] = useState(user?.bio || '');
-  const [profileImage, setProfileImage] = useState(user?.avatar || '');
 
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -419,7 +408,6 @@ export default function SettingsScreen() {
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showDeactivateConfirm, setShowDeactivateConfirm] = useState(false);
-  const [showImagePicker, setShowImagePicker] = useState(false);
   const [showPromotionModal, setShowPromotionModal] = useState(false);
   const [downloadLoading, setDownloadLoading] = useState(false);
 
@@ -477,85 +465,6 @@ export default function SettingsScreen() {
       });
     }
   }, [toggleTheme, isDarkMode, user, updateUserSettings]);
-
-  const openCamera = async () => {
-    const permission = await ImagePicker.requestCameraPermissionsAsync();
-    if (!permission.granted) return;
-
-    const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: 'images',
-      allowsEditing: true,
-      quality: 1,
-    });
-
-    if (!result.canceled) {
-      const imageUri = result.assets[0].uri;
-      setProfileImage(imageUri);
-      setShowImagePicker(false);
-    }
-  };
-
-  const openGallery = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: 'images',
-      allowsEditing: true,
-      quality: 1,
-    });
-
-    if (!result.canceled) {
-      const imageUri = result.assets[0].uri;
-      setProfileImage(imageUri);
-      setShowImagePicker(false);
-    }
-  };
-
-  const handleSaveProfile = async () => {
-    if (!user || !token) return;
-
-    if (fullName.length < 2 || fullName.length > 50) {
-      showToast('error', 'Full name must be between 2-50 characters');
-      return;
-    }
-
-    if (username.length < 3 || username.length > 20) {
-      showToast('error', 'Username must be between 3-20 characters');
-      return;
-    }
-
-    if (bio.length > 200) {
-      showToast('error', 'Bio must be less than 200 characters');
-      return;
-    }
-
-    const formData = new FormData();
-
-    if (profileImage) {
-      formData.append('avatar', {
-        uri: profileImage,
-        name: 'avatar.jpg',
-        type: 'image/jpeg',
-      } as any);
-    }
-
-    formData.append('fullName', fullName);
-    formData.append('username', username);
-    formData.append('bio', bio);
-
-    try {
-      const response = await userService.updateProfile(formData, token);
-
-      if (!response.status) {
-        showToast('error', response.message || 'Failed to update profile');
-        return;
-      }
-
-      setUser(response.user);
-
-      showToast('success', 'Profile updated successfully');
-    } catch {
-      showToast('error', 'Failed to update profile');
-    }
-  };
 
   const handleChangePassword = async () => {
     if (!token) return;
@@ -1367,117 +1276,10 @@ export default function SettingsScreen() {
         </TouchableWithoutFeedback>
       </Modal>
 
-      <Modal
-        visible={showImagePicker}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowImagePicker(false)}
-      >
-        <TouchableWithoutFeedback onPress={() => setShowImagePicker(false)}>
-          <View style={styles.modalOverlay}>
-            <TouchableWithoutFeedback onPress={() => {}}>
-              <View
-                style={[
-                  styles.imagePickerModal,
-                  { backgroundColor: theme.card },
-                ]}
-              >
-                <View style={styles.imagePickerHeader}>
-                  <Text
-                    style={[styles.imagePickerTitle, { color: theme.text }]}
-                  >
-                    Change Profile Picture
-                  </Text>
-                  <TouchableOpacity onPress={() => setShowImagePicker(false)}>
-                    <X size={24} color={theme.text} />
-                  </TouchableOpacity>
-                </View>
-                <View style={styles.imagePickerOptions}>
-                  <TouchableOpacity
-                    style={styles.imagePickerOption}
-                    onPress={openCamera}
-                  >
-                    <Camera size={24} color={theme.text} />
-                    <Text
-                      style={[
-                        styles.imagePickerOptionText,
-                        { color: theme.text },
-                      ]}
-                    >
-                      Take Photo
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.imagePickerOption}
-                    onPress={openGallery}
-                  >
-                    <ImageIcon size={24} color={theme.text} />
-                    <Text
-                      style={[
-                        styles.imagePickerOptionText,
-                        { color: theme.text },
-                      ]}
-                    >
-                      Choose from Gallery
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.imagePickerOption}
-                    onPress={() => {
-                      setProfileImage('');
-                      setShowImagePicker(false);
-                    }}
-                  >
-                    <ImageOff size={24} color={theme.error} />
-                    <Text
-                      style={[
-                        styles.imagePickerOptionText,
-                        { color: theme.error },
-                      ]}
-                    >
-                      Remove Photo
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </TouchableWithoutFeedback>
-          </View>
-        </TouchableWithoutFeedback>
-      </Modal>
-
       <PromotionRequestModal
         visible={showPromotionModal}
         onClose={() => setShowPromotionModal(false)}
       />
-
-      {visible.error && (
-        <Toast
-          type="error"
-          message={messages.error}
-          onClose={() => hideToast('error')}
-        />
-      )}
-      {visible.success && (
-        <Toast
-          type="success"
-          message={messages.success}
-          onClose={() => hideToast('success')}
-        />
-      )}
-      {visible.neutral && (
-        <Toast
-          type="neutral"
-          message={messages.neutral}
-          onClose={() => hideToast('neutral')}
-        />
-      )}
-      {visible.alert && (
-        <Toast
-          type="alert"
-          message={messages.alert}
-          onClose={() => hideToast('alert')}
-        />
-      )}
     </SafeAreaView>
   );
 }

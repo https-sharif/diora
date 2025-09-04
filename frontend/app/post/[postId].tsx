@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -45,6 +45,7 @@ import {
   searchService,
   reportService,
 } from '@/services';
+import { VirtualizedCommentList } from '@/utils/virtualizationUtils';
 import Color from 'color';
 
 const createStyles = (theme: Theme) => {
@@ -600,7 +601,13 @@ export default function PostDetailScreen() {
         if (commentsResponse.status) setComments(commentsResponse.comments);
 
         setIsStarred(user?.likedPosts?.includes(post._id) || false);
-      } catch {
+      } catch (error) {
+        console.error('Error fetching post and comments:', error);
+        Alert.alert(
+          'Error',
+          'Failed to load post details. Please try again.',
+          [{ text: 'OK' }]
+        );
       } finally {
         setIsLoading(false);
       }
@@ -627,7 +634,7 @@ export default function PostDetailScreen() {
     }
   }, [post]);
 
-  const searchUsers = async (query: string) => {
+  const searchUsers = useCallback(async (query: string) => {
     if (!token) {
       setSearchedUsers([]);
       return;
@@ -650,10 +657,11 @@ export default function PostDetailScreen() {
         );
       }
       setSearchedUsers(merged);
-    } catch {
+    } catch (error) {
+      console.error('Error searching users and shops:', error);
       setSearchedUsers([]);
     }
-  };
+  }, [token, user?._id]);
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -661,7 +669,7 @@ export default function PostDetailScreen() {
     }, 300);
 
     return () => clearTimeout(timeoutId);
-  }, [userSearchQuery]);
+  }, [userSearchQuery, searchUsers]);
 
   if (isLoading) {
     return (
@@ -758,8 +766,16 @@ export default function PostDetailScreen() {
         post.comments += 1;
         setNewComment('');
       } else {
+        throw new Error('Failed to post comment');
       }
-    } catch {}
+    } catch (error) {
+      console.error('Error posting comment:', error);
+      Alert.alert(
+        'Error',
+        'Failed to post comment. Please try again.',
+        [{ text: 'OK' }]
+      );
+    }
   };
 
   const handleShare = async () => {
@@ -852,7 +868,14 @@ export default function PostDetailScreen() {
           'Thank you for your report. We will review it shortly.'
         );
       }
-    } catch {}
+    } catch (error) {
+      console.error('Error submitting report:', error);
+      Alert.alert(
+        'Error',
+        'Failed to submit report. Please try again.',
+        [{ text: 'OK' }]
+      );
+    }
   };
 
   const renderComment = (comment: Comment, isReply = false) => (
@@ -999,14 +1022,13 @@ export default function PostDetailScreen() {
         )}
         <View style={styles.commentsSection}>
           <Text style={styles.commentsTitle}>Comments ({comments.length})</Text>
-          <ScrollView
-            style={[styles.commentsList, { flex: 1 }]}
+          <VirtualizedCommentList
+            comments={comments}
+            renderComment={(comment) => renderComment(comment)}
+            emptyMessage="No comments yet"
             contentContainerStyle={{ paddingBottom: 80 }}
             keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
-          >
-            {comments.map((comment) => renderComment(comment))}
-          </ScrollView>
+          />
         </View>
 
         <View style={styles.bottomPadding} />

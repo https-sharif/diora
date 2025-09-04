@@ -1,55 +1,24 @@
-import { useState, useRef } from 'react';
-
-type ToastType = 'error' | 'success' | 'neutral' | 'alert';
+import { useGlobalToast } from '@/contexts/ToastContext';
 
 export const useToast = () => {
-  const [visible, setVisible] = useState<{ [key in ToastType]: boolean }>({
-    error: false,
-    success: false,
-    neutral: false,
-    alert: false,
-  });
-
-  const [messages, setMessages] = useState<{ [key in ToastType]: string }>({
-    error: '',
-    success: '',
-    neutral: '',
-    alert: '',
-  });
-
-  const timeoutRefs = {
-    error: useRef<number | null>(null),
-    success: useRef<number | null>(null),
-    neutral: useRef<number | null>(null),
-    alert: useRef<number | null>(null),
-  };
-
-  const showToast = (type: ToastType, message: string, duration = 3000) => {
-    if (timeoutRefs[type].current) {
-      clearTimeout(timeoutRefs[type].current!);
-    }
-
-    setMessages((prev) => ({ ...prev, [type]: message }));
-    setVisible((prev) => ({ ...prev, [type]: true }));
-
-    timeoutRefs[type].current = setTimeout(() => {
-      setVisible((prev) => ({ ...prev, [type]: false }));
-      timeoutRefs[type].current = null;
-    }, duration) as unknown as number;
-  };
-
-  const hideToast = (type: ToastType) => {
-    if (timeoutRefs[type].current) {
-      clearTimeout(timeoutRefs[type].current!);
-      timeoutRefs[type].current = null;
-    }
-    setVisible((prev) => ({ ...prev, [type]: false }));
-  };
+  const { showToast, hideToast, currentToast } = useGlobalToast();
 
   return {
     showToast,
     hideToast,
-    visible,
-    messages,
+    currentToast,
+    // Legacy compatibility methods
+    visible: {
+      error: currentToast?.type === 'error' && currentToast.visible,
+      success: currentToast?.type === 'success' && currentToast.visible,
+      neutral: currentToast?.type === 'neutral' && currentToast.visible,
+      alert: currentToast?.type === 'alert' && currentToast.visible,
+    },
+    messages: {
+      error: currentToast?.type === 'error' ? currentToast.message : '',
+      success: currentToast?.type === 'success' ? currentToast.message : '',
+      neutral: currentToast?.type === 'neutral' ? currentToast.message : '',
+      alert: currentToast?.type === 'alert' ? currentToast.message : '',
+    },
   };
 };

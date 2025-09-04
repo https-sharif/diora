@@ -186,11 +186,18 @@ export const createReply = async (req, res) => {
 export const getComments = async (req, res) => {
   console.log('Get comments route/controller hit');
   const { postId } = req.params;
+  const { page = 1, limit = 10 } = req.query;
 
   try {
+    const pageNum = parseInt(page, 10);
+    const limitNum = parseInt(limit, 10);
+    const skip = (pageNum - 1) * limitNum;
+
     const comments = await Comment.find({ postId })
       .populate('user', 'username avatar isVerified type')
       .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNum)
       .populate({
         path: 'replies',
         populate: {
@@ -199,16 +206,92 @@ export const getComments = async (req, res) => {
         },
       });
 
+    const totalComments = await Comment.countDocuments({ postId });
+    const totalPages = Math.ceil(totalComments / limitNum);
+
     if (!comments || comments.length === 0) {
-      return res
-        .status(200)
-        .json({ status: true, message: 'No comments found', comments: [] });
+      return res.status(200).json({
+        status: true,
+        message: 'No comments found',
+        comments: [],
+        pagination: {
+          currentPage: pageNum,
+          totalPages,
+          totalComments,
+          hasNextPage: pageNum < totalPages,
+          hasPrevPage: pageNum > 1,
+        },
+      });
     }
 
-    res.json({ status: true, comments });
+    res.json({
+      status: true,
+      comments,
+      pagination: {
+        currentPage: pageNum,
+        totalPages,
+        totalComments,
+        hasNextPage: pageNum < totalPages,
+        hasPrevPage: pageNum > 1,
+      },
+    });
   } catch (error) {
     res
       .status(500)
       .json({ status: false, message: 'Error fetching comments', error });
+  }
+};
+
+export const deleteComment = async (req, res) => {
+  console.log('Delete comment route/controller hit');
+  try {
+    const { commentId } = req.params;
+    const userId = req.user.id;
+
+    const comment = await Comment.findById(commentId);
+    if (!comment) {
+      return res.status(404).json({
+        status: false,
+        message: 'Comment not found'
+      });
+    }
+
+    if (comment.user.toString() !== userId) {
+      return res.status(403).json({
+        status: false,
+        message: 'Not authorized to delete this comment'
+      });
+    }
+
+    if (comment.postId) {
+      await Comment.deleteMany({ _id: { $in: comment.replies } });
+    } else {
+      await Comment.updateMany(
+        { replies: commentId },
+        { $pull: { replies: commentId } }
+      );
+    }
+
+    await Comment.findByIdAndDelete(commentId);
+
+    if (comment.postId) {
+      const post = await Post.findById(comment.postId);
+      if (post) {
+        post.comments = Math.max(0, post.comments - 1 - comment.replies.length);
+        await post.save();
+      }
+    }
+
+    res.json({
+      status: true,
+      message: 'Comment deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting comment:', error);
+    res.status(500).json({
+      status: false,
+      message: 'Error deleting comment',
+      error: error.message
+    });
   }
 };

@@ -58,9 +58,33 @@ export const verifyToken = async (req, res, next) => {
     req.userDetails = user;
     next();
   } catch (err) {
-    return res
-      .status(401)
-      .json({ status: false, message: 'Invalid or expired token' });
+    console.error('Token verification error:', err);
+
+    if (err.name === 'TokenExpiredError') {
+      return res
+        .status(401)
+        .json({
+          status: false,
+          message: 'Token has expired',
+          code: 'TOKEN_EXPIRED'
+        });
+    } else if (err.name === 'JsonWebTokenError') {
+      return res
+        .status(401)
+        .json({
+          status: false,
+          message: 'Invalid token',
+          code: 'INVALID_TOKEN'
+        });
+    } else {
+      return res
+        .status(401)
+        .json({
+          status: false,
+          message: 'Token verification failed',
+          code: 'TOKEN_VERIFICATION_FAILED'
+        });
+    }
   }
 };
 
