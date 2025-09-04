@@ -59,4 +59,15 @@ export const orderService = {
     );
     return response.data;
   },
+
+  async createStripeSession(orderId: string, token: string): Promise<any> {
+    const response = await axios.post(
+      `${config.apiUrl}/api/order/create-stripe-session`,
+      { orderId },
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+    return response.data;
+  },
 };

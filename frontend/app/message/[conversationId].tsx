@@ -44,15 +44,14 @@ import { useAuth } from '@/hooks/useAuth';
 import { useAuthStore } from '@/stores/authStore';
 import { messageService } from '@/services/messageService';
 import { reportService } from '@/services/reportService';
+import { userService } from '@/services/userService';
 import { useTheme } from '@/contexts/ThemeContext';
-import { config } from '@/config';
 import Color from 'color';
 import { Theme } from '@/types/Theme';
 import { User } from '@/types/User';
 import { Conversation } from '@/types/Conversation';
 import { Message } from '@/types/Message';
 import { ReportData } from '@/types/Report';
-import axios from 'axios';
 import { searchService } from '@/services';
 
 const { width } = Dimensions.get('window');
@@ -650,6 +649,103 @@ const createStyles = (theme: Theme, lightTheme: Theme, darkTheme: Theme) => {
       fontSize: 16,
       fontFamily: 'Inter-SemiBold',
     },
+    replyContainer: {
+      backgroundColor: Color(theme.border).alpha(0.1).toString(),
+      borderLeftWidth: 3,
+      borderLeftColor: theme.accent,
+      padding: 8,
+      marginBottom: 4,
+      borderRadius: 8,
+    },
+    replyText: {
+      fontSize: 12,
+      fontFamily: 'Inter-Regular',
+      color: theme.textSecondary,
+    },
+    replyMessageText: {
+      fontSize: 14,
+      fontFamily: 'Inter-Medium',
+      color: theme.text,
+      marginTop: 2,
+    },
+    replyCancelButton: {
+      position: 'absolute',
+      top: 8,
+      right: 8,
+      width: 24,
+      height: 24,
+      borderRadius: 12,
+      backgroundColor: theme.background,
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: theme.border,
+    },
+    reactionPickerModal: {
+      flex: 1,
+      justifyContent: 'flex-end',
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    },
+    reactionPickerContainer: {
+      backgroundColor: theme.card,
+      borderTopLeftRadius: 16,
+      borderTopRightRadius: 16,
+      padding: 20,
+      paddingBottom: Platform.OS === 'ios' ? 34 : 20,
+    },
+    reactionPickerTitle: {
+      fontSize: 18,
+      fontFamily: 'Inter-SemiBold',
+      color: theme.text,
+      textAlign: 'center',
+      marginBottom: 16,
+    },
+    reactionGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'center',
+      gap: 12,
+    },
+    reactionButton: {
+      width: 48,
+      height: 48,
+      borderRadius: 24,
+      backgroundColor: theme.background,
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: theme.border,
+    },
+    reactionEmoji: {
+      fontSize: 24,
+    },
+    messageReactionsContainer: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      marginTop: 4,
+      gap: 4,
+    },
+    reactionBadge: {
+      backgroundColor: theme.background,
+      borderRadius: 12,
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      borderWidth: 1,
+      borderColor: theme.border,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+    },
+    reactionBadgeText: {
+      fontSize: 12,
+      fontFamily: 'Inter-Regular',
+      color: theme.text,
+    },
+    reactionCount: {
+      fontSize: 12,
+      fontFamily: 'Inter-Medium',
+      color: theme.textSecondary,
+    },
   });
 };
 
@@ -668,6 +764,7 @@ export default function MessageScreen() {
   const { conversationId } = useLocalSearchParams<{ conversationId: string }>();
   const {
     conversations,
+    messages,
     setConversations,
     markConversationAsRead,
     updateLastMessage,
@@ -690,6 +787,43 @@ export default function MessageScreen() {
   const [addUserSelected, setAddUserSelected] = useState<User | null>(null);
   const [addUserSearching, setAddUserSearching] = useState(false);
 
+  const [replyMode, setReplyMode] = useState(false);
+  const [replyToMessage, setReplyToMessage] = useState<Message | null>(null);
+  const [showReactionPicker, setShowReactionPicker] = useState(false);
+  const [selectedMessageForReaction, setSelectedMessageForReaction] = useState<Message | null>(null);
+
+  React.useEffect(() => {
+    if (conversationId && messages.length > 0) {
+      const conversationMessages = messages.filter(
+        (msg: Message) => msg.conversationId === conversationId
+      );
+
+      if (conversationMessages.length > 0) {
+        setMyMessages((prevMessages) => {
+          const existingIds = new Set(prevMessages.map((msg) => msg._id));
+          const newMessages = conversationMessages.filter(
+            (msg: Message) => !existingIds.has(msg._id)
+          );
+
+          if (newMessages.length > 0) {
+            const merged = [...prevMessages, ...newMessages].sort(
+              (a, b) =>
+                new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+            );
+
+            setTimeout(() => {
+              flatListRef.current?.scrollToEnd({ animated: true });
+            }, 100);
+
+            return merged;
+          }
+
+          return prevMessages;
+        });
+      }
+    }
+  }, [messages, conversationId]);
+
   const handleOpenEditGroup = () => {
     setEditGroupName(conversation?.name || '');
     setEditGroupPhoto(conversation?.avatar || '');
@@ -699,6 +833,8 @@ export default function MessageScreen() {
   const handleSaveEditGroup = async () => {
     if (!conversation) return;
     try {
+      if(!token) return;
+
       const formData = new FormData();
       formData.append('name', editGroupName);
 
@@ -712,22 +848,12 @@ export default function MessageScreen() {
         } as any);
       }
 
-      const response = await axios.put(
-        `${config.apiUrl}/api/message/conversations/${conversation._id}/edit`,
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await messageService.updateGroupWithAvatar(conversation._id, formData, token);
 
-      if (response.data.status) {
-        const updatedConversation = response.data.conversation;
+      if (response.status) {
+        const updatedConversation = response.conversation;
         setConversation(updatedConversation);
         updateConversation(updatedConversation._id, updatedConversation);
-        setMyMessages((prev) => [...prev, response.data.message]);
       }
     } catch {
       alert('Failed to update group');
@@ -1246,18 +1372,9 @@ export default function MessageScreen() {
                   : (otherParticipant as any)._id;
 
               try {
-                const userResponse = await fetch(
-                  `${config.apiUrl}/api/user/${participantId}`,
-                  {
-                    headers: { Authorization: `Bearer ${token}` },
-                  }
-                );
-
-                if (userResponse.ok) {
-                  const userData = await userResponse.json();
-                  if (userData.status) {
-                    setOtherUser(userData.user);
-                  }
+                const userData = await userService.getUserById(participantId, token);
+                if (userData) {
+                  setOtherUser(userData);
                 } else {
                   if (
                     typeof otherParticipant === 'object' &&
@@ -1308,19 +1425,9 @@ export default function MessageScreen() {
 
         if (!otherUser && !foundConv) {
           try {
-            const userResponse = await fetch(
-              `${config.apiUrl}/api/user/${conversationId}`,
-              {
-                headers: { Authorization: `Bearer ${token}` },
-              }
-            );
-
-            if (userResponse.ok) {
-              const userData = await userResponse.json();
-
-              if (userData.status) {
-                setOtherUser(userData.user);
-              }
+            const userData = await userService.getUserById(conversationId, token);
+            if (userData) {
+              setOtherUser(userData);
             }
           } catch {}
         }
@@ -1330,19 +1437,9 @@ export default function MessageScreen() {
 
         if (!otherUser) {
           try {
-            const userResponse = await fetch(
-              `${config.apiUrl}/api/user/${conversationId}`,
-              {
-                headers: { Authorization: `Bearer ${token}` },
-              }
-            );
-
-            if (userResponse.ok) {
-              const userData = await userResponse.json();
-
-              if (userData.status) {
-                setOtherUser(userData.user);
-              }
+            const userData = await userService.getUserById(conversationId, token);
+            if (userData) {
+              setOtherUser(userData);
             }
           } catch {
             setError('Failed to load conversation or user profile');
@@ -1354,7 +1451,7 @@ export default function MessageScreen() {
     };
 
     fetchConversationData();
-  }, [conversationId, token]);
+  }, [conversationId, token, conversations, markConversationAsRead, otherUser, user?._id]);
 
   useEffect(() => {
     if (myMessages.length > 0) {
@@ -1527,9 +1624,11 @@ export default function MessageScreen() {
     }
 
     const messageToSend = messageText.trim();
+    const replyToId = replyToMessage?._id;
     const optimisticMessageId = `temp_${Date.now()}`;
 
     setMessageText('');
+    handleCancelReply();
 
     try {
       let targetConversationId = conversationId;
@@ -1563,11 +1662,13 @@ export default function MessageScreen() {
             } else {
               alert('Failed to start conversation. User may not exist.');
               setMessageText(messageToSend);
+              handleReplyToMessage(replyToMessage!);
               return;
             }
           } catch {
             alert('Failed to start conversation. Please try again.');
             setMessageText(messageToSend);
+            handleReplyToMessage(replyToMessage!);
             return;
           }
         }
@@ -1582,6 +1683,7 @@ export default function MessageScreen() {
         type: 'text',
         status: 'sending',
         reactions: {},
+        replyTo: replyToId,
       };
 
       setMyMessages((prev) => [...prev, optimisticMessage]);
@@ -1594,7 +1696,8 @@ export default function MessageScreen() {
         targetConversationId,
         messageToSend,
         'text',
-        token
+        token,
+        replyToId
       );
 
       if (response.status) {
@@ -1614,6 +1717,7 @@ export default function MessageScreen() {
           prev.filter((msg) => msg._id !== optimisticMessageId)
         );
         setMessageText(messageToSend);
+        handleReplyToMessage(replyToMessage!);
         alert('Failed to send message. Please try again.');
       }
     } catch {
@@ -1621,6 +1725,7 @@ export default function MessageScreen() {
         prev.filter((msg) => msg._id !== optimisticMessageId)
       );
       setMessageText(messageToSend);
+      handleReplyToMessage(replyToMessage!);
       alert('Failed to send message. Please check your connection.');
     }
   };
@@ -1769,6 +1874,51 @@ export default function MessageScreen() {
     }
   };
 
+  const handleReplyToMessage = (message: Message) => {
+    setReplyToMessage(message);
+    setReplyMode(true);
+    setShowMenu(false);
+  };
+
+  const handleCancelReply = () => {
+    setReplyToMessage(null);
+    setReplyMode(false);
+  };
+
+  const handleAddReaction = async (messageId: string, emoji: string) => {
+    if (!token) return;
+
+    try {
+      const response = await messageService.addReaction(messageId, emoji, token);
+      if (response.status) {
+        setMyMessages((prev) =>
+          prev.map((m) =>
+            m._id === messageId
+              ? { ...m, reactions: response.reactions }
+              : m
+          )
+        );
+        setShowReactionPicker(false);
+        setSelectedMessageForReaction(null);
+      } else {
+        Alert.alert('Error', 'Failed to add reaction');
+      }
+    } catch {
+      Alert.alert('Error', 'Failed to add reaction');
+    }
+  };
+
+  const handleShowReactionPicker = (message: Message) => {
+    setSelectedMessageForReaction(message);
+    setShowReactionPicker(true);
+    setShowMenu(false);
+  };
+
+  const handleCloseReactionPicker = () => {
+    setShowReactionPicker(false);
+    setSelectedMessageForReaction(null);
+  };
+
   const renderMessage = ({ item }: { item: Message }) => {
     if (!user) return null;
 
@@ -1816,6 +1966,32 @@ export default function MessageScreen() {
             <View style={{ flex: 1 }}>
               <Text style={styles.groupMessageUsername}>{senderName}</Text>
               <View style={[styles.messageBubble, styles.otherMessageBubble]}>
+                {/* Reply Context */}
+                {item.replyTo && (() => {
+                  const repliedMessage = myMessages.find(m => m._id === item.replyTo);
+                  if (!repliedMessage) return null;
+                  const repliedSenderId = typeof repliedMessage.senderId === 'string'
+                    ? repliedMessage.senderId
+                    : (repliedMessage.senderId as any)?._id;
+                  const repliedSenderName = repliedSenderId === user._id ? 'yourself' :
+                    (typeof repliedMessage.senderId === 'object'
+                      ? (repliedMessage.senderId as any)?.fullName || (repliedMessage.senderId as any)?.username || 'Unknown User'
+                      : senderName);
+                  return (
+                    <View style={styles.replyContainer}>
+                      <Text style={styles.replyText}>
+                        Replying to {repliedSenderName}
+                      </Text>
+                      <Text style={styles.replyMessageText} numberOfLines={1}>
+                        {repliedMessage.type === 'text' ? repliedMessage.text :
+                         repliedMessage.type === 'image' ? '📷 Photo' :
+                         repliedMessage.type === 'deleted' ? 'Deleted message' :
+                         'Message'}
+                      </Text>
+                    </View>
+                  );
+                })()}
+
                 {item.type === 'text' && item.text ? (
                   <Text style={styles.messageText}>{item.text}</Text>
                 ) : item.type === 'image' && item.imageUrl ? (
@@ -1894,6 +2070,19 @@ export default function MessageScreen() {
                 ) : item.type === 'info' && item.text ? (
                   <Text style={styles.infoText}>{item.text}</Text>
                 ) : null}
+
+                {/* Message Reactions */}
+                {item.reactions && Object.keys(item.reactions).length > 0 && (
+                  <View style={styles.messageReactionsContainer}>
+                    {Object.entries(item.reactions).map(([emoji, users]) => (
+                      <View key={emoji} style={styles.reactionBadge}>
+                        <Text style={styles.reactionEmoji}>{emoji}</Text>
+                        <Text style={styles.reactionCount}>{users.length}</Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
+
                 <View style={styles.messageTimeContainer}>
                   <Text style={styles.messageTime}>{formattedTime}</Text>
                 </View>
@@ -1926,24 +2115,72 @@ export default function MessageScreen() {
           ]}
           activeOpacity={1}
           onLongPress={() => {
-            if (!isMe) return;
-
-            Alert.alert(
-              'Delete Message',
-              'Are you sure you want to delete this message?',
-              [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                  text: 'Delete',
-                  style: 'destructive',
-                  onPress: () => {
-                    handleDeleteMessage(item._id);
+            if (isMe) {
+              Alert.alert(
+                'Message Options',
+                'Choose an action',
+                [
+                  { text: 'Cancel', style: 'cancel' },
+                  {
+                    text: 'Reply',
+                    onPress: () => handleReplyToMessage(item),
                   },
-                },
-              ]
-            );
+                  {
+                    text: 'Add Reaction',
+                    onPress: () => handleShowReactionPicker(item),
+                  },
+                  {
+                    text: 'Delete',
+                    style: 'destructive',
+                    onPress: () => handleDeleteMessage(item._id),
+                  },
+                ]
+              );
+            } else {
+              Alert.alert(
+                'Message Options',
+                'Choose an action',
+                [
+                  { text: 'Cancel', style: 'cancel' },
+                  {
+                    text: 'Reply',
+                    onPress: () => handleReplyToMessage(item),
+                  },
+                  {
+                    text: 'Add Reaction',
+                    onPress: () => handleShowReactionPicker(item),
+                  },
+                ]
+              );
+            }
           }}
         >
+          {/* Reply Context */}
+          {item.replyTo && (() => {
+            const repliedMessage = myMessages.find(m => m._id === item.replyTo);
+            if (!repliedMessage) return null;
+            const repliedSenderId = typeof repliedMessage.senderId === 'string'
+              ? repliedMessage.senderId
+              : (repliedMessage.senderId as any)?._id;
+            const repliedSenderName = repliedSenderId === user._id ? 'yourself' :
+              (typeof repliedMessage.senderId === 'object'
+                ? (repliedMessage.senderId as any)?.fullName || (repliedMessage.senderId as any)?.username || 'Unknown User'
+                : senderName);
+            return (
+              <View style={styles.replyContainer}>
+                <Text style={styles.replyText}>
+                  Replying to {repliedSenderName}
+                </Text>
+                <Text style={styles.replyMessageText} numberOfLines={1}>
+                  {repliedMessage.type === 'text' ? repliedMessage.text :
+                   repliedMessage.type === 'image' ? '📷 Photo' :
+                   repliedMessage.type === 'deleted' ? 'Deleted message' :
+                   'Message'}
+                </Text>
+              </View>
+            );
+          })()}
+
           {item.type === 'text' && item.text ? (
             <Text style={[styles.messageText, isMe && styles.myMessageText]}>
               {item.text}
@@ -2038,6 +2275,18 @@ export default function MessageScreen() {
               This message was deleted
             </Text>
           ) : null}
+
+          {/* Message Reactions */}
+          {item.reactions && Object.keys(item.reactions).length > 0 && (
+            <View style={styles.messageReactionsContainer}>
+              {Object.entries(item.reactions).map(([emoji, users]) => (
+                <View key={emoji} style={styles.reactionBadge}>
+                  <Text style={styles.reactionEmoji}>{emoji}</Text>
+                  <Text style={styles.reactionCount}>{users.length}</Text>
+                </View>
+              ))}
+            </View>
+          )}
 
           <View
             style={[
@@ -2485,6 +2734,64 @@ export default function MessageScreen() {
             {renderMembersModal()}
             {renderSearchModal()}
             {renderAddUserModal()}
+
+            {/* Reaction Picker Modal */}
+            <Modal
+              visible={showReactionPicker}
+              transparent
+              animationType="slide"
+              onRequestClose={handleCloseReactionPicker}
+            >
+              <TouchableWithoutFeedback onPress={handleCloseReactionPicker}>
+                <View style={styles.reactionPickerModal}>
+                  <TouchableWithoutFeedback>
+                    <View style={styles.reactionPickerContainer}>
+                      <Text style={styles.reactionPickerTitle}>Add Reaction</Text>
+                      <View style={styles.reactionGrid}>
+                        {['👍', '❤️', '😂', '😮', '😢', '😡', '🎉', '🔥', '👏', '🙏', '🤔', '💯'].map((emoji) => (
+                          <TouchableOpacity
+                            key={emoji}
+                            style={styles.reactionButton}
+                            onPress={() => handleAddReaction(selectedMessageForReaction?._id || '', emoji)}
+                          >
+                            <Text style={styles.reactionEmoji}>{emoji}</Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    </View>
+                  </TouchableWithoutFeedback>
+                </View>
+              </TouchableWithoutFeedback>
+            </Modal>
+
+            {/* Reply Input UI */}
+            {replyMode && replyToMessage && (
+              <View style={styles.replyContainer}>
+                <TouchableOpacity
+                  style={styles.replyCancelButton}
+                  onPress={handleCancelReply}
+                >
+                  <X size={16} color={theme.text} />
+                </TouchableOpacity>
+                <Text style={styles.replyText}>
+                  Replying to {(() => {
+                    const repliedSenderId = typeof replyToMessage.senderId === 'string'
+                      ? replyToMessage.senderId
+                      : (replyToMessage.senderId as any)?._id;
+                    return repliedSenderId === user._id ? 'yourself' :
+                      (typeof replyToMessage.senderId === 'object'
+                        ? (replyToMessage.senderId as any)?.fullName || (replyToMessage.senderId as any)?.username || 'Unknown User'
+                        : 'Unknown User');
+                  })()}
+                </Text>
+                <Text style={styles.replyMessageText} numberOfLines={1}>
+                  {replyToMessage.type === 'text' ? replyToMessage.text :
+                   replyToMessage.type === 'image' ? '📷 Photo' :
+                   replyToMessage.type === 'deleted' ? 'Deleted message' :
+                   'Message'}
+                </Text>
+              </View>
+            )}
 
             <View style={styles.textInputContainer}>
               <TextInput

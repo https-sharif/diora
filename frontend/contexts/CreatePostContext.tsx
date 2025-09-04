@@ -1,8 +1,7 @@
 import React, { createContext, useContext, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { config } from '@/config';
 import { User } from '@/types/User';
-import axios from 'axios';
+import { postService, productService } from '@/services';
 
 type ContentType = 'post' | 'product';
 
@@ -63,7 +62,7 @@ export const CreatePostProvider = ({
   const createPost = async () => {
     if (images.length === 0)
       throw new Error('Post requires at least one image!');
-    if (!user) throw new Error('User not authenticated!');
+    if (!user || !token) throw new Error('User not authenticated!');
 
     try {
       const form = new FormData();
@@ -81,13 +80,9 @@ export const CreatePostProvider = ({
 
       form.append('caption', formData.description);
 
-      const res = await axios.post(`${config.apiUrl}/api/post/create`, form, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const res = await postService.createPost(form, token);
 
-      const data = res.data;
+      const data = res;
 
       if (!data.status)
         throw new Error(data.message || 'Failed to create post');
@@ -107,7 +102,7 @@ export const CreatePostProvider = ({
       formData.category.length === 0
     )
       throw new Error('Product requires all fields and at least one category');
-    if (!user) throw new Error('User not authenticated!');
+    if (!user || !token) throw new Error('User not authenticated!');
     if (user.type !== 'shop')
       throw new Error('Only shop users can create products');
 
@@ -135,13 +130,9 @@ export const CreatePostProvider = ({
       form.append('stock', formData.stock?.toString() || '0');
       form.append('discount', formData.discount?.toString() || '0');
 
-      const res = await axios.post(`${config.apiUrl}/api/product`, form, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const res = await productService.createProduct(form, token);
 
-      const data = res.data;
+      const data = res;
       if (!data.status)
         throw new Error(data.message || 'Failed to create product');
 

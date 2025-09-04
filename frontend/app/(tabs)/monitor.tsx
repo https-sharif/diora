@@ -29,8 +29,6 @@ import {
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/hooks/useAuth';
 import { Theme } from '@/types/Theme';
-import axios from 'axios';
-import { config } from '@/config';
 import { adminService } from '@/services';
 import { router } from 'expo-router';
 import LoadingView from '@/components/Loading';
@@ -865,23 +863,18 @@ export default function Monitor() {
 
   const handlePostAction = async (postId: string, action: string) => {
     try {
-      const endpoint = `${config.apiUrl}/api/admin/posts/${postId}/${action}`;
+      if (!token) return;
+      const response = action === 'hide'
+        ? await adminService.hidePost(postId, token)
+        : await adminService.showPost(postId, token);
 
-      const response = await axios.post(
-        endpoint,
-        {},
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-
-      if (response.data.status) {
+      if (response.status) {
         Alert.alert('Success', `Post ${action} completed successfully`);
         handleRefresh();
       } else {
         Alert.alert(
           'Error',
-          response.data.message || `Failed to ${action} post`
+          response.message || `Failed to ${action} post`
         );
       }
     } catch {
@@ -891,23 +884,18 @@ export default function Monitor() {
 
   const handleProductAction = async (productId: string, action: string) => {
     try {
-      const endpoint = `${config.apiUrl}/api/admin/products/${productId}/${action}`;
+      if (!token) return;
+      const response = action === 'hide'
+        ? await adminService.hideProduct(productId, token)
+        : await adminService.showProduct(productId, token);
 
-      const response = await axios.post(
-        endpoint,
-        {},
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-
-      if (response.data.status) {
+      if (response.status) {
         Alert.alert('Success', `Product ${action} completed successfully`);
         handleRefresh();
       } else {
         Alert.alert(
           'Error',
-          response.data.message || `Failed to ${action} product`
+          response.message || `Failed to ${action} product`
         );
       }
     } catch {

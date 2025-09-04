@@ -36,3 +36,6 @@ yarn-error.*
 
 #vscode
 .vscode/
+
+#todo
+todo.txt

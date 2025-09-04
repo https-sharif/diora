@@ -26,8 +26,6 @@ import { orderService } from '@/services';
 import { Theme } from '@/types/Theme';
 import { Product } from '@/types/Product';
 import { CartItem } from '@/types/Cart';
-import axios from 'axios';
-import { config } from '@/config';
 import * as WebBrowser from 'expo-web-browser';
 
 interface CheckoutForm {
@@ -416,13 +414,8 @@ const CheckoutPage = () => {
           ]
         );
       } else if (form.paymentMethod === 'card') {
-        const { sessionUrl } = await axios
-          .post(
-            `${config.apiUrl}/api/order/create-stripe-session`,
-            { orderId: response.order._id },
-            { headers: { Authorization: `Bearer ${token}` } }
-          )
-          .then((res) => res.data);
+        const stripeResponse = await orderService.createStripeSession(response.order._id, token);
+        const { sessionUrl } = stripeResponse;
 
         if (sessionUrl) {
           await WebBrowser.openBrowserAsync(sessionUrl);

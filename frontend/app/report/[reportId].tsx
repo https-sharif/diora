@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -14,8 +14,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/hooks/useAuth';
 import { Theme } from '@/types/Theme';
-import axios from 'axios';
-import { config } from '@/config';
+import { reportService } from '@/services';
 import {
   ArrowLeft,
   CheckCircle,
@@ -269,26 +268,14 @@ export default function ReportDetail() {
   const [loading, setLoading] = useState(true);
   const styles = createStyles(theme);
 
-  useEffect(() => {
-    if (!user || user.type !== 'admin') {
-      router.replace('/(tabs)');
-      return;
-    }
-    fetchReportDetail();
-  }, [reportId]);
-
-  const fetchReportDetail = async () => {
+  const fetchReportDetail = useCallback(async () => {
     try {
+      if (!token || !reportId || Array.isArray(reportId)) return;
       setLoading(true);
-      const response = await axios.get(
-        `${config.apiUrl}/api/report/${reportId}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const response = await reportService.getReportById(reportId, token);
 
-      if (response.data.status) {
-        setReport(response.data.report);
+      if (response.status) {
+        setReport(response.report);
       }
     } catch {
       Alert.alert('Error', 'Failed to fetch report details');
@@ -296,17 +283,22 @@ export default function ReportDetail() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token, reportId]);
+
+  useEffect(() => {
+    if (!user || user.type !== 'admin') {
+      router.replace('/(tabs)');
+      return;
+    }
+    fetchReportDetail();
+  }, [reportId, user, fetchReportDetail]);
 
   const updateReportStatus = async (status: 'resolved' | 'dismissed') => {
     try {
-      const response = await axios.put(
-        `${config.apiUrl}/api/report/${reportId}`,
-        { status },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      if (!token || !reportId || Array.isArray(reportId)) return;
+      const response = await reportService.updateReport(reportId, { status }, token);
 
-      if (response.data.status) {
+      if (response.status) {
         Alert.alert('Success', `Report has been ${status}`, [
           { text: 'OK', onPress: () => router.back() },
         ]);
@@ -336,17 +328,18 @@ export default function ReportDetail() {
           style: 'destructive',
           onPress: async () => {
             try {
-              const response = await axios.post(
-                `${config.apiUrl}/api/report/${reportId}/moderate`,
+              if (!token || !reportId || Array.isArray(reportId)) return;
+              const response = await reportService.moderateReport(
+                reportId,
+                action,
+                token,
                 {
-                  action,
                   reason: `Admin action taken: ${action.replace('_', ' ')}`,
                   duration: action === 'suspend_user' ? 7 : undefined,
-                },
-                { headers: { Authorization: `Bearer ${token}` } }
+                }
               );
 
-              if (response.data.status) {
+              if (response.status) {
                 Alert.alert('Success', `Action completed successfully`, [
                   { text: 'OK', onPress: () => router.back() },
                 ]);

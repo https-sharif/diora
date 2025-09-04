@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -22,8 +22,7 @@ import { router } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Theme } from '@/types/Theme';
-import axios from 'axios';
-import { config } from '@/config';
+import { shopService } from '@/services';
 
 const { width } = Dimensions.get('window');
 
@@ -276,27 +275,24 @@ export default function ShopAnalytics() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  const fetchAnalytics = async () => {
+  const fetchAnalytics = useCallback(async () => {
     try {
-      const response = await axios.get(`${config.apiUrl}/api/shop/analytics`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      if (!token) return;
+      const response = await shopService.getAnalytics(token);
 
-      if (response.data.status) {
-        setAnalytics(response.data.analytics);
+      if (response.status) {
+        setAnalytics(response.analytics);
       }
     } catch {
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, [token]);
 
   useEffect(() => {
     fetchAnalytics();
-  }, []);
+  }, [fetchAnalytics]);
 
   const onRefresh = () => {
     setRefreshing(true);
