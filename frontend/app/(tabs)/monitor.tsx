@@ -30,6 +30,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/hooks/useAuth';
 import { Theme } from '@/types/Theme';
 import { adminService } from '@/services';
+import { refreshWithInternetCheck } from '@/utils/toastUtils';
 import { router } from 'expo-router';
 import LoadingView from '@/components/Loading';
 
@@ -508,9 +509,11 @@ export default function Monitor() {
   }, [token, contentType, debouncedSearch]);
 
   const handleRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await debouncedSearch(searchQuery, activeFilter, contentType);
-    setRefreshing(false);
+    await refreshWithInternetCheck(async () => {
+      setRefreshing(true);
+      await debouncedSearch(searchQuery, activeFilter, contentType);
+      setRefreshing(false);
+    });
   }, [searchQuery, activeFilter, contentType, debouncedSearch]);
 
   const handleUserAction = async (

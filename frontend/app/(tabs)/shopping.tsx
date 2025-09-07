@@ -34,6 +34,7 @@ import { Product } from '@/types/Product';
 import { Theme } from '@/types/Theme';
 import ReceiptClockIcon from '@/icon/ReceiptClockIcon';
 import { productService, searchService } from '@/services';
+import { refreshWithInternetCheck } from '@/utils/toastUtils';
 import LoadingView from '@/components/Loading';
 import debounce from 'lodash.debounce';
 const categories = [
@@ -526,23 +527,25 @@ export default function ShoppingScreen() {
   const [filters, setFilters] = useState(initialFilter);
 
   const onRefresh = async () => {
-    setRefreshing(true);
-    try {
-      if (!token) {
-        return;
-      }
+    await refreshWithInternetCheck(async () => {
+      setRefreshing(true);
+      try {
+        if (!token) {
+          return;
+        }
 
-      const products = await productService.getProducts({}, token);
+        const products = await productService.getProducts({}, token);
 
-      if (products) {
-        setProducts(products);
-      } else {
-        setProducts([]);
+        if (products) {
+          setProducts(products);
+        } else {
+          setProducts([]);
+        }
+      } catch {
+      } finally {
+        setRefreshing(false);
       }
-    } catch {
-    } finally {
-      setRefreshing(false);
-    }
+    });
   };
 
   const fetchProductResults = async (query: string, filterSnapshot: any) => {

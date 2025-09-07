@@ -39,6 +39,7 @@ import { Post } from '@/types/Post';
 import { Theme } from '@/types/Theme';
 import { useAuth } from '@/hooks/useAuth';
 import { trendingService, searchService } from '@/services';
+import { refreshWithInternetCheck } from '@/utils/toastUtils';
 import LoadingView from '@/components/Loading';
 
 const { width, height } = Dimensions.get('window');
@@ -639,89 +640,92 @@ export default function ExploreScreen() {
 
   const onRefresh = useCallback(async () => {
     if (!user) return;
-    setRefreshing(true);
+    
+    await refreshWithInternetCheck(async () => {
+      setRefreshing(true);
 
-    const fetchTrendingUser = async () => {
-      if (!token) return;
-      setLoading((prevState) => ({ ...prevState, trendingUsers: true }));
+      const fetchTrendingUser = async () => {
+        if (!token) return;
+        setLoading((prevState) => ({ ...prevState, trendingUsers: true }));
 
-      try {
-        const response = await trendingService.getTrendingUsers(token);
+        try {
+          const response = await trendingService.getTrendingUsers(token);
 
-        if (response.status) {
-          setExploreData((prevState) => ({
-            ...prevState,
-            trendingUsers: response.trendingUsers,
-          }));
+          if (response.status) {
+            setExploreData((prevState) => ({
+              ...prevState,
+              trendingUsers: response.trendingUsers,
+            }));
+          }
+        } catch {
+        } finally {
+          setLoading((prevState) => ({ ...prevState, trendingUsers: false }));
         }
-      } catch {
-      } finally {
-        setLoading((prevState) => ({ ...prevState, trendingUsers: false }));
-      }
-    };
+      };
 
-    const fetchTrendingShops = async () => {
-      if (!token) return;
-      setLoading((prevState) => ({ ...prevState, trendingShops: true }));
+      const fetchTrendingShops = async () => {
+        if (!token) return;
+        setLoading((prevState) => ({ ...prevState, trendingShops: true }));
 
-      try {
-        const response = await trendingService.getTrendingShops(token);
+        try {
+          const response = await trendingService.getTrendingShops(token);
 
-        if (response.status) {
-          setExploreData((prevState) => ({
-            ...prevState,
-            trendingShops: response.trendingShops,
-          }));
+          if (response.status) {
+            setExploreData((prevState) => ({
+              ...prevState,
+              trendingShops: response.trendingShops,
+            }));
+          }
+        } catch {
+        } finally {
+          setLoading((prevState) => ({ ...prevState, trendingShops: false }));
         }
-      } catch {
-      } finally {
-        setLoading((prevState) => ({ ...prevState, trendingShops: false }));
-      }
-    };
+      };
 
-    const fetchTrendingProducts = async () => {
-      if (!token) return;
-      setLoading((prevState) => ({ ...prevState, trendingProducts: true }));
+      const fetchTrendingProducts = async () => {
+        if (!token) return;
+        setLoading((prevState) => ({ ...prevState, trendingProducts: true }));
 
-      try {
-        const response = await trendingService.getTrendingProducts(token);
+        try {
+          const response = await trendingService.getTrendingProducts(token);
 
-        if (response.status) {
-          setExploreData((prevState) => ({
-            ...prevState,
-            trendingProducts: response.trendingProducts,
-          }));
+          if (response.status) {
+            setExploreData((prevState) => ({
+              ...prevState,
+              trendingProducts: response.trendingProducts,
+            }));
+          }
+        } catch {
+        } finally {
+          setLoading((prevState) => ({ ...prevState, trendingProducts: false }));
         }
-      } catch {
-      } finally {
-        setLoading((prevState) => ({ ...prevState, trendingProducts: false }));
-      }
-    };
+      };
 
-    const fetchTrendingPosts = async () => {
-      if (!token) return;
-      setLoading((prevState) => ({ ...prevState, trendingPosts: true }));
+      const fetchTrendingPosts = async () => {
+        if (!token) return;
+        setLoading((prevState) => ({ ...prevState, trendingPosts: true }));
 
-      try {
-        const response = await trendingService.getTrendingPosts(token);
+        try {
+          const response = await trendingService.getTrendingPosts(token);
 
-        if (response.status) {
-          setExploreData((prevState) => ({
-            ...prevState,
-            trendingPosts: response.trendingPosts,
-          }));
+          if (response.status) {
+            setExploreData((prevState) => ({
+              ...prevState,
+              trendingPosts: response.trendingPosts,
+            }));
+          }
+        } catch {
+        } finally {
+          setLoading((prevState) => ({ ...prevState, trendingPosts: false }));
         }
-      } catch {
-      } finally {
-        setLoading((prevState) => ({ ...prevState, trendingPosts: false }));
-      }
-    };
+      };
 
-    fetchTrendingUser();
-    fetchTrendingShops();
-    fetchTrendingProducts();
-    fetchTrendingPosts();
-    setRefreshing(false);
+      fetchTrendingUser();
+      fetchTrendingShops();
+      fetchTrendingProducts();
+      fetchTrendingPosts();
+      setRefreshing(false);
+    });
   }, [user, token]);
 
   useEffect(() => {

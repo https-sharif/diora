@@ -1,4 +1,5 @@
 import { useGlobalToast } from '@/contexts/ToastContext';
+import NetInfo from '@react-native-community/netinfo';
 
 // Global toast instance for non-React contexts
 let globalToastInstance: ReturnType<typeof useGlobalToast> | null = null;
@@ -6,6 +7,34 @@ let globalToastInstance: ReturnType<typeof useGlobalToast> | null = null;
 // Initialize toast instance (call this from a React component)
 export const initializeGlobalToast = (toastInstance: ReturnType<typeof useGlobalToast>) => {
   globalToastInstance = toastInstance;
+};
+
+// Check internet connectivity and show toast if offline
+export const checkInternetConnection = async (): Promise<boolean> => {
+  const networkState = await NetInfo.fetch();
+  const isConnected = networkState.isConnected ?? false;
+  
+  if (!isConnected) {
+    showToast.error(toastMessages.noInternet);
+    return false;
+  }
+  
+  return true;
+};
+
+// Utility function for refresh with internet check
+export const refreshWithInternetCheck = async (refreshFunction: () => Promise<void>): Promise<void> => {
+  const hasInternet = await checkInternetConnection();
+  
+  if (!hasInternet) {
+    return; // Don't proceed with refresh if no internet
+  }
+  
+  try {
+    await refreshFunction();
+  } catch {
+    showToast.error(toastMessages.refreshFailed);
+  }
 };
 
 // Toast utility functions for non-React contexts

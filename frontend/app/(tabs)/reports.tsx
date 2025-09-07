@@ -35,6 +35,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Theme } from '@/types/Theme';
 import { useEffect, useState, useCallback } from 'react';
 import { reportService } from '@/services';
+import { refreshWithInternetCheck } from '@/utils/toastUtils';
 import { Report, ReportStats } from '@/types/Report';
 
 const createStyles = (theme: Theme) =>
@@ -468,9 +469,11 @@ export default function ReportsManagement() {
   }, [user, activeCategory, filterStatus, fetchReports]);
 
   const onRefresh = async () => {
-    setRefreshing(true);
-    await Promise.all([fetchReports(), fetchStats()]);
-    setRefreshing(false);
+    await refreshWithInternetCheck(async () => {
+      setRefreshing(true);
+      await Promise.all([fetchReports(), fetchStats()]);
+      setRefreshing(false);
+    });
   };
 
   const updateReportStatus = async (
