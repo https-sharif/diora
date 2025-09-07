@@ -70,10 +70,11 @@ export const createReview = async (req, res) => {
 export const getReviewsByTargetId = async (req, res, targetType = null) => {
   console.log('Get reviews by target ID route/controller hit');
   try {
-    const { targetId } = req.params;
-    const queryTargetType = targetType || req.query.targetType || 'product'; // Default to product if not specified
+    const { targetId, productId, shopId } = req.params;
+    const id = targetId || productId || shopId;
+    const queryTargetType = targetType || req.query.targetType || 'product';
 
-    if (!targetId) {
+    if (!id) {
       return res
         .status(400)
         .json({ status: false, message: 'Target ID is required' });
@@ -86,7 +87,7 @@ export const getReviewsByTargetId = async (req, res, targetType = null) => {
     }
 
     const reviews = await Review.find({
-      targetId: targetId,
+      targetId: id,
       targetType: queryTargetType,
     })
       .populate('user', 'username avatar isVerified type')
@@ -138,7 +139,7 @@ export const reviewed = async (req, res) => {
 export const deleteReview = async (req, res) => {
   console.log('Delete review route/controller hit');
   try {
-    const { targetType, id } = req.params;
+    const { id } = req.params;
     const userId = req.user.id;
 
     const review = await Review.findById(id);
@@ -165,7 +166,7 @@ export const deleteReview = async (req, res) => {
       }
     }
 
-    if (targetType === 'product') {
+    if (review.targetType === 'product') {
       const product = await Product.findById(review.targetId);
       if (product) {
         product.rating -= review.rating;
@@ -193,7 +194,7 @@ export const deleteReview = async (req, res) => {
 export const updateReview = async (req, res) => {
   console.log('Update review route/controller hit');
   try {
-    const { targetType, id } = req.params;
+    const { id } = req.params;
     const userId = req.user.id;
     const { rating, comment } = req.body;
 
@@ -211,7 +212,7 @@ export const updateReview = async (req, res) => {
       });
     }
 
-    if (targetType === 'product') {
+    if (review.targetType === 'product') {
       const product = await Product.findById(review.targetId);
       if (!product) {
         return res

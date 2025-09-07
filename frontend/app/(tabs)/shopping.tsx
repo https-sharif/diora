@@ -138,8 +138,8 @@ const createStyles = (theme: Theme) => {
       height: 40,
     },
     categoryChipActive: {
-      backgroundColor: theme.primary,
-      borderColor: theme.primary,
+      backgroundColor: theme.accent,
+      borderColor: theme.accent,
     },
     categoryText: {
       fontSize: 14,
@@ -634,11 +634,11 @@ export default function ShoppingScreen() {
     <View style={styles.productCard}>
       <TouchableOpacity onPress={() => handleProductPress(item)}>
         <View style={styles.productImageContainer}>
-          {item.discount && (
+          {item.discount ? (
             <View style={styles.discountBadge}>
               <Text style={styles.discountText}>-{item.discount}%</Text>
             </View>
-          )}
+          ) : null}
           {!item.stock && (
             <View style={styles.outOfStockOverlay}>
               <Text style={styles.outOfStockText}>Out of Stock</Text>

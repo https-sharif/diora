@@ -33,7 +33,7 @@ import { router } from 'expo-router';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/hooks/useAuth';
 import { Theme } from '@/types/Theme';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { reportService } from '@/services';
 import { Report, ReportStats } from '@/types/Report';
 
@@ -405,9 +405,9 @@ export default function ReportsManagement() {
   const [stats, setStats] = useState<ReportStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [reportsLoading, setReportsLoading] = useState(false);
-  const [statsLoading, setStatsLoading] = useState(false);
+  
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState('all');
+  const [filterStatus] = useState('all');
   const [activeCategory, setActiveCategory] = useState('all');
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [showActionModal, setShowActionModal] = useState(false);
@@ -416,15 +416,19 @@ export default function ReportsManagement() {
 
   const styles = createStyles(theme);
 
-  useEffect(() => {
-    if (!user || user.type !== 'admin') {
-      router.replace('/(tabs)');
-      return;
-    }
-    fetchReports();
-  }, [user, activeCategory, filterStatus]);
+  const fetchStats = useCallback(async () => {
+    if (!token) return;
+    try {
+      const response = await reportService.getStats(token);
 
-  const fetchReports = async () => {
+      if (response.status) {
+        setStats(response.stats);
+      }
+    } catch {
+    }
+  }, [token]);
+
+  const fetchReports = useCallback(async () => {
     if (!token) return;
     try {
       if (reports.length === 0) {
@@ -453,22 +457,15 @@ export default function ReportsManagement() {
       setLoading(false);
       setReportsLoading(false);
     }
-  };
+  }, [token, filterStatus, activeCategory, reports.length, fetchStats]);
 
-  const fetchStats = async () => {
-    if (!token) return;
-    try {
-      setStatsLoading(true);
-      const response = await reportService.getStats(token);
-
-      if (response.status) {
-        setStats(response.stats);
-      }
-    } catch {
-    } finally {
-      setStatsLoading(false);
+  useEffect(() => {
+    if (!user || user.type !== 'admin') {
+      router.replace('/(tabs)');
+      return;
     }
-  };
+    fetchReports();
+  }, [user, activeCategory, filterStatus, fetchReports]);
 
   const onRefresh = async () => {
     setRefreshing(true);

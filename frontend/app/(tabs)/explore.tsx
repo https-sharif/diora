@@ -40,7 +40,6 @@ import { Theme } from '@/types/Theme';
 import { useAuth } from '@/hooks/useAuth';
 import { trendingService, searchService } from '@/services';
 import LoadingView from '@/components/Loading';
-import debounce from 'lodash.debounce';
 
 const { width, height } = Dimensions.get('window');
 
@@ -547,6 +546,21 @@ const createStyles = (theme: Theme) => {
       fontSize: 14,
       fontFamily: 'Inter-Medium',
     },
+    showMoreButton: {
+      backgroundColor: theme.accent,
+      borderRadius: 25,
+      paddingHorizontal: 20,
+      paddingVertical: 12,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginHorizontal: 16,
+      marginTop: 12,
+    },
+    showMoreText: {
+      color: '#000',
+      fontSize: 14,
+      fontFamily: 'Inter-SemiBold',
+    },
   });
 };
 
@@ -600,6 +614,13 @@ export default function ExploreScreen() {
     trendingPosts: [] as Post[],
   });
 
+  const [showMore, setShowMore] = useState({
+    users: false,
+    shops: false,
+    products: false,
+    posts: false,
+  });
+
   const [searchResults, setSearchResults] = useState({
     users: [] as User[],
     shops: [] as User[],
@@ -616,10 +637,7 @@ export default function ExploreScreen() {
 
   const [filters, setFilters] = useState(initialFilter);
 
-  const styles = createStyles(theme);
-  const isLiked = user?.likedPosts?.includes(enlargedPost?._id || '');
-
-  const onRefresh = async () => {
+  const onRefresh = useCallback(async () => {
     if (!user) return;
     setRefreshing(true);
 
@@ -704,11 +722,11 @@ export default function ExploreScreen() {
     fetchTrendingProducts();
     fetchTrendingPosts();
     setRefreshing(false);
-  };
+  }, [user, token]);
 
   useEffect(() => {
     onRefresh();
-  }, []);
+  }, [onRefresh]);
 
   const fetchSearchResults = async (query: string, filterSnapshot: any) => {
     if (!token) return;
@@ -732,20 +750,31 @@ export default function ExploreScreen() {
     } catch {}
   };
 
-  const debouncedSearch = useCallback(
-    debounce((query, filterSnapshot) => {
-      if (!query) {
-        return;
-      }
+  const debouncedSearch = useCallback(async (query: string, filterSnapshot: any) => {
+    if (!query || !token) return;
+    try {
+      const response = await searchService.generalSearch(
+        {
+          query,
+          ...filterSnapshot,
+        },
+        token
+      );
 
-      fetchSearchResults(query, filterSnapshot);
-    }, 500),
-    []
-  );
+      if (response.status) {
+        setSearchResults({
+          users: response.users,
+          shops: response.shops,
+          products: response.products,
+          posts: response.posts,
+        });
+      }
+    } catch {}
+  }, [token, setSearchResults]);
 
   useEffect(() => {
     debouncedSearch(searchQuery, filters);
-  }, [searchQuery, debouncedSearch]);
+  }, [searchQuery, debouncedSearch, filters]);
 
   useEffect(() => {
     const isEmptyQuery = searchQuery.trim() === '';
@@ -1018,6 +1047,8 @@ export default function ExploreScreen() {
   const renderEnlargedPost = (enlargedPost: Post) => {
     if (!enlargedPost) return null;
 
+    const isLiked = user?.likedPosts?.includes(enlargedPost._id || '');
+
     return (
       <>
         <View style={styles.enlargedHeader}>
@@ -1081,6 +1112,12 @@ export default function ExploreScreen() {
     );
   };
 
+  const handleShowMore = (type: 'users' | 'shops' | 'products' | 'posts') => {
+    setShowMore(prev => ({ ...prev, [type]: !prev[type] }));
+  };
+
+  const styles = createStyles(theme);
+
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <SafeAreaView style={styles.container}>
@@ -1125,16 +1162,28 @@ export default function ExploreScreen() {
               {loading.trendingUsers ? (
                 <LoadingView />
               ) : (
-                <FlatList
-                  data={
-                    searchQuery
-                      ? searchResults.users
-                      : exploreData.trendingUsers
-                  }
-                  renderItem={renderUserCard}
-                  keyExtractor={(item) => item._id}
-                  scrollEnabled={false}
-                />
+                <>
+                  <FlatList
+                    data={
+                      searchQuery
+                        ? searchResults.users.slice(0, showMore.users ? undefined : 4)
+                        : exploreData.trendingUsers.slice(0, showMore.users ? undefined : 4)
+                    }
+                    renderItem={renderUserCard}
+                    keyExtractor={(item) => item._id}
+                    scrollEnabled={false}
+                  />
+                  {((searchQuery ? searchResults.users : exploreData.trendingUsers).length > 4) && (
+                    <TouchableOpacity
+                      style={styles.showMoreButton}
+                      onPress={() => handleShowMore('users')}
+                    >
+                      <Text style={styles.showMoreText}>
+                        {showMore.users ? 'Show Less' : `Show More (${(searchQuery ? searchResults.users : exploreData.trendingUsers).length - 4} more)`}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </>
               )}
             </View>
           )}
@@ -1148,16 +1197,28 @@ export default function ExploreScreen() {
               {loading.trendingShops ? (
                 <LoadingView />
               ) : (
-                <FlatList
-                  data={
-                    searchQuery
-                      ? searchResults.shops
-                      : exploreData.trendingShops
-                  }
-                  renderItem={renderShopCard}
-                  keyExtractor={(item) => item._id}
-                  scrollEnabled={false}
-                />
+                <>
+                  <FlatList
+                    data={
+                      searchQuery
+                        ? searchResults.shops.slice(0, showMore.shops ? undefined : 4)
+                        : exploreData.trendingShops.slice(0, showMore.shops ? undefined : 4)
+                    }
+                    renderItem={renderShopCard}
+                    keyExtractor={(item) => item._id}
+                    scrollEnabled={false}
+                  />
+                  {((searchQuery ? searchResults.shops : exploreData.trendingShops).length > 4) && (
+                    <TouchableOpacity
+                      style={styles.showMoreButton}
+                      onPress={() => handleShowMore('shops')}
+                    >
+                      <Text style={styles.showMoreText}>
+                        {showMore.shops ? 'Show Less' : `Show More (${(searchQuery ? searchResults.shops : exploreData.trendingShops).length - 4} more)`}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </>
               )}
             </View>
           )}
@@ -1171,18 +1232,30 @@ export default function ExploreScreen() {
               {loading.trendingProducts ? (
                 <LoadingView />
               ) : (
-                <FlatList
-                  data={
-                    searchQuery
-                      ? searchResults.products
-                      : exploreData.trendingProducts
-                  }
-                  renderItem={renderProductCard}
-                  keyExtractor={(item) => item._id}
-                  numColumns={2}
-                  scrollEnabled={false}
-                  columnWrapperStyle={styles.gridRowProduct}
-                />
+                <>
+                  <FlatList
+                    data={
+                      searchQuery
+                        ? searchResults.products.slice(0, showMore.products ? undefined : 4)
+                        : exploreData.trendingProducts.slice(0, showMore.products ? undefined : 4)
+                    }
+                    renderItem={renderProductCard}
+                    keyExtractor={(item) => item._id}
+                    numColumns={2}
+                    scrollEnabled={false}
+                    columnWrapperStyle={styles.gridRowProduct}
+                  />
+                  {((searchQuery ? searchResults.products : exploreData.trendingProducts).length > 4) && (
+                    <TouchableOpacity
+                      style={styles.showMoreButton}
+                      onPress={() => handleShowMore('products')}
+                    >
+                      <Text style={styles.showMoreText}>
+                        {showMore.products ? 'Show Less' : `Show More (${(searchQuery ? searchResults.products : exploreData.trendingProducts).length - 4} more)`}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </>
               )}
             </View>
           )}
@@ -1196,23 +1269,35 @@ export default function ExploreScreen() {
               {loading.trendingPosts ? (
                 <LoadingView />
               ) : (
-                <FlatList
-                  data={
-                    searchQuery
-                      ? searchResults.posts
-                      : exploreData.trendingPosts
-                  }
-                  renderItem={renderGridItem}
-                  keyExtractor={(item) => item._id}
-                  numColumns={3}
-                  scrollEnabled={false}
-                  columnWrapperStyle={styles.gridRow}
-                />
+                <>
+                  <FlatList
+                    data={
+                      searchQuery
+                        ? searchResults.posts.slice(0, showMore.posts ? undefined : 6)
+                        : exploreData.trendingPosts.slice(0, showMore.posts ? undefined : 6)
+                    }
+                    renderItem={renderGridItem}
+                    keyExtractor={(item) => item._id}
+                    numColumns={3}
+                    scrollEnabled={false}
+                    columnWrapperStyle={styles.gridRow}
+                  />
+                  {((searchQuery ? searchResults.posts : exploreData.trendingPosts).length > 6) && (
+                    <TouchableOpacity
+                      style={styles.showMoreButton}
+                      onPress={() => handleShowMore('posts')}
+                    >
+                      <Text style={styles.showMoreText}>
+                        {showMore.posts ? 'Show Less' : `Show More (${(searchQuery ? searchResults.posts : exploreData.trendingPosts).length - 6} more)`}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </>
               )}
             </View>
           )}
 
-          {searching
+          {(searching
             ? searchResults.users.length === 0 &&
               searchResults.posts.length === 0 &&
               searchResults.products.length === 0 &&
@@ -1220,7 +1305,7 @@ export default function ExploreScreen() {
             : exploreData.trendingUsers.length === 0 &&
               exploreData.trendingPosts.length === 0 &&
               exploreData.trendingProducts.length === 0 &&
-              exploreData.trendingShops.length === 0 && (
+              exploreData.trendingShops.length === 0) && (
                 <View style={styles.noResults}>
                   <View style={styles.noResultsIconContainer}>
                     <SearchX size={48} color={theme.text} />

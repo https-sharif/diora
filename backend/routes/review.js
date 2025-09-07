@@ -19,7 +19,7 @@ router.get('/target/:targetId', getReviewsByTargetId);
 router.get('/product/:productId', getReviewsByProductId);
 router.get('/shop/:shopId', getReviewsByShopId);
 router.get('/reviewed/:userId/:targetType/:targetId', reviewed);
-router.put('/:targetType/:id', parser.array('images'), updateReview);
-router.delete('/:targetType/:id', deleteReview);
+router.put('/:id', parser.array('images'), updateReview);
+router.delete('/:id', deleteReview);
 
 export default router;

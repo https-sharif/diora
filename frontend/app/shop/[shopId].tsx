@@ -919,7 +919,9 @@ export default function ShopProfileScreen() {
         }
 
         setReviews(response.reviews);
-      } catch {}
+      } catch (error) {
+        console.error('Error fetching shop reviews:', error);
+      }
     };
 
     const fetchPosts = async () => {
@@ -1307,11 +1309,11 @@ export default function ShopProfileScreen() {
     >
       <View style={styles.productImageContainer}>
         <Image source={{ uri: item.imageUrl[0] }} style={styles.productImage} />
-        {item.discount && (
+        {item.discount ? (
           <View style={styles.discountBadge}>
             <Text style={styles.discountText}>-{item.discount}%</Text>
           </View>
-        )}
+        ) : null}
         {item.stock === 0 && (
           <View style={styles.outOfStockOverlay}>
             <Text style={styles.outOfStockText}>Out of Stock</Text>
@@ -1466,7 +1468,7 @@ export default function ShopProfileScreen() {
           />
         ) : (
           <EmptyState
-            text="No products available"
+            title="No products available"
             icon={<ProductSlashIcon size={40} />}
           />
         );
@@ -1522,7 +1524,7 @@ export default function ShopProfileScreen() {
               />
             ) : (
               <EmptyState
-                text="No reviews yet"
+                title="No reviews yet"
                 icon={<StarSlashIcon size={40} />}
               />
             )}
@@ -1542,7 +1544,7 @@ export default function ShopProfileScreen() {
             contentContainerStyle={styles.postsGrid}
           />
         ) : (
-          <EmptyState text="No posts yet" icon={<ImageSlashIcon size={40} />} />
+          <EmptyState title="No posts yet" icon={<ImageSlashIcon size={40} />} />
         );
 
       default:
