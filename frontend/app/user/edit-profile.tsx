@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   TextInput,
   Image,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -18,6 +17,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { Theme } from '@/types/Theme';
 import * as ImagePicker from 'expo-image-picker';
 import { userService } from '@/services/userService';
+import { showToast } from '@/utils/toastUtils';
 
 const createStyles = (theme: Theme) =>
   StyleSheet.create({
@@ -177,10 +177,7 @@ export default function EditUserProfile() {
       await ImagePicker.requestMediaLibraryPermissionsAsync();
 
     if (permissionResult.granted === false) {
-      Alert.alert(
-        'Permission Required',
-        'Permission to access camera roll is required!'
-      );
+      showToast.error('Permission to access camera roll is required!');
       return;
     }
 
@@ -223,14 +220,14 @@ export default function EditUserProfile() {
       const response = await userService.updateProfile(requestFormData, token);
 
       if (response.status) {
-        Alert.alert('Success', 'Profile updated successfully!');
+        showToast.success('Profile updated successfully!');
         setUser(response.user);
         router.back();
       } else {
-        Alert.alert('Error', response.message || 'Failed to update profile');
+        showToast.error(response.message || 'Failed to update profile');
       }
     } catch {
-      Alert.alert('Error', 'Failed to update profile. Please try again.');
+      showToast.error('Failed to update profile. Please try again.');
     } finally {
       setSaving(false);
     }

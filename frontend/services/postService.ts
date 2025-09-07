@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { config } from '@/config';
 import { PostData } from '@/types/Post';
+import { withRetry } from '@/utils/retryUtils';
 
 export const postService = {
   async getUserPosts(userId: string, token: string): Promise<any> {
@@ -25,15 +26,15 @@ export const postService = {
 
   async createPost(postData: PostData | FormData, token: string): Promise<any> {
     const headers: any = { Authorization: `Bearer ${token}` };
-    
-    // If it's FormData, don't set Content-Type (let browser set it with boundary)
+
     if (!(postData instanceof FormData)) {
       headers['Content-Type'] = 'application/json';
     }
-    
-    const response = await axios.post(`${config.apiUrl}/api/post/create`, postData, {
-      headers,
-    });
+
+    const response = await withRetry(
+      () => axios.post(`${config.apiUrl}/api/post/create`, postData, { headers }),
+      { maxRetries: 2, retryDelay: 1500 }
+    );
     return response.data;
   },
 
@@ -57,6 +58,26 @@ export const postService = {
       headers: { Authorization: `Bearer ${token}` },
     });
     return response.data;
+  },
+
+  async likePost(postId: string, token: string): Promise<any> {
+    try {
+      const response = await withRetry(
+        () => axios.put(
+          `${config.apiUrl}/api/post/like/${postId}`,
+          {},
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        ),
+        { maxRetries: 2, retryDelay: 1000 }
+      );
+
+      return response.data;
+    } catch (error: any) {
+      console.error('Like post error:', error);
+      throw error;
+    }
   },
 
   async getPosts(filters?: any, token?: string): Promise<any> {

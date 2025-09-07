@@ -46,7 +46,7 @@ export const getShopById = async (req, res) => {
     const isAdmin = req.userDetails && req.userDetails.type === 'admin';
 
     const shop = await User.findById(shopId).populate({
-      path: 'productIds',
+      path: 'shop.productIds',
       select: 'name price imageUrl discount stock category rating',
     });
 
@@ -71,12 +71,13 @@ export const getShopById = async (req, res) => {
 
     const shopData = shop.toObject();
 
-    if (shopData.logoUrl == '') {
-      shopData.logoUrl =
+    if (!shopData.avatar || shopData.avatar === '') {
+      shopData.avatar =
         'https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png';
     }
-    if (shopData.coverImageUrl == '') {
-      shopData.coverImageUrl =
+    if (!shopData.shop?.coverImageUrl || shopData.shop.coverImageUrl === '') {
+      if (!shopData.shop) shopData.shop = {};
+      shopData.shop.coverImageUrl =
         'https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png';
     }
 

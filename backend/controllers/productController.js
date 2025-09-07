@@ -1,4 +1,5 @@
 import Product from '../models/Product.js';
+import User from '../models/User.js';
 
 export const getAllProducts = async (req, res) => {
   console.log('Get all products route/controller hit');
@@ -106,6 +107,14 @@ export const createProduct = async (req, res) => {
     });
 
     await newProduct.save();
+    
+    // Add the product to the shop's productIds array
+    await User.findByIdAndUpdate(
+      shopId,
+      { $push: { 'shop.productIds': newProduct._id } },
+      { new: true }
+    );
+    
     res.status(201).json({ status: true, product: newProduct });
   } catch (err) {
     console.error(err);
@@ -118,16 +127,26 @@ export const updateProduct = async (req, res) => {
   try {
     const productId = req.params.productId;
     const updates = req.body;
+    const userId = req.user.id;
 
-    const product = await Product.findByIdAndUpdate(productId, updates, {
-      new: true,
-    });
-
-    if (!product) {
+    // First, check if the product exists and belongs to the user
+    const existingProduct = await Product.findById(productId);
+    if (!existingProduct) {
       return res
         .status(404)
         .json({ status: false, message: 'Product not found' });
     }
+
+    // Check if the user owns this product
+    if (existingProduct.shopId.toString() !== userId) {
+      return res
+        .status(403)
+        .json({ status: false, message: 'Not authorized to update this product' });
+    }
+
+    const product = await Product.findByIdAndUpdate(productId, updates, {
+      new: true,
+    });
 
     res.json({ status: true, product });
   } catch (err) {
@@ -141,13 +160,22 @@ export const deleteProduct = async (req, res) => {
   try {
     const productId = req.params.productId;
 
-    const product = await Product.findByIdAndDelete(productId);
+    const product = await Product.findById(productId);
 
     if (!product) {
       return res
         .status(404)
         .json({ status: false, message: 'Product not found' });
     }
+
+    // Remove the product from the shop's productIds array
+    await User.findByIdAndUpdate(
+      product.shopId,
+      { $pull: { 'shop.productIds': productId } }
+    );
+
+    // Delete the product
+    await Product.findByIdAndDelete(productId);
 
     res.json({ status: true, message: 'Product deleted successfully' });
   } catch (err) {

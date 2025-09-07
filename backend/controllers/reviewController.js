@@ -67,25 +67,36 @@ export const createReview = async (req, res) => {
   }
 };
 
-export const getReviewsByShopId = async (req, res) => {
-  console.log('Get reviews by shop ID route/controller hit');
+export const getReviewsByTargetId = async (req, res, targetType = null) => {
+  console.log('Get reviews by target ID route/controller hit');
   try {
-    const { shopId } = req.params;
+    const { targetId, productId, shopId } = req.params;
+    const id = targetId || productId || shopId;
+    const queryTargetType = targetType || req.query.targetType || 'product';
 
-    if (!shopId) {
+    if (!id) {
       return res
         .status(400)
-        .json({ status: false, message: 'Shop ID is required' });
+        .json({ status: false, message: 'Target ID is required' });
     }
 
-    const reviews = await Review.find({ targetId: shopId, targetType: 'shop' })
+    if (!['product', 'shop'].includes(queryTargetType)) {
+      return res
+        .status(400)
+        .json({ status: false, message: 'Invalid targetType. Must be "product" or "shop"' });
+    }
+
+    const reviews = await Review.find({
+      targetId: id,
+      targetType: queryTargetType,
+    })
       .populate('user', 'username avatar isVerified type')
       .sort({ createdAt: -1 });
 
     if (!reviews || reviews.length === 0) {
       return res.status(200).json({
         status: true,
-        message: 'No reviews found for this shop',
+        message: `No reviews found for this ${queryTargetType}`,
         reviews: [],
       });
     }
@@ -128,7 +139,7 @@ export const reviewed = async (req, res) => {
 export const deleteReview = async (req, res) => {
   console.log('Delete review route/controller hit');
   try {
-    const { targetType, id } = req.params;
+    const { id } = req.params;
     const userId = req.user.id;
 
     const review = await Review.findById(id);
@@ -155,7 +166,7 @@ export const deleteReview = async (req, res) => {
       }
     }
 
-    if (targetType === 'product') {
+    if (review.targetType === 'product') {
       const product = await Product.findById(review.targetId);
       if (product) {
         product.rating -= review.rating;
@@ -165,8 +176,8 @@ export const deleteReview = async (req, res) => {
     } else {
       const shop = await User.findById(review.targetId);
       if (shop) {
-        shop.rating -= review.rating;
-        shop.reviewCount -= 1;
+        shop.shop.rating -= review.rating;
+        shop.shop.reviewCount -= 1;
         await shop.save();
       }
     }
@@ -183,7 +194,7 @@ export const deleteReview = async (req, res) => {
 export const updateReview = async (req, res) => {
   console.log('Update review route/controller hit');
   try {
-    const { targetType, id } = req.params;
+    const { id } = req.params;
     const userId = req.user.id;
     const { rating, comment } = req.body;
 
@@ -201,7 +212,7 @@ export const updateReview = async (req, res) => {
       });
     }
 
-    if (targetType === 'product') {
+    if (review.targetType === 'product') {
       const product = await Product.findById(review.targetId);
       if (!product) {
         return res
@@ -229,7 +240,11 @@ export const updateReview = async (req, res) => {
     if (req.files && req.files.length > 0) {
       if (review.imagesIds && review.imagesIds.length > 0) {
         for (const publicId of review.imagesIds) {
-          await deleteImage(publicId);
+          try {
+            await deleteImage(publicId);
+          } catch (err) {
+            console.error(`Failed to delete Cloudinary image ${publicId}`, err);
+          }
         }
       }
       review.images = req.files.map((file) => file.path);
@@ -247,34 +262,9 @@ export const updateReview = async (req, res) => {
 };
 
 export const getReviewsByProductId = async (req, res) => {
-  console.log('Get reviews by product ID route/controller hit');
-  try {
-    const { productId } = req.params;
+  return getReviewsByTargetId(req, res, 'product');
+};
 
-    if (!productId) {
-      return res
-        .status(400)
-        .json({ status: false, message: 'Product ID is required' });
-    }
-
-    const reviews = await Review.find({
-      targetId: productId,
-      targetType: 'product',
-    })
-      .populate('user', 'username avatar isVerified type')
-      .sort({ createdAt: -1 });
-
-    if (!reviews || reviews.length === 0) {
-      return res.status(200).json({
-        status: true,
-        message: 'No reviews found for this product',
-        reviews: [],
-      });
-    }
-
-    res.json({ status: true, reviews });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ status: false, message: 'Something went wrong' });
-  }
+export const getReviewsByShopId = async (req, res) => {
+  return getReviewsByTargetId(req, res, 'shop');
 };

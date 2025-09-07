@@ -19,6 +19,9 @@ import { useAuth } from '@/hooks/useAuth';
 import { useNotification } from '@/hooks/useNotification';
 import { useMessage } from '@/hooks/useMessage';
 import { useShopping } from '@/hooks/useShopping';
+import { ToastProvider, useGlobalToast } from '@/contexts/ToastContext';
+import { GlobalToast } from '@/components/GlobalToast';
+import { initializeGlobalToast } from '@/utils/toastUtils';
 import initSocket, { getSocket } from './utils/useSocket';
 import { Message } from '@/types/Message';
 import * as Linking from 'expo-linking';
@@ -32,7 +35,9 @@ export default function RootLayout() {
   return (
     <ThemeProvider>
       <SafeAreaProvider>
-        <AppReadyWrapper insets={insets} />
+        <ToastProvider>
+          <AppReadyWrapper insets={insets} />
+        </ToastProvider>
       </SafeAreaProvider>
     </ThemeProvider>
   );
@@ -44,6 +49,12 @@ function AppReadyWrapper({ insets }: { insets: EdgeInsets }) {
   const { handleIncomingNotification } = useNotification();
   const { handleIncomingMessage } = useMessage();
   const { initializeUserData, fetchCart } = useShopping();
+
+  // Initialize global toast for non-React contexts
+  const toastInstance = useGlobalToast();
+  React.useEffect(() => {
+    initializeGlobalToast(toastInstance);
+  }, [toastInstance]);
 
   useEffect(() => {
     const handleUrl = async ({ url }: { url: string }) => {
@@ -198,6 +209,7 @@ function AppReadyWrapper({ insets }: { insets: EdgeInsets }) {
           <Stack.Screen name="settings" options={{ headerShown: false }} />
           <Stack.Screen name="pastOrder" options={{ headerShown: false }} />
         </Stack>
+        <GlobalToast />
       </View>
       <StatusBar
         style={isDarkMode ? 'light' : 'dark'}

@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { config } from '@/config';
 import { ReviewData } from '@/types/Review';
+import { showToast, toastMessages } from '@/utils/toastUtils';
 
 export const reviewService = {
   async getProductReviews(productId: string, token?: string): Promise<any> {
@@ -14,14 +15,21 @@ export const reviewService = {
   },
 
   async createReview(reviewData: ReviewData | FormData, token: string): Promise<any> {
-    const response = await axios.post(
-      `${config.apiUrl}/api/review`,
-      reviewData,
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
-    return response.data;
+    try {
+      const response = await axios.post(
+        `${config.apiUrl}/api/review`,
+        reviewData,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      showToast.success(toastMessages.commentSuccess);
+      return response.data;
+    } catch (error: any) {
+      console.error('Create review error:', error);
+      showToast.error(toastMessages.commentFailed);
+      throw error;
+    }
   },
 
   async updateReview(
@@ -29,24 +37,38 @@ export const reviewService = {
     reviewData: Partial<ReviewData> | FormData,
     token: string
   ): Promise<any> {
-    const response = await axios.put(
-      `${config.apiUrl}/api/review/${reviewId}`,
-      reviewData,
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
-    return response.data;
+    try {
+      const response = await axios.put(
+        `${config.apiUrl}/api/review/${reviewId}`,
+        reviewData,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      showToast.success('Review updated successfully!');
+      return response.data;
+    } catch (error: any) {
+      console.error('Update review error:', error);
+      showToast.error(toastMessages.serverError);
+      throw error;
+    }
   },
 
   async deleteReview(reviewId: string, token: string): Promise<any> {
-    const response = await axios.delete(
-      `${config.apiUrl}/api/review/${reviewId}`,
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
-    return response.data;
+    try {
+      const response = await axios.delete(
+        `${config.apiUrl}/api/review/${reviewId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      showToast.success(toastMessages.deleteSuccess('Review'));
+      return response.data;
+    } catch (error: any) {
+      console.error('Delete review error:', error);
+      showToast.error(toastMessages.deleteFailed('Review'));
+      throw error;
+    }
   },
 
   async getShopReviews(shopId: string, token?: string): Promise<any> {

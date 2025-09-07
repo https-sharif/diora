@@ -18,6 +18,7 @@ import PostCard from '@/components/PostCard';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Theme } from '@/types/Theme';
 import { postService } from '@/services/postService';
+import { refreshWithInternetCheck } from '@/utils/toastUtils';
 
 const createStyles = (theme: Theme) => {
   return StyleSheet.create({
@@ -101,7 +102,7 @@ export default function FeedScreen() {
   }, [user]);
 
   useEffect(() => {
-    if (!user || !token) return;
+    if (!token) return;
     const fetchPosts = async () => {
       setLoading(true);
       try {
@@ -115,7 +116,7 @@ export default function FeedScreen() {
     };
 
     fetchPosts();
-  }, [user, token]);
+  }, [token]);
 
   if (!isAuthenticated) {
     return null;
@@ -123,18 +124,21 @@ export default function FeedScreen() {
 
   const onRefresh = async () => {
     if (!user || !token) return;
-    setRefreshing(true);
+    
+    await refreshWithInternetCheck(async () => {
+      setRefreshing(true);
 
-    try {
-      const response = await postService.getPosts({}, token);
+      try {
+        const response = await postService.getPosts({}, token);
 
-      if (response.status) {
-        setPosts(response.posts);
-      }
-    } catch {}
+        if (response.status) {
+          setPosts(response.posts);
+        }
+      } catch {}
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setRefreshing(false);
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      setRefreshing(false);
+    });
   };
 
   const handleNotificationPress = () => {

@@ -14,7 +14,8 @@ export interface Comment {
 }
 
 export interface CommentData {
-  content: string;
-  postId?: string;
+  userId: string;
+  postId: string;
+  text: string;
   parentId?: string;
 }

@@ -34,6 +34,7 @@ import { Product } from '@/types/Product';
 import { Theme } from '@/types/Theme';
 import ReceiptClockIcon from '@/icon/ReceiptClockIcon';
 import { productService, searchService } from '@/services';
+import { refreshWithInternetCheck } from '@/utils/toastUtils';
 import LoadingView from '@/components/Loading';
 import debounce from 'lodash.debounce';
 const categories = [
@@ -138,8 +139,8 @@ const createStyles = (theme: Theme) => {
       height: 40,
     },
     categoryChipActive: {
-      backgroundColor: theme.primary,
-      borderColor: theme.primary,
+      backgroundColor: theme.accent,
+      borderColor: theme.accent,
     },
     categoryText: {
       fontSize: 14,
@@ -526,23 +527,25 @@ export default function ShoppingScreen() {
   const [filters, setFilters] = useState(initialFilter);
 
   const onRefresh = async () => {
-    setRefreshing(true);
-    try {
-      if (!token) {
-        return;
-      }
+    await refreshWithInternetCheck(async () => {
+      setRefreshing(true);
+      try {
+        if (!token) {
+          return;
+        }
 
-      const products = await productService.getProducts({}, token);
+        const products = await productService.getProducts({}, token);
 
-      if (products) {
-        setProducts(products);
-      } else {
-        setProducts([]);
+        if (products) {
+          setProducts(products);
+        } else {
+          setProducts([]);
+        }
+      } catch {
+      } finally {
+        setRefreshing(false);
       }
-    } catch {
-    } finally {
-      setRefreshing(false);
-    }
+    });
   };
 
   const fetchProductResults = async (query: string, filterSnapshot: any) => {
@@ -634,11 +637,11 @@ export default function ShoppingScreen() {
     <View style={styles.productCard}>
       <TouchableOpacity onPress={() => handleProductPress(item)}>
         <View style={styles.productImageContainer}>
-          {item.discount && (
+          {item.discount ? (
             <View style={styles.discountBadge}>
               <Text style={styles.discountText}>-{item.discount}%</Text>
             </View>
-          )}
+          ) : null}
           {!item.stock && (
             <View style={styles.outOfStockOverlay}>
               <Text style={styles.outOfStockText}>Out of Stock</Text>

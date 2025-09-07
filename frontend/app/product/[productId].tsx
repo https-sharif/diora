@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   Image,
   FlatList,
-  Alert,
   Dimensions,
   TextInput,
   Modal,
@@ -34,6 +33,7 @@ import {
   Flag,
   Check,
   MoreHorizontal,
+  Edit,
 } from 'lucide-react-native';
 import { useShopping } from '@/hooks/useShopping';
 import { useAuth } from '@/hooks/useAuth';
@@ -57,6 +57,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { format as timeago } from 'timeago.js';
 import LoadingView from '@/components/Loading';
 import Color from 'color';
+import { showToast } from '@/utils/toastUtils';
 
 const { width, height } = Dimensions.get('window');
 
@@ -114,17 +115,38 @@ const createStyles = (theme: Theme) => {
       resizeMode: 'contain',
     },
     thumbnailContainer: {
-      backgroundColor: theme.card,
+      marginTop: 16,
+      marginBottom: 16,
     },
     thumbnailContent: {
       paddingHorizontal: 16,
-      paddingVertical: 12,
-      gap: 8,
     },
     thumbnailImage: {
       width: 60,
       height: 60,
       borderRadius: 8,
+    },
+    thumbnailWrapper: {
+      position: 'relative',
+      marginRight: 8,
+      borderRadius: 12,
+      overflow: 'hidden',
+      borderWidth: 2,
+      borderColor: 'transparent',
+    },
+    thumbnailWrapperActive: {
+      borderColor: theme.accent,
+    },
+    thumbnailOverlay: {
+      position: 'absolute',
+      top: 4,
+      right: 4,
+      backgroundColor: theme.accent,
+      borderRadius: 10,
+      width: 20,
+      height: 20,
+      justifyContent: 'center',
+      alignItems: 'center',
     },
     productInfo: {
       padding: 16,
@@ -308,10 +330,33 @@ const createStyles = (theme: Theme) => {
     optionButtonTextActive: {
       color: '#000',
     },
+    optionCheck: {
+      position: 'absolute',
+      top: -4,
+      right: -4,
+      backgroundColor: theme.accent,
+      borderRadius: 10,
+      width: 20,
+      height: 20,
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderWidth: 2,
+      borderColor: theme.background,
+    },
     quantitySection: {
       padding: 16,
       borderBottomWidth: 1,
       borderBottomColor: theme.border,
+    },
+    quantityHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 12,
+    },
+    stockText: {
+      fontSize: 14,
+      fontFamily: 'Inter-Regular',
     },
     quantityControls: {
       flexDirection: 'row',
@@ -319,22 +364,33 @@ const createStyles = (theme: Theme) => {
       gap: 16,
     },
     quantityButton: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
+      width: 44,
+      height: 44,
+      borderRadius: 22,
       backgroundColor: theme.accentSecondary,
       justifyContent: 'center',
       alignItems: 'center',
+      borderWidth: 1,
+      borderColor: theme.border,
     },
     quantityButtonDisabled: {
       opacity: 0.5,
+      backgroundColor: theme.card,
+    },
+    quantityDisplay: {
+      minWidth: 50,
+      height: 44,
+      backgroundColor: theme.card,
+      borderRadius: 22,
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: theme.border,
     },
     quantityText: {
-      fontSize: 20,
+      fontSize: 18,
       fontFamily: 'Inter-SemiBold',
       color: theme.text,
-      minWidth: 30,
-      textAlign: 'center',
     },
     reviewsSection: {
       padding: 16,
@@ -672,17 +728,22 @@ const createStyles = (theme: Theme) => {
       alignItems: 'center',
     },
     modalButton: {
-      paddingVertical: 10,
+      flex: 1,
+      paddingVertical: 16,
       paddingHorizontal: 20,
-      borderRadius: 8,
+      borderRadius: 12,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: theme.accent,
     },
     modalButtonCancel: {
       borderWidth: 1,
     },
     modalButtonSubmit: {},
     modalButtonText: {
-      fontSize: 14,
+      fontSize: 16,
       fontFamily: 'Inter-SemiBold',
+      color: '#000',
     },
     emptySearchState: {
       padding: 40,
@@ -728,11 +789,108 @@ const createStyles = (theme: Theme) => {
       color: theme.textSecondary,
       marginTop: 2,
     },
+    // Edit form styles
+    editForm: {
+      flex: 1,
+      backgroundColor: theme.background,
+    },
+    formField: {
+      marginBottom: 16,
+    },
+    formRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+    },
+    fieldLabel: {
+      fontSize: 16,
+      fontFamily: 'Inter-SemiBold',
+      color: theme.text,
+      marginBottom: 8,
+    },
+    textInput: {
+      borderWidth: 1,
+      borderColor: theme.border,
+      borderRadius: 12,
+      padding: 16,
+      fontSize: 16,
+      fontFamily: 'Inter-Regular',
+      color: theme.text,
+      backgroundColor: theme.card,
+    },
+    textArea: {
+      height: 100,
+      textAlignVertical: 'top',
+    },
+    cancelButton: {
+      backgroundColor: theme.card,
+      borderWidth: 1,
+      borderColor: theme.border,
+    },
+    cancelButtonText: {
+      color: theme.text,
+    },
+    // Edit modal styles
+    editModalOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.4)',
+      justifyContent: 'flex-end',
+    },
+    editModalBackdrop: {
+      flex: 1,
+    },
+    editModalContainer: {
+      height: '80%',
+      backgroundColor: 'transparent',
+    },
+    editModalContent: {
+      flex: 1,
+      backgroundColor: theme.background,
+      borderTopLeftRadius: 20,
+      borderTopRightRadius: 20,
+      paddingTop: 8,
+    },
+    editModalHandle: {
+      width: 40,
+      height: 4,
+      backgroundColor: theme.textSecondary,
+      borderRadius: 2,
+      alignSelf: 'center',
+      marginBottom: 16,
+    },
+    editModalHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: 20,
+      paddingBottom: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.border,
+    },
+    editModalTitle: {
+      fontSize: 20,
+      fontFamily: 'Inter-Bold',
+      color: theme.text,
+    },
+    editFormContent: {
+      paddingHorizontal: 20,
+      paddingBottom: 20,
+    },
+    editModalFooter: {
+      flexDirection: 'row',
+      paddingHorizontal: 20,
+      paddingVertical: 20,
+      paddingBottom: 40,
+      gap: 12,
+      borderTopWidth: 1,
+      borderTopColor: theme.border,
+      backgroundColor: theme.background,
+    },
   });
 };
 
 export default function ProductDetailScreen() {
-  const { productId } = useLocalSearchParams<{ productId: string }>();
+  const { productId } = useLocalSearchParams() as { productId: string };
   const { addToCart, addToWishlist, isInWishlist } = useShopping();
   const { theme } = useTheme();
   const styles = createStyles(theme);
@@ -764,6 +922,17 @@ export default function ProductDetailScreen() {
   const [userSearchQuery, setUserSearchQuery] = useState('');
   const [selectedUsers, setSelectedUsers] = useState<User[]>([]);
   const [searchedUsers, setSearchedUsers] = useState<User[]>([]);
+  
+  // Edit product states
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [editPrice, setEditPrice] = useState('');
+  const [editStock, setEditStock] = useState('');
+  const [editDiscount, setEditDiscount] = useState('');
+  const [editCategory, setEditCategory] = useState<string[]>([]);
+  const [editSizes, setEditSizes] = useState<string[]>([]);
+  const [editVariants, setEditVariants] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -775,14 +944,14 @@ export default function ProductDetailScreen() {
         );
 
         if (!response.status) {
-          Alert.alert('Error', response.message);
+          showToast.error(response.message);
           return;
         }
 
         setProduct(response.product);
         setShopProfile(response.product.shopId);
       } catch {
-        Alert.alert('Error', 'Failed to fetch product');
+        showToast.error('Failed to fetch product');
       } finally {
         setLoading(false);
       }
@@ -798,9 +967,11 @@ export default function ProductDetailScreen() {
         if (response.status) {
           setReviews(response.reviews);
         } else {
-          Alert.alert('Error', response.message);
+          showToast.error(response.message);
         }
-      } catch {}
+      } catch (error) {
+        console.error('Error fetching reviews:', error);
+      }
     };
 
     const fetchReviewedStatus = async () => {
@@ -914,33 +1085,36 @@ export default function ProductDetailScreen() {
     });
   };
 
-  const searchUsers = async (query: string) => {
-    if (!token) {
-      setSearchedUsers([]);
-      return;
-    }
+  const searchUsers = useCallback(
+    async (query: string) => {
+      if (!token) {
+        setSearchedUsers([]);
+        return;
+      }
 
-    try {
-      const [userRes, shopRes] = await Promise.all([
-        searchService.searchUsers(query, token),
-        searchService.searchShops(query, token),
-      ]);
-      let merged: any[] = [];
-      if (userRes.status) {
-        merged = merged.concat(
-          userRes.users.filter((u: any) => u._id !== user?._id)
-        );
+      try {
+        const [userRes, shopRes] = await Promise.all([
+          searchService.searchUsers(query, token),
+          searchService.searchShops(query, token),
+        ]);
+        let merged: any[] = [];
+        if (userRes.status) {
+          merged = merged.concat(
+            userRes.users.filter((u: any) => u._id !== user?._id)
+          );
+        }
+        if (shopRes.status) {
+          merged = merged.concat(
+            shopRes.users.filter((s: any) => s._id !== user?._id)
+          );
+        }
+        setSearchedUsers(merged);
+      } catch {
+        setSearchedUsers([]);
       }
-      if (shopRes.status) {
-        merged = merged.concat(
-          shopRes.users.filter((s: any) => s._id !== user?._id)
-        );
-      }
-      setSearchedUsers(merged);
-    } catch {
-      setSearchedUsers([]);
-    }
-  };
+    },
+    [token, user?._id]
+  );
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -948,7 +1122,7 @@ export default function ProductDetailScreen() {
     }, 300);
 
     return () => clearTimeout(timeoutId);
-  }, [userSearchQuery]);
+  }, [userSearchQuery, searchUsers]);
 
   const renderUserList = (item: any) => {
     const isSelected = selectedUsers.find((u) => u._id === item._id);
@@ -1003,7 +1177,7 @@ export default function ProductDetailScreen() {
 
   const handleAddToCart = () => {
     if (!selectedSize || !selectedColor) {
-      Alert.alert('Please select size and color');
+      showToast.error('Please select size and color');
       return;
     }
 
@@ -1011,7 +1185,7 @@ export default function ProductDetailScreen() {
     setQuantity(1);
     setSelectedSize('');
     setSelectedColor('');
-    Alert.alert('Success', `${quantity} item(s) added to cart!`);
+    showToast.success(`${quantity} item(s) added to cart!`);
   };
 
   const handleReviewImage = (image: string) => {
@@ -1038,8 +1212,19 @@ export default function ProductDetailScreen() {
     item: string;
     index: number;
   }) => (
-    <TouchableOpacity onPress={() => setSelectedImageIndex(index)}>
+    <TouchableOpacity
+      onPress={() => setSelectedImageIndex(index)}
+      style={[
+        styles.thumbnailWrapper,
+        selectedImageIndex === index && styles.thumbnailWrapperActive,
+      ]}
+    >
       <Image source={{ uri: item }} style={styles.thumbnailImage} />
+      {selectedImageIndex === index && (
+        <View style={styles.thumbnailOverlay}>
+          <Check size={12} color="#fff" />
+        </View>
+      )}
     </TouchableOpacity>
   );
 
@@ -1073,7 +1258,7 @@ export default function ProductDetailScreen() {
       );
 
       if (response.status === false) {
-        Alert.alert('Error', response.message);
+        showToast.error(response.message);
         return;
       }
       setReviews(reviews.filter((review) => review._id !== selectedReview._id));
@@ -1081,40 +1266,45 @@ export default function ProductDetailScreen() {
       setShowReviewModal(false);
       setHasReviewed(false);
 
-      Alert.alert(
-        'Review Deleted',
-        'Your review has been deleted successfully.'
-      );
+      showToast.success('Your review has been deleted successfully.');
     } catch {
-      Alert.alert('Error', 'Failed to delete review. Please try again later.');
+      showToast.error('Failed to delete review. Please try again later.');
     }
   };
 
   const handleSubmitReview = async () => {
-    if (!shopProfile || !user || !token) return;
+    if (!product || !user || !token) return;
     if (rating === 0) return;
 
     try {
-      const reviewData = {
-        productId: product._id,
-        rating: rating,
-        comment: newReview.trim(),
-        images: reviewImages,
-      };
+      const form = new FormData();
+
+      form.append('comment', newReview.trim());
+      form.append('rating', String(rating));
+      form.append('targetId', product._id);
+      form.append('targetType', 'product');
+
+      reviewImages.forEach((uri, index) => {
+        const filename = uri.split('/').pop() || `review_${index}.jpg`;
+        const match = /\.(\w+)$/.exec(filename);
+        const type = match ? `image/${match[1]}` : 'image/jpeg';
+
+        form.append('images', {
+          uri,
+          name: filename,
+          type,
+        } as any);
+      });
 
       let response;
       if (editingReview && selectedReview) {
-        response = await reviewService.updateReview(
-          selectedReview._id,
-          reviewData,
-          token
-        );
+        response = await reviewService.updateReview(selectedReview._id, form, token);
       } else {
-        response = await reviewService.createReview(reviewData, token);
+        response = await reviewService.createReview(form, token);
       }
 
       if (response.status === false) {
-        Alert.alert('Error', response.message);
+        showToast.error(response.message);
         return;
       }
 
@@ -1127,8 +1317,9 @@ export default function ProductDetailScreen() {
       setRating(0);
       setHasReviewed(true);
       setReviewImages([]);
+      showToast.success('Review submitted successfully!');
     } catch {
-      Alert.alert('Error', 'Failed to submit review. Try again.');
+      showToast.error('Failed to submit review. Try again.');
     }
   };
 
@@ -1179,13 +1370,80 @@ export default function ProductDetailScreen() {
         setShowReportModal(false);
         setReportReason('');
         setReportDescription('');
-        Alert.alert(
-          'Report Submitted',
+        showToast.success(
           'Thank you for your report. We will review it shortly.'
         );
       }
     } catch {
-      Alert.alert('Error', 'Failed to submit report. Please try again.');
+      showToast.error('Failed to submit report. Please try again.');
+    }
+  };
+
+  const handleEditProduct = () => {
+    if (!product) return;
+    
+    setEditName(product.name);
+    setEditDescription(product.description);
+    setEditPrice(product.price.toString());
+    setEditStock(product.stock.toString());
+    setEditDiscount(product.discount?.toString() || '0');
+    setEditCategory(product.category);
+    setEditSizes(product.sizes);
+    setEditVariants(product.variants);
+    setShowMoreMenu(false);
+    setShowEditModal(true);
+  };
+
+  const handleSaveProduct = async () => {
+    if (!product || !user || !token) return;
+    
+    if (!editName.trim() || !editDescription.trim() || !editPrice.trim() || !editStock.trim()) {
+      showToast.error('Please fill in all required fields');
+      return;
+    }
+
+    const priceNum = parseFloat(editPrice);
+    const stockNum = parseInt(editStock);
+    const discountNum = parseFloat(editDiscount) || 0;
+
+    if (isNaN(priceNum) || priceNum <= 0) {
+      showToast.error('Please enter a valid price');
+      return;
+    }
+
+    if (isNaN(stockNum) || stockNum < 0) {
+      showToast.error('Please enter a valid stock number');
+      return;
+    }
+
+    if (discountNum < 0 || discountNum > 100) {
+      showToast.error('Discount must be between 0 and 100');
+      return;
+    }
+
+    try {
+      const updateData = {
+        name: editName.trim(),
+        description: editDescription.trim(),
+        price: priceNum,
+        stock: stockNum,
+        discount: discountNum,
+        category: editCategory,
+        sizes: editSizes,
+        variants: editVariants,
+      };
+
+      const response = await productService.updateProduct(product._id, updateData, token);
+
+      if (response.status) {
+        setProduct({ ...product, ...updateData });
+        setShowEditModal(false);
+        showToast.success('Product updated successfully!');
+      } else {
+        showToast.error(response.message || 'Failed to update product');
+      }
+    } catch {
+      showToast.error('Failed to update product. Please try again.');
     }
   };
 
@@ -1326,9 +1584,9 @@ export default function ProductDetailScreen() {
                 ? (product.price * (1 - product.discount / 100)).toFixed(2)
                 : product.price}
             </Text>
-            {product.discount && product.discount > 0 && (
+            {product.discount && product.discount > 0 ? (
               <Text style={styles.originalPrice}>${product.price}</Text>
-            )}
+            ) : null}
           </View>
           <View style={styles.ratingContainer}>
             <View style={styles.rating}>
@@ -1410,6 +1668,7 @@ export default function ProductDetailScreen() {
                   selectedSize === size && styles.optionButtonActive,
                 ]}
                 onPress={() => setSelectedSize(size)}
+                activeOpacity={0.7}
               >
                 <Text
                   style={[
@@ -1419,6 +1678,11 @@ export default function ProductDetailScreen() {
                 >
                   {size}
                 </Text>
+                {selectedSize === size && (
+                  <View style={styles.optionCheck}>
+                    <Check size={14} color="#000" />
+                  </View>
+                )}
               </TouchableOpacity>
             ))}
           </View>
@@ -1435,6 +1699,7 @@ export default function ProductDetailScreen() {
                   selectedColor === color && styles.optionButtonActive,
                 ]}
                 onPress={() => setSelectedColor(color)}
+                activeOpacity={0.7}
               >
                 <Text
                   style={[
@@ -1444,13 +1709,30 @@ export default function ProductDetailScreen() {
                 >
                   {color}
                 </Text>
+                {selectedColor === color && (
+                  <View style={styles.optionCheck}>
+                    <Check size={14} color="#000" />
+                  </View>
+                )}
               </TouchableOpacity>
             ))}
           </View>
         </View>
 
         <View style={styles.quantitySection}>
-          <Text style={styles.optionTitle}>Quantity</Text>
+          <View style={styles.quantityHeader}>
+            <Text style={styles.optionTitle}>Quantity</Text>
+            <Text
+              style={{
+                ...styles.stockText,
+                color: product.stock > 0 ? theme.textSecondary : theme.error,
+              }}
+            >
+              {product.stock > 0
+                ? `${product.stock} available`
+                : 'Out of stock'}
+            </Text>
+          </View>
           <View style={styles.quantityControls}>
             <TouchableOpacity
               style={[
@@ -1460,10 +1742,16 @@ export default function ProductDetailScreen() {
               ]}
               onPress={() => setQuantity(Math.max(1, quantity - 1))}
               disabled={!product.stock || quantity <= 1}
+              activeOpacity={0.7}
             >
-              <Minus size={20} color="#000" />
+              <Minus
+                size={20}
+                color={quantity <= 1 ? theme.textSecondary : '#000'}
+              />
             </TouchableOpacity>
-            <Text style={styles.quantityText}>{quantity}</Text>
+            <View style={styles.quantityDisplay}>
+              <Text style={styles.quantityText}>{quantity}</Text>
+            </View>
             <TouchableOpacity
               style={[
                 styles.quantityButton,
@@ -1472,8 +1760,12 @@ export default function ProductDetailScreen() {
               ]}
               onPress={() => setQuantity(Math.min(product.stock, quantity + 1))}
               disabled={!product.stock || quantity >= product.stock}
+              activeOpacity={0.7}
             >
-              <Plus size={20} color="#000" />
+              <Plus
+                size={20}
+                color={quantity >= product.stock ? theme.textSecondary : '#000'}
+              />
             </TouchableOpacity>
           </View>
         </View>
@@ -1656,6 +1948,16 @@ export default function ProductDetailScreen() {
               <Text style={styles.moreMenuItemText}>Share Product</Text>
             </TouchableOpacity>
 
+            {product && product.shopId._id === user?._id && (
+              <TouchableOpacity
+                style={styles.moreMenuItem}
+                onPress={handleEditProduct}
+              >
+                <Edit size={20} color={theme.text} />
+                <Text style={styles.moreMenuItemText}>Edit Product</Text>
+              </TouchableOpacity>
+            )}
+
             {product && product.shopId._id !== user?._id && (
               <TouchableOpacity
                 style={styles.moreMenuItem}
@@ -1819,6 +2121,151 @@ export default function ProductDetailScreen() {
           </TouchableWithoutFeedback>
         </KeyboardAvoidingView>
       </Modal>
+
+      {/* Edit Product Modal */}
+      <Modal
+        visible={showEditModal}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setShowEditModal(false)}
+      >
+        <View style={styles.editModalOverlay}>
+          <TouchableWithoutFeedback onPress={() => setShowEditModal(false)}>
+            <View style={styles.editModalBackdrop} />
+          </TouchableWithoutFeedback>
+          
+          <KeyboardAvoidingView
+            style={styles.editModalContainer}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          >
+            <View style={styles.editModalContent}>
+              <View style={styles.editModalHandle} />
+              
+              <View style={styles.editModalHeader}>
+                <Text style={styles.editModalTitle}>Edit Product</Text>
+                <TouchableOpacity onPress={() => setShowEditModal(false)}>
+                  <X size={24} color={theme.text} />
+                </TouchableOpacity>
+              </View>
+
+              <ScrollView 
+                style={styles.editForm} 
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.editFormContent}
+              >
+                  <View style={styles.formField}>
+                    <Text style={styles.fieldLabel}>Product Name *</Text>
+                    <TextInput
+                      style={styles.textInput}
+                      value={editName}
+                      onChangeText={setEditName}
+                      placeholder="Enter product name"
+                      placeholderTextColor={theme.textSecondary}
+                    />
+                  </View>
+
+                  <View style={styles.formField}>
+                    <Text style={styles.fieldLabel}>Description *</Text>
+                    <TextInput
+                      style={[styles.textInput, styles.textArea]}
+                      value={editDescription}
+                      onChangeText={setEditDescription}
+                      placeholder="Enter product description"
+                      placeholderTextColor={theme.textSecondary}
+                      multiline
+                      numberOfLines={4}
+                    />
+                  </View>
+
+                  <View style={styles.formRow}>
+                    <View style={[styles.formField, { flex: 1, marginRight: 8 }]}>
+                      <Text style={styles.fieldLabel}>Price *</Text>
+                      <TextInput
+                        style={styles.textInput}
+                        value={editPrice}
+                        onChangeText={setEditPrice}
+                        placeholder="0.00"
+                        placeholderTextColor={theme.textSecondary}
+                        keyboardType="numeric"
+                      />
+                    </View>
+                    <View style={[styles.formField, { flex: 1, marginLeft: 8 }]}>
+                      <Text style={styles.fieldLabel}>Stock *</Text>
+                      <TextInput
+                        style={styles.textInput}
+                        value={editStock}
+                        onChangeText={setEditStock}
+                        placeholder="0"
+                        placeholderTextColor={theme.textSecondary}
+                        keyboardType="numeric"
+                      />
+                    </View>
+                  </View>
+
+                  <View style={styles.formField}>
+                    <Text style={styles.fieldLabel}>Discount (%)</Text>
+                    <TextInput
+                      style={styles.textInput}
+                      value={editDiscount}
+                      onChangeText={setEditDiscount}
+                      placeholder="0"
+                      placeholderTextColor={theme.textSecondary}
+                      keyboardType="numeric"
+                    />
+                  </View>
+
+                  <View style={styles.formField}>
+                    <Text style={styles.fieldLabel}>Categories</Text>
+                    <TextInput
+                      style={styles.textInput}
+                      value={editCategory.join(', ')}
+                      onChangeText={(text) => setEditCategory(text.split(',').map(s => s.trim()).filter(s => s))}
+                      placeholder="Category 1, Category 2"
+                      placeholderTextColor={theme.textSecondary}
+                    />
+                  </View>
+
+                  <View style={styles.formField}>
+                    <Text style={styles.fieldLabel}>Sizes</Text>
+                    <TextInput
+                      style={styles.textInput}
+                      value={editSizes.join(', ')}
+                      onChangeText={(text) => setEditSizes(text.split(',').map(s => s.trim()).filter(s => s))}
+                      placeholder="S, M, L, XL"
+                      placeholderTextColor={theme.textSecondary}
+                    />
+                  </View>
+
+                  <View style={styles.formField}>
+                    <Text style={styles.fieldLabel}>Variants</Text>
+                    <TextInput
+                      style={styles.textInput}
+                      value={editVariants.join(', ')}
+                      onChangeText={(text) => setEditVariants(text.split(',').map(s => s.trim()).filter(s => s))}
+                      placeholder="Red, Blue, Green"
+                      placeholderTextColor={theme.textSecondary}
+                    />
+                  </View>
+                </ScrollView>
+
+                <View style={styles.editModalFooter}>
+                  <TouchableOpacity
+                    style={[styles.modalButton, styles.cancelButton]}
+                    onPress={() => setShowEditModal(false)}
+                  >
+                    <Text style={[styles.modalButtonText, styles.cancelButtonText]}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.modalButton}
+                    onPress={handleSaveProduct}
+                  >
+                    <Text style={styles.modalButtonText}>Save Changes</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </KeyboardAvoidingView>
+          </View>
+        </Modal>
     </SafeAreaView>
   );
 }

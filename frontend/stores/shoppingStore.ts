@@ -6,17 +6,6 @@ import { useAuthStore } from '@/stores/authStore';
 import { cartService, wishlistService } from '@/services';
 
 export const useShoppingStore = create<ShoppingStore>((set, get) => {
-  const addCartOperation = (key: string) => {
-    const operations = new Set(get().cartOperations);
-    operations.add(key);
-    set({ cartOperations: operations });
-  };
-
-  const removeCartOperation = (key: string) => {
-    const operations = new Set(get().cartOperations);
-    operations.delete(key);
-    set({ cartOperations: operations });
-  };
 
   const addWishlistOperation = (key: string) => {
     const operations = new Set(get().wishlistOperations);

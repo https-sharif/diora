@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   TextInput,
   Modal,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 import { X, Upload, Store } from 'lucide-react-native';
@@ -16,6 +15,7 @@ import { Theme } from '@/types/Theme';
 import { useAuth } from '@/hooks/useAuth';
 import { userService } from '@/services';
 import * as ImagePicker from 'expo-image-picker';
+import { showToast } from '@/utils/toastUtils';
 
 interface PromotionRequestModalProps {
   visible: boolean;
@@ -189,7 +189,7 @@ export const PromotionRequestModal: React.FC<PromotionRequestModalProps> = ({
         setProofDocuments((prev) => [...prev, ...result.assets]);
       }
     } catch {
-      Alert.alert('Error', 'Failed to pick document');
+      showToast.error('Failed to pick document');
     }
   };
 
@@ -203,12 +203,12 @@ export const PromotionRequestModal: React.FC<PromotionRequestModalProps> = ({
       !formData.businessDescription ||
       !formData.businessType
     ) {
-      Alert.alert('Error', 'Please fill in all required fields');
+      showToast.error('Please fill in all required fields');
       return;
     }
 
     if (proofDocuments.length === 0) {
-      Alert.alert('Error', 'Please upload at least one proof document');
+      showToast.error('Please upload at least one proof document');
       return;
     }
 
@@ -233,7 +233,7 @@ export const PromotionRequestModal: React.FC<PromotionRequestModalProps> = ({
       });
 
       if (!token) {
-        Alert.alert('Error', 'No authentication token available');
+        showToast.error('No authentication token available');
         return;
       }
 
@@ -243,11 +243,7 @@ export const PromotionRequestModal: React.FC<PromotionRequestModalProps> = ({
       );
 
       if (response.status) {
-        Alert.alert(
-          'Success',
-          'Your promotion request has been submitted successfully! You will be notified once an admin reviews your request.',
-          [{ text: 'OK', onPress: onClose }]
-        );
+        showToast.success('Your promotion request has been submitted successfully! You will be notified once an admin reviews your request.');
         setFormData({
           businessName: '',
           businessDescription: '',
@@ -257,11 +253,9 @@ export const PromotionRequestModal: React.FC<PromotionRequestModalProps> = ({
           additionalInfo: '',
         });
         setProofDocuments([]);
+        onClose();
       } else {
-        Alert.alert(
-          'Error',
-          response.data.message || 'Failed to submit request'
-        );
+        showToast.error(response.data.message || 'Failed to submit request');
       }
     } catch (error: any) {
       if (error.response) {
@@ -269,28 +263,21 @@ export const PromotionRequestModal: React.FC<PromotionRequestModalProps> = ({
           const message = error.response.data.message;
 
           if (message.includes('already have a pending promotion request')) {
-            Alert.alert(
-              'Pending Application',
-              'You already have a pending promotion request. Please wait for admin review before submitting a new request.',
-              [{ text: 'OK', onPress: onClose }]
-            );
+            showToast.error('You already have a pending promotion request. Please wait for admin review before submitting a new request.');
+            onClose();
             return;
           } else if (message.includes('required')) {
-            Alert.alert('Missing Information', message);
+            showToast.error(message);
             return;
           }
         }
 
-        Alert.alert(
-          'Error',
+        showToast.error(
           error.response.data?.message ||
             'Failed to submit request. Please try again.'
         );
       } else {
-        Alert.alert(
-          'Error',
-          'Failed to submit request. Please check your connection and try again.'
-        );
+        showToast.error('Failed to submit request. Please check your connection and try again.');
       }
     } finally {
       setLoading(false);

@@ -20,10 +20,13 @@ export interface ProductData {
   name: string;
   description: string;
   price: number;
-  category: string;
+  category: string[];
+  sizes?: string[];
+  variants?: string[];
+  stock?: number;
+  discount?: number;
   images?: string[];
   specifications?: any;
-  variants?: any[];
 }
 
 export interface ProductFilters {

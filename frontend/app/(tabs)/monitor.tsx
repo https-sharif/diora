@@ -30,9 +30,9 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/hooks/useAuth';
 import { Theme } from '@/types/Theme';
 import { adminService } from '@/services';
+import { refreshWithInternetCheck } from '@/utils/toastUtils';
 import { router } from 'expo-router';
 import LoadingView from '@/components/Loading';
-import debounce from 'lodash.debounce';
 
 interface SearchResult {
   _id: string;
@@ -409,15 +409,13 @@ export default function Monitor() {
     }
   };
 
-  const debouncedSearch = useCallback(
-    debounce(
-      async (
-        query: string,
-        filter: string,
-        type: 'users' | 'posts' | 'products' = contentType
-      ) => {
-        if (!token) return;
-        setLoading(true);
+  const debouncedSearch = useCallback(async (
+    query: string,
+    filter: string,
+    type: 'users' | 'posts' | 'products' = contentType
+  ) => {
+    if (!token) return;
+    setLoading(true);
         setContentTypeLoading((prev) => ({ ...prev, [type]: true }));
 
         try {
@@ -488,11 +486,7 @@ export default function Monitor() {
           setLoading(false);
           setContentTypeLoading((prev) => ({ ...prev, [type]: false }));
         }
-      },
-      500
-    ),
-    [token, contentType]
-  );
+  }, [token, contentType, setLoading, setContentTypeLoading, setSearchResults, setPostResults, setProductResults]);
 
   useEffect(() => {
     debouncedSearch(searchQuery, activeFilter, contentType);
@@ -512,12 +506,14 @@ export default function Monitor() {
       setActiveFilter('All');
       debouncedSearch('', 'All', contentType);
     }
-  }, [token, contentType]);
+  }, [token, contentType, debouncedSearch]);
 
   const handleRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await debouncedSearch(searchQuery, activeFilter, contentType);
-    setRefreshing(false);
+    await refreshWithInternetCheck(async () => {
+      setRefreshing(true);
+      await debouncedSearch(searchQuery, activeFilter, contentType);
+      setRefreshing(false);
+    });
   }, [searchQuery, activeFilter, contentType, debouncedSearch]);
 
   const handleUserAction = async (

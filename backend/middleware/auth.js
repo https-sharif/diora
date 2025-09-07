@@ -58,9 +58,66 @@ export const verifyToken = async (req, res, next) => {
     req.userDetails = user;
     next();
   } catch (err) {
-    return res
-      .status(401)
-      .json({ status: false, message: 'Invalid or expired token' });
+    console.error('Token verification error:', err);
+
+    if (err.name === 'TokenExpiredError') {
+      return res
+        .status(401)
+        .json({
+          status: false,
+          message: 'Token has expired',
+          code: 'TOKEN_EXPIRED'
+        });
+    } else if (err.name === 'JsonWebTokenError') {
+      return res
+        .status(401)
+        .json({
+          status: false,
+          message: 'Invalid token',
+          code: 'INVALID_TOKEN'
+        });
+    } else {
+      return res
+        .status(401)
+        .json({
+          status: false,
+          message: 'Token verification failed',
+          code: 'TOKEN_VERIFICATION_FAILED'
+        });
+    }
+  }
+};
+
+export const optionalAuth = async (req, res, next) => {
+  console.log('Optional Auth middleware hit');
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    req.user = null;
+    return next();
+  }
+
+  const token = authHeader.split(' ')[1];
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    const user = await User.findById(decoded.id);
+    if (!user) {
+      req.user = null;
+      return next();
+    }
+
+    if (user.status === 'banned') {
+      req.user = null;
+      return next();
+    }
+
+    req.user = user;
+    next();
+  } catch (err) {
+    req.user = null;
+    next();
   }
 };
 
