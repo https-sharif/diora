@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -469,7 +469,7 @@ const createStyles = (theme: Theme) => {
 };
 
 export default function UserProfileScreen() {
-  const { userId } = useLocalSearchParams<{ userId: string }>();
+  const { userId } = useLocalSearchParams() as { userId: string };
   const { user, followUser, token } = useAuth();
   const { conversations } = useMessage();
 
@@ -591,7 +591,7 @@ export default function UserProfileScreen() {
     });
   };
 
-  const searchUsers = async (query: string) => {
+  const searchUsers = useCallback(async (query: string) => {
     if (!token) {
       setSearchedUsers([]);
       return;
@@ -617,7 +617,7 @@ export default function UserProfileScreen() {
     } catch {
       setSearchedUsers([]);
     }
-  };
+  }, [token, user?._id]);
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -625,7 +625,7 @@ export default function UserProfileScreen() {
     }, 300);
 
     return () => clearTimeout(timeoutId);
-  }, [userSearchQuery]);
+  }, [userSearchQuery, searchUsers]);
 
   const renderUserList = (item: any) => {
     const isSelected = selectedUsers.find((u) => u._id === item._id);

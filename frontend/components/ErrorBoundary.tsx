@@ -2,6 +2,7 @@ import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { AlertTriangle, RefreshCw } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
+import { showToast } from '@/utils/toastUtils';
 
 interface Props {
   children: ReactNode;
@@ -35,12 +36,16 @@ class ErrorBoundary extends Component<Props, State> {
       this.props.onError(error, errorInfo);
     }
 
+    // Show error toast to user
+    showToast.error('An unexpected error occurred. Please try again.');
+
     // Here you could send error to monitoring service
     // Example: errorReportingService.logError(error, errorInfo);
   }
 
   handleRetry = () => {
     this.setState({ hasError: false, error: undefined });
+    showToast.success('Retrying...');
   };
 
   render() {

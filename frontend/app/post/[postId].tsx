@@ -29,15 +29,17 @@ import {
   MoreHorizontal,
   Flag,
   Check,
+  Edit,
+  Trash,
 } from 'lucide-react-native';
 import { useAuth } from '@/hooks/useAuth';
 import { Comment } from '@/types/Comment';
 import { Post } from '@/types/Post';
 import { Theme } from '@/types/Theme';
-import { User } from '@/types/User';
 import { useTheme } from '@/contexts/ThemeContext';
 import ImageSlashIcon from '@/icon/ImageSlashIcon';
 import { format } from 'timeago.js';
+import { showToast } from '@/utils/toastUtils';
 import {
   postService,
   commentService,
@@ -558,11 +560,52 @@ const createStyles = (theme: Theme) => {
       color: theme.textSecondary,
       marginTop: 2,
     },
+    editCommentContainer: {
+      marginTop: 8,
+    },
+    editCommentInput: {
+      borderWidth: 1,
+      borderColor: theme.border,
+      borderRadius: 8,
+      padding: 12,
+      fontSize: 16,
+      fontFamily: 'Inter-Regular',
+      color: theme.text,
+      backgroundColor: theme.card,
+      minHeight: 80,
+      textAlignVertical: 'top',
+    },
+    editActions: {
+      flexDirection: 'row',
+      justifyContent: 'flex-end',
+      gap: 12,
+      marginTop: 8,
+    },
+    editActionButton: {
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      borderRadius: 6,
+      backgroundColor: theme.card,
+      borderWidth: 1,
+      borderColor: theme.border,
+    },
+    editActionText: {
+      fontSize: 14,
+      fontFamily: 'Inter-Medium',
+      color: theme.text,
+    },
+    saveButton: {
+      backgroundColor: theme.accent,
+      borderColor: theme.accent,
+    },
+    saveButtonText: {
+      color: theme.background,
+    },
   });
 };
 
 export default function PostDetailScreen() {
-  const { postId } = useLocalSearchParams<{ postId: string }>();
+  const { postId } = useLocalSearchParams() as { postId: string };
   const [isStarred, setIsStarred] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
@@ -579,8 +622,12 @@ export default function PostDetailScreen() {
   const [reportDescription, setReportDescription] = useState('');
   const [showShareModal, setShowShareModal] = useState(false);
   const [userSearchQuery, setUserSearchQuery] = useState('');
-  const [selectedUsers, setSelectedUsers] = useState<User[]>([]);
-  const [searchedUsers, setSearchedUsers] = useState<User[]>([]);
+  const [selectedComment, setSelectedComment] = useState<Comment | null>(null);
+  const [showCommentActions, setShowCommentActions] = useState(false);
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editingText, setEditingText] = useState('');
+  const [searchedUsers, setSearchedUsers] = useState<any[]>([]);
+  const [selectedUsers, setSelectedUsers] = useState<any[]>([]);
 
   useEffect(() => {
     if (!token || !postId) return;
@@ -603,18 +650,22 @@ export default function PostDetailScreen() {
         setIsStarred(user?.likedPosts?.includes(post._id) || false);
       } catch (error) {
         console.error('Error fetching post and comments:', error);
-        Alert.alert(
-          'Error',
-          'Failed to load post details. Please try again.',
-          [{ text: 'OK' }]
-        );
+        Alert.alert('Error', 'Failed to load post details. Please try again.', [
+          { text: 'OK' },
+        ]);
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchPostAndComment();
-  }, [postId, token, user?.likedPosts]);
+  }, [postId, token]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (post) {
+      setIsStarred(user?.likedPosts?.includes(post._id) || false);
+    }
+  }, [user?.likedPosts, post]);
 
   useEffect(() => {
     if (post) {
@@ -634,34 +685,37 @@ export default function PostDetailScreen() {
     }
   }, [post]);
 
-  const searchUsers = useCallback(async (query: string) => {
-    if (!token) {
-      setSearchedUsers([]);
-      return;
-    }
+  const searchUsers = useCallback(
+    async (query: string) => {
+      if (!token) {
+        setSearchedUsers([]);
+        return;
+      }
 
-    try {
-      const [userRes, shopRes] = await Promise.all([
-        searchService.searchUsers(query, token),
-        searchService.searchShops(query, token),
-      ]);
-      let merged: any[] = [];
-      if (userRes.status) {
-        merged = merged.concat(
-          userRes.users.filter((u: any) => u._id !== user?._id)
-        );
+      try {
+        const [userRes, shopRes] = await Promise.all([
+          searchService.searchUsers(query, token),
+          searchService.searchShops(query, token),
+        ]);
+        let merged: any[] = [];
+        if (userRes.status) {
+          merged = merged.concat(
+            userRes.users.filter((u: any) => u._id !== user?._id)
+          );
+        }
+        if (shopRes.status) {
+          merged = merged.concat(
+            shopRes.users.filter((s: any) => s._id !== user?._id)
+          );
+        }
+        setSearchedUsers(merged);
+      } catch (error) {
+        console.error('Error searching users and shops:', error);
+        setSearchedUsers([]);
       }
-      if (shopRes.status) {
-        merged = merged.concat(
-          shopRes.users.filter((s: any) => s._id !== user?._id)
-        );
-      }
-      setSearchedUsers(merged);
-    } catch (error) {
-      console.error('Error searching users and shops:', error);
-      setSearchedUsers([]);
-    }
-  }, [token, user?._id]);
+    },
+    [token, user?._id]
+  );
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -722,7 +776,9 @@ export default function PostDetailScreen() {
   const handleStar = () => {
     const newStarred = !isStarred;
     setIsStarred(newStarred);
-    post.stars += newStarred ? 1 : -1;
+    setPost((prev) =>
+      prev ? { ...prev, stars: prev.stars + (newStarred ? 1 : -1) } : null
+    );
     likePost(post._id);
   };
 
@@ -734,12 +790,12 @@ export default function PostDetailScreen() {
       if (replyingTo) {
         response = await commentService.replyToComment(
           replyingTo,
-          { content: newComment, postId: post._id },
+          { userId: user._id, postId: post._id, text: newComment },
           token
         );
       } else {
         response = await commentService.createComment(
-          { content: newComment, postId: post._id },
+          { userId: user._id, postId: post._id, text: newComment },
           token
         );
       }
@@ -770,11 +826,9 @@ export default function PostDetailScreen() {
       }
     } catch (error) {
       console.error('Error posting comment:', error);
-      Alert.alert(
-        'Error',
-        'Failed to post comment. Please try again.',
-        [{ text: 'OK' }]
-      );
+      Alert.alert('Error', 'Failed to post comment. Please try again.', [
+        { text: 'OK' },
+      ]);
     }
   };
 
@@ -870,11 +924,116 @@ export default function PostDetailScreen() {
       }
     } catch (error) {
       console.error('Error submitting report:', error);
-      Alert.alert(
-        'Error',
-        'Failed to submit report. Please try again.',
-        [{ text: 'OK' }]
+      Alert.alert('Error', 'Failed to submit report. Please try again.', [
+        { text: 'OK' },
+      ]);
+    }
+  };
+
+  const handleEditComment = (comment: Comment) => {
+    setSelectedComment(comment);
+    setEditingCommentId(comment._id);
+    setEditingText(comment.text);
+    setShowCommentActions(false);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingText.trim() || !editingCommentId || !token) return;
+
+    try {
+      const response = await commentService.updateComment(
+        editingCommentId,
+        editingText,
+        token!
       );
+
+      if (response.status) {
+        setComments((prev) =>
+          prev.map((comment) =>
+            comment._id === editingCommentId
+              ? { ...comment, text: editingText }
+              : comment
+          )
+        );
+        setEditingCommentId(null);
+        setEditingText('');
+        setSelectedComment(null);
+        showToast.success('Comment updated successfully');
+      } else {
+        throw new Error('Failed to update comment');
+      }
+    } catch (error) {
+      console.error('Error updating comment:', error);
+      showToast.error('Failed to update comment');
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingCommentId(null);
+    setEditingText('');
+    setSelectedComment(null);
+  };
+
+  const handleReportComment = async () => {
+    if (!selectedComment || !reportReason.trim() || !user) return;
+
+    const reasonMap: { [key: string]: string } = {
+      Spam: 'spam',
+      'Inappropriate Content': 'inappropriate_content',
+      'False Information': 'other',
+      'Copyright Violation': 'copyright_violation',
+      Other: 'other',
+    };
+
+    try {
+      const response = await reportService.createReport(
+        {
+          targetType: 'comment',
+          targetId: selectedComment._id,
+          reason: reasonMap[reportReason] || 'other',
+          description:
+            reportDescription.trim() || 'No additional details provided',
+        },
+        token!
+      );
+
+      if (response.status) {
+        setShowCommentActions(false);
+        setSelectedComment(null);
+        setReportReason('');
+        setReportDescription('');
+        showToast.success('Comment reported successfully');
+      } else {
+        throw new Error('Failed to report comment');
+      }
+    } catch (error) {
+      console.error('Error reporting comment:', error);
+      showToast.error('Failed to report comment');
+    }
+  };
+
+  const handleDeleteComment = async () => {
+    if (!selectedComment || !token) return;
+
+    try {
+      const response = await commentService.deleteComment(
+        selectedComment._id,
+        token
+      );
+
+      if (response.status) {
+        setComments((prev) =>
+          prev.filter((comment) => comment._id !== selectedComment._id)
+        );
+        setShowCommentActions(false);
+        setSelectedComment(null);
+        showToast.success('Comment deleted successfully');
+      } else {
+        throw new Error('Failed to delete comment');
+      }
+    } catch (error) {
+      console.error('Error deleting comment:', error);
+      showToast.error('Failed to delete comment');
     }
   };
 
@@ -913,7 +1072,46 @@ export default function PostDetailScreen() {
             {format(new Date(comment.createdAt))}
           </Text>
         </View>
-        <Text style={styles.commentText}>{comment.text}</Text>
+        {editingCommentId === comment._id ? (
+          <View style={styles.editCommentContainer}>
+            <TextInput
+              style={styles.editCommentInput}
+              value={editingText}
+              onChangeText={setEditingText}
+              multiline
+              autoFocus
+              placeholder="Edit your comment..."
+            />
+            <View style={styles.editActions}>
+              <TouchableOpacity
+                style={styles.editActionButton}
+                onPress={handleCancelEdit}
+              >
+                <Text style={styles.editActionText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.editActionButton, styles.saveButton]}
+                onPress={handleSaveEdit}
+              >
+                <Text style={[styles.editActionText, styles.saveButtonText]}>
+                  Save
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        ) : (
+          <TouchableOpacity
+            onLongPress={() => {
+              if (comment.user._id === user?._id) {
+                setSelectedComment(comment);
+                setShowCommentActions(true);
+              }
+            }}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.commentText}>{comment.text}</Text>
+          </TouchableOpacity>
+        )}
         <View style={styles.commentActions}>
           {!isReply && (
             <TouchableOpacity
@@ -1007,7 +1205,13 @@ export default function PostDetailScreen() {
             <Text style={styles.actionText}>{comments.length}</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.actionButton} onPress={handleShare}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => {
+              setShowMoreMenu(false);
+              setShowShareModal(true);
+            }}
+          >
             <Share size={24} color={theme.text} strokeWidth={2} />
           </TouchableOpacity>
         </View>
@@ -1125,13 +1329,18 @@ export default function PostDetailScreen() {
         visible={showReportModal}
         animationType="fade"
         transparent
-        onRequestClose={() => setShowReportModal(false)}
+        onRequestClose={() => {
+          setShowReportModal(false);
+          setSelectedComment(null);
+        }}
       >
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <View style={styles.reportModal}>
             <View style={styles.reportContainer}>
               <View style={styles.reportHeader}>
-                <Text style={styles.reportTitle}>Report Post</Text>
+                <Text style={styles.reportTitle}>
+                  Report {selectedComment ? 'Comment' : 'Post'}
+                </Text>
                 <TouchableOpacity onPress={() => setShowReportModal(false)}>
                   <X size={24} color={theme.text} />
                 </TouchableOpacity>
@@ -1143,7 +1352,8 @@ export default function PostDetailScreen() {
                   { marginBottom: 12, color: theme.textSecondary },
                 ]}
               >
-                Why are you reporting this post?
+                Why are you reporting this{' '}
+                {selectedComment ? 'comment' : 'post'}?
               </Text>
 
               {[
@@ -1177,7 +1387,10 @@ export default function PostDetailScreen() {
               <View style={styles.reportButtons}>
                 <TouchableOpacity
                   style={[styles.reportButton, styles.reportButtonCancel]}
-                  onPress={() => setShowReportModal(false)}
+                  onPress={() => {
+                    setShowReportModal(false);
+                    setSelectedComment(null);
+                  }}
                 >
                   <Text
                     style={[
@@ -1190,7 +1403,7 @@ export default function PostDetailScreen() {
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.reportButton, styles.reportButtonSubmit]}
-                  onPress={handleReport}
+                  onPress={selectedComment ? handleReportComment : handleReport}
                   disabled={!reportReason.trim()}
                 >
                   <Text
@@ -1264,6 +1477,83 @@ export default function PostDetailScreen() {
             </View>
           </TouchableWithoutFeedback>
         </KeyboardAvoidingView>
+      </Modal>
+
+      <Modal
+        visible={showCommentActions}
+        transparent
+        animationType="slide"
+        onRequestClose={() => {
+          setShowCommentActions(false);
+          setSelectedComment(null);
+        }}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => {
+            setShowCommentActions(false);
+            setSelectedComment(null);
+          }}
+        >
+          <View style={styles.moreMenu}>
+            <View style={styles.moreMenuHeader}>
+              <Text style={styles.moreMenuTitle}>Comment Options</Text>
+              <TouchableOpacity
+                onPress={() => {
+                  setShowCommentActions(false);
+                  setSelectedComment(null);
+                }}
+              >
+                <X size={24} color={theme.text} />
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity
+              style={styles.moreMenuItem}
+              onPress={() => {
+                handleEditComment(selectedComment!);
+              }}
+            >
+              <Edit size={20} color={theme.text} />
+              <Text style={styles.moreMenuItemText}>Edit Comment</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.moreMenuItem}
+              onPress={() => {
+                Alert.alert(
+                  'Delete Comment',
+                  'Are you sure you want to delete this comment? This action cannot be undone.',
+                  [
+                    { text: 'Cancel', style: 'cancel' },
+                    {
+                      text: 'Delete',
+                      style: 'destructive',
+                      onPress: handleDeleteComment,
+                    },
+                  ]
+                );
+              }}
+            >
+              <Trash size={20} color={theme.error} />
+              <Text style={[styles.moreMenuItemText, { color: theme.error }]}>
+                Delete Comment
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.moreMenuItem}
+              onPress={() => {
+                setShowCommentActions(false);
+                setShowReportModal(true);
+              }}
+            >
+              <Flag size={20} color={theme.error} />
+              <Text style={[styles.moreMenuItemText, { color: theme.error }]}>
+                Report Comment
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
       </Modal>
     </SafeAreaView>
   );

@@ -101,7 +101,7 @@ export default function FeedScreen() {
   }, [user]);
 
   useEffect(() => {
-    if (!user || !token) return;
+    if (!token) return;
     const fetchPosts = async () => {
       setLoading(true);
       try {
@@ -115,7 +115,7 @@ export default function FeedScreen() {
     };
 
     fetchPosts();
-  }, [user, token]);
+  }, [token]);
 
   if (!isAuthenticated) {
     return null;

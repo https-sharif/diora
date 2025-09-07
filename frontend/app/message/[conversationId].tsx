@@ -761,7 +761,7 @@ export default function MessageScreen() {
   const [otherUser, setOtherUser] = useState<User | null>(null);
   const { user } = useAuth();
   const { token } = useAuthStore();
-  const { conversationId } = useLocalSearchParams<{ conversationId: string }>();
+  const { conversationId } = useLocalSearchParams() as { conversationId: string };
   const {
     conversations,
     messages,

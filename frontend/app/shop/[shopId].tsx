@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,7 +8,6 @@ import {
   Image,
   FlatList,
   Modal,
-  Alert,
   Linking,
   Animated,
   PanResponder,
@@ -19,6 +18,7 @@ import {
   Pressable,
   Keyboard,
   TouchableWithoutFeedback,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -51,13 +51,14 @@ import { User } from '@/types/User';
 import { Post } from '@/types/Post';
 import { Theme } from '@/types/Theme';
 import { useTheme } from '@/contexts/ThemeContext';
-import { userService, reviewService, postService, messageService, searchService, reportService } from '@/services';
+import { reviewService, postService, messageService, searchService, reportService, shopService } from '@/services';
 import Color from 'color';
 import { BlurView } from 'expo-blur';
 import { format as timeago } from 'timeago.js';
 import { format } from 'date-fns';
 import { EmptyState } from '@/components/EmptyState';
 import ProductSlashIcon from '@/icon/ProductSlashIcon';
+import { showToast } from '@/utils/toastUtils';
 import StarSlashIcon from '@/icon/StarSlashIcon';
 import RatingStars from '@/components/RatingStar';
 import ReviewInput from '@/components/ReviewInput';
@@ -843,7 +844,7 @@ const createStyles = (theme: Theme) => {
 };
 
 export default function ShopProfileScreen() {
-  const { shopId } = useLocalSearchParams<{ shopId: string }>();
+  const { shopId } = useLocalSearchParams() as { shopId: string };
   const { addToWishlist, isInWishlist } = useShopping();
   const { conversations } = useMessage();
 
@@ -883,20 +884,24 @@ export default function ShopProfileScreen() {
       try {
         if (!token || !shopId) return;
         setLoading(true);
-        const response = await userService.getUserById(shopId, token);
+        const response = await shopService.getShopById(shopId, token);
 
         if (response.status === false) {
+          console.log('Shop API returned status false:', response);
+          Alert.alert('Shop Not Found', response.message || 'This shop may not exist or is unavailable.');
           router.back();
           return;
         }
-        const shop = response.user;
+
+        const shop = response.shop;
 
         setShopProfile(shop);
 
         if (user) {
           setIsFollowing(user.following.includes(shop._id));
         }
-      } catch {
+      } catch (err) {
+        console.error('Error: ', err);
         router.back();
       } finally {
         setLoading(false);
@@ -1046,12 +1051,9 @@ export default function ShopProfileScreen() {
       setShowReviewModal(false);
       setHasReviewed(false);
 
-      Alert.alert(
-        'Review Deleted',
-        'Your review has been deleted successfully.'
-      );
+      showToast.success('Your review has been deleted successfully.');
     } catch {
-      Alert.alert('Error', 'Failed to delete review. Please try again later.');
+      showToast.error('Failed to delete review. Please try again later.');
     }
   };
 
@@ -1087,7 +1089,7 @@ export default function ShopProfileScreen() {
       }
 
       if (response.status === false) {
-        Alert.alert('Error', response.message);
+        showToast.error(response.message);
         return;
       }
 
@@ -1100,8 +1102,9 @@ export default function ShopProfileScreen() {
       setRating(0);
       setHasReviewed(true);
       setReviewImages([]);
+      showToast.success('Review submitted successfully!');
     } catch {
-      Alert.alert('Error', 'Failed to submit review. Try again.');
+      showToast.error('Failed to submit review. Try again.');
     }
   };
 
@@ -1208,7 +1211,7 @@ export default function ShopProfileScreen() {
     });
   };
 
-  const searchUsers = async (query: string) => {
+  const searchUsers = useCallback(async (query: string) => {
     if (!token) {
       setSearchedUsers([]);
       return;
@@ -1234,7 +1237,7 @@ export default function ShopProfileScreen() {
     } catch {
       setSearchedUsers([]);
     }
-  };
+  }, [token, user]);
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -1242,7 +1245,7 @@ export default function ShopProfileScreen() {
     }, 300);
 
     return () => clearTimeout(timeoutId);
-  }, [userSearchQuery]);
+  }, [userSearchQuery, searchUsers]);
 
   const handleReport = async () => {
     if (!reportReason.trim() || !user || !shopProfile || !token) return;
@@ -1271,13 +1274,10 @@ export default function ShopProfileScreen() {
         setShowMoreMenu(false);
         setReportReason('');
         setReportDescription('');
-        Alert.alert(
-          'Report Submitted',
-          'Thank you for reporting this shop. We will review it shortly.'
-        );
+        showToast.success('Thank you for reporting this shop. We will review it shortly.');
       }
     } catch {
-      Alert.alert('Error', 'Failed to submit report. Please try again.');
+      showToast.error('Failed to submit report. Please try again.');
     }
   };
 
@@ -1699,10 +1699,7 @@ export default function ShopProfileScreen() {
                       if (url?.trim()) {
                         Linking.openURL(url);
                       } else {
-                        Alert.alert(
-                          'Invalid URL',
-                          'This shop does not have a valid website.'
-                        );
+                        showToast.error('This shop does not have a valid website.');
                       }
                     }}
                   >

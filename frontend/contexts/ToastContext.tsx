@@ -30,18 +30,15 @@ interface ToastProviderProps {
 
 export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
   const [currentToast, setCurrentToast] = useState<ToastState | null>(null);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const showToast = (type: ToastType, message: string, duration = 3000) => {
-    // Clear any existing timeout
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
 
-    // Set new toast
     setCurrentToast({ visible: true, message, type });
 
-    // Auto-hide after duration
     timeoutRef.current = setTimeout(() => {
       setCurrentToast(null);
       timeoutRef.current = null;

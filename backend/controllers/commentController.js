@@ -26,7 +26,7 @@ export const createComment = async (req, res) => {
 
     const user = await User.findById(userId);
 
-    post.comments += 1;
+    post.comments.push(comment._id);
     await post.save();
 
     await comment.save();
@@ -145,12 +145,16 @@ export const createReply = async (req, res) => {
       return res.status(404).json({ status: false, message: 'Post not found' });
     }
 
-    post.comments += 1;
-    await post.save();
-
-    const newReply = new Comment({ user: userId, text });
+    const newReply = new Comment({ 
+      user: userId, 
+      text, 
+      postId: postId 
+    });
     await newReply.save();
     await newReply.populate('user', 'username avatar');
+
+    post.comments.push(newReply._id);
+    await post.save();
 
     parentComment.replies.push(newReply._id);
     await parentComment.save();
@@ -277,7 +281,7 @@ export const deleteComment = async (req, res) => {
     if (comment.postId) {
       const post = await Post.findById(comment.postId);
       if (post) {
-        post.comments = Math.max(0, post.comments - 1 - comment.replies.length);
+        post.comments.pull(commentId);
         await post.save();
       }
     }
@@ -291,6 +295,111 @@ export const deleteComment = async (req, res) => {
     res.status(500).json({
       status: false,
       message: 'Error deleting comment',
+      error: error.message
+    });
+  }
+};
+
+export const updateComment = async (req, res) => {
+  console.log('Update comment route/controller hit');
+
+  const { commentId } = req.params;
+  const { text } = req.body;
+  const userId = req.user.id;
+
+  if (!text || text.trim().length === 0) {
+    return res.status(400).json({
+      status: false,
+      message: 'Comment text is required',
+    });
+  }
+
+  try {
+    const comment = await Comment.findById(commentId);
+
+    if (!comment) {
+      return res.status(404).json({
+        status: false,
+        message: 'Comment not found',
+      });
+    }
+
+    if (comment.user.toString() !== userId) {
+      return res.status(403).json({
+        status: false,
+        message: 'You can only edit your own comments',
+      });
+    }
+
+    comment.text = text.trim();
+    comment.updatedAt = new Date();
+    await comment.save();
+    await comment.populate('user', 'username avatar');
+
+    res.status(200).json({
+      status: true,
+      message: 'Comment updated successfully',
+      comment,
+    });
+  } catch (error) {
+    console.error('Error updating comment:', error);
+    res.status(500).json({
+      status: false,
+      message: 'Error updating comment',
+      error: error.message
+    });
+  }
+};
+
+export const reportComment = async (req, res) => {
+  console.log('Report comment route/controller hit');
+
+  const { commentId } = req.params;
+  const userId = req.user.id;
+
+  try {
+    const comment = await Comment.findById(commentId);
+
+    if (!comment) {
+      return res.status(404).json({
+        status: false,
+        message: 'Comment not found',
+      });
+    }
+
+    // Check if user already reported this comment
+    const existingReport = await Report.findOne({
+      type: 'comment',
+      reportedItemId: commentId,
+      reportedBy: userId,
+    });
+
+    if (existingReport) {
+      return res.status(400).json({
+        status: false,
+        message: 'You have already reported this comment',
+      });
+    }
+
+    // Create a new report
+    const report = new Report({
+      type: 'comment',
+      reportedItemId: commentId,
+      reportedBy: userId,
+      reason: 'Reported by user', // Could be expanded to include specific reasons
+    });
+
+    await report.save();
+
+    res.status(200).json({
+      status: true,
+      message: 'Comment reported successfully',
+    });
+  } catch (error) {
+    console.error('Error reporting comment:', error);
+    res.status(500).json({
+      status: false,
+      message: 'Error reporting comment',
       error: error.message
     });
   }

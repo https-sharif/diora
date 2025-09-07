@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { config } from '@/config';
 import { ProductData } from '@/types/Product';
+import { showToast, toastMessages } from '@/utils/toastUtils';
 
 export const productService = {
   async getProductById(productId: string, token?: string): Promise<any> {
@@ -43,20 +44,27 @@ export const productService = {
   },
 
   async createProduct(productData: ProductData | FormData, token: string): Promise<any> {
-    const headers: any = { Authorization: `Bearer ${token}` };
-    
-    if (!(productData instanceof FormData)) {
-      headers['Content-Type'] = 'application/json';
-    }
-    
-    const response = await axios.post(
-      `${config.apiUrl}/api/product`,
-      productData,
-      {
-        headers,
+    try {
+      const headers: any = { Authorization: `Bearer ${token}` };
+      
+      if (!(productData instanceof FormData)) {
+        headers['Content-Type'] = 'application/json';
       }
-    );
-    return response.data;
+      
+      const response = await axios.post(
+        `${config.apiUrl}/api/product`,
+        productData,
+        {
+          headers,
+        }
+      );
+      showToast.success(toastMessages.createSuccess('Product'));
+      return response.data;
+    } catch (error: any) {
+      console.error('Create product error:', error);
+      showToast.error(toastMessages.serverError);
+      throw error;
+    }
   },
 
   async updateProduct(
@@ -64,24 +72,38 @@ export const productService = {
     productData: ProductData,
     token: string
   ): Promise<any> {
-    const response = await axios.put(
-      `${config.apiUrl}/api/product/${productId}`,
-      productData,
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
-    return response.data;
+    try {
+      const response = await axios.put(
+        `${config.apiUrl}/api/product/${productId}`,
+        productData,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      showToast.success(toastMessages.updateSuccess('Product'));
+      return response.data;
+    } catch (error: any) {
+      console.error('Update product error:', error);
+      showToast.error(toastMessages.serverError);
+      throw error;
+    }
   },
 
   async deleteProduct(productId: string, token: string): Promise<any> {
-    const response = await axios.delete(
-      `${config.apiUrl}/api/product/${productId}`,
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
-    return response.data;
+    try {
+      const response = await axios.delete(
+        `${config.apiUrl}/api/product/${productId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      showToast.success(toastMessages.deleteSuccess('Product'));
+      return response.data;
+    } catch (error: any) {
+      console.error('Delete product error:', error);
+      showToast.error(toastMessages.deleteFailed('Product'));
+      throw error;
+    }
   },
 
   async searchProducts(

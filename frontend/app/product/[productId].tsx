@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   Image,
   FlatList,
-  Alert,
   Dimensions,
   TextInput,
   Modal,
@@ -57,6 +56,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { format as timeago } from 'timeago.js';
 import LoadingView from '@/components/Loading';
 import Color from 'color';
+import { showToast } from '@/utils/toastUtils';
 
 const { width, height } = Dimensions.get('window');
 
@@ -732,7 +732,7 @@ const createStyles = (theme: Theme) => {
 };
 
 export default function ProductDetailScreen() {
-  const { productId } = useLocalSearchParams<{ productId: string }>();
+  const { productId } = useLocalSearchParams() as { productId: string };
   const { addToCart, addToWishlist, isInWishlist } = useShopping();
   const { theme } = useTheme();
   const styles = createStyles(theme);
@@ -775,14 +775,14 @@ export default function ProductDetailScreen() {
         );
 
         if (!response.status) {
-          Alert.alert('Error', response.message);
+          showToast.error(response.message);
           return;
         }
 
         setProduct(response.product);
         setShopProfile(response.product.shopId);
       } catch {
-        Alert.alert('Error', 'Failed to fetch product');
+        showToast.error('Failed to fetch product');
       } finally {
         setLoading(false);
       }
@@ -798,7 +798,7 @@ export default function ProductDetailScreen() {
         if (response.status) {
           setReviews(response.reviews);
         } else {
-          Alert.alert('Error', response.message);
+          showToast.error(response.message);
         }
       } catch {}
     };
@@ -914,7 +914,7 @@ export default function ProductDetailScreen() {
     });
   };
 
-  const searchUsers = async (query: string) => {
+  const searchUsers = useCallback(async (query: string) => {
     if (!token) {
       setSearchedUsers([]);
       return;
@@ -940,7 +940,7 @@ export default function ProductDetailScreen() {
     } catch {
       setSearchedUsers([]);
     }
-  };
+  }, [token, user?._id]);
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -948,7 +948,7 @@ export default function ProductDetailScreen() {
     }, 300);
 
     return () => clearTimeout(timeoutId);
-  }, [userSearchQuery]);
+  }, [userSearchQuery, searchUsers]);
 
   const renderUserList = (item: any) => {
     const isSelected = selectedUsers.find((u) => u._id === item._id);
@@ -1003,7 +1003,7 @@ export default function ProductDetailScreen() {
 
   const handleAddToCart = () => {
     if (!selectedSize || !selectedColor) {
-      Alert.alert('Please select size and color');
+      showToast.error('Please select size and color');
       return;
     }
 
@@ -1011,7 +1011,7 @@ export default function ProductDetailScreen() {
     setQuantity(1);
     setSelectedSize('');
     setSelectedColor('');
-    Alert.alert('Success', `${quantity} item(s) added to cart!`);
+    showToast.success(`${quantity} item(s) added to cart!`);
   };
 
   const handleReviewImage = (image: string) => {
@@ -1073,7 +1073,7 @@ export default function ProductDetailScreen() {
       );
 
       if (response.status === false) {
-        Alert.alert('Error', response.message);
+        showToast.error(response.message);
         return;
       }
       setReviews(reviews.filter((review) => review._id !== selectedReview._id));
@@ -1081,12 +1081,9 @@ export default function ProductDetailScreen() {
       setShowReviewModal(false);
       setHasReviewed(false);
 
-      Alert.alert(
-        'Review Deleted',
-        'Your review has been deleted successfully.'
-      );
+      showToast.success('Your review has been deleted successfully.');
     } catch {
-      Alert.alert('Error', 'Failed to delete review. Please try again later.');
+      showToast.error('Failed to delete review. Please try again later.');
     }
   };
 
@@ -1114,7 +1111,7 @@ export default function ProductDetailScreen() {
       }
 
       if (response.status === false) {
-        Alert.alert('Error', response.message);
+        showToast.error(response.message);
         return;
       }
 
@@ -1127,8 +1124,9 @@ export default function ProductDetailScreen() {
       setRating(0);
       setHasReviewed(true);
       setReviewImages([]);
+      showToast.success('Review submitted successfully!');
     } catch {
-      Alert.alert('Error', 'Failed to submit review. Try again.');
+      showToast.error('Failed to submit review. Try again.');
     }
   };
 
@@ -1179,13 +1177,10 @@ export default function ProductDetailScreen() {
         setShowReportModal(false);
         setReportReason('');
         setReportDescription('');
-        Alert.alert(
-          'Report Submitted',
-          'Thank you for your report. We will review it shortly.'
-        );
+        showToast.success('Thank you for your report. We will review it shortly.');
       }
     } catch {
-      Alert.alert('Error', 'Failed to submit report. Please try again.');
+      showToast.error('Failed to submit report. Please try again.');
     }
   };
 

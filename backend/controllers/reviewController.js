@@ -67,11 +67,11 @@ export const createReview = async (req, res) => {
   }
 };
 
-export const getReviewsByTargetId = async (req, res) => {
+export const getReviewsByTargetId = async (req, res, targetType = null) => {
   console.log('Get reviews by target ID route/controller hit');
   try {
     const { targetId } = req.params;
-    const { targetType } = req.query || 'product'; // Default to product if not specified
+    const queryTargetType = targetType || req.query.targetType || 'product'; // Default to product if not specified
 
     if (!targetId) {
       return res
@@ -79,7 +79,7 @@ export const getReviewsByTargetId = async (req, res) => {
         .json({ status: false, message: 'Target ID is required' });
     }
 
-    if (!['product', 'shop'].includes(targetType)) {
+    if (!['product', 'shop'].includes(queryTargetType)) {
       return res
         .status(400)
         .json({ status: false, message: 'Invalid targetType. Must be "product" or "shop"' });
@@ -87,7 +87,7 @@ export const getReviewsByTargetId = async (req, res) => {
 
     const reviews = await Review.find({
       targetId: targetId,
-      targetType: targetType,
+      targetType: queryTargetType,
     })
       .populate('user', 'username avatar isVerified type')
       .sort({ createdAt: -1 });
@@ -95,7 +95,7 @@ export const getReviewsByTargetId = async (req, res) => {
     if (!reviews || reviews.length === 0) {
       return res.status(200).json({
         status: true,
-        message: `No reviews found for this ${targetType}`,
+        message: `No reviews found for this ${queryTargetType}`,
         reviews: [],
       });
     }
@@ -261,11 +261,9 @@ export const updateReview = async (req, res) => {
 };
 
 export const getReviewsByProductId = async (req, res) => {
-  req.query = { targetType: 'product' };
-  return getReviewsByTargetId(req, res);
+  return getReviewsByTargetId(req, res, 'product');
 };
 
 export const getReviewsByShopId = async (req, res) => {
-  req.query = { targetType: 'shop' };
-  return getReviewsByTargetId(req, res);
+  return getReviewsByTargetId(req, res, 'shop');
 };

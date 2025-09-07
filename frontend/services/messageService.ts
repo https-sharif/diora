@@ -2,6 +2,7 @@ import axios from 'axios';
 import { config } from '@/config';
 import { Conversation } from '@/types/Conversation';
 import { Message } from '@/types/Message';
+import { showToast, toastMessages } from '@/utils/toastUtils';
 
 export const messageService = {
   async getConversations(
@@ -73,41 +74,52 @@ export const messageService = {
     postId?: string,
     imageUrl?: string
   ): Promise<{ status: boolean; message: Message }> {
-    const response = await axios.post(
-      `${config.apiUrl}/api/message/messages`,
-      {
-        conversationId,
-        text,
-        type,
-        replyTo,
-        productId,
-        profileId,
-        postId,
-        imageUrl,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
+    try {
+      const response = await axios.post(
+        `${config.apiUrl}/api/message/messages`,
+        {
+          conversationId,
+          text,
+          type,
+          replyTo,
+          productId,
+          profileId,
+          postId,
+          imageUrl,
         },
-      }
-    );
-
-    return response.data;
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      return response.data;
+    } catch (error: any) {
+      console.error('Send message error:', error);
+      showToast.error('Failed to send message. Please try again.');
+      throw error;
+    }
   },
 
   async markMessagesAsRead(
     conversationId: string,
     token: string
   ): Promise<{ status: boolean; message: string }> {
-    const response = await axios.put(
-      `${config.apiUrl}/api/message/conversations/${conversationId}/read`,
-      {},
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
-    return response.data;
+    try {
+      const response = await axios.put(
+        `${config.apiUrl}/api/message/conversations/${conversationId}/read`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      return response.data;
+    } catch (error: any) {
+      console.error('Mark messages as read error:', error);
+      showToast.error(toastMessages.serverError);
+      throw error;
+    }
   },
 
   async addReaction(
@@ -115,47 +127,67 @@ export const messageService = {
     emoji: string,
     token: string
   ): Promise<{ status: boolean; reactions: Record<string, string[]> }> {
-    const response = await axios.put(
-      `${config.apiUrl}/api/message/messages/${messageId}/reaction`,
-      { emoji },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      }
-    );
-    return response.data;
+    try {
+      const response = await axios.put(
+        `${config.apiUrl}/api/message/messages/${messageId}/reaction`,
+        { emoji },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      return response.data;
+    } catch (error: any) {
+      console.error('Add reaction error:', error);
+      showToast.error(toastMessages.serverError);
+      throw error;
+    }
   },
 
   async deleteMessage(
     messageId: string,
     token: string
   ): Promise<{ status: boolean; message: string }> {
-    const response = await axios.delete(
-      `${config.apiUrl}/api/message/messages/${messageId}`,
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
-    return response.data;
+    try {
+      const response = await axios.delete(
+        `${config.apiUrl}/api/message/messages/${messageId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      showToast.success('Message deleted successfully!');
+      return response.data;
+    } catch (error: any) {
+      console.error('Delete message error:', error);
+      showToast.error(toastMessages.serverError);
+      throw error;
+    }
   },
 
   async createGroupConversation(
     data: { name: string; participants: string[] },
     token: string
   ): Promise<{ status: boolean; conversation: Conversation }> {
-    const response = await axios.post(
-      `${config.apiUrl}/api/message/conversations/group`,
-      data,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      }
-    );
-    return response.data;
+    try {
+      const response = await axios.post(
+        `${config.apiUrl}/api/message/conversations/group`,
+        data,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      showToast.success('Group conversation created successfully!');
+      return response.data;
+    } catch (error: any) {
+      console.error('Create group conversation error:', error);
+      showToast.error(toastMessages.serverError);
+      throw error;
+    }
   },
 
   async addUser(
@@ -163,28 +195,42 @@ export const messageService = {
     token: string,
     users: string[]
   ): Promise<{ status: boolean; conversation: Conversation; message: string }> {
-    const response = await axios.put(
-      `${config.apiUrl}/api/message/conversations/${conversationId}/add-user`,
-      { users },
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
-    return response.data;
+    try {
+      const response = await axios.put(
+        `${config.apiUrl}/api/message/conversations/${conversationId}/add-user`,
+        { users },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      showToast.success('User added to conversation successfully!');
+      return response.data;
+    } catch (error: any) {
+      console.error('Add user error:', error);
+      showToast.error(toastMessages.serverError);
+      throw error;
+    }
   },
 
   async leaveGroup(
     conversationId: string,
     token: string
   ): Promise<{ status: boolean; message: string }> {
-    const response = await axios.put(
-      `${config.apiUrl}/api/message/conversations/${conversationId}/leave`,
-      {},
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
-    return response.data;
+    try {
+      const response = await axios.put(
+        `${config.apiUrl}/api/message/conversations/${conversationId}/leave`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      showToast.success('Left group conversation successfully!');
+      return response.data;
+    } catch (error: any) {
+      console.error('Leave group error:', error);
+      showToast.error(toastMessages.serverError);
+      throw error;
+    }
   },
 
   async updateGroupName(
@@ -192,17 +238,24 @@ export const messageService = {
     name: string,
     token: string
   ): Promise<{ status: boolean; conversation: Conversation }> {
-    const response = await axios.put(
-      `${config.apiUrl}/api/message/conversations/${conversationId}/name`,
-      { name },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      }
-    );
-    return response.data;
+    try {
+      const response = await axios.put(
+        `${config.apiUrl}/api/message/conversations/${conversationId}/name`,
+        { name },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      showToast.success('Group name updated successfully!');
+      return response.data;
+    } catch (error: any) {
+      console.error('Update group name error:', error);
+      showToast.error(toastMessages.serverError);
+      throw error;
+    }
   },
 
   async updateGroup(
@@ -210,17 +263,24 @@ export const messageService = {
     data: { name?: string; avatar?: string },
     token: string
   ): Promise<{ status: boolean; conversation: Conversation }> {
-    const response = await axios.put(
-      `${config.apiUrl}/api/message/conversations/${conversationId}`,
-      data,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      }
-    );
-    return response.data;
+    try {
+      const response = await axios.put(
+        `${config.apiUrl}/api/message/conversations/${conversationId}`,
+        data,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      showToast.success('Group updated successfully!');
+      return response.data;
+    } catch (error: any) {
+      console.error('Update group error:', error);
+      showToast.error(toastMessages.serverError);
+      throw error;
+    }
   },
 
   async updateGroupWithAvatar(
@@ -228,16 +288,23 @@ export const messageService = {
     formData: FormData,
     token: string
   ): Promise<{ status: boolean; conversation: Conversation }> {
-    const response = await axios.put(
-      `${config.apiUrl}/api/message/conversations/${conversationId}/edit`,
-      formData,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data',
-        },
-      }
-    );
-    return response.data;
+    try {
+      const response = await axios.put(
+        `${config.apiUrl}/api/message/conversations/${conversationId}/edit`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+      showToast.success('Group updated successfully!');
+      return response.data;
+    } catch (error: any) {
+      console.error('Update group with avatar error:', error);
+      showToast.error(toastMessages.serverError);
+      throw error;
+    }
   },
 };

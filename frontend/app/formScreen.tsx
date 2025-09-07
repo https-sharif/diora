@@ -8,7 +8,6 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 import { useCreatePost } from '@/contexts/CreatePostContext';
@@ -19,6 +18,7 @@ import { Check, Plus, X } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { postValidation, validateField, postRateLimiter } from '@/utils/validationUtils';
 import { useAuth } from '@/hooks/useAuth';
+import { showToast, toastMessages } from '@/utils/toastUtils';
 
 const createStyles = (theme: Theme) => {
   return StyleSheet.create({
@@ -159,14 +159,14 @@ export default function CreateFormScreen() {
     if (isSubmitting || !user) return;
 
     if (!postRateLimiter.isAllowed(user._id)) {
-      Alert.alert('Rate Limit Exceeded', 'Please wait before creating another post.');
+      showToast.error('Rate limit exceeded. Please wait before creating another post.');
       return;
     }
 
     if (formData.description?.trim()) {
       const validation = validateField(postValidation.caption, formData.description.trim());
       if (!validation.success) {
-        Alert.alert('Invalid Caption', validation.error);
+        showToast.error(validation.error || 'Invalid caption');
         return;
       }
     }
@@ -178,14 +178,13 @@ export default function CreateFormScreen() {
       } else {
         await createPost();
       }
-      router.push('/imageScreen');
+      showToast.success(toastMessages.createSuccess(isProduct ? 'Product' : 'Post'));
       reset();
+      // Navigate back to main screen after successful creation
+      router.push('/(tabs)');
     } catch (error) {
       console.error('Post creation failed:', error);
-      Alert.alert(
-        'Error',
-        error instanceof Error ? error.message : 'Failed to create post. Please try again.'
-      );
+      showToast.error(error instanceof Error ? error.message : 'Failed to create post. Please try again.');
       setIsSubmitting(false);
       return;
     } finally {

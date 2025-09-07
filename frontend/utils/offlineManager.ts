@@ -202,7 +202,8 @@ class OfflineManager {
         if (item.data.postId && item.data.content) {
           await commentService.createComment({
             postId: item.data.postId,
-            content: item.data.content
+            userId: item.data.userId || '',
+            text: item.data.content
           }, token);
         } else {
           throw new Error('Invalid comment data');

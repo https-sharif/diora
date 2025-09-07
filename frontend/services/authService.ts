@@ -2,6 +2,7 @@ import axios from 'axios';
 import { config } from '@/config';
 import { LoginData, SignupData, AuthResponse } from '@/types/Auth';
 import { showToast, toastMessages } from '@/utils/toastUtils';
+import { postService } from './postService';
 
 export const authService = {
   async login(data: LoginData): Promise<AuthResponse> {
@@ -78,13 +79,6 @@ export const authService = {
   },
 
   async likePost(postId: string, token: string): Promise<any> {
-    const response = await axios.put(
-      `${config.apiUrl}/api/post/like/${postId}`,
-      {},
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
-    return response.data;
+    return postService.likePost(postId, token);
   },
 };

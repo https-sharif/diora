@@ -2,7 +2,6 @@ import axios from 'axios';
 import { config } from '@/config';
 import { PostData } from '@/types/Post';
 import { withRetry } from '@/utils/retryUtils';
-import { showToast, toastMessages } from '@/utils/toastUtils';
 
 export const postService = {
   async getUserPosts(userId: string, token: string): Promise<any> {
@@ -74,17 +73,9 @@ export const postService = {
         { maxRetries: 2, retryDelay: 1000 }
       );
 
-      if (response.data.status) {
-        // Check if it's a like or unlike based on the response
-        const isLiked = response.data.message?.includes('liked') || response.data.liked;
-        showToast.success(isLiked ? toastMessages.likeSuccess : toastMessages.unlikeSuccess);
-      }
-
       return response.data;
     } catch (error: any) {
       console.error('Like post error:', error);
-      const errorMessage = error.response?.data?.message || 'Failed to like post. Please try again.';
-      showToast.error(errorMessage);
       throw error;
     }
   },

@@ -24,7 +24,12 @@ import { router } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { format } from 'timeago.js';
 import { commentService } from '@/services';
-import { commentValidation, validateField, sanitizeInput, commentRateLimiter } from '@/utils/validationUtils';
+import {
+  commentValidation,
+  validateField,
+  sanitizeInput,
+  commentRateLimiter,
+} from '@/utils/validationUtils';
 import { VirtualizedCommentList } from '@/utils/virtualizationUtils';
 
 const createStyles = (theme: Theme) => {
@@ -98,6 +103,7 @@ const createStyles = (theme: Theme) => {
       fontSize: 14,
       fontFamily: 'Inter-Bold',
       color: theme.text,
+      minWidth: 10,
     },
     content: {
       paddingHorizontal: 16,
@@ -166,7 +172,8 @@ const createStyles = (theme: Theme) => {
     },
     commentItem: {
       flexDirection: 'row',
-      marginBottom: 16,
+      marginHorizontal: 16,
+      marginVertical: 8,
     },
     commentsModal: {
       flex: 1,
@@ -285,7 +292,12 @@ export default function PostCard({ post }: { post: Post }) {
 
       setIsLoadingComments(true);
       try {
-        const response = await commentService.getPostComments(post._id, token, 1, 10);
+        const response = await commentService.getPostComments(
+          post._id,
+          token,
+          1,
+          10
+        );
 
         if (response.status) {
           setComments(response.comments);
@@ -367,7 +379,10 @@ export default function PostCard({ post }: { post: Post }) {
     }
 
     if (!commentRateLimiter.isAllowed(user._id)) {
-      Alert.alert('Rate Limit Exceeded', 'Please wait before posting another comment.');
+      Alert.alert(
+        'Rate Limit Exceeded',
+        'Please wait before posting another comment.'
+      );
       return;
     }
 
@@ -386,7 +401,7 @@ export default function PostCard({ post }: { post: Post }) {
       postId: post._id,
       createdAt: new Date().toISOString(),
       replies: [],
-      isOptimistic: true, 
+      isOptimistic: true,
     } as Comment;
 
     if (replyingTo) {
@@ -404,16 +419,19 @@ export default function PostCard({ post }: { post: Post }) {
       setComments((prev) => [optimisticComment, ...prev]);
     }
 
-    post.comments += 1;
     setNewComment('');
 
     try {
-      const payload = { content: commentText, postId: post._id };
+      const payload = { 
+        userId: user._id,
+        postId: post._id, 
+        text: commentText 
+      };
 
       const response = replyingTo
         ? await commentService.replyToComment(
             replyingTo,
-            { content: commentText, postId: post._id },
+            { userId: user._id, postId: post._id, text: commentText },
             token
           )
         : await commentService.createComment(payload, token);
@@ -466,7 +484,6 @@ export default function PostCard({ post }: { post: Post }) {
         );
       }
 
-      post.comments -= 1;
       setNewComment(commentText);
       Alert.alert('Error', 'Failed to post comment. Please try again.');
     } finally {
@@ -499,7 +516,10 @@ export default function PostCard({ post }: { post: Post }) {
             style={styles.commentAvatar}
           />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.commentContent} activeOpacity={1}>
+        <TouchableOpacity 
+          style={styles.commentContent} 
+          activeOpacity={1}
+        >
           <View style={styles.commentHeader}>
             <TouchableOpacity
               onPress={() => {
@@ -610,16 +630,12 @@ export default function PostCard({ post }: { post: Post }) {
             activeOpacity={1}
             disabled={isLiking}
           >
-            {isLiking ? (
-              <ActivityIndicator size="small" color={theme.text} />
-            ) : (
-              <Star
-                size={24}
-                color={isStarred ? '#FFD700' : theme.text}
-                fill={isStarred ? '#FFD700' : 'transparent'}
-                strokeWidth={2}
-              />
-            )}
+            <Star
+              size={24}
+              color={isStarred ? '#FFD700' : theme.text}
+              fill={isStarred ? '#FFD700' : 'transparent'}
+              strokeWidth={2}
+            />
             <Text style={styles.actionText}>{formatNumber(starCount)}</Text>
           </TouchableOpacity>
 
@@ -681,7 +697,9 @@ export default function PostCard({ post }: { post: Post }) {
                   {isLoadingComments ? (
                     <View style={styles.loadingContainer}>
                       <ActivityIndicator size="small" color={theme.text} />
-                      <Text style={styles.loadingText}>Loading comments...</Text>
+                      <Text style={styles.loadingText}>
+                        Loading comments...
+                      </Text>
                     </View>
                   ) : (
                     <VirtualizedCommentList
@@ -729,7 +747,9 @@ export default function PostCard({ post }: { post: Post }) {
                           <Send
                             size={20}
                             color={
-                              newComment.trim() ? theme.text : theme.textSecondary
+                              newComment.trim()
+                                ? theme.text
+                                : theme.textSecondary
                             }
                           />
                         )}

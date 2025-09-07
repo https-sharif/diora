@@ -81,14 +81,19 @@ export const commentService = {
     content: string,
     token: string
   ): Promise<any> {
-    const response = await axios.put(
-      `${config.apiUrl}/api/comment/${commentId}`,
-      { content },
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
-    return response.data;
+    try {
+      const response = await axios.put(
+        `${config.apiUrl}/api/comment/${commentId}`,
+        { text: content },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      return response.data;
+    } catch (error: any) {
+      console.error('Update comment error:', error);
+      throw error;
+    }
   },
 
   async deleteComment(commentId: string, token: string): Promise<any> {
@@ -99,5 +104,21 @@ export const commentService = {
       }
     );
     return response.data;
+  },
+
+  async reportComment(commentId: string, token: string): Promise<any> {
+    try {
+      const response = await axios.post(
+        `${config.apiUrl}/api/comment/${commentId}/report`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      return response.data;
+    } catch (error: any) {
+      console.error('Report comment error:', error);
+      throw error;
+    }
   },
 };

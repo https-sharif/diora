@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -323,18 +323,14 @@ const createStyles = (theme: Theme) =>
 const OrderDetailsScreen = () => {
   const { theme } = useTheme();
   const styles = createStyles(theme);
-  const { orderId } = useLocalSearchParams<{ orderId: string }>();
+  const { orderId } = useLocalSearchParams() as { orderId: string };
   const { token } = useAuth();
 
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchOrderDetails();
-  }, [orderId]);
-
-  const fetchOrderDetails = async () => {
+  const fetchOrderDetails = useCallback(async () => {
     if (!orderId || !token) {
       setError('Order ID or authentication token missing');
       setLoading(false);
@@ -356,7 +352,11 @@ const OrderDetailsScreen = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [orderId, token]);
+
+  useEffect(() => {
+    fetchOrderDetails();
+  }, [fetchOrderDetails]);
 
   const handleCancelOrder = async () => {
     if (!order || !token) return;
