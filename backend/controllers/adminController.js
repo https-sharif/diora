@@ -183,6 +183,7 @@ export const searchUsers = async (req, res) => {
       sort: { createdAt: -1 },
     };
 
+    filter.type = { $ne: 'admin' };
     const users = await User.find(filter, null, options).select(
       'username fullName email avatar type isVerified followers following posts status suspendedUntil banReason createdAt lastActiveAt'
     );

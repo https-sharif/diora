@@ -791,6 +791,7 @@ export default function MessageScreen() {
   const [replyToMessage, setReplyToMessage] = useState<Message | null>(null);
   const [showReactionPicker, setShowReactionPicker] = useState(false);
   const [selectedMessageForReaction, setSelectedMessageForReaction] = useState<Message | null>(null);
+  const isMarkingAsReadRef = useRef(false);
 
   React.useEffect(() => {
     if (conversationId && messages.length > 0) {
@@ -1412,9 +1413,19 @@ export default function MessageScreen() {
             setMyMessages(sortedMessages);
 
             try {
-              await messageService.markMessagesAsRead(conversationId, token);
-              markConversationAsRead(conversationId);
-            } catch {}
+              if (!isMarkingAsReadRef.current) {
+                isMarkingAsReadRef.current = true;
+                await messageService.markMessagesAsRead(conversationId, token);
+                markConversationAsRead(conversationId);
+                
+                // Prevent rapid successive calls
+                setTimeout(() => {
+                  isMarkingAsReadRef.current = false;
+                }, 2000);
+              }
+            } catch {
+              isMarkingAsReadRef.current = false;
+            }
           } else {
             setMyMessages([]);
           }
@@ -1423,7 +1434,7 @@ export default function MessageScreen() {
           setConversation(null);
         }
 
-        if (!otherUser && !foundConv) {
+        if (!foundConv) {
           try {
             const userData = await userService.getUserById(conversationId, token);
             if (userData) {
@@ -1451,7 +1462,8 @@ export default function MessageScreen() {
     };
 
     fetchConversationData();
-  }, [conversationId, token, conversations, markConversationAsRead, otherUser, user?._id]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conversationId, token, conversations, markConversationAsRead, user?._id]);
 
   useEffect(() => {
     if (myMessages.length > 0) {
@@ -1994,7 +2006,7 @@ export default function MessageScreen() {
 
                 {item.type === 'text' && item.text ? (
                   <Text style={styles.messageText}>{item.text}</Text>
-                ) : item.type === 'image' && item.imageUrl ? (
+                ) : item.type === 'image' && item.imageUrl && item.imageUrl.trim() ? (
                   <Image
                     source={{ uri: item.imageUrl }}
                     style={styles.messageImage}
@@ -2007,10 +2019,16 @@ export default function MessageScreen() {
                       router.push(`/product/${item.productId?._id}`);
                     }}
                   >
-                    <Image
-                      source={{ uri: item.productId.imageUrl[0] }}
-                      style={styles.productImage}
-                    />
+                    {item.productId.imageUrl && item.productId.imageUrl[0] && item.productId.imageUrl[0].trim() ? (
+                      <Image
+                        source={{ uri: item.productId.imageUrl[0] }}
+                        style={styles.productImage}
+                      />
+                    ) : (
+                      <View style={[styles.productImage, { backgroundColor: theme.card, justifyContent: 'center', alignItems: 'center' }]}>
+                        <Text style={{ color: theme.textSecondary }}>No Image</Text>
+                      </View>
+                    )}
                     <View>
                       <Text style={styles.productText}>
                         {item.productId.name}
@@ -2030,10 +2048,18 @@ export default function MessageScreen() {
                       );
                     }}
                   >
-                    <Image
-                      source={{ uri: item.profileId.avatar }}
-                      style={styles.profileImage}
-                    />
+                    {item.profileId.avatar && item.profileId.avatar.trim() ? (
+                      <Image
+                        source={{ uri: item.profileId.avatar }}
+                        style={styles.profileImage}
+                      />
+                    ) : (
+                      <View style={[styles.profileImage, { backgroundColor: theme.card, justifyContent: 'center', alignItems: 'center' }]}>
+                        <Text style={{ fontSize: 18, fontFamily: 'Inter-SemiBold', color: theme.text }}>
+                          {(item.profileId.fullName || 'U').charAt(0).toUpperCase()}
+                        </Text>
+                      </View>
+                    )}
                     <View>
                       <Text style={styles.profileName}>
                         {item.profileId.fullName}
@@ -2050,10 +2076,16 @@ export default function MessageScreen() {
                       router.push(`/post/${item.postId?._id}`);
                     }}
                   >
-                    <Image
-                      source={{ uri: item.postId.imageUrl }}
-                      style={styles.postImage}
-                    />
+                    {item.postId.imageUrl && item.postId.imageUrl.trim() ? (
+                      <Image
+                        source={{ uri: item.postId.imageUrl }}
+                        style={styles.postImage}
+                      />
+                    ) : (
+                      <View style={[styles.postImage, { backgroundColor: theme.card, justifyContent: 'center', alignItems: 'center' }]}>
+                        <Text style={{ color: theme.textSecondary }}>No Image</Text>
+                      </View>
+                    )}
                     <View style={styles.postUserContainer}>
                       <Text style={styles.postUsername}>
                         {item.postId.user.username}
@@ -2099,7 +2131,8 @@ export default function MessageScreen() {
       >
         {!isMe &&
           conversation?.type === 'private' &&
-          (otherUser?.avatar || senderAvatar) && (
+          (otherUser?.avatar || senderAvatar) && 
+          (otherUser?.avatar?.trim() || senderAvatar?.trim()) && (
             <Image
               source={{
                 uri: otherUser?.avatar || senderAvatar,
@@ -2185,7 +2218,7 @@ export default function MessageScreen() {
             <Text style={[styles.messageText, isMe && styles.myMessageText]}>
               {item.text}
             </Text>
-          ) : item.type === 'image' && item.imageUrl ? (
+          ) : item.type === 'image' && item.imageUrl && item.imageUrl.trim() ? (
             <Image
               source={{ uri: item.imageUrl }}
               style={styles.messageImage}
@@ -2198,10 +2231,16 @@ export default function MessageScreen() {
                 router.push(`/product/${item.productId?._id}`);
               }}
             >
-              <Image
-                source={{ uri: item.productId.imageUrl[0] }}
-                style={styles.productImage}
-              />
+              {item.productId.imageUrl && item.productId.imageUrl[0] && item.productId.imageUrl[0].trim() ? (
+                <Image
+                  source={{ uri: item.productId.imageUrl[0] }}
+                  style={styles.productImage}
+                />
+              ) : (
+                <View style={[styles.productImage, { backgroundColor: theme.card, justifyContent: 'center', alignItems: 'center' }]}>
+                  <Text style={{ color: theme.textSecondary }}>No Image</Text>
+                </View>
+              )}
               <View>
                 <Text
                   style={[styles.productText, isMe && styles.myMessageText]}
@@ -2225,10 +2264,18 @@ export default function MessageScreen() {
                 );
               }}
             >
-              <Image
-                source={{ uri: item.profileId.avatar }}
-                style={styles.profileImage}
-              />
+              {item.profileId.avatar && item.profileId.avatar.trim() ? (
+                <Image
+                  source={{ uri: item.profileId.avatar }}
+                  style={styles.profileImage}
+                />
+              ) : (
+                <View style={[styles.profileImage, { backgroundColor: theme.card, justifyContent: 'center', alignItems: 'center' }]}>
+                  <Text style={{ fontSize: 18, fontFamily: 'Inter-SemiBold', color: theme.text }}>
+                    {(item.profileId.fullName || 'U').charAt(0).toUpperCase()}
+                  </Text>
+                </View>
+              )}
               <View>
                 <Text
                   style={[styles.profileName, isMe && styles.myMessageText]}
@@ -2421,7 +2468,7 @@ export default function MessageScreen() {
               ]}
             >
               {conversation?.type === 'group' ? (
-                conversation?.avatar ? (
+                conversation?.avatar && conversation.avatar.trim() ? (
                   <Image
                     source={{ uri: conversation.avatar }}
                     style={styles.headerAvatar}
@@ -2431,7 +2478,7 @@ export default function MessageScreen() {
                     {(conversation?.name || 'G').charAt(0).toUpperCase()}
                   </Text>
                 )
-              ) : otherUser?.avatar ? (
+              ) : otherUser?.avatar && otherUser.avatar.trim() ? (
                 <Image
                   source={{ uri: otherUser.avatar }}
                   style={styles.headerAvatar}

@@ -8,31 +8,23 @@ import {
   Image,
   TextInput,
   ActivityIndicator,
-  Modal,
-  KeyboardAvoidingView,
-  Platform,
-  TouchableWithoutFeedback,
-  Keyboard,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   Search,
   Plus,
   ArrowLeft,
-  X,
-  Users,
-  MessageCircle,
-  Check,
 } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useMessage } from '@/hooks/useMessage';
 import { useAuthStore } from '@/stores/authStore';
+
 import { messageService } from '@/services/messageService';
-import { searchService } from '@/services/searchService';
-import { userService } from '@/services/userService';
 import { Conversation } from '@/types/Conversation';
 import { useAuth } from '@/hooks/useAuth';
+import { NewConversationModal } from '@/components/NewConversationModal';
+import { useNewConversation } from '@/hooks/useNewConversation';
 import Color from 'color';
 
 const createStyles = (theme: any) => {
@@ -393,18 +385,8 @@ const createStyles = (theme: any) => {
 
 export default function MessagesScreen() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [newChatVisible, setNewChatVisible] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [userSearchQuery, setUserSearchQuery] = useState('');
-  const [searchedUsers, setSearchedUsers] = useState<any[]>([]);
-  const [searchLoading, setSearchLoading] = useState(false);
-  const [searchError, setSearchError] = useState<string | null>(null);
-  const [selectedUsers, setSelectedUsers] = useState<any[]>([]);
-  const [groupName, setGroupName] = useState('');
-  const [chatMode, setChatMode] = useState<'direct' | 'group'>('direct');
-  const [followingUsers, setFollowingUsers] = useState<any[]>([]);
-  const [followingLoading, setFollowingLoading] = useState(false);
   const debounceTimeout = useRef<any>(null);
   const [filteredConversations, setFilteredConversations] = useState<
     Conversation[]
@@ -415,6 +397,16 @@ export default function MessagesScreen() {
   const { user } = useAuth();
   const { token } = useAuthStore();
   const styles = createStyles(theme);
+
+  // New conversation functionality
+  const newConversationHook = useNewConversation({
+    token,
+    user,
+    conversations,
+    onConversationCreated: (conversation) => {
+      setConversations([conversation, ...conversations]);
+    },
+  });
 
   useEffect(() => {
     const fetchConversations = async () => {
@@ -439,171 +431,18 @@ export default function MessagesScreen() {
     };
 
     fetchConversations();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, user]);
 
   const handleConversationPress = (conversationId: string) => {
     router.push(`/message/${conversationId}`);
   };
 
-  const fetchFollowingUsers = async () => {
-    if (!token || !user?.following || user.following.length === 0) {
-      setFollowingUsers([]);
-      return;
-    }
-
-    setFollowingLoading(true);
-    try {
-      const followingPromises = user.following.map(async (userId: string) => {
-        try {
-          if (!token) return null;
-          const response = await userService.getUserById(userId, token);
-          return response.status ? response.user : null;
-        } catch {
-          return null;
-        }
-      });
-
-      const followingData = await Promise.all(followingPromises);
-      const validFollowing = followingData.filter((user) => user !== null);
-      setFollowingUsers(validFollowing);
-    } catch {
-      setFollowingUsers([]);
-    } finally {
-      setFollowingLoading(false);
-    }
-  };
-
   function handleNewChatPress() {
-    setNewChatVisible(true);
-    setUserSearchQuery('');
-    setSearchedUsers([]);
-    setSearchError(null);
-    setSelectedUsers([]);
-    setGroupName('');
-    setChatMode('direct');
-    fetchFollowingUsers();
+    newConversationHook.actions.openModal();
   }
 
-  const handleCloseNewChat = () => {
-    setNewChatVisible(false);
-    setUserSearchQuery('');
-    setSearchedUsers([]);
-    setSearchError(null);
-    setSelectedUsers([]);
-    setGroupName('');
-    setChatMode('direct');
-  };
 
-  const searchUsers = async (query: string) => {
-    if (!query.trim() || !token) {
-      setSearchedUsers([]);
-      return;
-    }
-
-    setSearchLoading(true);
-    setSearchError(null);
-
-    try {
-      const [userRes, shopRes] = await Promise.all([
-        searchService.searchUsers(query, token),
-        searchService.searchShops(query, token),
-      ]);
-      let merged: any[] = [];
-      if (userRes.status) {
-        merged = merged.concat(
-          userRes.users.filter((u: any) => u._id !== user?._id)
-        );
-      }
-      if (shopRes.status) {
-        merged = merged.concat(
-          shopRes.users.filter((s: any) => s._id !== user?._id)
-        );
-      }
-      setSearchedUsers(merged);
-    } catch {
-      setSearchError('Failed to search users/shops');
-      setSearchedUsers([]);
-    } finally {
-      setSearchLoading(false);
-    }
-  };
-
-  const handleUserSelect = async (selectedUser: any) => {
-    try {
-      if (chatMode === 'group') {
-        if (selectedUsers.find((u) => u._id === selectedUser._id)) {
-          setSelectedUsers(
-            selectedUsers.filter((u) => u._id !== selectedUser._id)
-          );
-        } else {
-          if (selectedUsers.length >= 9) {
-            alert('Group chat is limited to 10 members maximum');
-            return;
-          }
-          setSelectedUsers([...selectedUsers, selectedUser]);
-        }
-        return;
-      }
-
-      setNewChatVisible(false);
-      setUserSearchQuery('');
-      setSearchedUsers([]);
-      const existingConversation = conversations.find((conv) =>
-        conv.participants?.some((p: any) => {
-          const participantId = typeof p === 'string' ? p : p._id;
-          return participantId === selectedUser._id;
-        })
-      );
-      if (existingConversation) {
-        router.push(`/message/${existingConversation._id}`);
-      } else {
-        router.push(`/message/${selectedUser._id}`);
-      }
-    } catch {
-      alert('Failed to start conversation');
-    }
-  };
-
-  const handleCreateGroupChat = async () => {
-    if (selectedUsers.length < 2) {
-      alert('Please select at least 2 members for a group chat');
-      return;
-    }
-    if (!groupName.trim()) {
-      alert('Please enter a group name');
-      return;
-    }
-    if (!token) {
-      alert('Authentication required');
-      return;
-    }
-    try {
-      const participantIds = selectedUsers.map((member) => member._id);
-      const response = await messageService.createGroupConversation(
-        {
-          name: groupName.trim(),
-          participants: participantIds,
-        },
-        token
-      );
-      if (response.status) {
-        handleCloseNewChat();
-        router.push(`/message/${response.conversation._id}`);
-      } else {
-        alert('Failed to create group chat');
-      }
-    } catch {
-      alert('Failed to create group chat');
-    }
-  };
-
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      searchUsers(userSearchQuery);
-    }, 300);
-
-    return () => clearTimeout(timeoutId);
-  }, [userSearchQuery, token]);
 
   useEffect(() => {
     if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
@@ -636,6 +475,7 @@ export default function MessagesScreen() {
     }, 250);
     return () =>
       debounceTimeout.current && clearTimeout(debounceTimeout.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery, conversations]);
 
   const formatTime = (isoString: string) => {
@@ -723,7 +563,7 @@ export default function MessagesScreen() {
         activeOpacity={0.7}
       >
         <View style={styles.avatarContainer}>
-          {senderAvatar ? (
+          {senderAvatar && senderAvatar.trim() ? (
             <Image source={{ uri: senderAvatar }} style={styles.avatar} />
           ) : (
             <View
@@ -926,266 +766,24 @@ export default function MessagesScreen() {
         />
       )}
 
-      <Modal
-        visible={newChatVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={handleCloseNewChat}
-      >
-        <KeyboardAvoidingView
-          style={{ flex: 1 }}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={0}
-        >
-          <TouchableWithoutFeedback
-            onPress={() => {
-              Keyboard.dismiss();
-              handleCloseNewChat();
-            }}
-          >
-            <View style={styles.modalOverlay}>
-              <TouchableWithoutFeedback onPress={() => {}}>
-                <View style={styles.modalContainer}>
-                  <View style={styles.modalHeader}>
-                    <Text style={styles.modalTitle}>New Message</Text>
-                    <TouchableOpacity
-                      onPress={handleCloseNewChat}
-                      style={styles.closeButton}
-                    >
-                      <X size={24} color={theme.text} />
-                    </TouchableOpacity>
-                  </View>
-
-                  <View style={styles.chatModeSelector}>
-                    <TouchableOpacity
-                      style={[
-                        styles.chatModeButton,
-                        chatMode === 'direct' && styles.chatModeButtonActive,
-                      ]}
-                      onPress={() => setChatMode('direct')}
-                    >
-                      <MessageCircle
-                        size={16}
-                        color={
-                          chatMode === 'direct' ? '#000' : theme.textSecondary
-                        }
-                      />
-                      <Text
-                        style={[
-                          styles.chatModeButtonText,
-                          chatMode === 'direct' &&
-                            styles.chatModeButtonTextActive,
-                        ]}
-                      >
-                        Direct
-                      </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[
-                        styles.chatModeButton,
-                        chatMode === 'group' && styles.chatModeButtonActive,
-                      ]}
-                      onPress={() => setChatMode('group')}
-                    >
-                      <Users
-                        size={16}
-                        color={
-                          chatMode === 'group' ? '#000' : theme.textSecondary
-                        }
-                      />
-                      <Text
-                        style={[
-                          styles.chatModeButtonText,
-                          chatMode === 'group' &&
-                            styles.chatModeButtonTextActive,
-                        ]}
-                      >
-                        Group
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-
-                  {chatMode === 'group' && (
-                    <TextInput
-                      style={styles.groupNameInput}
-                      placeholder="Group name..."
-                      value={groupName}
-                      onChangeText={setGroupName}
-                      placeholderTextColor={theme.textSecondary}
-                    />
-                  )}
-
-                  {chatMode === 'group' && selectedUsers.length > 0 && (
-                    <View style={styles.selectedUsersContainer}>
-                      <Text style={styles.selectedUsersTitle}>
-                        Selected ({selectedUsers.length})
-                      </Text>
-                      <View style={styles.selectedUsersList}>
-                        {selectedUsers.map((user) => (
-                          <View key={user._id} style={styles.selectedUserChip}>
-                            <Text style={styles.selectedUserName}>
-                              {user.fullName || user.username}
-                            </Text>
-                            <TouchableOpacity
-                              onPress={() =>
-                                setSelectedUsers(
-                                  selectedUsers.filter(
-                                    (u) => u._id !== user._id
-                                  )
-                                )
-                              }
-                            >
-                              <X size={14} color="#000" />
-                            </TouchableOpacity>
-                          </View>
-                        ))}
-                      </View>
-                    </View>
-                  )}
-
-                  <View style={styles.modalSearchContainer}>
-                    <Search size={20} color={theme.textSecondary} />
-                    <TextInput
-                      style={styles.modalSearchInput}
-                      placeholder={
-                        chatMode === 'group'
-                          ? 'Search users to add...'
-                          : 'Search users...'
-                      }
-                      value={userSearchQuery}
-                      onChangeText={setUserSearchQuery}
-                      placeholderTextColor={theme.textSecondary}
-                      autoFocus
-                    />
-                  </View>
-
-                  {searchLoading || followingLoading ? (
-                    <View style={styles.loadingContainer}>
-                      <ActivityIndicator size="large" color={theme.accent} />
-                      <Text style={[styles.emptySearchText, { marginTop: 12 }]}>
-                        {searchLoading
-                          ? 'Searching users...'
-                          : 'Loading following...'}
-                      </Text>
-                    </View>
-                  ) : searchError ? (
-                    <View style={styles.emptySearchState}>
-                      <Text style={styles.emptySearchText}>{searchError}</Text>
-                    </View>
-                  ) : (userSearchQuery.trim() === ''
-                      ? followingUsers
-                      : searchedUsers
-                    ).length === 0 ? (
-                    <View style={styles.emptySearchState}>
-                      <Text style={styles.emptySearchText}>
-                        {user?.following?.length === 0
-                          ? "You're not following anyone yet. Search to find users."
-                          : 'No users found.'}
-                      </Text>
-                    </View>
-                  ) : (
-                    <FlatList
-                      data={
-                        userSearchQuery.trim() === ''
-                          ? followingUsers
-                          : searchedUsers
-                      }
-                      keyExtractor={(item) => item._id}
-                      keyboardShouldPersistTaps="handled"
-                      ListFooterComponent={
-                        chatMode === 'group' ? (
-                          <TouchableOpacity
-                            style={[
-                              styles.createGroupButton,
-                              (selectedUsers.length < 2 || !groupName.trim()) &&
-                                styles.createGroupButtonDisabled,
-                            ]}
-                            onPress={handleCreateGroupChat}
-                            disabled={
-                              selectedUsers.length < 2 || !groupName.trim()
-                            }
-                          >
-                            <Text
-                              style={[
-                                styles.createGroupButtonText,
-                                (selectedUsers.length < 2 ||
-                                  !groupName.trim()) &&
-                                  styles.createGroupButtonTextDisabled,
-                              ]}
-                            >
-                              Create Group ({selectedUsers.length} members)
-                            </Text>
-                          </TouchableOpacity>
-                        ) : null
-                      }
-                      renderItem={({ item }) => {
-                        const isSelected = selectedUsers.find(
-                          (u) => u._id === item._id
-                        );
-                        return (
-                          <TouchableOpacity
-                            style={[
-                              styles.userItem,
-                              isSelected && styles.userItemSelected,
-                            ]}
-                            onPress={() => handleUserSelect(item)}
-                            activeOpacity={0.7}
-                          >
-                            {item.avatar ? (
-                              <Image
-                                source={{ uri: item.avatar }}
-                                style={styles.userAvatar}
-                              />
-                            ) : (
-                              <View
-                                style={[
-                                  styles.userAvatar,
-                                  {
-                                    backgroundColor: theme.card,
-                                    justifyContent: 'center',
-                                    alignItems: 'center',
-                                  },
-                                ]}
-                              >
-                                <Text
-                                  style={{
-                                    fontSize: 16,
-                                    fontFamily: 'Inter-SemiBold',
-                                    color: theme.text,
-                                  }}
-                                >
-                                  {(item.fullName || item.username || 'U')
-                                    .charAt(0)
-                                    .toUpperCase()}
-                                </Text>
-                              </View>
-                            )}
-                            <View style={styles.userInfo}>
-                              <Text style={styles.userName}>
-                                {item.fullName ||
-                                  item.username ||
-                                  'Unknown User'}
-                              </Text>
-                              {item.username && (
-                                <Text style={styles.userUsername}>
-                                  @{item.username}
-                                </Text>
-                              )}
-                            </View>
-                            {chatMode === 'group' && isSelected && (
-                              <Check size={20} color={theme.accent} />
-                            )}
-                          </TouchableOpacity>
-                        );
-                      }}
-                    />
-                  )}
-                </View>
-              </TouchableWithoutFeedback>
-            </View>
-          </TouchableWithoutFeedback>
-        </KeyboardAvoidingView>
-      </Modal>
+      <NewConversationModal
+        visible={newConversationHook.state.isModalVisible}
+        onClose={newConversationHook.actions.closeModal}
+        mode={newConversationHook.state.mode}
+        onModeChange={newConversationHook.actions.setMode}
+        searchQuery={newConversationHook.state.searchQuery}
+        onSearchChange={newConversationHook.actions.searchUsers}
+        groupName={newConversationHook.state.groupName}
+        onGroupNameChange={newConversationHook.actions.setGroupName}
+        selectedUsers={newConversationHook.state.selectedUsers}
+        onRemoveUser={newConversationHook.actions.removeSelectedUser}
+        displayUsers={newConversationHook.computed.displayUsers}
+        onUserSelect={newConversationHook.actions.selectUser}
+        onCreateGroup={newConversationHook.actions.createGroupConversation}
+        canCreateGroup={newConversationHook.computed.canCreateGroup}
+        isLoading={newConversationHook.computed.isLoading}
+        error={newConversationHook.state.error}
+      />
     </SafeAreaView>
   );
 }

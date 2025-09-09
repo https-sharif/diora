@@ -19,7 +19,6 @@ export const notificationService = {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      showToast.success('Notification marked as read!');
       return response.data;
     } catch (error: any) {
       console.error('Mark as read error:', error);
@@ -37,7 +36,6 @@ export const notificationService = {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      showToast.success('All notifications marked as read!');
       return response.data;
     } catch (error: any) {
       console.error('Mark all as read error:', error);

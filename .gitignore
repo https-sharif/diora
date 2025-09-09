@@ -34,8 +34,8 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 
-#vscode
+# vscode
 .vscode/
 
-#todo
+# development files
 todo.txt
