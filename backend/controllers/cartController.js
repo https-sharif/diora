@@ -8,7 +8,7 @@ export const getCart = async (req, res) => {
 
     let cart = await Cart.findOne({ userId }).populate({
       path: 'products.productId',
-      select: 'name price imageUrl description category',
+      select: 'name price imageUrl description category stock',
     });
 
     if (!cart) {
@@ -35,6 +35,13 @@ export const addToCart = async (req, res) => {
         .json({ status: false, message: 'Product not found' });
     }
 
+    // Check if product is in stock
+    if (product.stock <= 0) {
+      return res
+        .status(400)
+        .json({ status: false, message: 'Product is out of stock' });
+    }
+
     let cart = await Cart.findOne({ userId });
 
     if (!cart) {
@@ -48,6 +55,21 @@ export const addToCart = async (req, res) => {
         item.variant === variant
     );
 
+    let totalRequestedQuantity = quantity;
+    if (existingItemIndex > -1) {
+      totalRequestedQuantity += cart.products[existingItemIndex].quantity;
+    }
+
+    // Check if requested quantity exceeds available stock
+    if (totalRequestedQuantity > product.stock) {
+      return res
+        .status(400)
+        .json({ 
+          status: false, 
+          message: `Only ${product.stock} items available in stock` 
+        });
+    }
+
     if (existingItemIndex > -1) {
       cart.products[existingItemIndex].quantity += quantity;
     } else {
@@ -58,7 +80,7 @@ export const addToCart = async (req, res) => {
 
     await cart.populate({
       path: 'products.productId',
-      select: 'name price imageUrl description category',
+      select: 'name price imageUrl description category stock',
     });
 
     res.json({ status: true, cart });
@@ -101,6 +123,23 @@ export const updateCartQuantity = async (req, res) => {
     if (quantity === 0) {
       cart.products.splice(itemIndex, 1);
     } else {
+      // Validate stock availability for non-zero quantities
+      const product = await Product.findById(productId);
+      if (!product) {
+        return res
+          .status(404)
+          .json({ status: false, message: 'Product not found' });
+      }
+
+      if (quantity > product.stock) {
+        return res
+          .status(400)
+          .json({ 
+            status: false, 
+            message: `Only ${product.stock} items available in stock` 
+          });
+      }
+
       cart.products[itemIndex].quantity = quantity;
     }
 
@@ -108,7 +147,7 @@ export const updateCartQuantity = async (req, res) => {
 
     await cart.populate({
       path: 'products.productId',
-      select: 'name price imageUrl description category',
+      select: 'name price imageUrl description category stock',
     });
 
     res.json({ status: true, cart });
@@ -142,7 +181,7 @@ export const removeFromCart = async (req, res) => {
 
     await cart.populate({
       path: 'products.productId',
-      select: 'name price imageUrl description category',
+      select: 'name price imageUrl description category stock',
     });
 
     res.json({ status: true, cart });

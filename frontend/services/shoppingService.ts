@@ -36,7 +36,8 @@ export const cartService = {
       return response.data;
     } catch (error: any) {
       console.error('Add to cart error:', error);
-      showToast.error(toastMessages.serverError);
+      const errorMessage = error.response?.data?.message || toastMessages.serverError;
+      showToast.error(errorMessage);
       throw error;
     }
   },
@@ -76,7 +77,8 @@ export const cartService = {
       return response.data;
     } catch (error: any) {
       console.error('Update cart quantity error:', error);
-      showToast.error(toastMessages.serverError);
+      const errorMessage = error.response?.data?.message || toastMessages.serverError;
+      showToast.error(errorMessage);
       throw error;
     }
   },

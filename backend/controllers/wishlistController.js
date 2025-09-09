@@ -8,14 +8,14 @@ export const getWishlist = async (req, res) => {
 
     let wishlist = await Wishlist.findOne({ userId }).populate({
       path: 'products',
-      select: 'name price imageUrl description category shopId',
+      select: 'name price imageUrl description category shopId stock',
     });
 
     if (!wishlist) {
       wishlist = await Wishlist.create({ userId, products: [] });
       await wishlist.populate({
         path: 'products',
-        select: 'name price imageUrl description category shopId',
+        select: 'name price imageUrl description category shopId stock',
       });
     }
 
@@ -58,7 +58,7 @@ export const addToWishlist = async (req, res) => {
 
     await wishlist.populate({
       path: 'products',
-      select: 'name price imageUrl description category shopId',
+      select: 'name price imageUrl description category shopId stock',
     });
 
     res.json({ status: true, wishlist: wishlist.products });
@@ -89,7 +89,7 @@ export const removeFromWishlist = async (req, res) => {
 
     await wishlist.populate({
       path: 'products',
-      select: 'name price imageUrl description category shopId',
+      select: 'name price imageUrl description category shopId stock',
     });
 
     res.json({ status: true, wishlist: wishlist.products });
@@ -132,7 +132,7 @@ export const toggleWishlist = async (req, res) => {
 
     await wishlist.populate({
       path: 'products',
-      select: 'name price imageUrl description category shopId',
+      select: 'name price imageUrl description category shopId stock',
     });
 
     res.json({ status: true, wishlist: wishlist.products });

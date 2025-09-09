@@ -314,6 +314,19 @@ const createStyles = (theme: Theme) =>
       textAlign: 'center',
       lineHeight: 24,
     },
+    stockText: {
+      fontSize: 12,
+      fontFamily: 'Inter-Medium',
+      marginBottom: 8,
+    },
+    addToCartButtonDisabled: {
+      backgroundColor: theme.textSecondary,
+      opacity: 0.5,
+    },
+    addToCartTextDisabled: {
+      color: theme.background,
+      opacity: 0.7,
+    },
   });
 
 const Wishlist = () => {
@@ -409,6 +422,12 @@ const Wishlist = () => {
   };
 
   const handleAddToCart = (product: Product) => {
+    // Check if product is out of stock
+    if (product.stock <= 0) {
+      Alert.alert('Out of Stock', 'This product is currently out of stock.');
+      return;
+    }
+    
     setSelectedProduct(product);
     setSelectedSize(product.sizes[0]);
     setSelectedColor(product.variants[0]);
@@ -416,6 +435,13 @@ const Wishlist = () => {
 
   const confirmAddToCart = () => {
     if (selectedProduct) {
+      // Double-check stock before adding to cart
+      if (selectedProduct.stock <= 0) {
+        Alert.alert('Out of Stock', 'This product is currently out of stock.');
+        setSelectedProduct(null);
+        return;
+      }
+      
       addToCart(selectedProduct, 1, selectedSize, selectedColor);
       setSelectedProduct(null);
       Alert.alert('Success', 'Item added to cart!');
@@ -447,12 +473,29 @@ const Wishlist = () => {
           <Text style={styles.productName}>{item.name}</Text>
         </TouchableOpacity>
         {renderPrice(item)}
+        
+        {/* Stock Information */}
+        <Text style={[
+          styles.stockText, 
+          { color: item.stock <= 0 ? theme.error : theme.textSecondary }
+        ]}>
+          {item.stock <= 0 ? 'Out of Stock' : `${item.stock} in stock`}
+        </Text>
 
         <TouchableOpacity
-          style={styles.addToCartButton}
+          style={[
+            styles.addToCartButton,
+            item.stock <= 0 && styles.addToCartButtonDisabled
+          ]}
           onPress={() => handleAddToCart(item)}
+          disabled={item.stock <= 0}
         >
-          <Text style={styles.addToCartText}>Add to Cart</Text>
+          <Text style={[
+            styles.addToCartText,
+            item.stock <= 0 && styles.addToCartTextDisabled
+          ]}>
+            {item.stock <= 0 ? 'Out of Stock' : 'Add to Cart'}
+          </Text>
         </TouchableOpacity>
       </View>
     </View>

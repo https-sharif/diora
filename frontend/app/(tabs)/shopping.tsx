@@ -619,6 +619,13 @@ export default function ShoppingScreen() {
 
   const confirmAddToCart = () => {
     if (selectedProduct) {
+      // Check if product is out of stock
+      if (selectedProduct.stock <= 0) {
+        Alert.alert('Out of Stock', 'This product is currently out of stock.');
+        setSelectedProduct(null);
+        return;
+      }
+      
       addToCart(selectedProduct, 1, selectedSize, selectedColor);
       setSelectedProduct(null);
       Alert.alert('Success', 'Item added to cart!');

@@ -1181,6 +1181,18 @@ export default function ProductDetailScreen() {
       return;
     }
 
+    // Check if product is out of stock
+    if (product.stock <= 0) {
+      showToast.error('This product is currently out of stock');
+      return;
+    }
+
+    // Check if requested quantity exceeds available stock
+    if (quantity > product.stock) {
+      showToast.error(`Only ${product.stock} items available in stock`);
+      return;
+    }
+
     addToCart(product, quantity, selectedSize, selectedColor);
     setQuantity(1);
     setSelectedSize('');
