@@ -178,24 +178,42 @@ export const PromotionRequestModal: React.FC<PromotionRequestModalProps> = ({
 
   const pickDocument = async () => {
     try {
+      // Request permissions
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
         showToast.error('Please grant media library permissions to upload documents.');
         return;
       }
 
+      // Launch image library with Android-compatible settings
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images', 'videos'],
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: false,
         quality: 0.8,
         allowsMultipleSelection: true,
+        selectionLimit: 5,
       });
 
-      if (!result.canceled && result.assets) {
-        setProofDocuments((prev) => [...prev, ...result.assets]);
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        // Validate selected files
+        const validAssets = result.assets.filter(asset => {
+          if (!asset.uri) {
+            console.warn('Asset missing URI:', asset);
+            return false;
+          }
+          return true;
+        });
+
+        if (validAssets.length > 0) {
+          setProofDocuments((prev) => [...prev, ...validAssets]);
+          showToast.success(`${validAssets.length} document(s) selected successfully!`);
+        } else {
+          showToast.error('No valid documents were selected');
+        }
       }
-    } catch {
-      showToast.error('Failed to pick document');
+    } catch (error) {
+      console.error('Error picking documents:', error);
+      showToast.error('Failed to pick document. Please try again.');
     }
   };
 
@@ -228,9 +246,27 @@ export const PromotionRequestModal: React.FC<PromotionRequestModalProps> = ({
       });
 
       proofDocuments.forEach((doc, index) => {
-        const fileExtension = doc.uri.split('.').pop() || 'jpg';
-        const fileName = doc.fileName || `document_${index}.${fileExtension}`;
-        const mimeType = doc.type || doc.mimeType || `image/${fileExtension}`;
+        const fileExtension = doc.uri.split('.').pop()?.toLowerCase() || 'jpg';
+        const fileName = doc.fileName || `promotion_document_${Date.now()}_${index}.${fileExtension}`;
+        
+        // Better MIME type detection for Android compatibility
+        let mimeType = doc.type || doc.mimeType;
+        if (!mimeType) {
+          switch (fileExtension) {
+            case 'jpg':
+            case 'jpeg':
+              mimeType = 'image/jpeg';
+              break;
+            case 'png':
+              mimeType = 'image/png';
+              break;
+            case 'webp':
+              mimeType = 'image/webp';
+              break;
+            default:
+              mimeType = 'image/jpeg';
+          }
+        }
 
         requestFormData.append('proofDocuments', {
           uri: doc.uri,
@@ -243,6 +279,12 @@ export const PromotionRequestModal: React.FC<PromotionRequestModalProps> = ({
         showToast.error('No authentication token available');
         return;
       }
+
+      console.log('Submitting promotion request with:', {
+        documentsCount: proofDocuments.length,
+        businessName: formData.businessName,
+        businessType: formData.businessType,
+      });
 
       const response = await userService.requestPromotion(
         requestFormData,
