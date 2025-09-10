@@ -16,7 +16,10 @@ export const shopService = {
         `${config.apiUrl}/api/shop/profile`,
         profileData,
         {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data',
+          },
         }
       );
       showToast.success('Shop profile updated successfully!');
@@ -90,7 +93,10 @@ export const shopService = {
         `${config.apiUrl}/api/shop/profile`,
         profileData,
         {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data',
+          },
         }
       );
       showToast.success('Shop profile updated successfully!');

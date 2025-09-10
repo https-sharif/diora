@@ -142,7 +142,10 @@ export const userService = {
         `${config.apiUrl}/api/user/upload-image`,
         formData,
         {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data',
+          },
         }
       );
       showToast.success(toastMessages.imageUploaded);
@@ -160,7 +163,10 @@ export const userService = {
         `${config.apiUrl}/api/user/request-promotion`,
         formData,
         {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data',
+          },
         }
       );
       showToast.success('Promotion request submitted successfully!');

@@ -178,6 +178,12 @@ export const PromotionRequestModal: React.FC<PromotionRequestModalProps> = ({
 
   const pickDocument = async () => {
     try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        showToast.error('Please grant media library permissions to upload documents.');
+        return;
+      }
+
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ['images', 'videos'],
         allowsEditing: false,
@@ -224,10 +230,11 @@ export const PromotionRequestModal: React.FC<PromotionRequestModalProps> = ({
       proofDocuments.forEach((doc, index) => {
         const fileExtension = doc.uri.split('.').pop() || 'jpg';
         const fileName = doc.fileName || `document_${index}.${fileExtension}`;
+        const mimeType = doc.type || doc.mimeType || `image/${fileExtension}`;
 
         requestFormData.append('proofDocuments', {
           uri: doc.uri,
-          type: doc.type || doc.mimeType || 'image/jpeg',
+          type: mimeType,
           name: fileName,
         } as any);
       });
