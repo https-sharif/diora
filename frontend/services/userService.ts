@@ -2,6 +2,8 @@ import axios from '@/utils/axiosConfig';
 import { config } from '@/config';
 import { UserProfileData, UserSettings } from '@/types/User';
 import { showToast, toastMessages } from '@/utils/toastUtils';
+import { Platform } from 'react-native';
+import { androidFormDataUpload } from '@/utils/androidUpload';
 
 export const userService = {
   async getUserById(userId: string, token: string): Promise<any> {
@@ -26,7 +28,7 @@ export const userService = {
         {
           headers: { 
             Authorization: `Bearer ${token}`,
-            'Content-Type': 'multipart/form-data',
+            // Let axios handle Content-Type and boundary for FormData
           },
         }
       );
@@ -147,7 +149,7 @@ export const userService = {
         {
           headers: { 
             Authorization: `Bearer ${token}`,
-            'Content-Type': 'multipart/form-data',
+            // Let axios handle Content-Type and boundary for FormData
           },
         }
       );
@@ -162,13 +164,14 @@ export const userService = {
 
   async requestPromotion(formData: FormData, token: string): Promise<any> {
     try {
+      // First try with axios - let axios set Content-Type with boundary for FormData
       const response = await axios.post(
         `${config.apiUrl}/api/user/request-promotion`,
         formData,
         {
           headers: { 
             Authorization: `Bearer ${token}`,
-            'Content-Type': 'multipart/form-data',
+            // Don't set Content-Type for FormData - let axios handle the boundary
           },
         }
       );
@@ -176,6 +179,23 @@ export const userService = {
       return response.data;
     } catch (error: any) {
       console.error('Request promotion error:', error);
+      
+      // Fallback to fetch for Android if axios fails
+      if (Platform.OS === 'android' && (error.code === 'ERR_NETWORK' || error.message === 'Network Error')) {
+        console.log('Trying Android fallback upload method...');
+        try {
+          const fallbackResponse = await androidFormDataUpload(
+            '/api/user/request-promotion',
+            formData,
+            token
+          );
+          showToast.success('Promotion request submitted successfully!');
+          return fallbackResponse;
+        } catch (fallbackError) {
+          console.error('Android fallback also failed:', fallbackError);
+        }
+      }
+      
       showToast.error(toastMessages.serverError);
       throw error;
     }

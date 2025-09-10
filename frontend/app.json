@@ -24,7 +24,19 @@
       ],
       "usesCleartextTraffic": true,
       "allowBackup": false,
-      "requestLegacyExternalStorage": true
+      "requestLegacyExternalStorage": true,
+      "networkSecurityConfig": {
+        "domain-config": [
+          {
+            "domain": "diora.onrender.com",
+            "includeSubdomains": true,
+            "cleartextTrafficPermitted": false
+          }
+        ],
+        "base-config": {
+          "cleartextTrafficPermitted": true
+        }
+      }
     },
     "splash": {
       "image": "./assets/images/lightIcon.png",

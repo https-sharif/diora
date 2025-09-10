@@ -3,11 +3,17 @@ import { Platform } from 'react-native';
 
 // Create axios instance with Android-specific configuration
 const axiosInstance = axios.create({
-  timeout: Platform.OS === 'android' ? 30000 : 15000, // Longer timeout for Android
+  timeout: Platform.OS === 'android' ? 60000 : 15000, // Even longer timeout for Android FormData
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   },
+  // Additional Android-specific configuration
+  ...(Platform.OS === 'android' && {
+    maxRedirects: 5,
+    maxContentLength: Infinity,
+    maxBodyLength: Infinity,
+  }),
 });
 
 // Add request interceptor for Android
@@ -17,7 +23,24 @@ axiosInstance.interceptors.request.use(
     if (Platform.OS === 'android') {
       config.headers['User-Agent'] = 'DioraApp/1.0 Android';
       config.headers['Cache-Control'] = 'no-cache';
+      config.headers['Connection'] = 'keep-alive';
+      
+      // Special handling for FormData on Android
+      if (config.data && config.data._parts) {
+        console.log('Android FormData upload detected, optimizing...');
+        config.timeout = 120000; // 2 minutes for large uploads
+        delete config.headers['Content-Type']; // Let browser set the boundary
+      }
     }
+    
+    console.log('Request config:', {
+      url: config.url,
+      method: config.method,
+      timeout: config.timeout,
+      platform: Platform.OS,
+      hasFormData: !!(config.data && config.data._parts),
+    });
+    
     return config;
   },
   (error) => Promise.reject(error)

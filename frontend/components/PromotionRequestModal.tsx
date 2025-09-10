@@ -16,6 +16,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { userService } from '@/services';
 import * as ImagePicker from 'expo-image-picker';
 import { showToast } from '@/utils/toastUtils';
+import { checkNetworkConnectivity } from '@/utils/networkUtils';
 
 interface PromotionRequestModalProps {
   visible: boolean;
@@ -238,6 +239,13 @@ export const PromotionRequestModal: React.FC<PromotionRequestModalProps> = ({
 
     try {
       setLoading(true);
+
+      // Check network connectivity first
+      const isConnected = await checkNetworkConnectivity();
+      if (!isConnected) {
+        showToast.error('No internet connection. Please check your network and try again.');
+        return;
+      }
 
       const requestFormData = new FormData();
 
