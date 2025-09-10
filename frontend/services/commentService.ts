@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios from '@/utils/axiosConfig';
 import { config } from '@/config';
 import { CommentData } from '@/types/Comment';
 import { withRetry } from '@/utils/retryUtils';

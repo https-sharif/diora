@@ -1,4 +1,5 @@
 import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
+import { checkNetworkConnectivity } from './networkUtils';
 
 interface RetryConfig {
   maxRetries?: number;
@@ -11,7 +12,11 @@ const defaultRetryCondition = (error: any): boolean => {
     !error.response ||
     error.response.status >= 500 ||
     error.code === 'ECONNABORTED' ||
-    error.code === 'ENOTFOUND'
+    error.code === 'ENOTFOUND' ||
+    error.code === 'NETWORK_ERROR' ||
+    error.message === 'Network Error' ||
+    error.code === 'ECONNRESET' ||
+    error.code === 'ETIMEDOUT'
   );
 };
 
@@ -49,7 +54,14 @@ export const withRetry = async <T = any>(
 
       console.warn(`API call failed on attempt ${attempt + 1}, retrying in ${retryDelay}ms...`, (error as Error).message);
 
-      await delay(retryDelay * Math.pow(2, attempt));
+      // Check network connectivity before retrying
+      const isConnected = await checkNetworkConnectivity();
+      if (!isConnected) {
+        console.error('No network connectivity, skipping retry');
+        break;
+      }
+
+      await delay(retryDelay);
     }
   }
 

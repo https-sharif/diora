@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios from '@/utils/axiosConfig';
 import { config } from '@/config';
 import { ProductData } from '@/types/Product';
 import { showToast, toastMessages } from '@/utils/toastUtils';
@@ -49,6 +49,8 @@ export const productService = {
       
       if (!(productData instanceof FormData)) {
         headers['Content-Type'] = 'application/json';
+      } else {
+        headers['Content-Type'] = 'multipart/form-data';
       }
       
       const response = await axios.post(

@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios from '@/utils/axiosConfig';
 import { config } from '@/config';
 import { UserProfileData, UserSettings } from '@/types/User';
 import { showToast, toastMessages } from '@/utils/toastUtils';
@@ -24,7 +24,10 @@ export const userService = {
         `${config.apiUrl}/api/user/update/profile`,
         profileData,
         {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data',
+          },
         }
       );
       showToast.success(toastMessages.profileUpdated);

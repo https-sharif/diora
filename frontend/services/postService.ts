@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios from '@/utils/axiosConfig';
 import { config } from '@/config';
 import { PostData } from '@/types/Post';
 import { withRetry } from '@/utils/retryUtils';
@@ -25,17 +25,27 @@ export const postService = {
   },
 
   async createPost(postData: PostData | FormData, token: string): Promise<any> {
-    const headers: any = { Authorization: `Bearer ${token}` };
+    try {
+      const headers: any = { Authorization: `Bearer ${token}` };
 
-    if (!(postData instanceof FormData)) {
-      headers['Content-Type'] = 'application/json';
+      if (!(postData instanceof FormData)) {
+        headers['Content-Type'] = 'application/json';
+      } else {
+        headers['Content-Type'] = 'multipart/form-data';
+      }
+
+      console.log('Creating post with URL:', `${config.apiUrl}/api/post/create`);
+      console.log('Headers:', { ...headers, Authorization: 'Bearer [HIDDEN]' });
+
+      const response = await withRetry(
+        () => axios.post(`${config.apiUrl}/api/post/create`, postData, { headers }),
+        { maxRetries: 3, retryDelay: 2000 }
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Post creation failed:', error);
+      throw error;
     }
-
-    const response = await withRetry(
-      () => axios.post(`${config.apiUrl}/api/post/create`, postData, { headers }),
-      { maxRetries: 2, retryDelay: 1500 }
-    );
-    return response.data;
   },
 
   async updatePost(

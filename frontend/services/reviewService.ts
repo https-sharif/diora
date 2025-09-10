@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios from '@/utils/axiosConfig';
 import { config } from '@/config';
 import { ReviewData } from '@/types/Review';
 import { showToast, toastMessages } from '@/utils/toastUtils';
@@ -16,11 +16,17 @@ export const reviewService = {
 
   async createReview(reviewData: ReviewData | FormData, token: string): Promise<any> {
     try {
+      const headers: any = { Authorization: `Bearer ${token}` };
+      
+      if (reviewData instanceof FormData) {
+        headers['Content-Type'] = 'multipart/form-data';
+      }
+      
       const response = await axios.post(
         `${config.apiUrl}/api/review`,
         reviewData,
         {
-          headers: { Authorization: `Bearer ${token}` },
+          headers,
         }
       );
       showToast.success(toastMessages.commentSuccess);
@@ -38,11 +44,17 @@ export const reviewService = {
     token: string
   ): Promise<any> {
     try {
+      const headers: any = { Authorization: `Bearer ${token}` };
+      
+      if (reviewData instanceof FormData) {
+        headers['Content-Type'] = 'multipart/form-data';
+      }
+      
       const response = await axios.put(
         `${config.apiUrl}/api/review/${reviewId}`,
         reviewData,
         {
-          headers: { Authorization: `Bearer ${token}` },
+          headers,
         }
       );
       showToast.success('Review updated successfully!');

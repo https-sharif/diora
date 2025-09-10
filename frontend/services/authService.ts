@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios from '@/utils/axiosConfig';
 import { config } from '@/config';
 import { LoginData, SignupData, AuthResponse } from '@/types/Auth';
 import { showToast, toastMessages } from '@/utils/toastUtils';
