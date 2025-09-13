@@ -570,6 +570,7 @@ export default function ShoppingScreen() {
     } catch {}
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const debouncedProductSearch = useCallback(
     debounce((query, filterSnapshot) => {
       fetchProductResults(query, filterSnapshot);
@@ -593,6 +594,7 @@ export default function ShoppingScreen() {
     } else {
       onRefresh();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery, selectedCategory, debouncedProductSearch, token]);
 
   useEffect(() => {
@@ -605,6 +607,7 @@ export default function ShoppingScreen() {
     };
 
     fetch();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   const handleProductPress = (product: Product) => {
@@ -619,7 +622,6 @@ export default function ShoppingScreen() {
 
   const confirmAddToCart = () => {
     if (selectedProduct) {
-      // Check if product is out of stock
       if (selectedProduct.stock <= 0) {
         Alert.alert('Out of Stock', 'This product is currently out of stock.');
         setSelectedProduct(null);

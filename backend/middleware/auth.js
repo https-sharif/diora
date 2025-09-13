@@ -2,7 +2,6 @@ import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 
 export const verifyToken = async (req, res, next) => {
-  console.log('Verify Token middleware hit');
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -89,7 +88,6 @@ export const verifyToken = async (req, res, next) => {
 };
 
 export const optionalAuth = async (req, res, next) => {
-  console.log('Optional Auth middleware hit');
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {

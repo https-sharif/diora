@@ -553,7 +553,6 @@ export default function UserProfileScreen() {
     if (existingConversation) {
       router.push(`/message/${existingConversation._id}`);
     } else {
-      // Navigate to messages screen where user can start new conversation
       router.push('/messages');
     }
   };

@@ -2,7 +2,6 @@ import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 
 export const verifyAdmin = async (req, res, next) => {
-  console.log('Admin verification middleware hit');
   try {
     const token = req.header('Authorization')?.replace('Bearer ', '');
 
@@ -43,7 +42,6 @@ export const verifyAdmin = async (req, res, next) => {
 };
 
 export const verifyAdminOrOwner = async (req, res, next) => {
-  console.log('Admin or Owner verification middleware hit');
   try {
     const token = req.header('Authorization')?.replace('Bearer ', '');
 

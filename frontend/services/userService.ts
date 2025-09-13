@@ -27,7 +27,6 @@ export const userService = {
         {
           headers: { 
             Authorization: `Bearer ${token}`,
-            // Let axios handle Content-Type and boundary for FormData
           },
         }
       );
@@ -148,7 +147,6 @@ export const userService = {
         {
           headers: { 
             Authorization: `Bearer ${token}`,
-            // Let axios handle Content-Type and boundary for FormData
           },
         }
       );
@@ -168,9 +166,6 @@ export const userService = {
       if (formData instanceof FormData) {
         headers['Content-Type'] = 'multipart/form-data';
       }
-
-      console.log('Creating promotion request with URL:', `${config.apiUrl}/api/user/request-promotion`);
-      console.log('Headers:', { ...headers, Authorization: 'Bearer [HIDDEN]' });
 
       const response = await withRetry(
         () => axios.post(`${config.apiUrl}/api/user/request-promotion`, formData, { headers }),

@@ -3,7 +3,6 @@ import User from '../models/User.js';
 import { getIO, onlineUsers } from '../sockets/socketSetup.js';
 
 export const addNotification = async (req, res) => {
-  console.log('Add notification route/controller hit');
   const {
     type,
     userId,
@@ -106,7 +105,6 @@ export const addNotification = async (req, res) => {
 };
 
 export const getNotifications = async (req, res) => {
-  console.log('Get notifications route/controller hit');
   const userId = req.user.id;
 
   if (!userId) {
@@ -138,7 +136,6 @@ export const getNotifications = async (req, res) => {
 };
 
 export const markNotificationAsRead = async (req, res) => {
-  console.log('Mark notification as read route/controller hit');
   const { notificationId } = req.params;
 
   if (!notificationId) {
@@ -170,7 +167,6 @@ export const markNotificationAsRead = async (req, res) => {
 };
 
 export const markAllNotificationsAsRead = async (req, res) => {
-  console.log('Mark all notifications as read route/controller hit');
   const userId = req.user.id;
 
   if (!userId) {
@@ -190,7 +186,6 @@ export const markAllNotificationsAsRead = async (req, res) => {
 };
 
 export const deleteNotification = async (req, res) => {
-  console.log('Delete notification route/controller hit');
   const { notificationId } = req.params;
 
   if (!notificationId) {
@@ -217,7 +212,6 @@ export const deleteNotification = async (req, res) => {
 };
 
 export const cleanupOldNotifications = async (req, res) => {
-  console.log('Cleanup old notifications route/controller hit');
   try {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);

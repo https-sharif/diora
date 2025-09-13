@@ -10,7 +10,6 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
 });
 
 router.post('/create-account-link', async (req, res) => {
-  console.log('Create account link route/controller hit');
   try {
     const user = req.userDetails;
     if (!user || user.type !== 'shop') {
@@ -46,7 +45,6 @@ router.post('/create-account-link', async (req, res) => {
 });
 
 router.get('/check-onboarding-status', async (req, res) => {
-  console.log('Check onboarding status route/controller hit');
   try {
     const user = req.userDetails;
     if (!user || user.type !== 'shop')

@@ -2,7 +2,6 @@ import Wishlist from '../models/Wishlist.js';
 import Product from '../models/Product.js';
 
 export const getWishlist = async (req, res) => {
-  console.log('Get wishlist route/controller hit');
   try {
     const userId = req.user.id;
 
@@ -21,13 +20,12 @@ export const getWishlist = async (req, res) => {
 
     res.json({ status: true, wishlist: wishlist.products });
   } catch (err) {
-    console.error(err);
+    console.error('Get wishlist error:', err);
     res.status(500).json({ status: false, message: 'Something went wrong' });
   }
 };
 
 export const addToWishlist = async (req, res) => {
-  console.log('Add to wishlist route/controller hit');
   try {
     const userId = req.user.id;
     const { productId } = req.body;
@@ -63,13 +61,12 @@ export const addToWishlist = async (req, res) => {
 
     res.json({ status: true, wishlist: wishlist.products });
   } catch (err) {
-    console.error(err);
+    console.error('Add to wishlist error:', err);
     res.status(500).json({ status: false, message: 'Something went wrong' });
   }
 };
 
 export const removeFromWishlist = async (req, res) => {
-  console.log('Remove from wishlist route/controller hit');
   try {
     const userId = req.user.id;
     const { productId } = req.body;
@@ -94,13 +91,12 @@ export const removeFromWishlist = async (req, res) => {
 
     res.json({ status: true, wishlist: wishlist.products });
   } catch (err) {
-    console.error(err);
+    console.error('Remove from wishlist error:', err);
     res.status(500).json({ status: false, message: 'Something went wrong' });
   }
 };
 
 export const toggleWishlist = async (req, res) => {
-  console.log('Toggle wishlist route/controller hit');
   try {
     const userId = req.user.id;
     const { productId } = req.body;
@@ -137,7 +133,7 @@ export const toggleWishlist = async (req, res) => {
 
     res.json({ status: true, wishlist: wishlist.products });
   } catch (err) {
-    console.error(err);
+    console.error('Toggle wishlist error:', err);
     res.status(500).json({ status: false, message: 'Something went wrong' });
   }
 };

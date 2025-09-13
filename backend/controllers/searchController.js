@@ -3,7 +3,6 @@ import User from '../models/User.js';
 import Product from '../models/Product.js';
 
 export const getSearchResults = async (req, res) => {
-  console.log('Get search results route/controller hit');
   try {
     const {
       query,
@@ -155,7 +154,6 @@ export const getSearchResults = async (req, res) => {
 };
 
 export const searchUsers = async (req, res) => {
-  console.log('Search user route/controller hit');
   try {
     const { q: query } = req.query;
     const userId = req.userDetails?._id;
@@ -206,7 +204,6 @@ export const searchUsers = async (req, res) => {
 };
 
 export const searchShops = async (req, res) => {
-  console.log('Search shop route/controller hit');
   try {
     const { q: query } = req.query;
     const userId = req.userDetails?._id;

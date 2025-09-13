@@ -5,8 +5,6 @@ import Notification from '../models/Notification.js';
 import { getIO, onlineUsers } from '../sockets/socketSetup.js';
 
 export const createComment = async (req, res) => {
-  console.log('Create comment route/controller hit');
-
   const { userId, postId, text } = req.body;
 
   if (!userId || !postId || !text) {
@@ -125,8 +123,6 @@ export const createComment = async (req, res) => {
 };
 
 export const createReply = async (req, res) => {
-  console.log('Create reply route/controller hit');
-
   const commentId = req.params.commentId;
   const { userId, text, postId } = req.body;
 
@@ -188,7 +184,6 @@ export const createReply = async (req, res) => {
 };
 
 export const getComments = async (req, res) => {
-  console.log('Get comments route/controller hit');
   const { postId } = req.params;
   const { page = 1, limit = 10 } = req.query;
 
@@ -247,7 +242,6 @@ export const getComments = async (req, res) => {
 };
 
 export const deleteComment = async (req, res) => {
-  console.log('Delete comment route/controller hit');
   try {
     const { commentId } = req.params;
     const userId = req.user.id;
@@ -301,8 +295,6 @@ export const deleteComment = async (req, res) => {
 };
 
 export const updateComment = async (req, res) => {
-  console.log('Update comment route/controller hit');
-
   const { commentId } = req.params;
   const { text } = req.body;
   const userId = req.user.id;
@@ -352,8 +344,6 @@ export const updateComment = async (req, res) => {
 };
 
 export const reportComment = async (req, res) => {
-  console.log('Report comment route/controller hit');
-
   const { commentId } = req.params;
   const userId = req.user.id;
 
@@ -367,7 +357,6 @@ export const reportComment = async (req, res) => {
       });
     }
 
-    // Check if user already reported this comment
     const existingReport = await Report.findOne({
       type: 'comment',
       reportedItemId: commentId,
@@ -381,12 +370,12 @@ export const reportComment = async (req, res) => {
       });
     }
 
-    // Create a new report
+    const { reason } = req.body;
     const report = new Report({
       type: 'comment',
       reportedItemId: commentId,
       reportedBy: userId,
-      reason: 'Reported by user', // Could be expanded to include specific reasons
+      reason: reason || 'Reported by user',
     });
 
     await report.save();

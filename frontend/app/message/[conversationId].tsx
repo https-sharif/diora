@@ -1418,7 +1418,6 @@ export default function MessageScreen() {
                 await messageService.markMessagesAsRead(conversationId, token);
                 markConversationAsRead(conversationId);
                 
-                // Prevent rapid successive calls
                 setTimeout(() => {
                   isMarkingAsReadRef.current = false;
                 }, 2000);

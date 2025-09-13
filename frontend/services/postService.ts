@@ -34,9 +34,6 @@ export const postService = {
         headers['Content-Type'] = 'multipart/form-data';
       }
 
-      console.log('Creating post with URL:', `${config.apiUrl}/api/post/create`);
-      console.log('Headers:', { ...headers, Authorization: 'Bearer [HIDDEN]' });
-
       const response = await withRetry(
         () => axios.post(`${config.apiUrl}/api/post/create`, postData, { headers }),
         { maxRetries: 3, retryDelay: 2000 }

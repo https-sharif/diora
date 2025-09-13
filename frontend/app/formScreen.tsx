@@ -180,7 +180,6 @@ export default function CreateFormScreen() {
       }
       showToast.success(toastMessages.createSuccess(isProduct ? 'Product' : 'Post'));
       reset();
-      // Navigate back to main screen after successful creation
       router.push('/(tabs)');
     } catch (error) {
       console.error('Post creation failed:', error);

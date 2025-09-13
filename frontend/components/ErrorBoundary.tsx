@@ -35,12 +35,7 @@ class ErrorBoundary extends Component<Props, State> {
     if (this.props.onError) {
       this.props.onError(error, errorInfo);
     }
-
-    // Show error toast to user
     showToast.error('An unexpected error occurred. Please try again.');
-
-    // Here you could send error to monitoring service
-    // Example: errorReportingService.logError(error, errorInfo);
   }
 
   handleRetry = () => {

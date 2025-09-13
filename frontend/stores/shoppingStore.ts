@@ -151,7 +151,7 @@ export const useShoppingStore = create<ShoppingStore>((set, get) => {
             productId: product._id,
             quantity: quantity || 1,
             size,
-            color: variant,
+            variant: variant,
           },
           token
         );

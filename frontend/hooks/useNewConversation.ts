@@ -159,8 +159,6 @@ export const useNewConversation = ({
         return;
       }
 
-      // Don't create conversation yet - just navigate to the user
-      // Conversation will be created when first message is sent
       closeModal();
       router.push(`/message/${selectedUser._id}`);
     } catch {

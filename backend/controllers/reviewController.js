@@ -4,7 +4,6 @@ import User from '../models/User.js';
 import { deleteImage } from '../utils/cloudinary.js';
 
 export const createReview = async (req, res) => {
-  console.log('Create review route/controller hit');
   try {
     const { targetId, targetType, rating, comment } = req.body;
     const userId = req.user.id;
@@ -68,7 +67,6 @@ export const createReview = async (req, res) => {
 };
 
 export const getReviewsByTargetId = async (req, res, targetType = null) => {
-  console.log('Get reviews by target ID route/controller hit');
   try {
     const { targetId, productId, shopId } = req.params;
     const id = targetId || productId || shopId;
@@ -109,7 +107,6 @@ export const getReviewsByTargetId = async (req, res, targetType = null) => {
 };
 
 export const reviewed = async (req, res) => {
-  console.log('Check if user has reviewed shop route/controller hit');
   try {
     const { userId, targetType, targetId } = req.params;
 
@@ -137,7 +134,6 @@ export const reviewed = async (req, res) => {
 };
 
 export const deleteReview = async (req, res) => {
-  console.log('Delete review route/controller hit');
   try {
     const { id } = req.params;
     const userId = req.user.id;
@@ -192,7 +188,6 @@ export const deleteReview = async (req, res) => {
 };
 
 export const updateReview = async (req, res) => {
-  console.log('Update review route/controller hit');
   try {
     const { id } = req.params;
     const userId = req.user.id;

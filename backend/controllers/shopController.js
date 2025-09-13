@@ -21,7 +21,6 @@ const isUserAccessible = (user, requesterIsAdmin = false) => {
 };
 
 export const getAllShops = async (req, res) => {
-  console.log('Get all shops route/controller hit');
   try {
     const isAdmin = req.userDetails && req.userDetails.type === 'admin';
 
@@ -40,7 +39,6 @@ export const getAllShops = async (req, res) => {
 };
 
 export const getShopById = async (req, res) => {
-  console.log('Get shop by ID route/controller hit');
   try {
     const shopId = req.params.shopId;
     const isAdmin = req.userDetails && req.userDetails.type === 'admin';
@@ -89,7 +87,6 @@ export const getShopById = async (req, res) => {
 };
 
 export const createShop = async (req, res) => {
-  console.log('Create shop route/controller hit');
   try {
     const {
       name,
@@ -168,7 +165,6 @@ export const createShop = async (req, res) => {
 };
 
 export const updateShop = async (req, res) => {
-  console.log('Update shop route/controller hit');
   try {
     const shopId = req.params.shopId;
     const {
@@ -241,7 +237,6 @@ export const updateShop = async (req, res) => {
 };
 
 export const deleteShop = async (req, res) => {
-  console.log('Delete shop route/controller hit');
   try {
     const shopId = req.params.shopId;
 
@@ -264,7 +259,6 @@ export const deleteShop = async (req, res) => {
 };
 
 export const getTrendingShops = async (req, res) => {
-  console.log('Get trending shops route/controller hit');
   try {
     const currentUserId = req.user.id;
     const isAdmin = req.userDetails && req.userDetails.type === 'admin';
@@ -301,7 +295,6 @@ export const getTrendingShops = async (req, res) => {
 };
 
 export const followShop = async (req, res) => {
-  console.log('Follow shop route/controller hit');
   try {
     const userId = req.user.id;
     const shopId = req.params.shopId;
@@ -353,7 +346,6 @@ export const followShop = async (req, res) => {
 };
 
 export const getShopAnalytics = async (req, res) => {
-  console.log('Get shop analytics route/controller hit');
   try {
     const shopId = req.user.id;
 
@@ -469,8 +461,6 @@ export const getShopAnalytics = async (req, res) => {
 };
 
 export const updateShopProfile = async (req, res) => {
-  console.log('Update shop profile route/controller hit');
-
   try {
     const shopId = req.user.id;
 

@@ -18,7 +18,6 @@ export const androidFormDataUpload = async (
       headers: {
         'Authorization': `Bearer ${token}`,
         'Accept': 'application/json',
-        // Don't set Content-Type for FormData - let browser set the boundary
       },
       body: formData,
     });

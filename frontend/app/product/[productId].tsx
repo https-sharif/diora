@@ -789,7 +789,6 @@ const createStyles = (theme: Theme) => {
       color: theme.textSecondary,
       marginTop: 2,
     },
-    // Edit form styles
     editForm: {
       flex: 1,
       backgroundColor: theme.background,
@@ -830,7 +829,6 @@ const createStyles = (theme: Theme) => {
     cancelButtonText: {
       color: theme.text,
     },
-    // Edit modal styles
     editModalOverlay: {
       flex: 1,
       backgroundColor: 'rgba(0, 0, 0, 0.4)',
@@ -923,7 +921,6 @@ export default function ProductDetailScreen() {
   const [selectedUsers, setSelectedUsers] = useState<User[]>([]);
   const [searchedUsers, setSearchedUsers] = useState<User[]>([]);
   
-  // Edit product states
   const [showEditModal, setShowEditModal] = useState(false);
   const [editName, setEditName] = useState('');
   const [editDescription, setEditDescription] = useState('');
@@ -1181,13 +1178,11 @@ export default function ProductDetailScreen() {
       return;
     }
 
-    // Check if product is out of stock
     if (product.stock <= 0) {
       showToast.error('This product is currently out of stock');
       return;
     }
 
-    // Check if requested quantity exceeds available stock
     if (quantity > product.stock) {
       showToast.error(`Only ${product.stock} items available in stock`);
       return;

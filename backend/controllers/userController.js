@@ -23,7 +23,6 @@ const isUserAccessible = (user, requesterIsAdmin = false) => {
 };
 
 export const getCurrentUser = async (req, res) => {
-  console.log('Get current user route/controller hit');
   try {
     const userId = req.user.id;
 
@@ -99,7 +98,6 @@ export const getCurrentUser = async (req, res) => {
 };
 
 export const followUser = async (req, res) => {
-  console.log('Follow user route/controller hit');
   try {
     const currentUserId = req.user.id;
     const targetUserId = req.params.targetUserId;
@@ -143,7 +141,6 @@ export const followUser = async (req, res) => {
 };
 
 export const getUserProfile = async (req, res) => {
-  console.log('Get user profile route/controller hit');
   try {
     const userId = req.params.userId;
     const isAdmin = req.userDetails && req.userDetails.type === 'admin';
@@ -198,7 +195,6 @@ export const getUserProfile = async (req, res) => {
 };
 
 export const getTrendingUsers = async (req, res) => {
-  console.log('Get trending users route/controller hit');
   try {
     const currentUserId = req.user.id;
     const isAdmin = req.userDetails && req.userDetails.type === 'admin';
@@ -244,7 +240,6 @@ export const getTrendingUsers = async (req, res) => {
 };
 
 export const updateUserProfile = async (req, res) => {
-  console.log('Update user profile route/controller hit');
   try {
     const userId = req.user.id;
     const { fullName, bio, username } = req.body;
@@ -290,7 +285,6 @@ export const updateUserProfile = async (req, res) => {
 };
 
 export const updateUserEmail = async (req, res) => {
-  console.log('Update user email route/controller hit');
   try {
     const userId = req.user.id;
     const { email } = req.body;
@@ -319,7 +313,6 @@ export const updateUserEmail = async (req, res) => {
 };
 
 export const updateUserPassword = async (req, res) => {
-  console.log('Update user password route/controller hit');
   try {
     const userId = req.user.id;
     const { currentPassword, newPassword } = req.body;
@@ -351,7 +344,6 @@ export const updateUserPassword = async (req, res) => {
 };
 
 export const getUserSettings = async (req, res) => {
-  console.log('Get user settings route/controller hit');
   try {
     const userId = req.user.id;
 
@@ -370,7 +362,6 @@ export const getUserSettings = async (req, res) => {
 };
 
 export const updateUserSettings = async (req, res) => {
-  console.log('Update user settings route/controller hit');
   try {
     const userId = req.user.id;
     const { theme, notifications } = req.body;
@@ -427,7 +418,6 @@ export const updateUserSettings = async (req, res) => {
 };
 
 export const requestPromotion = async (req, res) => {
-  console.log('Request promotion route/controller hit');
   try {
     const userId = req.user.id;
     const {
@@ -536,7 +526,6 @@ export const requestPromotion = async (req, res) => {
 };
 
 export const approvePromotionRequest = async (req, res) => {
-  console.log('Approve promotion request route/controller hit');
   try {
     const adminId = req.user.id;
     const { requestId } = req.params;
@@ -685,7 +674,6 @@ export const approvePromotionRequest = async (req, res) => {
 };
 
 export const getPromotionRequests = async (req, res) => {
-  console.log('Get promotion requests route/controller hit');
   try {
     const adminId = req.user.id;
 
@@ -718,7 +706,6 @@ export const getPromotionRequests = async (req, res) => {
 };
 
 export const completeOnboarding = async (req, res) => {
-  console.log('Complete onboarding route/controller hit');
   try {
     const userId = req.user.id;
     const { onboarding } = req.body;
@@ -786,7 +773,6 @@ export const completeOnboarding = async (req, res) => {
 };
 
 export const uploadImage = async (req, res) => {
-  console.log('Upload image route/controller hit');
   try {
     const file = req.file;
 
@@ -816,7 +802,6 @@ export const uploadImage = async (req, res) => {
 };
 
 export const completeShopOnboarding = async (req, res) => {
-  console.log('Complete shop onboarding route/controller hit');
   try {
     const userId = req.user.id;
     const { onboarding, avatar, shop } = req.body;
@@ -927,7 +912,6 @@ export const completeShopOnboarding = async (req, res) => {
 };
 
 export const updateShopDetails = async (req, res) => {
-  console.log('Update shop details route/controller hit');
   try {
     const userId = req.user.id;
     const { shop } = req.body;

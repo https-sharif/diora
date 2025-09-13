@@ -32,7 +32,7 @@ export const networkDiagnostics = {
       console.log(`Testing endpoint: ${url}`);
       
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
       
       const response = await fetch(url, {
         method: 'HEAD',

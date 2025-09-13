@@ -398,7 +398,6 @@ export default function MessagesScreen() {
   const { token } = useAuthStore();
   const styles = createStyles(theme);
 
-  // New conversation functionality
   const newConversationHook = useNewConversation({
     token,
     user,

@@ -13,7 +13,6 @@ import {
 import { deleteImage } from '../utils/cloudinary.js';
 
 export const getConversations = async (req, res) => {
-  console.log('Get conversations route/controller hit');
   try {
     const userId = req.user.id;
 
@@ -32,7 +31,6 @@ export const getConversations = async (req, res) => {
 };
 
 export const getOrCreateConversation = async (req, res) => {
-  console.log('Get or create conversation route/controller hit');
   try {
     const userId = req.user.id;
     const { participantId, type = 'private' } = req.body;
@@ -82,7 +80,6 @@ export const getOrCreateConversation = async (req, res) => {
 };
 
 export const getConversationId = async (req, res) => {
-  console.log('Get conversation ID route/controller hit');
   try {
     const userId = req.user.id;
     const { otherUserId } = req.params;
@@ -120,7 +117,6 @@ export const getConversationId = async (req, res) => {
 };
 
 export const getMessages = async (req, res) => {
-  console.log('Get messages route/controller hit');
   try {
     const userId = req.user.id;
     const { conversationId } = req.params;
@@ -159,7 +155,6 @@ export const getMessages = async (req, res) => {
 };
 
 export const sendMessage = async (req, res) => {
-  console.log('Send message route/controller hit');
   try {
     const userId = req.user.id;
     const {
@@ -307,7 +302,6 @@ export const sendMessage = async (req, res) => {
 };
 
 export const markMessagesAsRead = async (req, res) => {
-  console.log('Mark messages as read route/controller hit');
   try {
     const userId = req.user.id;
     const { conversationId } = req.params;
@@ -345,7 +339,6 @@ export const markMessagesAsRead = async (req, res) => {
 };
 
 export const addReaction = async (req, res) => {
-  console.log('Add reaction route/controller hit');
   try {
     const userId = req.user.id;
     const { messageId } = req.params;
@@ -414,7 +407,6 @@ export const addReaction = async (req, res) => {
 };
 
 export const deleteMessage = async (req, res) => {
-  console.log('Delete message route/controller hit');
   try {
     const userId = req.user.id;
     const { messageId } = req.params;
@@ -464,7 +456,6 @@ export const deleteMessage = async (req, res) => {
 };
 
 export const createGroupConversation = async (req, res) => {
-  console.log('Create group conversation route/controller hit');
   try {
     const userId = req.user.id;
     const { name, participants } = req.body;
@@ -547,7 +538,6 @@ export const createGroupConversation = async (req, res) => {
 };
 
 export const leaveGroup = async (req, res) => {
-  console.log('Leave group route/controller hit');
   try {
     const userId = req.user.id;
     const { conversationId } = req.params;
@@ -619,7 +609,6 @@ export const leaveGroup = async (req, res) => {
 };
 
 export const updateGroup = async (req, res) => {
-  console.log('Update group route/controller hit');
   try {
     const userId = req.user.id;
     const { conversationId } = req.params;
@@ -698,7 +687,6 @@ export const updateGroup = async (req, res) => {
 };
 
 export const addUser = async (req, res) => {
-  console.log('Add user to group route/controller hit');
   try {
     const userId = req.user.id;
     const { conversationId } = req.params;

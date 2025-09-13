@@ -1,7 +1,6 @@
 import User from '../models/User.js';
 
 export const searchUsers = async (req, res) => {
-  console.log('Search users route/controller hit');
   try {
     const { q: query } = req.query;
     const userId = req.userDetails?._id;
@@ -48,7 +47,6 @@ export const searchUsers = async (req, res) => {
 };
 
 export const searchShops = async (req, res) => {
-  console.log('Search shops route/controller hit');
   try {
     const { q: query } = req.query;
     const userId = req.userDetails?._id;
@@ -96,7 +94,6 @@ export const searchShops = async (req, res) => {
 };
 
 export const searchUsersAndShops = async (req, res) => {
-  console.log('Search users and shops route/controller hit');
   try {
     const { q: query } = req.query;
     const userId = req.userDetails?._id;

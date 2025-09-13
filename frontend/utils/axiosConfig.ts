@@ -22,7 +22,6 @@ axiosInstance.interceptors.request.use(
       config.headers['Connection'] = 'keep-alive';
       
       if (config.data && config.data._parts) {
-        console.log('Android FormData upload detected, optimizing...');
         config.timeout = 120000;
         delete config.headers['Content-Type'];
       }

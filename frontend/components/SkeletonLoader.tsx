@@ -63,7 +63,6 @@ const SkeletonLoader = ({
 
 const styles = StyleSheet.create({
   skeleton: {
-    // Base styles are applied dynamically
   },
   productCard: {
     width: '48%',
@@ -134,7 +133,6 @@ const styles = StyleSheet.create({
   },
 });
 
-// Product Card Skeleton
 export const ProductCardSkeleton = () => {
   const { theme } = useTheme();
 
@@ -152,7 +150,6 @@ export const ProductCardSkeleton = () => {
   );
 };
 
-// Post Card Skeleton
 export const PostCardSkeleton = () => {
   const { theme } = useTheme();
 
@@ -174,7 +171,6 @@ export const PostCardSkeleton = () => {
   );
 };
 
-// User Profile Skeleton
 export const UserProfileSkeleton = () => {
   const { theme } = useTheme();
 
@@ -205,7 +201,6 @@ export const UserProfileSkeleton = () => {
   );
 };
 
-// Product List Skeleton
 export const ProductListSkeleton = ({ count = 6 }: { count?: number }) => {
   return (
     <View style={styles.productList}>
@@ -216,7 +211,6 @@ export const ProductListSkeleton = ({ count = 6 }: { count?: number }) => {
   );
 };
 
-// Post List Skeleton
 export const PostListSkeleton = ({ count = 4 }: { count?: number }) => {
   return (
     <View style={styles.postList}>

@@ -6,7 +6,6 @@ import Stripe from 'stripe';
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export const signup = async (req, res) => {
-  console.log('Signup route/controller hit');
   const { email, username, fullName, password } = req.body;
 
   if (!email || !username || !fullName || !password)
@@ -106,7 +105,6 @@ export const signup = async (req, res) => {
 };
 
 export const login = async (req, res) => {
-  console.log('Login route/controller hit');
   const { username, password } = req.body;
 
   if (!username || !password)

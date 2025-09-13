@@ -28,7 +28,6 @@ export const waitForNetworkConnection = async (maxWaitTime: number = 10000): Pro
       return true;
     }
     
-    // Wait 1 second before checking again
     await new Promise(resolve => setTimeout(resolve, 1000));
   }
   

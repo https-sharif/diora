@@ -7,7 +7,6 @@ export const useToast = () => {
     showToast,
     hideToast,
     currentToast,
-    // Legacy compatibility methods
     visible: {
       error: currentToast?.type === 'error' && currentToast.visible,
       success: currentToast?.type === 'success' && currentToast.visible,

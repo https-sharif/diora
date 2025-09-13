@@ -8,7 +8,6 @@ import Notification from '../models/Notification.js';
 import { getIO, onlineUsers } from '../sockets/socketSetup.js';
 
 export const getAdminStats = async (req, res) => {
-  console.log('Get admin stats route/controller hit');
   try {
     const totalUsers = await User.countDocuments({ type: 'user' });
     const totalShops = await User.countDocuments({ type: 'shop' });
@@ -100,7 +99,6 @@ export const getAdminStats = async (req, res) => {
 };
 
 export const getSystemHealth = async (req, res) => {
-  console.log('Get system health route/controller hit');
   try {
     const dbStats = {
       connected: true,
@@ -154,7 +152,6 @@ export const getSystemHealth = async (req, res) => {
 };
 
 export const searchUsers = async (req, res) => {
-  console.log('Admin search users route/controller hit');
   try {
     const { query, type, status, page = 1, limit = 20 } = req.query;
 
@@ -207,7 +204,6 @@ export const searchUsers = async (req, res) => {
 };
 
 export const suspendUser = async (req, res) => {
-  console.log('Admin suspend user route/controller hit');
   try {
     const { userId } = req.params;
     const { duration = 7, reason } = req.body;
@@ -265,7 +261,6 @@ export const suspendUser = async (req, res) => {
 };
 
 export const banUser = async (req, res) => {
-  console.log('Admin ban user route/controller hit');
   try {
     const { userId } = req.params;
     const { reason } = req.body;
@@ -319,7 +314,6 @@ export const banUser = async (req, res) => {
 };
 
 export const unbanUser = async (req, res) => {
-  console.log('Admin unban user route/controller hit');
   try {
     const { userId } = req.params;
 
@@ -368,7 +362,6 @@ export const unbanUser = async (req, res) => {
 };
 
 export const warnUser = async (req, res) => {
-  console.log('Admin warn user route/controller hit');
   try {
     const { userId } = req.params;
     const { message } = req.body;
@@ -413,7 +406,6 @@ export const warnUser = async (req, res) => {
 };
 
 export const searchPosts = async (req, res) => {
-  console.log('Admin search posts route/controller hit');
   try {
     const { query, sort, reported, hidden } = req.query;
 
@@ -460,7 +452,6 @@ export const searchPosts = async (req, res) => {
 };
 
 export const searchProducts = async (req, res) => {
-  console.log('Admin search products route/controller hit');
   try {
     const { query, sort, reported, stock } = req.query;
 
@@ -511,7 +502,6 @@ export const searchProducts = async (req, res) => {
 };
 
 export const hidePost = async (req, res) => {
-  console.log('Admin hide post route/controller hit');
   try {
     const { postId } = req.params;
 
@@ -537,7 +527,6 @@ export const hidePost = async (req, res) => {
 };
 
 export const showPost = async (req, res) => {
-  console.log('Admin show post route/controller hit');
   try {
     const { postId } = req.params;
 
@@ -563,7 +552,6 @@ export const showPost = async (req, res) => {
 };
 
 export const hideProduct = async (req, res) => {
-  console.log('Admin hide product route/controller hit');
   try {
     const { productId } = req.params;
 
@@ -591,7 +579,6 @@ export const hideProduct = async (req, res) => {
 };
 
 export const showProduct = async (req, res) => {
-  console.log('Admin show product route/controller hit');
   try {
     const { productId } = req.params;
 

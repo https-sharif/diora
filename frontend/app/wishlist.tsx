@@ -422,7 +422,6 @@ const Wishlist = () => {
   };
 
   const handleAddToCart = (product: Product) => {
-    // Check if product is out of stock
     if (product.stock <= 0) {
       Alert.alert('Out of Stock', 'This product is currently out of stock.');
       return;
@@ -435,7 +434,6 @@ const Wishlist = () => {
 
   const confirmAddToCart = () => {
     if (selectedProduct) {
-      // Double-check stock before adding to cart
       if (selectedProduct.stock <= 0) {
         Alert.alert('Out of Stock', 'This product is currently out of stock.');
         setSelectedProduct(null);

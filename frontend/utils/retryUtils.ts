@@ -54,7 +54,6 @@ export const withRetry = async <T = any>(
 
       console.warn(`API call failed on attempt ${attempt + 1}, retrying in ${retryDelay}ms...`, (error as Error).message);
 
-      // Check network connectivity before retrying
       const isConnected = await checkNetworkConnectivity();
       if (!isConnected) {
         console.error('No network connectivity, skipping retry');

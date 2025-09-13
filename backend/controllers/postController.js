@@ -4,7 +4,6 @@ import Notification from '../models/Notification.js';
 import { getIO, onlineUsers } from '../sockets/socketSetup.js';
 
 export const likePost = async (req, res) => {
-  console.log('Like post route/controller hit');
   try {
     const userId = req.user.id;
     const postId = req.params.postId;
@@ -206,7 +205,6 @@ export const likePost = async (req, res) => {
 };
 
 export const getAllPost = async (req, res) => {
-  console.log('Get all posts route/controller hit');
   try {
     const isAdmin = req.userDetails && req.userDetails.type === 'admin';
 
@@ -235,7 +233,6 @@ export const getAllPost = async (req, res) => {
 };
 
 export const createPost = async (req, res) => {
-  console.log('Create post route/controller hit');
   try {
     const userId = req.user.id;
 
@@ -266,7 +263,6 @@ export const createPost = async (req, res) => {
 };
 
 export const getUserPosts = async (req, res) => {
-  console.log('Get user posts route/controller hit');
   try {
     const userId = req.params.userId;
     const isAdmin = req.userDetails && req.userDetails.type === 'admin';
@@ -303,7 +299,6 @@ export const getUserPosts = async (req, res) => {
 };
 
 export const getLikedPosts = async (req, res) => {
-  console.log('Get liked posts route/controller hit');
   try {
     const userId = req.params.userId;
     const user = await User.findById(userId);
@@ -327,7 +322,6 @@ export const getLikedPosts = async (req, res) => {
 };
 
 export const getPost = async (req, res) => {
-  console.log('Get post route/controller hit');
   try {
     const postId = req.params.postId;
     const post = await Post.findById(postId)
@@ -346,7 +340,6 @@ export const getPost = async (req, res) => {
 };
 
 export const getTrendingPosts = async (req, res) => {
-  console.log('Get trending posts route/controller hit');
   try {
     const isAdmin = req.userDetails && req.userDetails.type === 'admin';
 

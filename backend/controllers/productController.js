@@ -2,7 +2,6 @@ import Product from '../models/Product.js';
 import User from '../models/User.js';
 
 export const getAllProducts = async (req, res) => {
-  console.log('Get all products route/controller hit');
   try {
     const isAdmin = req.userDetails && req.userDetails.type === 'admin';
 
@@ -45,7 +44,6 @@ export const getAllProducts = async (req, res) => {
 };
 
 export const getProductById = async (req, res) => {
-  console.log('Get product by ID route/controller hit');
   try {
     const productId = req.params.productId;
     const isAdmin = req.userDetails && req.userDetails.type === 'admin';
@@ -75,7 +73,6 @@ export const getProductById = async (req, res) => {
 };
 
 export const createProduct = async (req, res) => {
-  console.log('Create product route/controller hit');
   try {
     const {
       name,
@@ -108,7 +105,6 @@ export const createProduct = async (req, res) => {
 
     await newProduct.save();
     
-    // Add the product to the shop's productIds array
     await User.findByIdAndUpdate(
       shopId,
       { $push: { 'shop.productIds': newProduct._id } },
@@ -123,13 +119,11 @@ export const createProduct = async (req, res) => {
 };
 
 export const updateProduct = async (req, res) => {
-  console.log('Update product route/controller hit');
   try {
     const productId = req.params.productId;
     const updates = req.body;
     const userId = req.user.id;
 
-    // First, check if the product exists and belongs to the user
     const existingProduct = await Product.findById(productId);
     if (!existingProduct) {
       return res
@@ -137,7 +131,6 @@ export const updateProduct = async (req, res) => {
         .json({ status: false, message: 'Product not found' });
     }
 
-    // Check if the user owns this product
     if (existingProduct.shopId.toString() !== userId) {
       return res
         .status(403)
@@ -156,7 +149,6 @@ export const updateProduct = async (req, res) => {
 };
 
 export const deleteProduct = async (req, res) => {
-  console.log('Delete product route/controller hit');
   try {
     const productId = req.params.productId;
 
@@ -168,13 +160,11 @@ export const deleteProduct = async (req, res) => {
         .json({ status: false, message: 'Product not found' });
     }
 
-    // Remove the product from the shop's productIds array
     await User.findByIdAndUpdate(
       product.shopId,
       { $pull: { 'shop.productIds': productId } }
     );
 
-    // Delete the product
     await Product.findByIdAndDelete(productId);
 
     res.json({ status: true, message: 'Product deleted successfully' });
@@ -185,7 +175,6 @@ export const deleteProduct = async (req, res) => {
 };
 
 export const getTrendingProducts = async (req, res) => {
-  console.log('Get trending products route/controller hit');
   try {
     const isAdmin = req.userDetails && req.userDetails.type === 'admin';
 
@@ -234,7 +223,6 @@ export const getTrendingProducts = async (req, res) => {
 };
 
 export const getProductsByShop = async (req, res) => {
-  console.log('Get products by shop route/controller hit');
   try {
     const { shopId } = req.params;
     const isAdmin = req.userDetails && req.userDetails.type === 'admin';

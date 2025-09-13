@@ -36,19 +36,15 @@ class OfflineManager {
   }
 
   private async initialize() {
-    // Initialize network status detection
     const networkState = await NetInfo.fetch();
     this.isOnline = networkState.isConnected ?? true;
 
-    // Set up network state listener
     NetInfo.addEventListener(state => {
       const wasOnline = this.isOnline;
       this.isOnline = state.isConnected ?? true;
 
-      // Show toast for network status changes
       if (!wasOnline && this.isOnline) {
         showToast.success(networkMessages.online);
-        // If we just came back online, sync pending actions
         if (this.syncQueue.length > 0) {
           this.syncPendingActions();
         }
@@ -57,7 +53,6 @@ class OfflineManager {
       }
     });
 
-    // Load pending sync items
     await this.loadSyncQueue();
   }
 
@@ -103,20 +98,17 @@ class OfflineManager {
   }
 
   async addToSyncQueue(item: Omit<SyncItem, 'timestamp' | 'retryCount'>): Promise<void> {
-    // Check if item already exists to prevent duplicates
     const existingIndex = this.syncQueue.findIndex(
       existing => existing.id === item.id && existing.type === item.type
     );
 
     if (existingIndex !== -1) {
-      // Update existing item
       this.syncQueue[existingIndex] = {
         ...this.syncQueue[existingIndex],
         data: item.data,
         timestamp: Date.now(),
       };
     } else {
-      // Add new item
       const syncItem: SyncItem = {
         ...item,
         timestamp: Date.now(),
@@ -164,7 +156,6 @@ class OfflineManager {
       } catch (error) {
         console.error(`❌ Failed to sync ${item.type} action: ${item.id}`, error);
 
-        // Increment retry count and re-queue if under limit
         if (item.retryCount < 3) {
           remainingItems.push({
             ...item,

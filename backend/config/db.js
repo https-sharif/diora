@@ -6,7 +6,6 @@ dotenv.config();
 const connectDB = async () => {
   try {
     await mongoose.connect(process.env.MONGODB_URI);
-    // Set global strictPopulate to false
     mongoose.set('strictPopulate', false);
     console.log('MongoDB connected');
   } catch (error) {

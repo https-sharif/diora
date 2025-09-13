@@ -115,7 +115,6 @@ export const wishlistService = {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      // Check if item was added or removed based on response
       const isAdded = response.data?.isWishlisted || response.data?.added;
       showToast.success(isAdded ? toastMessages.addToWishlist : toastMessages.removeFromWishlist);
       return response.data;

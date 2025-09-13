@@ -2,7 +2,6 @@ import Cart from '../models/Cart.js';
 import Product from '../models/Product.js';
 
 export const getCart = async (req, res) => {
-  console.log('Get cart route/controller hit');
   try {
     const userId = req.user.id;
 
@@ -17,13 +16,12 @@ export const getCart = async (req, res) => {
 
     res.json({ status: true, cart });
   } catch (err) {
-    console.error(err);
+    console.error('Get cart error:', err);
     res.status(500).json({ status: false, message: 'Something went wrong' });
   }
 };
 
 export const addToCart = async (req, res) => {
-  console.log('Add to cart route/controller hit');
   try {
     const userId = req.user.id;
     const { productId, quantity = 1, size, variant } = req.body;
@@ -35,7 +33,6 @@ export const addToCart = async (req, res) => {
         .json({ status: false, message: 'Product not found' });
     }
 
-    // Check if product is in stock
     if (product.stock <= 0) {
       return res
         .status(400)
@@ -60,7 +57,6 @@ export const addToCart = async (req, res) => {
       totalRequestedQuantity += cart.products[existingItemIndex].quantity;
     }
 
-    // Check if requested quantity exceeds available stock
     if (totalRequestedQuantity > product.stock) {
       return res
         .status(400)
@@ -85,13 +81,12 @@ export const addToCart = async (req, res) => {
 
     res.json({ status: true, cart });
   } catch (err) {
-    console.error(err);
+    console.error('Add to cart error:', err);
     res.status(500).json({ status: false, message: 'Something went wrong' });
   }
 };
 
 export const updateCartQuantity = async (req, res) => {
-  console.log('Update cart quantity route/controller hit');
   try {
     const userId = req.user.id;
     const { productId, quantity, size, variant } = req.body;
@@ -123,7 +118,6 @@ export const updateCartQuantity = async (req, res) => {
     if (quantity === 0) {
       cart.products.splice(itemIndex, 1);
     } else {
-      // Validate stock availability for non-zero quantities
       const product = await Product.findById(productId);
       if (!product) {
         return res
@@ -152,13 +146,12 @@ export const updateCartQuantity = async (req, res) => {
 
     res.json({ status: true, cart });
   } catch (err) {
-    console.error(err);
+    console.error('Update cart quantity error:', err);
     res.status(500).json({ status: false, message: 'Something went wrong' });
   }
 };
 
 export const removeFromCart = async (req, res) => {
-  console.log('Remove from cart route/controller hit');
   try {
     const userId = req.user.id;
     const { productId, size, variant } = req.body;
@@ -186,13 +179,12 @@ export const removeFromCart = async (req, res) => {
 
     res.json({ status: true, cart });
   } catch (err) {
-    console.error(err);
+    console.error('Remove from cart error:', err);
     res.status(500).json({ status: false, message: 'Something went wrong' });
   }
 };
 
 export const clearCart = async (req, res) => {
-  console.log('Clear cart route/controller hit');
   try {
     const userId = req.user.id;
 
@@ -206,7 +198,7 @@ export const clearCart = async (req, res) => {
 
     res.json({ status: true, cart });
   } catch (err) {
-    console.error(err);
+    console.error('Clear cart error:', err);
     res.status(500).json({ status: false, message: 'Something went wrong' });
   }
 };

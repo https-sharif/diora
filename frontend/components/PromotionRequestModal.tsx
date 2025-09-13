@@ -179,14 +179,12 @@ export const PromotionRequestModal: React.FC<PromotionRequestModalProps> = ({
 
   const pickDocument = async () => {
     try {
-      // Request permissions
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
         showToast.error('Please grant media library permissions to upload documents.');
         return;
       }
 
-      // Launch image library with Android-compatible settings
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: false,
@@ -196,7 +194,6 @@ export const PromotionRequestModal: React.FC<PromotionRequestModalProps> = ({
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
-        // Validate selected files
         const validAssets = result.assets.filter(asset => {
           if (!asset.uri) {
             console.warn('Asset missing URI:', asset);
@@ -240,7 +237,6 @@ export const PromotionRequestModal: React.FC<PromotionRequestModalProps> = ({
     try {
       setLoading(true);
 
-      // Check network connectivity first
       const isConnected = await checkNetworkConnectivity();
       if (!isConnected) {
         showToast.error('No internet connection. Please check your network and try again.');
@@ -257,7 +253,6 @@ export const PromotionRequestModal: React.FC<PromotionRequestModalProps> = ({
         const fileExtension = doc.uri.split('.').pop()?.toLowerCase() || 'jpg';
         const fileName = doc.fileName || `promotion_document_${Date.now()}_${index}.${fileExtension}`;
         
-        // Better MIME type detection for Android compatibility
         let mimeType = doc.type || doc.mimeType;
         if (!mimeType) {
           switch (fileExtension) {

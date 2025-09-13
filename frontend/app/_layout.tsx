@@ -50,7 +50,6 @@ function AppReadyWrapper({ insets }: { insets: EdgeInsets }) {
   const { handleIncomingMessage } = useMessage();
   const { initializeUserData, fetchCart } = useShopping();
 
-  // Initialize global toast for non-React contexts
   const toastInstance = useGlobalToast();
   React.useEffect(() => {
     initializeGlobalToast(toastInstance);

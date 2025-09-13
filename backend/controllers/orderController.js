@@ -9,7 +9,6 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
 });
 
 export const createOrder = async (req, res) => {
-  console.log('Create order route/controller hit');
   try {
     const userId = req.user.id;
     const { shippingAddress, paymentMethod, notes } = req.body;
@@ -126,7 +125,6 @@ export const createOrder = async (req, res) => {
 };
 
 export const createStripeSession = async (req, res) => {
-  console.log('Create Stripe session route/controller hit');
   try {
     const { orderId } = req.body;
     const order = await Order.findById(orderId).populate('items.productId');
@@ -167,7 +165,6 @@ export const createStripeSession = async (req, res) => {
 };
 
 export const getUserOrders = async (req, res) => {
-  console.log('Get user orders route/controller hit');
   try {
     const userId = req.user.id;
     const { page = 1, limit = 10 } = req.query;
@@ -197,7 +194,6 @@ export const getUserOrders = async (req, res) => {
 };
 
 export const getOrderById = async (req, res) => {
-  console.log('Get order by ID route/controller hit');
   try {
     const { orderId } = req.params;
     const userId = req.user.id;
@@ -244,7 +240,6 @@ export const getOrderById = async (req, res) => {
 };
 
 export const updateOrderStatus = async (req, res) => {
-  console.log('Update order status route/controller hit');
   try {
     const { orderId } = req.params;
     const { status, trackingNumber, estimatedDelivery } = req.body;
@@ -283,7 +278,6 @@ export const updateOrderStatus = async (req, res) => {
 };
 
 export const cancelOrder = async (req, res) => {
-  console.log('Cancel order route/controller hit');
   try {
     const { orderId } = req.params;
     const userId = req.user.id;
@@ -322,7 +316,6 @@ export const cancelOrder = async (req, res) => {
 };
 
 export const getShopOrders = async (req, res) => {
-  console.log('Get shop orders route/controller hit');
   try {
     const shopId = req.user.id;
     const { page = 1, limit = 10, status } = req.query;
@@ -424,7 +417,6 @@ export const getShopOrders = async (req, res) => {
 };
 
 export const orderSuccess = async (req, res) => {
-  console.log('Order Success route/controller hit');
   try {
     const { orderId } = req.query;
     if (!orderId) return res.status(400).send('Order ID is required');
@@ -509,7 +501,6 @@ export const orderSuccess = async (req, res) => {
 };
 
 export const orderCancel = async (req, res) => {
-  console.log('Order Cancel route/controller hit');
   const { orderId } = req.query;
 
   res.send(`

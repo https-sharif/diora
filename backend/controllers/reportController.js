@@ -8,7 +8,6 @@ import Notification from '../models/Notification.js';
 import { getIO, onlineUsers } from '../sockets/socketSetup.js';
 
 const createReport = async (req, res) => {
-  console.log('Create report route/controller hit');
   try {
     const { reportedItem, type, description, evidenceUrl } = req.body;
     const reporter = req.user.id;
@@ -89,7 +88,6 @@ const createReport = async (req, res) => {
 };
 
 const getAllReports = async (req, res) => {
-  console.log('Get all reports route/controller hit');
   try {
     const {
       status,
@@ -246,7 +244,6 @@ const getAllReports = async (req, res) => {
 };
 
 const getReportById = async (req, res) => {
-  console.log('Get report by ID route/controller hit');
   try {
     const { id } = req.params;
 
@@ -375,7 +372,6 @@ const getReportById = async (req, res) => {
 };
 
 const updateReport = async (req, res) => {
-  console.log('Update report route/controller hit');
   try {
     const { id } = req.params;
     const { status, priority, adminNotes, actionTaken } = req.body;
@@ -418,7 +414,6 @@ const updateReport = async (req, res) => {
 };
 
 const takeModerationAction = async (req, res) => {
-  console.log('Take moderation action route/controller hit');
   try {
     const { id } = req.params;
     const { action, duration, reason } = req.body;
@@ -618,7 +613,6 @@ const takeModerationAction = async (req, res) => {
 };
 
 const getReportStats = async (req, res) => {
-  console.log('Get report stats route/controller hit');
   try {
     const stats = await Promise.all([
       Report.countDocuments({ status: 'pending' }),
@@ -659,7 +653,6 @@ const getReportStats = async (req, res) => {
 };
 
 const clearOldReports = async (req, res) => {
-  console.log('Clear old reports route/controller hit');
   try {
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
@@ -684,7 +677,6 @@ const clearOldReports = async (req, res) => {
 };
 
 const clearResolvedReports = async (req, res) => {
-  console.log('Clear resolved/dismissed reports route/controller hit');
   try {
     const result = await Report.deleteMany({
       status: { $in: ['resolved', 'dismissed'] },

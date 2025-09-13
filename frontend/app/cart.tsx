@@ -282,36 +282,28 @@ export default function Cart() {
   } = useDebounce(
     (productId: string, quantity: number, size?: string, variant?: string) => {
       updateCartQuantity(productId, quantity, size, variant);
-      // Clear local quantity override after API call
       const key = getItemKey(productId, size, variant);
       setLocalQuantities((prev) => {
         const newState = { ...prev };
         delete newState[key];
         return newState;
       });
-    },
-    500 // 500ms debounce delay
-  );
+    }, 500);
 
-  // Improved debounce implementation for item removal
   const {
     debouncedCallback: debouncedRemoval,
     cleanup: cleanupRemovalDebounce,
   } = useDebounce(
     (productId: string, size?: string, variant?: string) => {
       removeFromCart(productId, size, variant);
-    },
-    300 // 300ms debounce delay
-  );
+    }, 300);
 
   const debouncedUpdateQuantity = useCallback(
     (productId: string, quantity: number, size?: string, variant?: string) => {
       const key = `${productId}-${size || ''}-${variant || ''}`;
 
-      // Update local quantity immediately for instant UI feedback
       updateLocalQuantity(productId, quantity, size, variant);
 
-      // Use the debounced callback with the key
       debouncedQuantityUpdate(key, productId, quantity, size, variant);
     },
     [debouncedQuantityUpdate, updateLocalQuantity]
@@ -321,13 +313,11 @@ export default function Cart() {
     (productId: string, size?: string, variant?: string) => {
       const key = `${productId}-${size || ''}-${variant || ''}`;
 
-      // Use the debounced callback with the key
       debouncedRemoval(key, productId, size, variant);
     },
     [debouncedRemoval]
   );
 
-  // Cleanup debounced callbacks on unmount
   useEffect(() => {
     return () => {
       cleanupQuantityDebounce();
