@@ -11,15 +11,7 @@ import {
 import Color from 'color';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Theme } from '@/types/Theme';
-
-interface EmptyStateProps {
-  type?: 'default' | 'search' | 'products' | 'reviews' | 'posts' | 'messages' | 'wishlist' | 'cart' | 'orders';
-  title?: string;
-  message?: string;
-  actionText?: string;
-  onAction?: () => void;
-  icon?: React.ReactNode;
-}
+import { EmptyStateProps } from '@/types/ComponentProps';
 
 const getEmptyStateConfig = (type: EmptyStateProps['type']) => {
   switch (type) {

@@ -25,43 +25,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Theme } from '@/types/Theme';
 import { orderService } from '@/services/orderService';
-
-interface Order {
-  _id: string;
-  orderNumber: string;
-  createdAt: string;
-  status: 'processing' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
-  total: number;
-  subtotal: number;
-  shippingFee: number;
-  paymentMethod: 'cod' | 'card' | 'bkash';
-  paymentStatus: 'pending' | 'paid' | 'failed';
-  items: {
-    _id: string;
-    productId: {
-      _id: string;
-      name: string;
-      imageUrl: string[];
-    };
-    name: string;
-    image: string;
-    quantity: number;
-    price: number;
-    size?: string;
-    variant?: string;
-  }[];
-  shippingAddress: {
-    name: string;
-    address: string;
-    city: string;
-    postalCode?: string;
-    phone: string;
-    email: string;
-  };
-  trackingNumber?: string;
-  estimatedDelivery?: string;
-  notes?: string;
-}
+import { Order } from '@/types/App';
 
 const createStyles = (theme: Theme) =>
   StyleSheet.create({

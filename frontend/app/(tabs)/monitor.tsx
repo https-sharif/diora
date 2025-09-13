@@ -33,59 +33,7 @@ import { adminService } from '@/services';
 import { refreshWithInternetCheck } from '@/utils/toastUtils';
 import { router } from 'expo-router';
 import LoadingView from '@/components/Loading';
-
-interface SearchResult {
-  _id: string;
-  username: string;
-  fullName: string;
-  email: string;
-  avatar: string;
-  type: 'user' | 'shop' | 'admin';
-  isVerified: boolean;
-  followers: string[];
-  following: string[];
-  posts: string[];
-  createdAt: string;
-  status?: 'active' | 'suspended' | 'banned';
-  suspendedUntil?: string;
-  banReason?: string;
-  lastActiveAt?: string;
-}
-
-interface PostResult {
-  _id: string;
-  caption: string;
-  user: {
-    _id: string;
-    username: string;
-    avatar: string;
-    type: 'user' | 'shop' | 'admin';
-  };
-  imageUrl: string;
-  likes: number;
-  comments: number;
-  createdAt: string;
-  reports?: number;
-  isHidden?: boolean;
-}
-
-interface ProductResult {
-  _id: string;
-  name: string;
-  description: string;
-  price: number;
-  shopId: {
-    _id: string;
-    username: string;
-    avatar: string;
-  };
-  images: string[];
-  stock: number;
-  reviews: number;
-  createdAt: string;
-  reports?: number;
-  isHidden?: boolean;
-}
+import { SearchResult, PostResult, ProductResult } from '@/types/Monitor';
 
 const createStyles = (theme: Theme) =>
   StyleSheet.create({

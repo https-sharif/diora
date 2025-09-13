@@ -1,18 +1,5 @@
-import React, { createContext, useContext, useState, useRef, ReactNode } from 'react';
-
-type ToastType = 'error' | 'success' | 'neutral' | 'alert';
-
-interface ToastState {
-  visible: boolean;
-  message: string;
-  type: ToastType;
-}
-
-interface ToastContextType {
-  showToast: (type: ToastType, message: string, duration?: number) => void;
-  hideToast: () => void;
-  currentToast: ToastState | null;
-}
+import React, { createContext, useContext, useState, useRef } from 'react';
+import { ToastType, ToastState, ToastContextType, ToastProviderProps } from '@/types/Contexts';
 
 const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
@@ -23,10 +10,6 @@ export const useGlobalToast = () => {
   }
   return context;
 };
-
-interface ToastProviderProps {
-  children: ReactNode;
-}
 
 export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
   const [currentToast, setCurrentToast] = useState<ToastState | null>(null);

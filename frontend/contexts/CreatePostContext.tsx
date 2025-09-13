@@ -2,33 +2,7 @@ import React, { createContext, useContext, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { User } from '@/types/User';
 import { postService, productService } from '@/services';
-
-type ContentType = 'post' | 'product';
-
-interface FormData {
-  name: string;
-  description: string;
-  price: string;
-  sizes: string[];
-  variants: string[];
-  stock?: number;
-  discount?: number;
-  category: string[];
-}
-
-interface CreatePostContextType {
-  contentType: ContentType;
-  setContentType: (type: ContentType) => void;
-  images: string[];
-  setImages: (uris: string[]) => void;
-  imageUri: string | null;
-  setImageUri: (uri: string | null) => void;
-  formData: FormData;
-  setFormData: React.Dispatch<React.SetStateAction<FormData>>;
-  createPost: () => Promise<void>;
-  createProduct: () => Promise<void>;
-  reset: () => void;
-}
+import { ContentType, FormData, CreatePostContextType } from '@/types/Contexts';
 
 const CreatePostContext = createContext<CreatePostContextType | null>(null);
 

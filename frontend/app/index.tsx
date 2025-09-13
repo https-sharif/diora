@@ -86,7 +86,7 @@ export default function Index() {
     };
 
     fetchConversations();
-  }, [token, user]);
+  }, [token, user, setConversations]);
 
   return (
     <Animated.View style={[styles.container, { opacity: fadeAnim }]}>

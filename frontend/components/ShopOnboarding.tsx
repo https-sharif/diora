@@ -24,10 +24,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
 import { Theme } from '@/types/Theme';
 import { shopService, userService } from '@/services';
-
-interface ShopOnboardingProps {
-  onComplete: () => void;
-}
+import { ShopOnboardingProps } from '@/types/ComponentProps';
 
 const BUSINESS_CATEGORIES = [
   "Women's Clothing",

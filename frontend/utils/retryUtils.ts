@@ -1,11 +1,6 @@
 import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
 import { checkNetworkConnectivity } from './networkUtils';
-
-interface RetryConfig {
-  maxRetries?: number;
-  retryDelay?: number;
-  retryCondition?: (error: any) => boolean;
-}
+import { RetryConfig } from '@/types/Utils';
 
 const defaultRetryCondition = (error: any): boolean => {
   return (

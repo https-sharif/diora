@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -181,7 +181,7 @@ export default function UserProfile() {
   const [myPosts, setMyPosts] = useState([]);
   const [myLikedPosts, setMyLikedPosts] = useState([]);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     if (!user || !token) return;
 
     try {
@@ -191,15 +191,15 @@ export default function UserProfile() {
       const userPosts = await postService.getUserPosts(user._id, token);
       setMyPosts(userPosts);
     } catch {}
-  };
+  }, [token, user]);
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [fetchData]);
 
   useEffect(() => {
     if (user?._id) fetchData();
-  }, [user, user?.posts, user?.likedPosts, token]);
+  }, [user, user?.posts, user?.likedPosts, token, fetchData]);
 
   const handleTabPress = (tab: 'posts' | 'liked') => {
     setActiveTab(tab);

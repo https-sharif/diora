@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -348,7 +348,7 @@ export default function ShopProfile() {
     fetchProducts();
   }, [user, token]);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     if (!user?._id || !token) return;
 
     try {
@@ -358,11 +358,11 @@ export default function ShopProfile() {
       const userPosts = await postService.getUserPosts(user._id, token);
       setMyPosts(userPosts);
     } catch {}
-  };
+  }, [token, user]);
 
   useEffect(() => {
     if (user?._id) fetchData();
-  }, [user, user?.posts, user?.likedPosts, token]);
+  }, [user, user?.posts, user?.likedPosts, token, fetchData]);
 
   const handleTabPress = (tab: 'posts' | 'products' | 'liked') => {
     setActiveTab(tab);

@@ -16,10 +16,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/hooks/useAuth';
 import { userService } from '@/services';
 import * as ImagePicker from 'expo-image-picker';
-
-interface UserOnboardingProps {
-  onComplete: () => void;
-}
+import { UserOnboardingProps } from '@/types/ComponentProps';
 
 const FASHION_INTERESTS = [
   'Streetwear',

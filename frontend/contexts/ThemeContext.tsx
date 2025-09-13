@@ -2,16 +2,9 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Theme } from '@/types/Theme';
 import { useAuthStore } from '@/stores/authStore';
+import { ThemeContextType } from '@/types/Contexts';
 
 const THEME_KEY = 'app_theme';
-
-interface ThemeContextType {
-  theme: Theme;
-  isDarkMode: boolean;
-  toggleTheme: () => void;
-  lightTheme: Theme;
-  darkTheme: Theme;
-}
 
 const lightTheme: Theme = {
   background: '#ffffff',

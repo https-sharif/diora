@@ -2,10 +2,7 @@ import React, { useEffect } from 'react';
 import { UserOnboarding } from './UserOnboarding';
 import ShopOnboarding from './ShopOnboarding';
 import { useAuth } from '@/hooks/useAuth';
-
-interface OnboardingManagerProps {
-  onComplete: () => void;
-}
+import { OnboardingManagerProps } from '@/types/ComponentProps';
 
 export const OnboardingManager: React.FC<OnboardingManagerProps> = ({
   onComplete,

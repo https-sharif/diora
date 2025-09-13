@@ -1,11 +1,7 @@
 import React from 'react';
 import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
-
-interface LoadingViewProps {
-  message?: string;
-  size?: 'small' | 'large' | number;
-}
+import { LoadingViewProps } from '@/types/ComponentProps';
 
 const LoadingView = ({
   message = 'Loading...',

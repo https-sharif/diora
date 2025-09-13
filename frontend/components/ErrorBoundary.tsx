@@ -1,31 +1,21 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import React, { Component, ErrorInfo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { AlertTriangle, RefreshCw } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { showToast } from '@/utils/toastUtils';
-
-interface Props {
-  children: ReactNode;
-  fallback?: ReactNode;
-  onError?: (error: Error, errorInfo: ErrorInfo) => void;
-}
-
-interface State {
-  hasError: boolean;
-  error?: Error;
-}
+import { ErrorBoundaryProps, ErrorBoundaryState } from '@/types/ComponentProps';
 
 /**
  * Enhanced Error Boundary component for catching and handling React errors
  * Provides user-friendly error UI and error reporting capabilities
  */
-class ErrorBoundary extends Component<Props, State> {
-  constructor(props: Props) {
+class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false };
   }
 
-  static getDerivedStateFromError(error: Error): State {
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
     return { hasError: true, error };
   }
 

@@ -6,13 +6,7 @@ import { searchService } from '@/services/searchService';
 import { userService } from '@/services/userService';
 import { User } from '@/types/User';
 import { Conversation } from '@/types/Conversation';
-
-interface UseNewConversationProps {
-  token: string | null;
-  user: User | null;
-  conversations: Conversation[];
-  onConversationCreated?: (conversation: Conversation) => void;
-}
+import { UseNewConversationProps } from '@/types/Hooks';
 
 export const useNewConversation = ({
   token,

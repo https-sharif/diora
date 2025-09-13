@@ -1,55 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { orderService } from '@/services';
-
-interface OrderItem {
-  productId: string;
-  name: string;
-  image: string;
-  price: number;
-  quantity: number;
-  size?: string;
-  variant?: string;
-}
-
-interface Order {
-  _id: string;
-  orderNumber: string;
-  userId: string;
-  items: OrderItem[];
-  subtotal: number;
-  shippingFee: number;
-  total: number;
-  status: 'processing' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
-  paymentMethod: 'cod' | 'card' | 'bkash';
-  paymentStatus: 'pending' | 'paid' | 'failed';
-  shippingAddress: {
-    name: string;
-    address: string;
-    city: string;
-    postalCode?: string;
-    phone: string;
-    email: string;
-  };
-  trackingNumber?: string;
-  estimatedDelivery?: string;
-  notes?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface UseOrdersResult {
-  orders: Order[];
-  loading: boolean;
-  error: string | null;
-  totalPages: number;
-  currentPage: number;
-  totalOrders: number;
-  fetchOrders: (page?: number) => Promise<void>;
-  getOrderById: (orderId: string) => Promise<Order | null>;
-  cancelOrder: (orderId: string) => Promise<boolean>;
-  refreshOrders: () => Promise<void>;
-}
+import { Order, UseOrdersResult } from '@/types/Hooks';
 
 export const useOrders = (): UseOrdersResult => {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -61,7 +13,7 @@ export const useOrders = (): UseOrdersResult => {
 
   const { token, user } = useAuth();
 
-  const fetchOrders = async (page = 1) => {
+  const fetchOrders = useCallback(async (page = 1) => {
     if (!user || !token) {
       setOrders([]);
       return;
@@ -85,7 +37,7 @@ export const useOrders = (): UseOrdersResult => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, token]);
 
   const getOrderById = async (orderId: string): Promise<Order | null> => {
     if (!user || !token) return null;
@@ -132,7 +84,7 @@ export const useOrders = (): UseOrdersResult => {
 
   useEffect(() => {
     fetchOrders();
-  }, [user, token]);
+  }, [fetchOrders]);
 
   return {
     orders,

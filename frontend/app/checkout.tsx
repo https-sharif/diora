@@ -27,16 +27,7 @@ import { Theme } from '@/types/Theme';
 import { Product } from '@/types/Product';
 import { CartItem } from '@/types/Cart';
 import * as WebBrowser from 'expo-web-browser';
-
-interface CheckoutForm {
-  fullName: string;
-  email: string;
-  phone: string;
-  address: string;
-  city: string;
-  postalCode: string;
-  paymentMethod: 'cod' | 'card' | 'bkash';
-}
+import { CheckoutForm } from '@/types/App';
 
 const createStyles = (theme: Theme) =>
   StyleSheet.create({

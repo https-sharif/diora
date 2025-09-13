@@ -1,13 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, Animated } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
-
-interface SkeletonLoaderProps {
-  width?: number | string;
-  height?: number;
-  borderRadius?: number;
-  style?: any;
-}
+import { SkeletonLoaderProps } from '@/types/ComponentProps';
 
 const SkeletonLoader = ({
   width = '100%',

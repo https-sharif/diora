@@ -3,20 +3,7 @@ import NetInfo from '@react-native-community/netinfo';
 import { commentService, postService } from '@/services';
 import { useAuthStore } from '@/stores/authStore';
 import { showToast, networkMessages } from '@/utils/toastUtils';
-
-interface CacheItem<T = any> {
-  data: T;
-  timestamp: number;
-  expiresAt?: number;
-}
-
-interface SyncItem {
-  id: string;
-  type: 'comment' | 'like' | 'post';
-  data: any;
-  timestamp: number;
-  retryCount: number;
-}
+import { CacheItem, SyncItem } from '@/types/Utils';
 
 class OfflineManager {
   private static instance: OfflineManager;

@@ -1,20 +1,9 @@
 import React from 'react';
-import { FlashList, FlashListProps } from '@shopify/flash-list';
+import { FlashList } from '@shopify/flash-list';
 import { View, Text, StyleSheet } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Theme } from '@/types/Theme';
-
-/**
- * VirtualizedList - A high-performance list component using FlashList
- * Optimized for rendering large lists of comments, reviews, and other items
- */
-interface VirtualizedListProps<T> extends Omit<FlashListProps<T>, 'renderItem'> {
-  data: T[];
-  renderItem: (item: T, index: number) => React.ReactElement;
-  emptyMessage?: string;
-  estimatedItemSize?: number;
-  showsVerticalScrollIndicator?: boolean;
-}
+import { VirtualizedListProps, VirtualizedCommentListProps } from '@/types/Utils';
 
 export function VirtualizedList<T>({
   data,
@@ -52,12 +41,6 @@ export function VirtualizedList<T>({
  * VirtualizedCommentList - Specialized component for comment lists
  * Includes optimizations for nested replies and dynamic heights
  */
-interface VirtualizedCommentListProps extends Omit<FlashListProps<any>, 'renderItem' | 'data'> {
-  comments: any[];
-  renderComment: (comment: any) => React.ReactElement | null;
-  emptyMessage?: string;
-}
-
 export function VirtualizedCommentList({
   comments,
   renderComment,

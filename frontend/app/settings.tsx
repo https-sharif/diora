@@ -31,13 +31,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useToast } from '@/hooks/useToast';
 import { PromotionRequestModal } from '@/components/PromotionRequestModal';
 import { userService } from '@/services/userService';
-
-interface SocialAccount {
-  id: string;
-  name: string;
-  connected: boolean;
-  icon: string;
-}
+import { SocialAccount } from '@/types/App';
 
 const createTheme = (theme: any) =>
   StyleSheet.create({

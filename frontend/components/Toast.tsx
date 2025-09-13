@@ -1,5 +1,6 @@
 import React from 'react';
 import { Text, TouchableOpacity } from 'react-native';
+import { ToastProps } from '@/types/ComponentProps';
 
 const toastStyles = {
   error: {
@@ -22,12 +23,6 @@ const toastStyles = {
     border: '#FFC107',
     text: '#856404',
   },
-};
-
-type ToastProps = {
-  type: 'error' | 'success' | 'neutral' | 'alert';
-  message: string;
-  onClose?: () => void;
 };
 
 export const Toast = ({ type, message, onClose }: ToastProps) => {

@@ -17,25 +17,7 @@ import { X, MessageCircle, Users, Search, Check } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { User } from '@/types/User';
 import { createNewConversationStyles } from './NewConversationModal.styles';
-
-interface NewConversationModalProps {
-  visible: boolean;
-  onClose: () => void;
-  mode: 'direct' | 'group';
-  onModeChange: (mode: 'direct' | 'group') => void;
-  searchQuery: string;
-  onSearchChange: (query: string) => void;
-  groupName: string;
-  onGroupNameChange: (name: string) => void;
-  selectedUsers: User[];
-  onUserSelect: (user: User) => void;
-  onRemoveUser: (userId: string) => void;
-  displayUsers: User[];
-  onCreateGroup: () => void;
-  canCreateGroup: boolean;
-  isLoading: boolean;
-  error: string | null;
-}
+import { NewConversationModalProps } from '@/types/ComponentProps';
 
 export const NewConversationModal: React.FC<NewConversationModalProps> = ({
   visible,

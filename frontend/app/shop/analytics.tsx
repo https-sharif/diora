@@ -23,42 +23,9 @@ import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Theme } from '@/types/Theme';
 import { shopService } from '@/services';
+import { AnalyticsData } from '@/types/App';
 
 const { width } = Dimensions.get('window');
-
-interface AnalyticsData {
-  summary: {
-    totalOrders: number;
-    totalRevenue: number;
-    totalProducts: number;
-    wishlistCount: number;
-    followers: number;
-  };
-  orderTrends: {
-    _id: string;
-    orderCount: number;
-    revenue: number;
-  }[];
-  recentOrders: {
-    _id: string;
-    userId: {
-      fullName: string;
-      avatar: string;
-    };
-    totalAmount: number;
-    status: string;
-    createdAt: string;
-    items: any[];
-  }[];
-  topProducts: {
-    _id: string;
-    name: string;
-    imageUrl: string[];
-    totalSold: number;
-    revenue: number;
-    price: number;
-  }[];
-}
 
 const createStyles = (theme: Theme) =>
   StyleSheet.create({

@@ -17,11 +17,7 @@ import { userService } from '@/services';
 import * as ImagePicker from 'expo-image-picker';
 import { showToast } from '@/utils/toastUtils';
 import { checkNetworkConnectivity } from '@/utils/networkUtils';
-
-interface PromotionRequestModalProps {
-  visible: boolean;
-  onClose: () => void;
-}
+import { PromotionRequestModalProps } from '@/types/ComponentProps';
 
 const createStyles = (theme: Theme) =>
   StyleSheet.create({
