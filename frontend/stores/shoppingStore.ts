@@ -190,7 +190,7 @@ export const useShoppingStore = create<ShoppingStore>((set, get) => {
       set({ cart: optimisticCart });
 
       try {
-        const res = await cartService.removeFromCart(productId, token);
+        const res = await cartService.removeFromCart(productId, token, size, variant);
 
         const cartItems: CartItem[] =
           res.cart?.products?.map((item: any) => ({
@@ -237,7 +237,9 @@ export const useShoppingStore = create<ShoppingStore>((set, get) => {
         const res = await cartService.updateCartQuantity(
           productId,
           quantity,
-          token
+          token,
+          size,
+          variant
         );
 
         const cartItems: CartItem[] =

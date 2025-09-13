@@ -15,15 +15,15 @@ import {
   FlatList,
   Image,
   Alert,
-  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/hooks/useAuth';
 import { useShopping } from '@/hooks/useShopping';
+import { useDebounce } from '@/hooks/useDebounce';
 import { Theme } from '@/types/Theme';
-import { useEffect, useCallback, useRef, useState } from 'react';
+import { useEffect, useCallback, useState } from 'react';
 import { CartItem } from '@/types/Cart';
 import { Product } from '@/types/Product';
 
@@ -243,79 +243,103 @@ export default function Cart() {
 
   const styles = createStyles(theme);
 
-  const [pendingUpdates, setPendingUpdates] = useState<Set<string>>(new Set());
+  const [localQuantities, setLocalQuantities] = useState<
+    Record<string, number>
+  >({});
 
-  const updateQuantityTimeoutRef = useRef<any>(null);
-  const removeItemTimeoutRef = useRef<any>(null);
+  const getItemKey = (productId: string, size?: string, variant?: string) =>
+    `${productId}-${size || ''}-${variant || ''}`;
+
+  const getEffectiveQuantity = (item: CartItem) => {
+    const key = getItemKey(
+      (item.productId as Product)._id,
+      item.size,
+      item.variant
+    );
+    const quantity = localQuantities[key] ?? item.quantity;
+    return Math.max(1, quantity || 1);
+  };
+
+  const updateLocalQuantity = useCallback(
+    (
+      productId: string,
+      newQuantity: number,
+      size?: string,
+      variant?: string
+    ) => {
+      const key = getItemKey(productId, size, variant);
+      setLocalQuantities((prev) => ({
+        ...prev,
+        [key]: newQuantity,
+      }));
+    },
+    []
+  );
+
+  const {
+    debouncedCallback: debouncedQuantityUpdate,
+    cleanup: cleanupQuantityDebounce,
+  } = useDebounce(
+    (productId: string, quantity: number, size?: string, variant?: string) => {
+      updateCartQuantity(productId, quantity, size, variant);
+      // Clear local quantity override after API call
+      const key = getItemKey(productId, size, variant);
+      setLocalQuantities((prev) => {
+        const newState = { ...prev };
+        delete newState[key];
+        return newState;
+      });
+    },
+    500 // 500ms debounce delay
+  );
+
+  // Improved debounce implementation for item removal
+  const {
+    debouncedCallback: debouncedRemoval,
+    cleanup: cleanupRemovalDebounce,
+  } = useDebounce(
+    (productId: string, size?: string, variant?: string) => {
+      removeFromCart(productId, size, variant);
+    },
+    300 // 300ms debounce delay
+  );
 
   const debouncedUpdateQuantity = useCallback(
     (productId: string, quantity: number, size?: string, variant?: string) => {
       const key = `${productId}-${size || ''}-${variant || ''}`;
 
-      setPendingUpdates((prev) => new Set(prev.add(key)));
+      // Update local quantity immediately for instant UI feedback
+      updateLocalQuantity(productId, quantity, size, variant);
 
-      if (updateQuantityTimeoutRef.current) {
-        clearTimeout(updateQuantityTimeoutRef.current);
-      }
-
-      updateQuantityTimeoutRef.current = setTimeout(() => {
-        updateCartQuantity(productId, quantity, size, variant);
-        setPendingUpdates((prev) => {
-          const newSet = new Set(prev);
-          newSet.delete(key);
-          return newSet;
-        });
-      }, 500);
+      // Use the debounced callback with the key
+      debouncedQuantityUpdate(key, productId, quantity, size, variant);
     },
-    [updateCartQuantity]
+    [debouncedQuantityUpdate, updateLocalQuantity]
   );
 
   const debouncedRemoveFromCart = useCallback(
     (productId: string, size?: string, variant?: string) => {
       const key = `${productId}-${size || ''}-${variant || ''}`;
 
-      setPendingUpdates((prev) => new Set(prev.add(key)));
-
-      if (removeItemTimeoutRef.current) {
-        clearTimeout(removeItemTimeoutRef.current);
-      }
-
-      removeItemTimeoutRef.current = setTimeout(() => {
-        removeFromCart(productId, size, variant);
-        setPendingUpdates((prev) => {
-          const newSet = new Set(prev);
-          newSet.delete(key);
-          return newSet;
-        });
-      }, 300);
+      // Use the debounced callback with the key
+      debouncedRemoval(key, productId, size, variant);
     },
-    [removeFromCart]
+    [debouncedRemoval]
   );
 
+  // Cleanup debounced callbacks on unmount
   useEffect(() => {
     return () => {
-      if (updateQuantityTimeoutRef.current) {
-        clearTimeout(updateQuantityTimeoutRef.current);
-      }
-      if (removeItemTimeoutRef.current) {
-        clearTimeout(removeItemTimeoutRef.current);
-      }
+      cleanupQuantityDebounce();
+      cleanupRemovalDebounce();
     };
-  }, []);
-
-  const hasPendingUpdate = useCallback(
-    (productId: string, size?: string, variant?: string) => {
-      const key = `${productId}-${size || ''}-${variant || ''}`;
-      return pendingUpdates.has(key);
-    },
-    [pendingUpdates]
-  );
+  }, [cleanupQuantityDebounce, cleanupRemovalDebounce]);
 
   useEffect(() => {
     if (user) {
       fetchCart();
     }
-  }, [user]);
+  }, [user, fetchCart]);
 
   const renderCartItemPrice = (product: Product) => {
     if (product.discount && product.discount > 0) {
@@ -364,15 +388,9 @@ export default function Cart() {
 
   const renderCartItem = ({ item }: { item: CartItem }) => {
     const product = item.productId as Product;
-    const isPending = hasPendingUpdate(product._id, item.size, item.variant);
 
     return (
-      <View
-        style={[
-          styles.cartItem,
-          isPending && { opacity: 0.7, backgroundColor: theme.accentSecondary },
-        ]}
-      >
+      <View style={styles.cartItem}>
         <Image
           source={{ uri: product.imageUrl?.[0] }}
           style={styles.cartItemImage}
@@ -386,9 +404,9 @@ export default function Cart() {
 
           {(item.size || item.variant) && (
             <Text style={styles.cartItemDetails}>
-              {item.size && `Size: ${item.size}`}
-              {item.size && item.variant && ' • '}
-              {item.variant && `Color: ${item.variant}`}
+              {item.size ? `Size: ${item.size}` : ''}
+              {item.size && item.variant ? ' • ' : ''}
+              {item.variant ? `Color: ${item.variant}` : ''}
             </Text>
           )}
 
@@ -399,10 +417,11 @@ export default function Cart() {
               <TouchableOpacity
                 style={styles.quantityButton}
                 onPress={() => {
-                  if (item.quantity > 1) {
+                  const currentQuantity = getEffectiveQuantity(item);
+                  if (currentQuantity > 1) {
                     debouncedUpdateQuantity(
                       product._id,
-                      item.quantity - 1,
+                      currentQuantity - 1,
                       item.size,
                       item.variant
                     );
@@ -429,28 +448,22 @@ export default function Cart() {
               >
                 <Minus size={16} color="#000" strokeWidth={3} />
               </TouchableOpacity>
-
               <View style={styles.quantityTextContainer}>
-                <Text style={styles.quantityText}>{item.quantity}</Text>
-                {isPending && (
-                  <ActivityIndicator
-                    size="small"
-                    color={theme.primary}
-                    style={{ marginLeft: 4 }}
-                  />
-                )}
+                <Text style={styles.quantityText}>
+                  {getEffectiveQuantity(item)}
+                </Text>
               </View>
-
               <TouchableOpacity
                 style={styles.quantityButton}
-                onPress={() =>
+                onPress={() => {
+                  const currentQuantity = getEffectiveQuantity(item);
                   debouncedUpdateQuantity(
                     product._id,
-                    item.quantity + 1,
+                    currentQuantity + 1,
                     item.size,
                     item.variant
-                  )
-                }
+                  );
+                }}
               >
                 <Plus size={16} color="#000" strokeWidth={3} />
               </TouchableOpacity>
@@ -530,13 +543,6 @@ export default function Cart() {
         </TouchableOpacity>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <Text style={styles.headerTitle}>Shopping Cart</Text>
-          {pendingUpdates.size > 0 && (
-            <ActivityIndicator
-              size="small"
-              color={theme.primary}
-              style={{ marginLeft: 8 }}
-            />
-          )}
         </View>
         <TouchableOpacity style={styles.headerButton}>
           <Menu size={24} color={theme.text} />

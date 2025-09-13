@@ -116,11 +116,11 @@ function AppReadyWrapper({ insets }: { insets: EdgeInsets }) {
       };
 
       const onConnect = () => {
-        console.log('✅ Socket connected in layout');
+        console.log('✅ Socket connected');
       };
 
       const onDisconnect = () => {
-        console.log('🔌 Socket disconnected in layout');
+        console.log('🔌 Socket disconnected');
       };
 
       const onMessageReaction = (data: any) => {

@@ -44,7 +44,6 @@ export function setupListeners(
   const s = getSocket();
 
   s.on('connect', () => {
-    console.log('✅ Socket connected successfully');
     if (onConnect) onConnect();
   });
 
@@ -53,7 +52,6 @@ export function setupListeners(
   });
 
   s.on('disconnect', (reason) => {
-    console.log('🔌 Socket disconnected:', reason);
     if (onDisconnect) onDisconnect();
   });
 

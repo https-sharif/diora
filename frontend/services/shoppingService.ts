@@ -6,7 +6,7 @@ export interface CartItem {
   productId: string;
   quantity: number;
   size?: string;
-  color?: string;
+  variant?: string;
 }
 
 export interface WishlistItem {
@@ -29,10 +29,14 @@ export const cartService = {
 
   async addToCart(item: CartItem, token: string): Promise<any> {
     try {
-      const response = await axios.post(`${config.apiUrl}/api/cart`, item, {
+      const response = await axios.post(`${config.apiUrl}/api/cart`, {
+        productId: item.productId,
+        quantity: item.quantity,
+        size: item.size,
+        variant: item.variant,
+      }, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      showToast.success(toastMessages.addToCart);
       return response.data;
     } catch (error: any) {
       console.error('Add to cart error:', error);
@@ -42,13 +46,12 @@ export const cartService = {
     }
   },
 
-  async removeFromCart(productId: string, token: string): Promise<any> {
+  async removeFromCart(productId: string, token: string, size?: string, variant?: string): Promise<any> {
     try {
       const response = await axios.delete(`${config.apiUrl}/api/cart`, {
         headers: { Authorization: `Bearer ${token}` },
-        data: { productId },
+        data: { productId, size, variant },
       });
-      showToast.success(toastMessages.removeFromCart);
       return response.data;
     } catch (error: any) {
       console.error('Remove from cart error:', error);
@@ -60,7 +63,9 @@ export const cartService = {
   async updateCartQuantity(
     productId: string,
     quantity: number,
-    token: string
+    token: string,
+    size?: string,
+    variant?: string
   ): Promise<any> {
     try {
       const response = await axios.patch(
@@ -68,12 +73,13 @@ export const cartService = {
         {
           productId,
           quantity,
+          size,
+          variant,
         },
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      showToast.success(toastMessages.updateSuccess('Cart item'));
       return response.data;
     } catch (error: any) {
       console.error('Update cart quantity error:', error);
