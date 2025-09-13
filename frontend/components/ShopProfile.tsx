@@ -60,20 +60,6 @@ const createStyles = (theme: Theme) =>
     headerButton: {
       padding: 4,
     },
-    actionButton: {
-      backgroundColor: theme.primary,
-      paddingHorizontal: 16,
-      paddingVertical: 8,
-      borderRadius: 8,
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 8,
-    },
-    actionButtonText: {
-      color: 'white',
-      fontSize: 14,
-      fontFamily: 'Inter-SemiBold',
-    },
     content: {
       flex: 1,
     },

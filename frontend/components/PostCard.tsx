@@ -139,11 +139,6 @@ const createStyles = (theme: Theme) => {
       gap: 8,
       marginBottom: 4,
     },
-    commentUser: {
-      fontSize: 14,
-      fontFamily: 'Inter-SemiBold',
-      color: theme.text,
-    },
     commentTime: {
       fontSize: 12,
       fontFamily: 'Inter-Regular',
@@ -194,10 +189,6 @@ const createStyles = (theme: Theme) => {
       fontSize: 20,
       fontFamily: 'Inter-Bold',
       color: theme.text,
-    },
-    commentsList: {
-      flex: 1,
-      padding: 16,
     },
     commentInput: {
       borderTopWidth: 1,
