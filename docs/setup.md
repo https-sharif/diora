@@ -27,12 +27,22 @@ FIREBASE_SERVICE_ACCOUNT_KEY=path/to/service-account-key.json
 ```
 
 2. Create a `config.js` file in the frontend directory:
-```javascript
-export const config = {
-  apiUrl: 'http://localhost:5000/api',
-  socketUrl: 'http://localhost:5000',
-};
-```
+   
+   **For Development:**
+   ```javascript
+   export const config = {
+     apiUrl: 'http://localhost:5000/api',
+     socketUrl: 'http://localhost:5000',
+   };
+   ```
+   
+   **For Production:**
+   ```javascript
+   export const config = {
+     apiUrl: 'https://diora.onrender.com/api',
+     socketUrl: 'https://diora.onrender.com',
+   };
+   ```
 
 ## Installation Steps
 
@@ -62,13 +72,17 @@ cd backend
 npm run dev
 ```
 
-2. Start the frontend app:
-```bash
-cd frontend
-npm run dev
-```
+7. Start the frontend app:
+   ```bash
+   cd frontend
+   npm run dev
+   ```
 
-## Service Configuration
+8. (Optional) Build for web deployment:
+   ```bash
+   cd frontend
+   npm run build:web
+   ```## Service Configuration
 
 ### Cloudinary Setup
 1. Sign up at [cloudinary.com](https://cloudinary.com)
@@ -151,7 +165,9 @@ STRIPE_SECRET_KEY=sk_test_your_stripe_secret_key
 STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret
 
 # Firebase (Notifications)
-FIREBASE_SERVICE_ACCOUNT_KEY=path/to/firebase-service-account.json
+FIREBASE_PROJECT_ID=your_project_id
+FIREBASE_PRIVATE_KEY=your_private_key
+FIREBASE_CLIENT_EMAIL=your_client_email
 ```
 
 ## Next Steps

@@ -60,6 +60,7 @@ Diora addresses the gap between fashion inspiration and purchasing by creating a
 - Shop promotion request approval
 - Report system for community guidelines
 - Real-time monitoring dashboard
+- Automated maintenance and cleanup jobs
 - System health tracking
 
 ### Additional Features
@@ -79,7 +80,16 @@ Diora addresses the gap between fashion inspiration and purchasing by creating a
 - Stripe account
 - Firebase project (for notifications)
 
-### Setup Instructions
+## Installation
+
+### Prerequisites
+- Node.js (v14 or higher)
+- MongoDB
+- Cloudinary account
+- Stripe account
+- Firebase project (for notifications)
+
+### Quick Setup
 
 1. Clone the repository:
    ```bash
@@ -87,18 +97,19 @@ Diora addresses the gap between fashion inspiration and purchasing by creating a
    cd diora-app
    ```
 
-2. Initialize backend:
+2. Install dependencies:
    ```bash
-   cd backend
-   npm install
-   npm run dev
+   cd backend && npm install
+   cd ../frontend && npm install
    ```
 
-3. Configure frontend:
+3. Set up environment variables (see setup guide)
+
+4. Start the application:
    ```bash
-   cd frontend
-   npm install
-   npm run dev
+   cd backend && npm run dev
+   # In another terminal:
+   cd frontend && npm run dev
    ```
 
 For detailed configuration instructions, refer to the [setup documentation](docs/setup.md).

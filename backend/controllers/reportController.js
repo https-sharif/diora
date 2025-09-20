@@ -493,9 +493,7 @@ const takeModerationAction = async (req, res) => {
           case 'shop':
             targetUserId = report.reportedItem.itemId;
             warningTitle = 'Account Behavior Warning ⚠️';
-            warningMessage = `You have received a warning regarding your account behavior. Please ensure your interactions and profile comply with our community guidelines. Reason: ${
-              reason || 'Community guidelines violation'
-            }`;
+            warningMessage = `You have received a warning regarding your account behavior. Please ensure your interactions and profile comply with our community guidelines.`;
             break;
 
           case 'post':
@@ -505,9 +503,7 @@ const takeModerationAction = async (req, res) => {
             if (reportedPost && reportedPost.user) {
               targetUserId = reportedPost.user._id;
               warningTitle = 'Post Content Warning ⚠️';
-              warningMessage = `You have received a warning about one of your posts. Please review our content guidelines and ensure your posts comply with our community standards. Reason: ${
-                reason || 'Inappropriate content'
-              }`;
+              warningMessage = `You have received a warning about one of your posts. Please review our content guidelines and ensure your posts comply with our community standards.`;
             }
             break;
 
@@ -518,9 +514,7 @@ const takeModerationAction = async (req, res) => {
             if (reportedProduct && reportedProduct.shopId) {
               targetUserId = reportedProduct.shopId._id;
               warningTitle = 'Product Listing Warning ⚠️';
-              warningMessage = `You have received a warning about one of your product listings. Please review our marketplace guidelines and ensure your products comply with our policies. Reason: ${
-                reason || 'Policy violation'
-              }`;
+              warningMessage = `You have received a warning about one of your product listings. Please review our marketplace guidelines and ensure your products comply with our policies.`;
             }
             break;
 
@@ -531,9 +525,7 @@ const takeModerationAction = async (req, res) => {
             if (reportedComment && reportedComment.user) {
               targetUserId = reportedComment.user._id;
               warningTitle = 'Comment Warning ⚠️';
-              warningMessage = `You have received a warning about one of your comments. Please keep your comments respectful and within our community guidelines. Reason: ${
-                reason || 'Inappropriate comment'
-              }`;
+              warningMessage = `You have received a warning about one of your comments. Please keep your comments respectful and within our community guidelines.`;
             }
             break;
 
@@ -544,9 +536,7 @@ const takeModerationAction = async (req, res) => {
             if (reportedReview && reportedReview.user) {
               targetUserId = reportedReview.user._id;
               warningTitle = 'Review Warning ⚠️';
-              warningMessage = `You have received a warning about one of your reviews. Please ensure your reviews are honest and follow our review guidelines. Reason: ${
-                reason || 'Review policy violation'
-              }`;
+              warningMessage = `You have received a warning about one of your reviews. Please ensure your reviews are honest and follow our review guidelines.`;
             }
             break;
         }
@@ -558,9 +548,6 @@ const takeModerationAction = async (req, res) => {
             title: warningTitle,
             message: warningMessage,
             data: {
-              reportId: id,
-              action: 'warning',
-              reason: reason || 'Policy violation',
               itemType: report.reportedItem.itemType,
               itemId: report.reportedItem.itemId,
             },

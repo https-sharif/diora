@@ -1828,9 +1828,11 @@ export default function MessageScreen() {
           onPress: async () => {
             try {
               const reportData: ReportData = {
-                targetType: 'user',
-                targetId: otherUser._id,
-                reason: 'Inappropriate behavior in chat',
+                reportedItem: {
+                  itemType: 'user',
+                  itemId: otherUser._id,
+                },
+                type: 'harassment',
                 description: 'User reported from private message conversation',
               };
 

@@ -1,14 +1,27 @@
 # Architecture & Data Flow
 
-This document explains how Diora works internally - how data moves through the system and how different parts communicate with each other.
+This document explains how Diora works internally - how data moves throug### Database Organization
+- **Users Collection**: Stores user profiles, preferences, authentication data, and shop information
+- **Posts Collection**: Contains outfit posts with references to user who created them
+- **Products Collection**: Shop items with pricing, descriptions, inventory, variants, sizes, and category information
+- **Orders Collection**: Purchase records linking customers, products, and payment status with shipping details
+- **Messages Collection**: Chat history between users with timestamps, reactions, and delivery status
+- **Conversations Collection**: Group and direct message conversation metadata with participant management
+- **Notifications Collection**: User notifications with read status, types, and timestamps (auto-cleanup after 30 days)
+- **Reviews Collection**: Product and shop reviews with ratings and user feedback
+- **Reports Collection**: Content moderation reports and admin actions with status tracking
+- **Carts Collection**: Shopping cart items for each user with quantity management
+- **Wishlists Collection**: Saved products for future purchase with quick add-to-cart functionality
+- **Promotion Requests Collection**: Shop promotion applications with document verification and how different parts communicate with each other.
 
 ## System Overview
 
 Diora is built as a client-server application:
-- **Mobile App (Frontend)**: What users interact with - built with React Native
-- **API Server (Backend)**: Handles all data processing and business logic - built with Node.js
-- **Database**: Stores all information - MongoDB
-- **External Services**: Cloudinary (images), Stripe (payments), Firebase (notifications)
+- **Mobile App (Frontend)**: React Native 0.79.4 with Expo SDK 53 - what users interact with
+- **API Server (Backend)**: Node.js with Express.js 5.1.0 - handles all data processing and business logic
+- **Database**: MongoDB 6.17.0 with Mongoose 8.16.2 - stores all information
+- **Real-time Communication**: Socket.io 4.8.1 - enables instant messaging and notifications
+- **External Services**: Cloudinary, Stripe, Firebase - handle images, payments, and push notifications
 
 ## How Data Flows Through The System
 
@@ -99,16 +112,37 @@ Diora is built as a client-server application:
 ## Data Storage Strategy
 
 ### Database Organization
-- **Users Collection**: Stores user profiles, preferences, and authentication data
+- **Users Collection**: Stores user profiles, preferences, authentication data, and shop information
 - **Posts Collection**: Contains outfit posts with references to user who created them
-- **Products Collection**: Shop items with pricing, descriptions, and inventory
+- **Products Collection**: Shop items with pricing, descriptions, inventory, and category information
 - **Orders Collection**: Purchase records linking customers, products, and payment status
 - **Messages Collection**: Chat history between users with timestamps and delivery status
+- **Conversations Collection**: Group and direct message conversation metadata
+- **Notifications Collection**: User notifications with read status and timestamps
+- **Reviews Collection**: Product and shop reviews with ratings
+- **Reports Collection**: Content moderation reports and admin actions
+- **Carts Collection**: Shopping cart items for each user
+- **Wishlists Collection**: Saved products for future purchase
 
 ### Performance Optimizations
 - **Indexing**: Database indexes on frequently searched fields (usernames, product categories)
 - **Caching**: Frequently accessed data is cached to reduce database queries
 - **CDN Delivery**: Images are served through Cloudinary's global CDN for fast loading
+
+## Administrative Features
+
+### Platform Management
+- **Real-time Statistics**: User growth, order metrics, and system health monitoring
+- **User Management**: Search, suspend, ban, and warn users with detailed reason tracking
+- **Content Moderation**: Hide/show posts and products, review reports with priority levels
+- **Shop Promotion System**: Review and approve shop promotion requests with document verification
+- **System Health Monitoring**: Performance metrics and automated cleanup jobs
+- **Bulk Operations**: Efficient platform management with batch processing capabilities
+
+### Automated Maintenance
+- **Notification Cleanup**: Automatic removal of old read notifications (30+ days)
+- **Report Archiving**: Cleanup of resolved reports to maintain database performance
+- **User Activity Tracking**: Monitoring of user engagement and platform usage patterns
 
 ## External Service Integration
 

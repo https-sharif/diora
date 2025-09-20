@@ -662,9 +662,11 @@ export default function UserProfileScreen() {
 
     try {
       const reportData = {
-        targetType: 'user' as const,
-        targetId: userProfile._id,
-        reason: reasonMap[reportReason] || 'other',
+        reportedItem: {
+          itemType: 'user' as const,
+          itemId: userProfile._id,
+        },
+        type: reasonMap[reportReason] || 'other',
         description:
           reportDescription.trim() || 'No additional details provided',
       };

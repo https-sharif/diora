@@ -84,8 +84,11 @@ export interface ReportStats {
 }
 
 export interface ReportData {
-  targetType: 'user' | 'post' | 'product' | 'comment';
-  targetId: string;
-  reason: string;
+  reportedItem: {
+    itemType: 'user' | 'post' | 'product' | 'comment' | 'shop';
+    itemId: string;
+  };
+  type: string;
   description?: string;
+  evidenceUrl?: string;
 }

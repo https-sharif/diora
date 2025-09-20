@@ -5,7 +5,8 @@ This document provides comprehensive information about the Diora REST API endpoi
 ## Base URL
 
 ```
-https://diora.onrender.com/api
+Development: http://localhost:5000/api
+Production: https://diora.onrender.com/api
 ```
 
 ## Route Structure Overview

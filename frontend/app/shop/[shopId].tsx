@@ -1263,9 +1263,11 @@ export default function ShopProfileScreen() {
 
     try {
       const payload = {
-        targetType: 'user' as const,
-        targetId: shopProfile._id,
-        reason: reasonMap[reportReason] || 'other',
+        reportedItem: {
+          itemType: 'shop' as const,
+          itemId: shopProfile._id,
+        },
+        type: reasonMap[reportReason] || 'other',
         description: reportDescription.trim() || 'No additional details provided',
       };
 

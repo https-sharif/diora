@@ -904,9 +904,11 @@ export default function PostDetailScreen() {
 
       const response = await reportService.createReport(
         {
-          targetType: 'post',
-          targetId: post._id,
-          reason: reasonMap[reportReason] || 'other',
+          reportedItem: {
+            itemType: 'post',
+            itemId: post._id,
+          },
+          type: reasonMap[reportReason] || 'other',
           description:
             reportDescription.trim() || 'No additional details provided',
         },
@@ -988,9 +990,11 @@ export default function PostDetailScreen() {
     try {
       const response = await reportService.createReport(
         {
-          targetType: 'comment',
-          targetId: selectedComment._id,
-          reason: reasonMap[reportReason] || 'other',
+          reportedItem: {
+            itemType: 'comment',
+            itemId: selectedComment._id,
+          },
+          type: reasonMap[reportReason] || 'other',
           description:
             reportDescription.trim() || 'No additional details provided',
         },

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -638,18 +638,17 @@ export default function ExploreScreen() {
 
   const [filters, setFilters] = useState(initialFilter);
 
-  const onRefresh = useCallback(async () => {
-    if (!user) return;
-    
+  const initialLoadRef = useRef(false);
+  
+  const loadExploreData = useCallback(async (userToken: string) => {
     await refreshWithInternetCheck(async () => {
       setRefreshing(true);
 
       const fetchTrendingUser = async () => {
-        if (!token) return;
         setLoading((prevState) => ({ ...prevState, trendingUsers: true }));
 
         try {
-          const response = await trendingService.getTrendingUsers(token);
+          const response = await trendingService.getTrendingUsers(userToken);
 
           if (response.status) {
             setExploreData((prevState) => ({
@@ -664,11 +663,10 @@ export default function ExploreScreen() {
       };
 
       const fetchTrendingShops = async () => {
-        if (!token) return;
         setLoading((prevState) => ({ ...prevState, trendingShops: true }));
 
         try {
-          const response = await trendingService.getTrendingShops(token);
+          const response = await trendingService.getTrendingShops(userToken);
 
           if (response.status) {
             setExploreData((prevState) => ({
@@ -682,31 +680,11 @@ export default function ExploreScreen() {
         }
       };
 
-      const fetchTrendingProducts = async () => {
-        if (!token) return;
-        setLoading((prevState) => ({ ...prevState, trendingProducts: true }));
-
-        try {
-          const response = await trendingService.getTrendingProducts(token);
-
-          if (response.status) {
-            setExploreData((prevState) => ({
-              ...prevState,
-              trendingProducts: response.trendingProducts,
-            }));
-          }
-        } catch {
-        } finally {
-          setLoading((prevState) => ({ ...prevState, trendingProducts: false }));
-        }
-      };
-
       const fetchTrendingPosts = async () => {
-        if (!token) return;
         setLoading((prevState) => ({ ...prevState, trendingPosts: true }));
 
         try {
-          const response = await trendingService.getTrendingPosts(token);
+          const response = await trendingService.getTrendingPosts(userToken);
 
           if (response.status) {
             setExploreData((prevState) => ({
@@ -720,17 +698,53 @@ export default function ExploreScreen() {
         }
       };
 
-      fetchTrendingUser();
-      fetchTrendingShops();
-      fetchTrendingProducts();
-      fetchTrendingPosts();
+      const fetchTrendingProducts = async () => {
+        setLoading((prevState) => ({ ...prevState, trendingProducts: true }));
+
+        try {
+          const response = await trendingService.getTrendingProducts(userToken);
+
+          if (response.status) {
+            setExploreData((prevState) => ({
+              ...prevState,
+              trendingProducts: response.trendingProducts,
+            }));
+          }
+        } catch {
+        } finally {
+          setLoading((prevState) => ({
+            ...prevState,
+            trendingProducts: false,
+          }));
+        }
+      };
+
+      await Promise.all([
+        fetchTrendingUser(),
+        fetchTrendingShops(),
+        fetchTrendingPosts(),
+        fetchTrendingProducts(),
+      ]);
+
       setRefreshing(false);
     });
-  }, [user, token]);
+  }, []);
+
+  const initialLoad = useCallback(async () => {
+    if (!user || !token || initialLoadRef.current) return;
+    
+    initialLoadRef.current = true;
+    await loadExploreData(token);
+  }, [token, user, loadExploreData]); // Only depend on token, not user object
+
+  const onRefresh = useCallback(async () => {
+    if (!user || !token) return;
+    await loadExploreData(token);
+  }, [user, token, loadExploreData]);
 
   useEffect(() => {
-    onRefresh();
-  }, [onRefresh]);
+    initialLoad();
+  }, [initialLoad]);
 
   const fetchSearchResults = async (query: string, filterSnapshot: any) => {
     if (!token) return;

@@ -1364,9 +1364,11 @@ export default function ProductDetailScreen() {
 
     try {
       const reportData = {
-        targetType: 'product' as const,
-        targetId: product._id,
-        reason: reasonMap[reportReason] || 'other',
+        reportedItem: {
+          itemType: 'product' as const,
+          itemId: product._id,
+        },
+        type: reasonMap[reportReason] || 'other',
         description:
           reportDescription.trim() || 'No additional details provided',
       };

@@ -9,31 +9,118 @@ This document outlines the organizational structure and key components of the Di
 frontend/
 ├── app/                    # Screen components and navigation
 │   ├── (tabs)/            # Tab-based main screens
+│   │   ├── analytics.tsx  # Admin analytics dashboard
+│   │   ├── index.tsx      # Home feed screen
+│   │   ├── explore.tsx    # Search and discovery
+│   │   ├── monitor.tsx    # Admin monitoring
+│   │   ├── create.tsx     # Post creation
+│   │   ├── shopping.tsx   # Product browsing
+│   │   ├── reports.tsx    # Admin reports
+│   │   └── profile.tsx    # User profile
 │   ├── admin/             # Admin-specific screens
 │   ├── message/           # Messaging interfaces
 │   ├── post/              # Post-related screens
 │   ├── product/           # Product detail screens
 │   └── shop/              # Shop management screens
 ├── components/            # Reusable UI components
+│   ├── AdminProfile.tsx
+│   ├── CategorySelector.tsx
+│   ├── EmptyState.tsx
+│   ├── ErrorBoundary.tsx
+│   ├── GlobalToast.tsx
+│   ├── Loading.tsx
+│   ├── NewConversationModal.tsx
+│   ├── NotLoggedIn.tsx
+│   ├── OnboardingManager.tsx
+│   ├── PostCard.tsx
+│   ├── PromotionRequestModal.tsx
+│   ├── RatingStar.tsx
+│   ├── ReviewInput.tsx
+│   └── ShopProfile.tsx
 ├── contexts/              # React context providers
+│   ├── ThemeContext.tsx
+│   ├── ToastContext.tsx
+│   └── SafeAreaContext.tsx
 ├── hooks/                 # Custom React hooks
 ├── services/              # API communication layer
 ├── stores/                # State management
 ├── types/                 # TypeScript type definitions
-└── validation/            # Form validation schemas
+├── validation/            # Form validation schemas
+├── utils/                 # Helper functions
+└── assets/                # Static assets
+    ├── fonts/
+    ├── icons/
+    └── images/
 ```
 
 ### Backend (Node.js API)
 ```
 backend/
 ├── config/                # Database and service configurations
+│   └── db.js              # MongoDB connection setup
 ├── controllers/           # Business logic handlers
+│   ├── adminController.js
+│   ├── authController.js
+│   ├── cartController.js
+│   ├── commentController.js
+│   ├── messageController.js
+│   ├── notificationController.js
+│   ├── orderController.js
+│   ├── postController.js
+│   ├── productController.js
+│   ├── reportController.js
+│   ├── reviewController.js
+│   ├── searchController.js
+│   ├── shopController.js
+│   ├── upload.js
+│   ├── userController.js
+│   └── userSearchController.js
 ├── middleware/            # Authentication and security
+│   ├── adminAuth.js
+│   └── auth.js
 ├── models/                # Database schemas
+│   ├── Cart.js
+│   ├── Comment.js
+│   ├── Conversation.js
+│   ├── Message.js
+│   ├── Notification.js
+│   ├── Order.js
+│   ├── Post.js
+│   ├── Product.js
+│   ├── PromotionRequest.js
+│   ├── Report.js
+│   ├── Review.js
+│   ├── Shop.js
+│   └── User.js
 ├── routes/                # API endpoint definitions
+│   ├── admin.js
+│   ├── auth.js
+│   ├── cart.js
+│   ├── comment.js
+│   ├── message.js
+│   ├── notification.js
+│   ├── order.js
+│   ├── post.js
+│   ├── product.js
+│   ├── report.js
+│   ├── review.js
+│   ├── search.js
+│   ├── shop.js
+│   ├── stripe.js
+│   ├── upload.js
+│   ├── user.js
+│   ├── userSearch.js
+│   └── webhook.js
 ├── sockets/               # Real-time communication
+│   ├── messageSocket.js
+│   └── socketSetup.js
 ├── utils/                 # Helper functions and utilities
-└── uploads/               # Temporary file storage
+│   ├── cloudinary.js
+│   └── migrations/
+├── uploads/               # Temporary file storage
+├── package.json           # Dependencies and scripts
+├── server.js              # Main server file
+└── .env                   # Environment variables
 ```
 
 ## Application Architecture
