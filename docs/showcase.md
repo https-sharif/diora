@@ -1,6 +1,22 @@
-# Diora App Showcase
+# Feature Showcase
 
-A visual tour of Diora's key features and user interfaces for fashion enthusiasts, shoppers, and retailers.
+<div align="center">
+
+**Visual Tour of Diora's Key Features and User Interfaces**
+
+*Explore what makes Diora the ultimate fashion platform*
+
+[![UI/UX](https://img.shields.io/badge/UI%2FUX-Modern-purple?style=for-the-badge)](docs/showcase.md)
+[![Mobile](https://img.shields.io/badge/Mobile-Optimized-blue?style=for-the-badge)](frontend/)
+[![Features](https://img.shields.io/badge/Features-Rich-orange?style=for-the-badge)](#)
+
+</div>
+
+---
+
+## Overview
+
+A visual tour of Diora's key features and user interfaces for fashion enthusiasts, shoppers, and retailers. This showcase demonstrates the platform's capabilities across different user types and use cases.
 
 ## Navigation & Getting Started
 

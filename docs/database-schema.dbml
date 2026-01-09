@@ -1,0 +1,281 @@
+// Diora - Complete Database Schema
+// Copy this entire content to https://dbdiagram.io/ to generate visual diagram
+
+Project diora_database {
+  database_type: 'MongoDB'
+  Note: '''
+    Diora Fashion Discovery & Shopping Platform
+    MongoDB Collections Schema
+    Generated: September 2025
+  '''
+}
+
+Table Users {
+  _id ObjectId [pk]
+  email String [unique, not null]
+  username String [unique, not null]
+  fullName String [not null]
+  password String [not null]
+  avatar String
+  bio String
+  isVerified Boolean [default: false]
+  avatarId String
+  followers "ObjectId[]" [ref: > Users._id]
+  following "ObjectId[]" [ref: > Users._id]
+  createdAt Date [default: `now()`]
+  stripeCustomerId String
+  posts Number [default: 0]
+  likedPosts "ObjectId[]" [ref: > Posts._id]
+  type String [note: 'user, shop, admin']
+  status String [note: 'active, suspended, banned']
+  suspendedUntil Date
+  suspensionReason String
+  banReason String
+  bannedAt Date
+  lastActiveAt Date [default: `now()`]
+  onboarding Object [note: 'Onboarding progress and profile info']
+  
+  Note: 'Core user accounts - regular users, shop owners, and administrators'
+}
+
+Table Posts {
+  _id ObjectId [pk]
+  user ObjectId [ref: > Users._id, not null]
+  imageUrl String [not null]
+  caption String
+  stars Number [default: 0]
+  likes "ObjectId[]" [ref: > Users._id]
+  comments "ObjectId[]" [ref: > Comments._id]
+  reports Number [default: 0]
+  isHidden Boolean [default: false]
+  createdAt Date [default: `now()`]
+  imageId String [not null, note: 'Cloudinary image ID']
+  
+  Note: 'Social outfit posts shared by users'
+}
+
+Table Products {
+  _id ObjectId [pk]
+  shopId ObjectId [ref: > Users._id, not null]
+  name String [not null]
+  price Number [not null]
+  imageUrl "String[]" [not null]
+  images "String[]" [not null]
+  category "String[]" [not null]
+  description String [not null]
+  sizes "String[]" [not null]
+  colors "String[]"
+  variants "String[]"
+  stock Number [default: 0]
+  isActive Boolean [default: true]
+  isHidden Boolean [default: false]
+  reports Number [default: 0]
+  createdAt Date [default: `now()`]
+  updatedAt Date [default: `now()`]
+  
+  Note: 'Products sold by shops'
+}
+
+Table Shops {
+  _id ObjectId [pk]
+  userId ObjectId [ref: > Users._id, unique, not null]
+  name String [not null]
+  username String [unique, not null]
+  logoUrl String
+  coverImageUrl String
+  description String
+  email String
+  phone String
+  website String
+  address Object [note: 'Complete address with coordinates']
+  socialMedia Object [note: 'Social media links']
+  businessInfo Object [note: 'Business verification documents']
+  promotion Object [note: 'Promotion status and features']
+  isVerified Boolean [default: false]
+  isActive Boolean [default: true]
+  followers "ObjectId[]" [ref: > Users._id]
+  rating Number [default: 0]
+  totalReviews Number [default: 0]
+  totalOrders Number [default: 0]
+  createdAt Date [default: `now()`]
+  updatedAt Date [default: `now()`]
+  
+  Note: 'Shop profiles and business information'
+}
+
+Table Orders {
+  _id ObjectId [pk]
+  customerId ObjectId [ref: > Users._id, not null]
+  shopId ObjectId [ref: > Users._id, not null]
+  orderNumber String [unique, not null]
+  items "OrderItem[]" [note: 'Array of order items']
+  totalAmount Number [not null]
+  status String [note: 'pending, confirmed, shipped, delivered, cancelled']
+  paymentStatus String [note: 'pending, paid, failed, refunded']
+  paymentMethod String
+  stripePaymentIntentId String
+  shippingAddress Object [not null]
+  billingAddress Object
+  tracking Object [note: 'Shipping tracking information']
+  notes String
+  cancelReason String
+  refundAmount Number
+  refundReason String
+  createdAt Date [default: `now()`]
+  updatedAt Date [default: `now()`]
+  
+  Note: 'Customer orders and transaction records'
+}
+
+Table Conversations {
+  _id ObjectId [pk]
+  participants "ObjectId[]" [ref: > Users._id, not null]
+  type String [note: 'direct, group']
+  name String [note: 'Group conversation name']
+  avatar String [note: 'Group conversation avatar']
+  lastMessage ObjectId [ref: > Messages._id]
+  lastMessageAt Date
+  isActive Boolean [default: true]
+  createdAt Date [default: `now()`]
+  updatedAt Date [default: `now()`]
+  
+  Note: 'Chat conversations between users'
+}
+
+Table Messages {
+  _id ObjectId [pk]
+  conversationId ObjectId [ref: > Conversations._id, not null]
+  senderId ObjectId [ref: > Users._id]
+  text String
+  type String [note: 'text, image, product, profile, post, deleted, info']
+  status String [note: 'sending, sent, delivered, read']
+  replyTo ObjectId [ref: > Messages._id]
+  imageUrl String
+  productId ObjectId [ref: > Products._id]
+  userId ObjectId [ref: > Users._id]
+  postId ObjectId [ref: > Posts._id]
+  reactions Object [note: 'Message reactions by users']
+  isEdited Boolean [default: false]
+  editedAt Date
+  deletedAt Date
+  createdAt Date [default: `now()`]
+  
+  Note: 'Individual messages within conversations'
+}
+
+Table Comments {
+  _id ObjectId [pk]
+  postId ObjectId [ref: > Posts._id, not null]
+  userId ObjectId [ref: > Users._id, not null]
+  text String [not null]
+  likes "ObjectId[]" [ref: > Users._id]
+  reports Number [default: 0]
+  isHidden Boolean [default: false]
+  createdAt Date [default: `now()`]
+  
+  Note: 'Comments on posts'
+}
+
+Table Reviews {
+  _id ObjectId [pk]
+  productId ObjectId [ref: > Products._id, not null]
+  shopId ObjectId [ref: > Users._id, not null]
+  userId ObjectId [ref: > Users._id, not null]
+  orderId ObjectId [ref: > Orders._id, not null]
+  rating Number [not null, note: '1-5 stars']
+  text String
+  images "String[]"
+  isVerified Boolean [default: false]
+  helpful "ObjectId[]" [ref: > Users._id]
+  reports Number [default: 0]
+  isHidden Boolean [default: false]
+  createdAt Date [default: `now()`]
+  
+  Note: 'Product and shop reviews by customers'
+}
+
+Table Carts {
+  _id ObjectId [pk]
+  userId ObjectId [ref: > Users._id, unique, not null]
+  items "CartItem[]" [note: 'Array of cart items']
+  totalAmount Number [default: 0]
+  updatedAt Date [default: `now()`]
+  
+  Note: 'Shopping cart for each user'
+}
+
+Table Wishlists {
+  _id ObjectId [pk]
+  userId ObjectId [ref: > Users._id, not null]
+  productId ObjectId [ref: > Products._id, not null]
+  createdAt Date [default: `now()`]
+  
+  Note: 'User wishlist items'
+}
+
+Table Notifications {
+  _id ObjectId [pk]
+  userId ObjectId [ref: > Users._id, not null]
+  type String [note: 'follow, like, comment, order, admin, promotion']
+  title String [not null]
+  message String [not null]
+  data Object [note: 'Additional notification data']
+  isRead Boolean [default: false]
+  actionUrl String
+  createdAt Date [default: `now()`]
+  expiresAt Date [note: 'Auto-cleanup after 30 days']
+  
+  Note: 'User notifications and alerts'
+}
+
+Table Reports {
+  _id ObjectId [pk]
+  reporterId ObjectId [ref: > Users._id, not null]
+  targetType String [note: 'post, product, shop, user, message']
+  targetId ObjectId [not null]
+  reason String [not null]
+  description String
+  status String [note: 'pending, under_review, resolved, dismissed']
+  adminId ObjectId [ref: > Users._id]
+  adminAction String
+  adminNotes String
+  resolution String
+  createdAt Date [default: `now()`]
+  resolvedAt Date
+  
+  Note: 'Content moderation reports'
+}
+
+Table PromotionRequests {
+  _id ObjectId [pk]
+  shopId ObjectId [ref: > Users._id, not null]
+  businessType String [not null]
+  businessRegistration Object [note: 'Registration documents']
+  documents "String[]" [note: 'Verification document URLs']
+  contactInfo Object [not null]
+  bankDetails Object
+  description String
+  status String [note: 'pending, approved, rejected']
+  adminId ObjectId [ref: > Users._id]
+  adminNotes String
+  feedback String
+  submittedAt Date [default: `now()`]
+  reviewedAt Date
+  
+  Note: 'Shop promotion and verification requests'
+}
+
+// Relationships Summary
+Ref: Users._id < Posts.user [note: "User creates posts"]
+Ref: Users._id < Products.shopId [note: "Shop owner creates products"]
+Ref: Users._id < Shops.userId [note: "User can have a shop"]
+Ref: Users._id < Orders.customerId [note: "Customer places orders"]
+Ref: Users._id < Orders.shopId [note: "Shop receives orders"]
+Ref: Posts._id < Comments.postId [note: "Comments belong to posts"]
+Ref: Products._id < Reviews.productId [note: "Reviews for products"]
+Ref: Conversations._id < Messages.conversationId [note: "Messages in conversations"]
+Ref: Users._id < Carts.userId [note: "Each user has a cart"]
+Ref: Users._id < Wishlists.userId [note: "Users have wishlist items"]
+Ref: Users._id < Notifications.userId [note: "Users receive notifications"]
+Ref: Users._id < Reports.reporterId [note: "Users can report content"]
+Ref: Users._id < PromotionRequests.shopId [note: "Shops request promotion"]

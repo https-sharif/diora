@@ -1,21 +1,73 @@
-# Setting Up Diora
+# Development Setup
 
-This guide will walk you through setting up Diora for local development.
+<div align="center">
 
-## Prerequisites
+**Complete Guide to Setting Up Diora Development Environment**
+
+*Get up and running with Diora in minutes*
+
+[![Node.js](https://img.shields.io/badge/Node.js-16%2B-green?style=for-the-badge&logo=node.js)](https://nodejs.org/)
+[![MongoDB](https://img.shields.io/badge/MongoDB-Latest-green?style=for-the-badge&logo=mongodb)](https://mongodb.com/)
+[![React Native](https://img.shields.io/badge/React%20Native-Latest-blue?style=for-the-badge&logo=react)](https://reactnative.dev/)
+
+</div>
+
+---
+
+## Overview
+
+This guide will walk you through setting up Diora for local development with all necessary dependencies and configurations.
+
+**Note:** The backend is already deployed and live at `https://diora.onrender.com`. You can develop the frontend using the live backend, or set up a complete local environment for full development.
+
+## Quick Start (Using Live Backend)
+
+If you only want to work on the frontend and use the deployed backend:
+
+1. **Clone the repository:**
+```bash
+git clone https://github.com/https-sharif/diora-app.git
+cd diora-app
+```
+
+2. **Setup frontend environment:**
+```bash
+cd frontend
+npm install
+```
+
+3. **Create frontend `.env` file:**
+```env
+API_URL=https://diora.onrender.com/api
+STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
+```
+
+4. **Start frontend development:**
+```bash
+npm run dev
+```
+
+## Full Local Development Setup
+
+For complete local development with your own backend instance:
+
+## Full Local Development Setup
+
+For complete local development with your own backend instance:
+
+### Prerequisites
 
 Before you begin, make sure you have:
 - Node.js installed (v14 or higher)
 - MongoDB installed locally or a MongoDB Atlas account
 - Cloudinary account for image storage
 - Stripe account for payment processing
-- Firebase project for notifications (optional)
 
-## Environment Setup
+### Environment Setup
 
 1. Create a `.env` file in the backend directory with these variables:
 ```env
-PORT=5000
+PORT=5010
 MONGODB_URI=your_mongodb_uri
 JWT_SECRET=your_jwt_secret
 CLOUDINARY_CLOUD_NAME=your_cloudinary_name
@@ -23,28 +75,16 @@ CLOUDINARY_API_KEY=your_cloudinary_key
 CLOUDINARY_API_SECRET=your_cloudinary_secret
 STRIPE_SECRET_KEY=your_stripe_secret
 STRIPE_WEBHOOK_SECRET=your_webhook_secret
-FIREBASE_SERVICE_ACCOUNT_KEY=path/to/service-account-key.json
+APP_URL=your_app_url
 ```
 
-2. Create a `config.js` file in the frontend directory:
-   
-   **For Development:**
-   ```javascript
-   export const config = {
-     apiUrl: 'http://localhost:5000/api',
-     socketUrl: 'http://localhost:5000',
-   };
-   ```
-   
-   **For Production:**
-   ```javascript
-   export const config = {
-     apiUrl: 'https://diora.onrender.com/api',
-     socketUrl: 'https://diora.onrender.com',
-   };
-   ```
+2. Create a `.env` file in the frontend directory:
+```env
+API_URL=http://localhost:5010/api
+STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
+```
 
-## Installation Steps
+### Installation Steps
 
 1. Clone the repository:
 ```bash
@@ -66,19 +106,34 @@ npm install
 
 ## Development Workflow
 
+### Using Live Backend (Recommended for Frontend Development)
+
+1. Start the frontend app:
+```bash
+cd frontend
+npm run dev
+```
+
+2. Scan the QR code with Expo Go app on your phone, or:
+   - Press `w` to open in web browser
+   - Press `i` to open iOS simulator
+   - Press `a` to open Android emulator
+
+### Full Local Development
+
 1. Start the backend server:
 ```bash
 cd backend
 npm run dev
 ```
 
-7. Start the frontend app:
+2. In a new terminal, start the frontend:
    ```bash
    cd frontend
    npm run dev
    ```
 
-8. (Optional) Build for web deployment:
+3. (Optional) Build for web deployment:
    ```bash
    cd frontend
    npm run build:web

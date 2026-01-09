@@ -1,11 +1,27 @@
 # API Documentation
 
+<div align="center">
+
+**Comprehensive REST API Reference for Diora Platform**
+
+*Authentication, endpoints, and data models for developers*
+
+[![API](https://img.shields.io/badge/API-REST-blue?style=for-the-badge)](https://diora.onrender.com/api)
+[![Status](https://img.shields.io/badge/Status-Live-green?style=for-the-badge)](https://diora.onrender.com)
+[![Docs](https://img.shields.io/badge/Docs-Updated-brightgreen?style=for-the-badge)](#)
+
+</div>
+
+---
+
+## Overview
+
 This document provides comprehensive information about the Diora REST API endpoints, authentication, and data models.
 
 ## Base URL
 
 ```
-Development: http://localhost:5000/api
+Development: http://localhost:5010/api
 Production: https://diora.onrender.com/api
 ```
 
@@ -13,11 +29,17 @@ Production: https://diora.onrender.com/api
 
 The API is organized into the following route groups:
 
-### Authentication Routes (`/auth`)
+<details>
+<summary><strong>Authentication Routes</strong> <code>/auth</code></summary>
+
 - [`POST /auth/signup`](#post-authsignup) - User registration
 - [`POST /auth/login`](#post-authlogin) - User authentication
 
-### User Management (`/user`)
+</details>
+
+<details>
+<summary><strong>User Management</strong> <code>/user</code></summary>
+
 - [`GET /user/me`](#get-userme) - Current user profile
 - [`GET /user/:userId`](#get-useruserid) - Specific user profile
 - [`GET /user/trending`](#get-usertrending) - Get trending users
@@ -34,7 +56,11 @@ The API is organized into the following route groups:
 - [`PUT /user/update-shop-details`](#put-userupdate-shop-details) - Update shop details
 - [`POST /user/upload-image`](#post-userupload-image) - Upload user image
 
-### Post Management (`/post`)
+</details>
+
+<details>
+<summary><strong>Post Management</strong> <code>/post</code></summary>
+
 - [`GET /post/`](#get-post) - Get all posts
 - [`GET /post/trending`](#get-posttrending) - Get trending posts
 - [`POST /post/create`](#post-postcreate) - Create new post
@@ -43,12 +69,20 @@ The API is organized into the following route groups:
 - [`GET /post/user/:userId`](#get-postuseruserid) - Get user's posts
 - [`GET /post/user/:userId/liked`](#get-postuseruseridliked) - Get user's liked posts
 
-### Comment System (`/comment`)
+</details>
+
+<details>
+<summary><strong>Comment System</strong> <code>/comment</code></summary>
+
 - [`POST /comment/create`](#post-commentcreate) - Create comment
 - [`POST /comment/reply/:commentId`](#post-commentreplycommentid) - Reply to comment
 - [`GET /comment/post/:postId`](#get-commentpostpostid) - Get post comments
 
-### Product Catalog (`/product`)
+</details>
+
+<details>
+<summary><strong>Product Catalog</strong> <code>/product</code></summary>
+
 - [`GET /product/`](#get-product) - Browse products
 - [`GET /product/trending`](#get-producttrending) - Get trending products
 - [`GET /product/shop/:shopId`](#get-productshopshopid) - Get products by shop
@@ -57,7 +91,11 @@ The API is organized into the following route groups:
 - [`PUT /product/:productId`](#put-productproductid) - Update product (shops only)
 - [`DELETE /product/:productId`](#delete-productproductid) - Delete product (shops only)
 
-### Shop System (`/shop`)
+</details>
+
+<details>
+<summary><strong>Shop System</strong> <code>/shop</code></summary>
+
 - [`GET /shop/`](#get-shop) - All shops
 - [`GET /shop/trending`](#get-shoptrending) - Trending shops
 - [`GET /shop/analytics`](#get-shopanalytics) - Shop analytics (owners only)
@@ -68,20 +106,32 @@ The API is organized into the following route groups:
 - [`PUT /shop/:shopId`](#put-shopshopid) - Update shop info
 - [`DELETE /shop/:shopId`](#delete-shopshopid) - Delete shop
 
-### Shopping Cart (`/cart`)
+</details>
+
+<details>
+<summary><strong>Shopping Cart</strong> <code>/cart</code></summary>
+
 - [`GET /cart/`](#get-cart) - Get cart
 - [`POST /cart/`](#post-cart) - Add to cart
 - [`PATCH /cart/`](#patch-cart) - Update cart item
 - [`DELETE /cart/`](#delete-cart) - Remove from cart
 - [`DELETE /cart/clear`](#delete-cartclear) - Clear entire cart
 
-### Wishlist (`/wishlist`)
+</details>
+
+<details>
+<summary><strong>Wishlist</strong> <code>/wishlist</code></summary>
+
 - [`GET /wishlist/`](#get-wishlist) - Get wishlist
 - [`POST /wishlist/`](#post-wishlist) - Add to wishlist
 - [`DELETE /wishlist/`](#delete-wishlist) - Remove from wishlist
 - [`POST /wishlist/toggle`](#post-wishlisttoggle) - Toggle wishlist item
 
-### Order Management (`/order`)
+</details>
+
+<details>
+<summary><strong>Order Management</strong> <code>/order</code></summary>
+
 - [`GET /order/success`](#get-ordersuccess) - Order success callback
 - [`GET /order/cancel`](#get-ordercancel) - Order cancel callback
 - [`POST /order/`](#post-order) - Create order
@@ -92,7 +142,11 @@ The API is organized into the following route groups:
 - [`PATCH /order/:orderId/status`](#patch-orderorderidstatus) - Update order status
 - [`PATCH /order/:orderId/cancel`](#patch-orderorderidcancel) - Cancel order
 
-### Messaging System (`/message`)
+</details>
+
+<details>
+<summary><strong>Messaging System</strong> <code>/message</code></summary>
+
 - [`GET /message/conversations`](#get-messageconversations) - Get conversations
 - [`GET /message/conversations/user/:otherUserId`](#get-messageconversationsuserotheruser) - Get conversation ID
 - [`POST /message/conversations`](#post-messageconversations) - Create conversation
@@ -106,7 +160,11 @@ The API is organized into the following route groups:
 - [`PUT /message/messages/:messageId/reaction`](#put-messagemessagesmessageidreaction) - Add reaction
 - [`DELETE /message/messages/:messageId`](#delete-messagemessagesmessageid) - Delete message
 
-### Review System (`/review`)
+</details>
+
+<details>
+<summary><strong>Review System</strong> <code>/review</code></summary>
+
 - [`POST /review/`](#post-review) - Create review
 - [`GET /review/product/:productId`](#get-reviewproductproductid) - Product reviews
 - [`GET /review/shop/:shopId`](#get-reviewshopshopid) - Shop reviews
@@ -114,7 +172,11 @@ The API is organized into the following route groups:
 - [`PUT /review/:targetType/:id`](#put-reviewtargettypeid) - Update review
 - [`DELETE /review/:targetType/:id`](#delete-reviewtargettypeid) - Delete review
 
-### Search Features (`/search` & `/userSearch`)
+</details>
+
+<details>
+<summary><strong>Search Features</strong> <code>/search</code> & <code>/userSearch</code></summary>
+
 - [`GET /search/`](#get-search) - General search
 - [`GET /search/users`](#get-searchusers) - Search users
 - [`GET /search/shops`](#get-searchshops) - Search shops
@@ -122,14 +184,22 @@ The API is organized into the following route groups:
 - [`GET /userSearch/shops`](#get-usersearchshops) - Advanced shop search
 - [`GET /userSearch/all`](#get-usersearchall) - Combined search
 
-### Notifications (`/notification`)
+</details>
+
+<details>
+<summary><strong>Notifications</strong> <code>/notification</code></summary>
+
 - [`GET /notification/`](#get-notification) - Get notifications
 - [`POST /notification/add`](#post-notificationadd) - Add notification (internal)
 - [`PATCH /notification/mark-as-read/:notificationId`](#patch-notificationmark-as-readnotificationid) - Mark as read
 - [`PATCH /notification/mark-all-as-read`](#patch-notificationmark-all-as-read) - Mark all as read
 - [`DELETE /notification/delete/:notificationId`](#delete-notificationdeletenotificationid) - Delete notification
 
-### Reports & Moderation (`/report`)
+</details>
+
+<details>
+<summary><strong>Reports & Moderation</strong> <code>/report</code></summary>
+
 - [`POST /report/`](#post-report) - Report content
 - [`GET /report/stats`](#get-reportstats) - Report statistics (admin only)
 - [`GET /report/`](#get-report) - Get reports (admin only)
@@ -138,7 +208,11 @@ The API is organized into the following route groups:
 - [`POST /report/:id/moderate`](#post-reportidmoderate) - Moderate report (admin only)
 - [`DELETE /report/cleanup`](#delete-reportcleanup) - Clean old reports (admin only)
 
-### Admin Panel (`/admin`)
+</details>
+
+<details>
+<summary><strong>Admin Panel</strong> <code>/admin</code></summary>
+
 - [`GET /admin/stats`](#get-adminstats) - Platform statistics
 - [`GET /admin/health`](#get-adminhealth) - System health check
 - [`GET /admin/users/search`](#get-adminuserssearch) - User management
@@ -155,16 +229,30 @@ The API is organized into the following route groups:
 - [`GET /admin/promotion-requests`](#get-adminpromotion-requests) - Promotion requests
 - [`PUT /admin/promotion-requests/:requestId`](#put-adminpromotion-requestsrequestid) - Handle promotion
 
-### Payment Integration (`/stripe`)
+</details>
+
+<details>
+<summary><strong>Payment Integration</strong> <code>/stripe</code></summary>
+
 - [`POST /stripe/create-account-link`](#post-stripecreate-account-link) - Shop Stripe setup
 - [`GET /stripe/check-onboarding-status`](#get-stripecheck-onboarding-status) - Check Stripe status
 - [`POST /order/create-stripe-session`](#post-ordercreate-stripe-session) - Payment checkout
 
-### File Uploads (`/upload`)
+</details>
+
+<details>
+<summary><strong>File Uploads</strong> <code>/upload</code></summary>
+
 - [`POST /upload/group-photo/:conversationId`](#post-uploadgroup-photoconversationid) - Upload group photo
 
-### System Webhooks (`/webhook`)
+</details>
+
+<details>
+<summary><strong>System Webhooks</strong> <code>/webhook</code></summary>
+
 - [`POST /webhook/`](#post-webhook) - Stripe payment webhooks
+
+</details>
 
 ## Authentication
 
