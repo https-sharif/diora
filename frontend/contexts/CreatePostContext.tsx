@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { User } from '@/types/User';
 import { postService, productService } from '@/services';
-import { ContentType, FormData, CreatePostContextType } from '@/types/Contexts';
+import { ContentType, CreatePostContextType } from '@/types/Contexts';
 
 const CreatePostContext = createContext<CreatePostContextType | null>(null);
 
@@ -39,7 +39,8 @@ export const CreatePostProvider = ({
     if (!user || !token) throw new Error('User not authenticated!');
 
     try {
-      const form = new FormData();
+      // In React Native, FormData should be available globally
+      const form = new (global as any).FormData();
 
       const uri = images[0];
       const filename = uri.split('/').pop() || 'image.jpg';
@@ -81,7 +82,8 @@ export const CreatePostProvider = ({
       throw new Error('Only shop users can create products');
 
     try {
-      const form = new FormData();
+      // In React Native, FormData should be available globally
+      const form = new (global as any).FormData();
 
       images.forEach((uri, index) => {
         const filename = uri.split('/').pop() || `image_${index}.jpg`;

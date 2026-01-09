@@ -15,6 +15,7 @@
 [![Node.js](https://img.shields.io/badge/Node.js-43853D?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
 [![MongoDB](https://img.shields.io/badge/MongoDB-4EA94B?style=for-the-badge&logo=mongodb&logoColor=white)](https://www.mongodb.com/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Deployed](https://img.shields.io/badge/Backend-Live-green?style=for-the-badge)](https://diora.onrender.com)
 
 </div>
 
@@ -31,19 +32,19 @@ Diora is a comprehensive mobile application that bridges the gap between fashion
 - **Real-time Interaction**: Live messaging, notifications, and community engagement features
 - **Secure Commerce**: End-to-end secure payment processing and order management
 
-## Live Deployment
+## Deployment Status
 
 ### Backend API
 - **Production URL**: [https://diora.onrender.com](https://diora.onrender.com)
 - **Platform**: Render
-## Deployment
+- **Status**: ✅ Live and operational
+- **API Documentation**: [API Reference](docs/api.md)
 
-- **Backend**: https://diora.onrender.com
-- **Status**: Live and operational
-
-### Mobile App
-- **Status**: Development build available via Expo
-- **Download**: Scan QR code from development server or use Expo Go app
+### Mobile Application
+- **Platform**: React Native (Expo)
+- **Status**: Development build available
+- **Distribution**: Expo Go app (scan QR code from development server)
+- **Supported OS**: iOS 13.0+ | Android 8.0+ (API 26+)
 
 ## Quick Start
 

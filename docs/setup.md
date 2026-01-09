@@ -51,10 +51,6 @@ npm run dev
 
 For complete local development with your own backend instance:
 
-## Full Local Development Setup
-
-For complete local development with your own backend instance:
-
 ### Prerequisites
 
 Before you begin, make sure you have:
@@ -224,6 +220,122 @@ FIREBASE_PROJECT_ID=your_project_id
 FIREBASE_PRIVATE_KEY=your_private_key
 FIREBASE_CLIENT_EMAIL=your_client_email
 ```
+
+## Mobile Development Troubleshooting
+
+### Common Expo/React Native Issues
+
+#### Metro Bundler Issues
+
+**Problem:** "Error: Unable to resolve module"
+```bash
+# Solution: Clear Metro cache
+npx expo start -c
+# or
+npm start -- --reset-cache
+```
+
+**Problem:** Metro bundler won't start
+```bash
+# Solution: Kill any running Metro processes
+lsof -ti:8081 | xargs kill -9
+# Then restart
+npm start
+```
+
+#### iOS Simulator Issues
+
+**Problem:** "Could not connect to development server"
+- Ensure your Mac and device are on the same network
+- Check firewall settings aren't blocking port 8081
+- Try restarting the iOS simulator
+```bash
+# Reset iOS simulator
+xcrun simctl erase all
+```
+
+**Problem:** "No Xcode or CLT version detected"
+```bash
+# Install Xcode Command Line Tools
+xcode-select --install
+```
+
+#### Android Emulator Issues
+
+**Problem:** "Unable to load script from assets"
+```bash
+# Solution 1: Reverse the port
+adb reverse tcp:8081 tcp:8081
+
+# Solution 2: Start dev server with local IP
+npm start
+# Then press 'a' for Android
+```
+
+**Problem:** "SDK location not found"
+- Set ANDROID_HOME environment variable in your shell profile:
+```bash
+export ANDROID_HOME=$HOME/Library/Android/sdk
+export PATH=$PATH:$ANDROID_HOME/emulator
+export PATH=$PATH:$ANDROID_HOME/tools
+export PATH=$PATH:$ANDROID_HOME/platform-tools
+```
+
+#### Build Errors
+
+**Problem:** "Module not found" after installing new package
+```bash
+# Solution: Clear all caches and reinstall
+rm -rf node_modules
+rm package-lock.json
+npm install
+npx expo start -c
+```
+
+**Problem:** TypeScript errors after updating packages
+```bash
+# Regenerate TypeScript types
+npx expo customize tsconfig.json
+```
+
+#### Network/API Issues
+
+**Problem:** API calls fail on physical device
+- Use your computer's local IP instead of localhost
+- Update `API_URL` in frontend `.env`:
+```env
+API_URL=http://192.168.1.XXX:5010/api
+```
+
+**Problem:** CORS errors in web browser
+- Backend must allow the frontend origin in CORS settings
+- Check backend Express CORS configuration
+
+#### Performance Issues
+
+**Problem:** Slow app performance in development
+- Development builds are slower; test production build:
+```bash
+npx expo build:web
+# or for mobile
+eas build --platform ios
+```
+
+**Problem:** Images not loading
+- Clear Expo cache:
+```bash
+npx expo start -c
+```
+- Check Cloudinary credentials in backend `.env`
+- Verify image URLs are accessible
+
+### Getting Help
+
+If issues persist:
+1. Check the [Expo documentation](https://docs.expo.dev)
+2. Search [Stack Overflow](https://stackoverflow.com/questions/tagged/expo) with `expo` tag
+3. Visit [Expo Forums](https://forums.expo.dev)
+4. Check the project's [GitHub Issues](https://github.com/https-sharif/diora-app/issues)
 
 ## Next Steps
 

@@ -906,6 +906,101 @@ Create or get conversation with another user.
 }
 ```
 
+### GET /message/conversations/user/:otherUserId
+*Requires Authentication*
+
+Get or create conversation ID with a specific user.
+
+**Response:**
+```json
+{
+  "status": true,
+  "conversationId": "conversation_id"
+}
+```
+
+### POST /message/conversations/group
+*Requires Authentication*
+
+Create a new group conversation.
+
+**Request Body:**
+```json
+{
+  "participants": ["user_id_1", "user_id_2", "user_id_3"],
+  "name": "Group Name",
+  "avatar": "optional_avatar_url"
+}
+```
+
+**Response:**
+```json
+{
+  "status": true,
+  "conversation": {
+    "_id": "conversation_id",
+    "type": "group",
+    "name": "Group Name",
+    "participants": ["user_id_1", "user_id_2"],
+    "createdAt": "2026-01-10T00:00:00.000Z"
+  }
+}
+```
+
+### PUT /message/conversations/:conversationId/leave
+*Requires Authentication*
+
+Leave a group conversation.
+
+**Response:**
+```json
+{
+  "status": true,
+  "message": "Left group successfully"
+}
+```
+
+### PUT /message/conversations/:conversationId/edit
+*Requires Authentication*
+
+Edit group conversation details.
+
+**Request Body:**
+```json
+{
+  "name": "New Group Name",
+  "avatar": "new_avatar_url"
+}
+```
+
+**Response:**
+```json
+{
+  "status": true,
+  "message": "Group updated successfully"
+}
+```
+
+### PUT /message/conversations/:conversationId/add-user
+*Requires Authentication*
+
+Add a user to a group conversation.
+
+**Request Body:**
+```json
+{
+  "userId": "user_id_to_add"
+}
+```
+
+**Response:**
+```json
+{
+  "status": true,
+  "message": "User added to group successfully"
+}
+```
+
 ### GET /message/conversations/:conversationId/messages
 *Requires Authentication*
 
@@ -922,6 +1017,55 @@ Send a new message.
   "conversationId": "conversation_id",
   "content": "Hello there!",
   "type": "text"
+}
+```
+
+### PUT /message/conversations/:conversationId/read
+*Requires Authentication*
+
+Mark all messages in a conversation as read.
+
+**Response:**
+```json
+{
+  "status": true,
+  "message": "Conversation marked as read"
+}
+```
+
+### PUT /message/messages/:messageId/reaction
+*Requires Authentication*
+
+Add or remove a reaction to a message.
+
+**Request Body:**
+```json
+{
+  "emoji": "❤️"
+}
+```
+
+**Response:**
+```json
+{
+  "status": true,
+  "message": "Reaction updated",
+  "reactions": {
+    "❤️": ["user_id_1", "user_id_2"]
+  }
+}
+```
+
+### DELETE /message/messages/:messageId
+*Requires Authentication*
+
+Delete a message (soft delete - marked as deleted).
+
+**Response:**
+```json
+{
+  "status": true,
+  "message": "Message deleted successfully"
 }
 ```
 
@@ -1292,15 +1436,76 @@ Handle Stripe payment webhooks for order completion.
 
 Get user's notifications.
 
+**Query Parameters:**
+- `limit`: number (default: 20)
+- `page`: number (default: 1)
+- `unreadOnly`: boolean (optional)
+
+**Response:**
+```json
+{
+  "status": true,
+  "notifications": [
+    {
+      "_id": "notification_id",
+      "type": "like",
+      "title": "New Like",
+      "message": "John liked your post",
+      "isRead": false,
+      "data": {
+        "postId": "post_id",
+        "userId": "user_id"
+      },
+      "createdAt": "2026-01-10T00:00:00.000Z"
+    }
+  ],
+  "unreadCount": 5
+}
+```
+
+### POST /notification/add
+*Internal Use Only*
+
+Create a new notification (used by backend systems).
+
+**Request Body:**
+```json
+{
+  "userId": "user_id",
+  "type": "follow",
+  "title": "New Follower",
+  "message": "Jane started following you",
+  "data": {
+    "followerId": "follower_id"
+  }
+}
+```
+
 ### PATCH /notification/mark-as-read/:notificationId
 *Requires Authentication*
 
 Mark specific notification as read.
 
+**Response:**
+```json
+{
+  "status": true,
+  "message": "Notification marked as read"
+}
+```
+
 ### PATCH /notification/mark-all-as-read
 *Requires Authentication*
 
 Mark all notifications as read.
+
+**Response:**
+```json
+{
+  "status": true,
+  "message": "All notifications marked as read"
+}
+```
 
 ## Administrative Endpoints
 
@@ -1335,6 +1540,28 @@ Get platform statistics.
 }
 ```
 
+### GET /admin/health
+*Requires Admin Authentication*
+
+System health check and diagnostics.
+
+**Response:**
+```json
+{
+  "status": true,
+  "health": {
+    "database": "connected",
+    "redis": "connected",
+    "uptime": "72h 15m",
+    "memory": {
+      "used": "512MB",
+      "total": "2GB"
+    },
+    "lastBackup": "2026-01-09T00:00:00.000Z"
+  }
+}
+```
+
 ### GET /admin/users/search
 *Requires Admin Authentication*
 
@@ -1355,6 +1582,199 @@ Suspend a user account.
 {
   "duration": 7,
   "reason": "Violation of community guidelines"
+}
+```
+
+**Response:**
+```json
+{
+  "status": true,
+  "message": "User suspended successfully",
+  "suspendedUntil": "2026-01-17T00:00:00.000Z"
+}
+```
+
+### POST /admin/users/:userId/ban
+*Requires Admin Authentication*
+
+Ban a user account permanently.
+
+**Request Body:**
+```json
+{
+  "reason": "Repeated violations",
+  "permanent": true
+}
+```
+
+**Response:**
+```json
+{
+  "status": true,
+  "message": "User banned successfully"
+}
+```
+
+### POST /admin/users/:userId/unban
+*Requires Admin Authentication*
+
+Unban a previously banned user.
+
+**Response:**
+```json
+{
+  "status": true,
+  "message": "User unbanned successfully"
+}
+```
+
+### POST /admin/users/:userId/warn
+*Requires Admin Authentication*
+
+Send a warning to a user.
+
+**Request Body:**
+```json
+{
+  "message": "Please follow community guidelines",
+  "severity": "medium"
+}
+```
+
+**Response:**
+```json
+{
+  "status": true,
+  "message": "Warning sent successfully"
+}
+```
+
+### GET /admin/posts/search
+*Requires Admin Authentication*
+
+Search and filter posts for moderation.
+
+**Query Parameters:**
+- `query`: string (search term)
+- `reported`: boolean (show only reported posts)
+- `hidden`: boolean (show hidden posts)
+- `userId`: string (filter by user)
+- `limit`: number (default: 20)
+
+**Response:**
+```json
+{
+  "status": true,
+  "posts": [
+    {
+      "_id": "post_id",
+      "user": {
+        "username": "user123",
+        "fullName": "John Doe"
+      },
+      "caption": "Post caption",
+      "reports": 3,
+      "isHidden": false,
+      "createdAt": "2026-01-10T00:00:00.000Z"
+    }
+  ]
+}
+```
+
+### POST /admin/posts/:postId/hide
+*Requires Admin Authentication*
+
+Hide a post from public view.
+
+**Request Body:**
+```json
+{
+  "reason": "Inappropriate content"
+}
+```
+
+**Response:**
+```json
+{
+  "status": true,
+  "message": "Post hidden successfully"
+}
+```
+
+### POST /admin/posts/:postId/show
+*Requires Admin Authentication*
+
+Unhide a previously hidden post.
+
+**Response:**
+```json
+{
+  "status": true,
+  "message": "Post shown successfully"
+}
+```
+
+### GET /admin/products/search
+*Requires Admin Authentication*
+
+Search and filter products for moderation.
+
+**Query Parameters:**
+- `query`: string (search term)
+- `reported`: boolean (show only reported products)
+- `hidden`: boolean (show hidden products)
+- `shopId`: string (filter by shop)
+- `limit`: number (default: 20)
+
+**Response:**
+```json
+{
+  "status": true,
+  "products": [
+    {
+      "_id": "product_id",
+      "name": "Product Name",
+      "shop": {
+        "name": "Shop Name"
+      },
+      "price": 99.99,
+      "reports": 1,
+      "isHidden": false
+    }
+  ]
+}
+```
+
+### POST /admin/products/:productId/hide
+*Requires Admin Authentication*
+
+Hide a product from the marketplace.
+
+**Request Body:**
+```json
+{
+  "reason": "Counterfeit or misleading"
+}
+```
+
+**Response:**
+```json
+{
+  "status": true,
+  "message": "Product hidden successfully"
+}
+```
+
+### POST /admin/products/:productId/show
+*Requires Admin Authentication*
+
+Unhide a previously hidden product.
+
+**Response:**
+```json
+{
+  "status": true,
+  "message": "Product shown successfully"
 }
 ```
 
@@ -1398,6 +1818,107 @@ Report inappropriate content.
 
 Get all reports for moderation.
 
+**Query Parameters:**
+- `status`: string (pending, under_review, resolved, dismissed)
+- `type`: string (post, product, shop, user, message)
+- `limit`: number (default: 20)
+
+**Response:**
+```json
+{
+  "status": true,
+  "reports": [
+    {
+      "_id": "report_id",
+      "targetType": "post",
+      "targetId": "post_id",
+      "reporter": {
+        "username": "reporter123"
+      },
+      "reason": "spam",
+      "description": "Contains spam content",
+      "status": "pending",
+      "createdAt": "2026-01-10T00:00:00.000Z"
+    }
+  ]
+}
+```
+
+### GET /report/stats
+*Requires Admin Authentication*
+
+Get report statistics and trends.
+
+**Response:**
+```json
+{
+  "status": true,
+  "stats": {
+    "total": 150,
+    "pending": 25,
+    "underReview": 10,
+    "resolved": 100,
+    "dismissed": 15,
+    "byType": {
+      "post": 80,
+      "product": 40,
+      "user": 20,
+      "shop": 10
+    }
+  }
+}
+```
+
+### GET /report/:id
+*Requires Admin Authentication*
+
+Get detailed information about a specific report.
+
+**Response:**
+```json
+{
+  "status": true,
+  "report": {
+    "_id": "report_id",
+    "targetType": "post",
+    "targetId": "post_id",
+    "target": {
+      "caption": "Post content",
+      "imageUrl": "image_url"
+    },
+    "reporter": {
+      "username": "reporter123",
+      "email": "reporter@example.com"
+    },
+    "reason": "spam",
+    "description": "Detailed description",
+    "status": "pending",
+    "createdAt": "2026-01-10T00:00:00.000Z"
+  }
+}
+```
+
+### PUT /report/:id
+*Requires Admin Authentication*
+
+Update report status and add admin notes.
+
+**Request Body:**
+```json
+{
+  "status": "under_review",
+  "adminNotes": "Investigating the issue"
+}
+```
+
+**Response:**
+```json
+{
+  "status": true,
+  "message": "Report updated successfully"
+}
+```
+
 ### POST /report/:id/moderate
 *Requires Admin Authentication*
 
@@ -1408,6 +1929,28 @@ Take moderation action on a report.
 {
   "action": "remove_content",
   "reason": "Violates community guidelines"
+}
+```
+
+**Response:**
+```json
+{
+  "status": true,
+  "message": "Moderation action completed"
+}
+```
+
+### DELETE /report/cleanup
+*Requires Admin Authentication*
+
+Clean up old resolved/dismissed reports (90+ days).
+
+**Response:**
+```json
+{
+  "status": true,
+  "message": "Cleanup completed",
+  "deletedCount": 45
 }
 ```
 
@@ -1622,6 +2165,86 @@ Delete a review (only by review author).
   "message": "Review deleted successfully"
 }
 ```
+
+## Rate Limiting
+
+The API implements rate limiting to ensure fair usage and system stability.
+
+### Rate Limit Details
+
+| Endpoint Type | Requests | Time Window | Notes |
+|--------------|----------|-------------|-------|
+| Authentication | 5 requests | 15 minutes | Login/Signup attempts |
+| General API | 100 requests | 15 minutes | Most GET/POST endpoints |
+| File Upload | 10 requests | 15 minutes | Image/file uploads |
+| Admin Actions | 50 requests | 15 minutes | Admin-only endpoints |
+| Messaging | 30 messages | 1 minute | Real-time messages |
+
+### Rate Limit Headers
+
+Every API response includes rate limit information in the headers:
+
+```
+X-RateLimit-Limit: 100
+X-RateLimit-Remaining: 95
+X-RateLimit-Reset: 1704902400
+```
+
+### Rate Limit Exceeded Response
+
+When rate limit is exceeded, the API returns:
+
+```json
+{
+  "status": false,
+  "message": "Rate limit exceeded. Please try again later.",
+  "retryAfter": 300
+}
+```
+
+**HTTP Status Code:** `429 Too Many Requests`
+
+### Best Practices
+
+- **Cache responses** when possible to reduce API calls
+- **Implement exponential backoff** when retrying failed requests
+- **Use WebSocket connections** for real-time features instead of polling
+- **Batch requests** where the API supports it
+- **Monitor rate limit headers** to avoid hitting limits
+
+## Webhook Security
+
+### Stripe Webhook Verification
+
+All Stripe webhooks must be verified using the webhook signature:
+
+```javascript
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
+app.post('/webhook', express.raw({type: 'application/json'}), (req, res) => {
+  const sig = req.headers['stripe-signature'];
+  
+  try {
+    const event = stripe.webhooks.constructEvent(
+      req.body,
+      sig,
+      process.env.STRIPE_WEBHOOK_SECRET
+    );
+    // Process event
+  } catch (err) {
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+});
+```
+
+### Security Best Practices
+
+1. **Always verify webhook signatures** before processing
+2. **Use HTTPS endpoints** for webhooks in production
+3. **Implement idempotency** to handle duplicate webhook deliveries
+4. **Log all webhook events** for debugging and auditing
+5. **Set up proper error handling** and retry logic
+6. **Validate webhook payload** structure before processing
 
 ## Error Codes Reference
 

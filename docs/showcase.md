@@ -18,63 +18,127 @@
 
 A visual tour of Diora's key features and user interfaces for fashion enthusiasts, shoppers, and retailers. This showcase demonstrates the platform's capabilities across different user types and use cases.
 
-## Navigation & Getting Started
+<details open>
+<summary style="font-size: 18px;">Navigation & Getting Started</summary>
 
 ### Authentication
-**[Screenshot: Login screen with email/password fields]**
-**[Screenshot: Registration form with user type selection]**
+<table align="center">
+<tr>
+<th><b>Login</b></th>
+<th><b>Sign Up</b></th>
+</tr>
+<tr>
+<td><img src="images/login-screen.png" style="max-height: 450px; width: auto; height: auto;"></td>
+<td><img src="images/signup-screen.PNG" style="max-height: 450px; width: auto; height: auto;"></td>
+</tr>
+<tr>
+<td><small><i>Fig 1.1: Login Screen</i></small></td>
+<td><small><i>Fig 1.2: Sign Up Screen</i></small></td>
+</tr>
+</table>
 
 Secure user access:
 - Email/password authentication
-- User type selection (regular user, shop owner)
 - Account recovery options
 
-## Social Features
+</details>
+
+<details open>
+<summary style="font-size: 18px;">Social Features</summary>
 
 ### Home Feed
-**[Screenshot: Home feed showing outfit posts with user avatars, images, captions, like counts, and comment counts]**
+<table align="center">
+<tr>
+<th><b>Home Feed</b></th>
+<th><b>Explore Page 1</b></th>
+<th><b>Explore Page 2</b></th>
+</tr>
+<tr>
+<td><img src="images/home-feed.png" style="max-height: 450px; width: auto; height: auto;"></td>
+<td><img src="images/explore-page-1.png" style="max-height: 450px; width: auto; height: auto;"></td>
+<td><img src="images/explore-page-2.png" style="max-height: 450px; width: auto; height: auto;"></td>
+</tr>
+<tr>
+<td><small><i>Fig 2.1: Home Feed</i></small></td>
+<td><small><i>Fig 2.2: Explore Page 1</i></small></td>
+<td><small><i>Fig 2.3: Explore Page 2</i></small></td>
+</tr>
+</table>
 
-The main social feed where users discover fashion inspiration:
-- Scroll through a curated feed of outfit posts
+The main Feed tab where users discover fashion inspiration:
+- Scroll through a curated feed of outfit posts from followed users and trending content
 - Like and comment on posts that inspire them
 - Follow users whose style they admire
 - Get real-time updates from followed accounts
-- Save posts to personal collections
 
 ### Content Creation
-**[Screenshot: Post creation screen with camera interface, image preview, caption input field, and post button]**
+<table align="center">
+<tr>
+<th><b>Post Creation Screen 1</b></th>
+<th><b>Post Creation Screen 2</b></th>
+</tr>
+<tr>
+<td><img src="images/post-creation-screen-1.png" style="max-height: 450px; width: auto; height: auto;"></td>
+<td><img src="images/post-creation-screen-2.png" style="max-height: 450px; width: auto; height: auto;"></td>
+</tr>
+<tr>
+<td><small><i>Fig 2.4: Post Creation Screen 1</i></small></td>
+<td><small><i>Fig 2.5: Post Creation Screen 2</i></small></td>
+</tr>
+</table>
 
 Users can share their fashion choices with the community:
-- Upload high-quality outfit photos
-- Add detailed captions with styling tips
-- Tag similar products for shopping
-- Build a personal style portfolio
-
-Users can share their fashion choices with the community:
-- Upload high-quality outfit photos from camera or gallery
+- Upload outfit photos from camera or gallery
 - Add detailed captions with styling tips and hashtags
-- Tag similar products for shopping integration
-- Apply filters and edit images before posting
-- Schedule posts for optimal timing
-- Build a personal style portfolio over time
 
 ### Post Details & Interactions
-**[Screenshot: Individual post view with full-size image, user info, and interaction buttons]**
-**[Screenshot: Comments section with nested replies and user mentions]**
-**[Screenshot: Like list showing users who liked the post]**
+<table align="center">
+<tr>
+<th><b>Individual Post View</b></th>
+<th><b>Comments Section</b></th>
+<th><b>Liked Post</b></th>
+</tr>
+<tr>
+<td><img src="images/individual-post-view.png" style="max-height: 450px; width: auto; height: auto;"></td>
+<td><img src="images/comment-section.png" style="max-height: 450px; width: auto; height: auto;"></td>
+<td><img src="images/user-liked-post.png" style="max-height: 450px; width: auto; height: auto;"></td>
+</tr>
+<tr>
+<td><small><i>Fig 2.6: Individual Post View</i></small></td>
+<td><small><i>Fig 2.7: Comments Section</i></small></td>
+<td><small><i>Fig 2.8: Liked Post</i></small></td>
+</tr>
+</table>
 
 Detailed post viewing and interaction:
-- Full-screen image viewing with zoom capabilities
 - Complete caption and styling details
 - Nested comment system with threading
 - User mentions and hashtag linking
-- Like analytics and engagement metrics
 - Report inappropriate content options
 
-## User Profiles & Social Networking
+</details>
+
+<details open>
+<summary style="font-size: 18px;">User Profiles & Social Networking</summary>
 
 ### User Profiles
-**[Screenshot: User profile showing avatar, bio, follower/following counts, grid of posted outfit images, and follow button]**
+<table align="center">
+<tr>
+<th><b>User Profile</b></th>
+<th><b>Other User Profile</b></th>
+<th><b>Profile Edit Screen</b></th>
+</tr>
+<tr>
+<td><img src="images/user-profile.png" style="max-height: 450px; width: auto; height: auto;"></td>
+<td><img src="images/other-user-profile.png" style="max-height: 450px; width: auto; height: auto;"></td>
+<td><img src="images/profile-edit-screen.PNG" style="max-height: 450px; width: auto; height: auto;"></td>
+</tr>
+<tr>
+<td><small><i>Fig 3.1: User Profile</i></small></td>
+<td><small><i>Fig 3.2: Other User Profile</i></small></td>
+<td><small><i>Fig 3.3: Profile Edit Screen</i></small></td>
+</tr>
+</table>
 
 Personal style showcases and user information:
 - Display user's posted outfits in a grid layout
@@ -84,16 +148,28 @@ Personal style showcases and user information:
 - Direct messaging access
 
 Find and connect with fashion enthusiasts:
-- Search users by username or style preferences
+- Search users by username
 - Filter by location, style categories, and activity
 - Trending users based on engagement metrics
-- Style influencer recommendations
 - Follow suggestions based on interests
 
-## E-Commerce & Shopping
+</details>
+
+<details open>
+<summary style="font-size: 18px;">E-Commerce & Shopping</summary>
 
 ### Product Catalog
-**[Screenshot: Product catalog with grid layout showing product images, names, prices, and shop names]**
+<table align="center">
+<tr>
+<th><b>Product Catalog</b></th>
+</tr>
+<tr>
+<td><img src="images/product-catalog.png" style="max-height: 450px; width: auto; height: auto;"></td>
+</tr>
+<tr>
+<td><small><i>Fig 4.1: Product Catalog</i></small></td>
+</tr>
+</table>
 
 Browse and discover fashion products:
 - Curated fashion products from verified retailers
@@ -101,30 +177,128 @@ Browse and discover fashion products:
 - Search products by name or brand
 - Add items to wishlist for later consideration
 
-### Product Details
-**[Screenshot: Individual product page with large image, price, description, size options, color variants, add to cart button]**
+### Product Page
+<table align="center">
+<tr>
+<th><b>Product Page</b></th>
+</tr>
+<tr>
+<td><img src="images/product-details-1.png" style="max-height: 450px; width: auto; height: auto;"></td>
+<td><img src="images/product-details-2.png" style="max-height: 450px; width: auto; height: auto;"></td>
+<td><img src="images/product-details-3.png" style="max-height: 450px; width: auto; height: auto;"></td>
+</tr>
+<tr>
+<td><small><i>Fig 4.2: Product Page 1</i></small></td>
+<td><small><i>Fig 4.3: Product Page 2</i></small></td>
+<td><small><i>Fig 4.4: Product Page 3</i></small></td>
+</tr>
+</table>
 
 Comprehensive product information:
-- High-quality product images with zoom
+- High-quality product images
 - Detailed descriptions and specifications
 - Size and color selection options
 - Customer reviews and ratings
 - Add to cart and wishlist functionality
 
 ### Shopping Cart & Checkout
-**[Screenshot: Shopping cart showing item thumbnails, quantities, prices, total amount, and checkout button]**
-**[Screenshot: Checkout screen with shipping address form, payment method selection]**
+<table align="center">
+<tr>
+<th><b>Shopping Cart</b></th>
+<th><b>Checkout Page</b></th>
+<th><b>Stripe Payment Gateway</b></th>
+</tr>
+<tr>
+<td><img src="images/shopping-cart.png" style="max-height: 450px; width: auto; height: auto;"></td>
+<td><img src="images/checkout-page.png" style="max-height: 450px; width: auto; height: auto;"></td>
+<td><img src="images/checkout-stripe.png" style="max-height: 450px; width: auto; height: auto;"></td>
+</tr>
+<tr>
+<td><small><i>Fig 4.5: Shopping Cart</i></small></td>
+<td><small><i>Fig 4.6: Checkout Page</i></small></td>
+<td><small><i>Fig 4.7: Stripe Payment Gateway</i></small></td>
+</tr>
+</table>
 
 Streamlined purchasing experience:
 - Review selected items with quantity adjustment
 - Secure address and payment information entry
-- Multiple payment methods with Stripe integration
+- Multiple payment methods such as credit card via Stripe, Bkash and Cash on Delivery
 - Order confirmation with tracking details
 
-## Shop Owner Features
+### Order History & Tracking
+<table align="center">
+<tr>
+<th><b>Order History Screen</b></th>
+<th><b>Order Details</b></th>
+</tr>
+<tr>
+<td><img src="images/order-history.png" style="max-height: 450px; width: auto; height: auto;"></td>
+<td><img src="images/order-details.png" style="max-height: 450px; width: auto; height: auto;"></td>
+</tr>
+<tr>
+<td><small><i>Fig 4.8: Order History Screen</i></small></td>
+<td><small><i>Fig 4.9: Order Details</i></small></td>
+</tr>
+</table>
+
+Complete order lifecycle management:
+- Order history with filtering for processed, shipped, and delivered orders
+- Detailed order information and receipts
+- Order Cancellation and return options
+
+</details>
+
+<details open>
+<summary style="font-size: 18px;">Shop Owner Features</summary>
 
 ### Shop Management
-**[Screenshot: Shop dashboard showing sales analytics charts, order management interface, product inventory list]**
+<table align="center">
+<tr>
+<th><b>Shop Dashboard</b></th>
+<th><b>Shop Profile</b></th>
+<th><b>Shop Order List</b></th>
+</tr>
+<tr>
+<td><img src="images/shop-dashboard.PNG" style="max-height: 450px; width: auto; height: auto;"></td>
+<td><img src="images/shop-profile.png" style="max-height: 450px; width: auto; height: auto;"></td>
+<td><img src="images/shop-order-list.PNG" style="max-height: 450px; width: auto; height: auto;"></td>
+</tr>
+<tr>
+<td><small><i>Fig 5.1: Shop Dashboard</i></small></td>
+<td><small><i>Fig 5.2: Shop Profile</i></small></td>
+<td><small><i>Fig 5.3: Shop Order List</i></small></td>
+</tr>
+</table>
+
+### Shop Promotion
+<table align="center">
+<tr>
+<th><b>Shop Promotion Request Modal</b></th>
+</tr>
+<tr>
+<td><img src="images/shop-promotion-request-modal.png" style="max-height: 450px; width: auto; height: auto;"></td>
+</tr>
+<tr>
+<td><small><i>Fig 5.4: Shop Promotion Request Modal</i></small></td>
+</tr>
+</table>
+
+### Product Creation
+<table align="center">
+<tr>
+<th><b>Product Creation Screen 1</b></th>
+<th><b>Product Creation Screen 2</b></th>
+</tr>
+<tr>
+<td><img src="images/product-creation-screen-1.png" style="max-height: 450px; width: auto; height: auto;"></td>
+<td><img src="images/product-creation-screen-2.png" style="max-height: 450px; width: auto; height: auto;"></td>
+</tr>
+<tr>
+<td><small><i>Fig 5.5: Product Creation Screen 1</i></small></td>
+<td><small><i>Fig 5.6: Product Creation Screen 2</i></small></td>
+</tr>
+</table>
 
 Comprehensive tools for fashion retailers:
 - Create and manage branded shop profiles
@@ -133,22 +307,91 @@ Comprehensive tools for fashion retailers:
 - Manage orders and inventory
 - Communicate directly with customers
 
-## Real-Time Messaging
+</details>
+
+<details open>
+<summary style="font-size: 18px;">Real-Time Messaging</summary>
 
 ### Direct Messaging
-**[Screenshot: Chat interface with message bubbles, typing indicators, send button, and conversation list]**
+<table align="center">
+<tr>
+<th><b>Conversation List</b></th>
+<th><b>Chat Interface</b></th>
+</tr>
+<tr>
+<td><img src="images/conversation-list.PNG" style="max-height: 450px; width: auto; height: auto;"></td>
+<td><img src="images/chat-interface.png" style="max-height: 450px; width: auto; height: auto;"></td>
+</tr>
+<tr>
+<td><small><i>Fig 6.1: Conversation List</i></small></td>
+<td><small><i>Fig 6.2: Chat Interface</i></small></td>
+</tr>
+</table>
 
 Instant messaging capabilities throughout the platform:
 - Direct messaging between users
 - Group conversations for style discussions
 - Message reactions and media sharing
-- Online/offline status indicators
 - Push notifications for immediate updates
 
-## Administrative Panel
+</details>
+
+<details open>
+<summary style="font-size: 18px;">Administrative Panel</summary>
 
 ### Platform Management
-**[Screenshot: Admin dashboard with platform statistics, user management table, content moderation queue]**
+<table align="center">
+<tr>
+<th><b>Admin Analytics</b></th>
+<th><b>Admin Profile</b></th>
+</tr>
+<tr>
+<td><img src="images/admin-analytics.PNG" style="max-height: 450px; width: auto; height: auto;"></td>
+<td><img src="images/admin-profile.PNG" style="max-height: 450px; width: auto; height: auto;"></td>
+</tr>
+<tr>
+<td><small><i>Fig 7.1: Admin Analytics</i></small></td>
+<td><small><i>Fig 7.2: Admin Profile</i></small></td>
+</tr>
+</table>
+
+### Content Moderation
+<table align="center">
+<tr>
+<th><b>User Monitoring</b></th>
+<th><b>Post Monitoring</b></th>
+<th><b>Product Monitoring</b></th>
+
+</tr>
+<tr>
+<td><img src="images/admin-monitoring-page-user.PNG" style="max-height: 450px; width: auto; height: auto;"></td>
+<td><img src="images/admin-monitoring-page-post.PNG" style="max-height: 450px; width: auto; height: auto;"></td>
+<td><img src="images/admin-monitoring-page-product.PNG" style="max-height: 450px; width: auto; height: auto;"></td>
+</tr>
+<tr>
+<td><small><i>Fig 7.3: User Monitoring</i></small></td>
+<td><small><i>Fig 7.4: Post Monitoring</i></small></td>
+<td><small><i>Fig 7.5: Product Monitoring</i></small></td>
+</tr>
+</table>
+
+<table align="center">
+<tr>
+<th><b>Admin Report Management</b></th>
+<th><b>Report Detail 1</b></th>
+<th><b>Report Detail 2</b></th>
+</tr>
+<tr>
+<td><img src="images/admin-reports-management.png" style="max-height: 450px; width: auto; height: auto;"></td>
+<td><img src="images/report-detail-1.PNG" style="max-height: 450px; width: auto; height: auto;"></td>
+<td><img src="images/report-detail-2.PNG" style="max-height: 450px; width: auto; height: auto;"></td>
+</tr>
+<tr>
+<td><small><i>Fig 7.6: Admin Report Management</i></small></td>
+<td><small><i>Fig 7.7: Report Detail 1</i></small></td>
+<td><small><i>Fig 7.8: Report Detail 2</i></small></td>
+</tr>
+</table>
 
 Platform management tools for administrators:
 - Real-time platform statistics and user growth metrics
@@ -157,117 +400,74 @@ Platform management tools for administrators:
 - Shop promotion request approval workflow
 - System health monitoring and performance metrics
 
-## Search & Discovery
+</details>
 
-### Advanced Search
-**[Screenshot: Search interface with search bar, filter options, and results showing mix of users, posts, and products]**
+<details open>
+<summary style="font-size: 18px;">Search & Discovery</summary>
 
-Powerful search and discovery capabilities:
+### Explore & Discovery
+<table align="center">
+<tr>
+<th><b>Explore Interface</b></th>
+</tr>
+<tr>
+<td><img src="images/advanced-search-filter.png" style="max-height: 450px; width: auto; height: auto;"></td>
+</tr>
+<tr>
+<td><small><i>Fig 8.1: Explore Interface</i></small></td>
+</tr>
+</table>
+
+Powerful Explore tab for search and discovery capabilities:
 - Unified search across users, posts, and products
 - Real-time search suggestions and autocomplete
 - Advanced filters by category, location, and price
 - Trending posts and popular fashion content
 - Shop directory with ratings and reviews
 
-## Notifications & Activity Feed
+</details>
+
+<details open>
+<summary style="font-size: 18px;">Notifications & Activity Feed</summary>
 
 ### Notification Center
-**[Screenshot: Notifications list showing like notifications, comment notifications, follow notifications, and order updates with timestamps]**
-**[Screenshot: Notification categories and filtering options]**
-**[Screenshot: Notification settings and preferences]**
+<table align="center">
+<tr>
+<th><b>Notifications List</b></th>
+<th><b>Notification Settings</b></th>
+</tr>
+<tr>
+<td><img src="images/notification-list.png" style="max-height: 450px; width: auto; height: auto;"></td>
+<td><img src="images/notification-settings.png" style="max-height: 450px; width: auto; height: auto;"></td>
+</tr>
+<tr>
+<td><small><i>Fig 9.1: Notifications List</i></small></td>
+<td><small><i>Fig 9.2: Notification Preference Setting</i></small></td>
+</tr>
+</table>
 
 Stay updated with platform activity:
 - Real-time push notifications via Firebase
 - In-app notification center with activity history
-- Categorized notifications (social, shopping, system)
-- Customizable notification preferences by type
-- Email notifications for important updates
-- Notification analytics and engagement tracking
+- Customizable notification preferences and settings
 
-### Activity Types
-**[Screenshot: Social activity notifications (likes, comments, follows)]**
-**[Screenshot: Shopping activity notifications (orders, shipping, reviews)]**
-**[Screenshot: System notifications (promotions, updates, warnings)]**
+</details>
 
-Comprehensive activity tracking:
-- Social interactions (likes, comments, follows, mentions)
-- Shopping updates (order status, shipping, delivery)
-- System notifications (promotions, platform updates)
-- Administrative actions (warnings, suspensions)
-- Content interactions (saves, shares, reports)
-- Real-time delivery with read receipts
-
-## Onboarding & User Experience
-
-### Welcome & Introduction
-**[Screenshot: Welcome screen with app logo and getting started button]**
-**[Screenshot: App introduction with feature highlights]**
-**[Screenshot: User type selection (regular user vs shop owner)]**
-
-New user experience and orientation:
-- Welcome screen with app introduction and branding
-- Feature highlights and value proposition
-- User type selection (regular user, shop owner, admin)
-- Progressive disclosure of features
-- Interactive tutorial system
-- Skip options for experienced users
-
-### Style Preferences Setup
-**[Screenshot: Style preferences selection with category tiles and continue button]**
-**[Screenshot: Fashion interest selection and personalization]**
-**[Screenshot: Shopping habit and budget preferences]**
-
-Personalized experience setup:
-- Style preference selection for personalized feed
-- Fashion categories and interest areas
-- Shopping frequency and budget preferences
-- Color palette and aesthetic preferences
-- Body type and fit preferences
-- Location-based recommendations
-
-### Profile Setup
-**[Screenshot: Profile setup with avatar upload and bio entry]**
-**[Screenshot: Username and basic information setup]**
-**[Screenshot: Privacy and notification preferences]**
-
-Complete profile creation:
-- Avatar upload with cropping and editing
-- Username and display name setup
-- Bio and personal description
-- Privacy settings and profile visibility
-- Notification preferences setup
-- Account verification options
-
-### Shop Onboarding (Business Users)
-**[Screenshot: Shop onboarding for business accounts]**
-**[Screenshot: Business information and verification]**
-**[Screenshot: Product category and branding setup]**
-
-Business account setup and verification:
-- Business information and legal details
-- Document upload for verification
-- Product categories and target audience
-- Branding and shop customization
-- Stripe account setup for payments
-- Business policies and return information
-
-### Tutorial & Feature Introduction
-**[Screenshot: Interactive tutorial highlighting key app features]**
-**[Screenshot: Feature walkthrough with tooltips and guides]**
-**[Screenshot: Progress tracking and completion rewards]**
-
-Guided feature introduction:
-- Interactive walkthrough of key features
-- Contextual help and tooltips
-- Progress tracking through onboarding
-- Feature discovery and usage tips
-- Completion rewards and achievements
-- Help center and support access
-
-## Additional Features
+<details open>
+<summary style="font-size: 18px;">Additional Features</summary>
 
 ### Dark Mode Theme
-**[Screenshot: Home feed in dark mode showing dark backgrounds with light text]**
+<table align="center">
+<tr>
+<th><b>Home Feed Dark Mode</b></th>
+</tr>
+<tr>
+<td><img src="images/home-feed-dark-mode.PNG" style="max-height: 450px; width: auto; height: auto;"></td>
+</tr>
+<tr>
+<td><small><i>Fig 10.1: Home Feed Dark Mode</i></small></td>
+</tr>
+</table>
 
 Accessibility and personalization:
 - Complete dark theme implementation
@@ -276,22 +476,44 @@ Accessibility and personalization:
 - User preference storage and automatic switching
 
 ### Wishlist Management
-**[Screenshot: Wishlist screen showing saved products in grid layout]**
+<table align="center">
+<tr>
+<th><b>Wishlist Screen</b></th>
+</tr>
+<tr>
+<td><img src="images/wishlist.png" style="max-height: 450px; width: auto; height: auto;"></td>
+</tr>
+<tr>
+<td><small><i>Fig 10.2: Wishlist Screen</i></small></td>
+</tr>
+</table>
 
 Save items for future consideration:
-- Heart icon to save products from anywhere in the app
+- Bookmark icon to save products from anywhere in the app
 - Organized wishlist with product details
 - Quick add to cart from wishlist
-- Share wishlist items with friends
 
-### Order History & Tracking
-**[Screenshot: Order history screen with past orders and status tracking]**
+### Settings
+<table align="center">
+<tr>
+<th><b>Settings Screen</b></th>
+</tr>
+<tr>
+<td><img src="images/setting.png" style="max-height: 450px; width: auto; height: auto;"></td>
+</tr>
+<tr>
+<td><small><i>Fig 10.3: Settings Screen</i></small></td>
+</tr>
+</table>
 
-Complete order lifecycle management:
-- Order history with search and filtering
-- Detailed order information and receipts
-- Real-time tracking and delivery updates
-- Reorder functionality for favorite items
+App settings and preferences:
+- Account settings and privacy options
+- Notification preferences
+- Theme selection (light/dark mode)
+- Language and region settings
+- Help and support access
+
+</details>
 
 ---
 

@@ -28,7 +28,10 @@ export const postService = {
     try {
       const headers: any = { Authorization: `Bearer ${token}` };
 
-      if (!(postData instanceof FormData)) {
+      // Check if postData is FormData (safer check for React Native)
+      const isFormData = postData && typeof postData === 'object' && 'append' in postData;
+
+      if (!isFormData) {
         headers['Content-Type'] = 'application/json';
       } else {
         headers['Content-Type'] = 'multipart/form-data';

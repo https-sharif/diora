@@ -68,7 +68,7 @@
       "typedRoutes": true
     },
     "extra": {
-      "apiUrl": "https://diora.onrender.com"
+      "apiUrl": "http://localhost:5010"
     }
   }
 }

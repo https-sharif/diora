@@ -47,7 +47,10 @@ export const productService = {
     try {
       const headers: any = { Authorization: `Bearer ${token}` };
       
-      if (!(productData instanceof FormData)) {
+      // Check if productData is FormData (safer check for React Native)
+      const isFormData = productData && typeof productData === 'object' && 'append' in productData;
+      
+      if (!isFormData) {
         headers['Content-Type'] = 'application/json';
       } else {
         headers['Content-Type'] = 'multipart/form-data';
