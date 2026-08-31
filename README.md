@@ -226,8 +226,10 @@ npm run dev          # Expo development server
 | Role | Name | GitHub |
 |------|------|---------|
 | **Lead Developer** | Shariful Islam | [@https-sharif](https://github.com/https-sharif) |
-| **Frontend Developer** | Tajnova Jahan | [@Tajnova18](https://github.com/Tajnova18) |
-| **Full-Stack Developer** | Nafis Khan | [@NafisKHAN19](https://github.com/NafisKHAN19) |
+| **Logo and Assets Design** | Tajnova Jahan | [@Tajnova18](https://github.com/Tajnova18) |
+| **Moral Support** | Nafis Khan | [@NafisKHAN19](https://github.com/NafisKHAN19) |
+
+
 
 ## License
 
